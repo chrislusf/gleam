@@ -33,17 +33,7 @@ func TestCallingExternalFunction(t *testing.T) {
 	}()
 
 	cmd := exec.Command("grep", "-v", "asdf")
-	inputWriter, _ := cmd.StdinPipe()
-	go ChannelToWriter(&wg, ch1, inputWriter, inputWriter)
-	outputReader, _ := cmd.StdoutPipe()
-	go ReaderToChannel(&wg, outputReader, ch2, os.Stderr)
-	cmd.Stderr = os.Stderr
-
-	wg.Add(1)
-	go func() {
-		cmd.Run()
-		wg.Done()
-	}()
+	Execute(&wg, cmd, ch1, ch2, os.Stderr)
 
 	wg.Add(1)
 	go func() {

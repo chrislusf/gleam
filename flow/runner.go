@@ -3,6 +3,8 @@ package flow
 import (
 	"sync"
 	"time"
+
+	"github.com/chrislusf/gleam/util"
 )
 
 func RunFlowContextSync(fc *FlowContext) {
@@ -78,15 +80,6 @@ func ExecuteTask(wg *sync.WaitGroup, task *Task) {
 	} else if task.Step.NetworkType == OneShardToOneShard {
 		inChan := task.Inputs[0].OutgoingChans[0]
 		outChan := task.Outputs[0].IncomingChan
-		LinkChannel(wg, inChan, outChan)
+		util.LinkChannel(wg, inChan, outChan)
 	}
-}
-
-func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
-	wg.Add(1)
-	defer wg.Done()
-	for bytes := range inChan {
-		outChan <- bytes
-	}
-	close(outChan)
 }

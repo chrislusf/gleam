@@ -13,7 +13,6 @@ func (d *Dataset) Output() (out chan []byte) {
 	out = make(chan []byte)
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.Function = func(task *Task) {
-		println("running output task...")
 		var channels []chan []byte
 		for _, shard := range task.Inputs {
 			channels = append(channels, shard.OutgoingChans...)

@@ -11,7 +11,7 @@ func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.Function = func(task *Task) {
-		println("running source task...")
+		// println("running source task...")
 		for _, shard := range task.Outputs {
 			f(shard.IncomingChan)
 			close(shard.IncomingChan)
@@ -31,7 +31,9 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			out <- scanner.Bytes()
+			// this conversion to string and then to []byte is needed.
+			// calling scanner.Bytes() will cause malformed lines.
+			out <- []byte(scanner.Text())
 		}
 
 		if err := scanner.Err(); err != nil {

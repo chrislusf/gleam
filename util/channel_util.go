@@ -27,6 +27,15 @@ func MergeChannel(cs []chan []byte, out chan []byte) {
 	}()
 }
 
+func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
+	wg.Add(1)
+	defer wg.Done()
+	for bytes := range inChan {
+		outChan <- bytes
+	}
+	close(outChan)
+}
+
 func ReaderToChannel(wg *sync.WaitGroup, reader io.ReadCloser, ch chan []byte, errorOutput io.Writer) {
 	wg.Add(1)
 	defer wg.Done()
