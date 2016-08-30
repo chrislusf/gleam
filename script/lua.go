@@ -43,7 +43,7 @@ func (c *LuaScript) Reduce(code string) {
 
 func (c *LuaScript) Filter(code string) {
 	c.operations = append(c.operations, &Operation{
-		Type: "reduce",
+		Type: "filter",
 		Code: code,
 	})
 }

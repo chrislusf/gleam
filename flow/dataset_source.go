@@ -43,3 +43,30 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	}
 	return fc.Source(fn)
 }
+
+func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
+	ret = fc.newNextDataset(1)
+	step := fc.AddOneToOneStep(nil, ret)
+	step.Function = func(task *Task) {
+		for data := range ch {
+			task.Outputs[0].IncomingChan <- data
+		}
+		for _, shard := range task.Outputs {
+			close(shard.IncomingChan)
+		}
+	}
+	return
+}
+
+func (fc *FlowContext) Slice(slice [][]byte) (ret *Dataset) {
+	inputChannel := make(chan []byte)
+
+	go func() {
+		for _, data := range slice {
+			inputChannel <- data
+		}
+		close(inputChannel)
+	}()
+
+	return fc.Channel(inputChannel)
+}
