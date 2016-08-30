@@ -41,6 +41,6 @@ func TestCallingLuaScripts(t *testing.T) {
 	}
 
 	if len(outputData) != 3 {
-		t.Errorf("grep -v stops working!")
+		t.Errorf("filter stops working!")
 	}
 }
