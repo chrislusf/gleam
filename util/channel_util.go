@@ -43,7 +43,10 @@ func ReaderToChannel(wg *sync.WaitGroup, reader io.ReadCloser, ch chan []byte, e
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		ch <- scanner.Bytes()
+		b0 := scanner.Bytes()
+		b1 := make([]byte, len(b0))
+		copy(b1, b0)
+		ch <- b1
 	}
 	close(ch)
 	if err := scanner.Err(); err != nil {

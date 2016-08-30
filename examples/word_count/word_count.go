@@ -8,11 +8,12 @@ import (
 func main() {
 	f := flow.New()
 
-	ch := f.TextFile("/etc/passwd").Script("sh").Map("grep window").Map("awk {print}").Output()
+	ch := f.TextFile("/etc/passwd").Script("sh").Map("grep -v window").Map("awk {print}").Output()
+	// ch := f.TextFile("/etc/passwd").Script("sh").Map("sort").Output()
 
 	go flow.RunFlowContextSync(f)
 
 	for bytes := range ch {
-		println("line:", string(bytes))
+		println(string(bytes))
 	}
 }

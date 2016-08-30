@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/commander"
+	"github.com/chrislusf/gleam/script"
 )
 
 type NetworkType int
@@ -14,10 +14,10 @@ const (
 )
 
 type FlowContext struct {
-	LastScriptType   string
-	ScriptCommanders map[string]commander.Commander
-	Steps            []*Step
-	Datasets         []*Dataset
+	LastScriptType string
+	Scripts        map[string]script.Script
+	Steps          []*Step
+	Datasets       []*Dataset
 }
 
 type Dataset struct {
@@ -45,8 +45,7 @@ type Step struct {
 	Tasks       []*Task
 	Name        string
 	NetworkType NetworkType
-	ScriptType  string
-	ScriptCode  string
+	Script      script.Script
 	RunLocked
 }
 

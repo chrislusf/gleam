@@ -17,7 +17,7 @@ func (d *Dataset) GetShards() []*DatasetShard {
 }
 
 func (d *Dataset) Script(scriptType string) *Dataset {
-	if _, ok := d.FlowContext.ScriptCommanders[scriptType]; !ok {
+	if _, ok := d.FlowContext.Scripts[scriptType]; !ok {
 		log.Fatalf("script type %s is not registered.", scriptType)
 	}
 	d.FlowContext.LastScriptType = scriptType

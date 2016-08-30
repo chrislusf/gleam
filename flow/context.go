@@ -3,22 +3,22 @@
 package flow
 
 import (
-	"github.com/chrislusf/gleam/commander"
+	"github.com/chrislusf/gleam/script"
 )
 
 func New() (fc *FlowContext) {
 	fc = &FlowContext{
 		LastScriptType: "lua",
-		ScriptCommanders: map[string]commander.Commander{
-			"sh":  commander.NewShellCommander(),
-			"lua": commander.NewLuaCommander(),
+		Scripts: map[string]script.Script{
+			"sh":  script.NewShellScript(),
+			"lua": script.NewLuaScript(),
 		},
 	}
 	return
 }
 
-func (fc *FlowContext) GetCommander() commander.Commander {
-	return fc.ScriptCommanders[fc.LastScriptType]
+func (fc *FlowContext) GetScript() script.Script {
+	return fc.Scripts[fc.LastScriptType]
 }
 
 func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"os"
 	"sync"
 	"time"
 
@@ -78,8 +79,9 @@ func ExecuteTask(wg *sync.WaitGroup, task *Task) {
 	if task.Step.Function != nil {
 		task.Step.Function(task)
 	} else if task.Step.NetworkType == OneShardToOneShard {
+		cmd := task.Step.Script.GetCommand().ToOsExecCommand()
 		inChan := task.Inputs[0].OutgoingChans[0]
 		outChan := task.Outputs[0].IncomingChan
-		util.LinkChannel(wg, inChan, outChan)
+		util.Execute(wg, cmd, inChan, outChan, os.Stderr)
 	}
 }

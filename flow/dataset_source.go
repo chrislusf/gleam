@@ -31,9 +31,10 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			// this conversion to string and then to []byte is needed.
-			// calling scanner.Bytes() will cause malformed lines.
-			out <- []byte(scanner.Text())
+			b0 := scanner.Bytes()
+			b1 := make([]byte, len(b0))
+			copy(b1, b0)
+			out <- b1
 		}
 
 		if err := scanner.Err(); err != nil {

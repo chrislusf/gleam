@@ -4,7 +4,8 @@ func (d *Dataset) Map(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Map"
 	step.NetworkType = OneShardToOneShard
-	step.ScriptCode = code
+	step.Script = d.FlowContext.GetScript()
+	step.Script.Map(code)
 	return ret
 }
 

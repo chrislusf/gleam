@@ -32,7 +32,7 @@ func TestCallingExternalFunction(t *testing.T) {
 		wg.Done()
 	}()
 
-	cmd := exec.Command("grep", "-v", "asdf")
+	cmd := exec.Command("sh", "-c", "grep asdf")
 	Execute(&wg, cmd, ch1, ch2, os.Stderr)
 
 	wg.Add(1)
