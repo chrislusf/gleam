@@ -1,24 +1,44 @@
 package util
 
 import (
+	"fmt"
 	"io"
 	"os/exec"
 	"sync"
 )
 
-func Execute(wg *sync.WaitGroup, cmd *exec.Cmd,
+func Execute(execWaitGroup *sync.WaitGroup, cmd *exec.Cmd,
 	inChan, outChan chan []byte, errWriter io.Writer) {
 
-	inputWriter, _ := cmd.StdinPipe()
-	go ChannelToWriter(wg, inChan, inputWriter, errWriter)
-	outputReader, _ := cmd.StdoutPipe()
-	go ReaderToChannel(wg, outputReader, outChan, errWriter)
+	execWaitGroup.Add(1)
+	defer execWaitGroup.Done()
+
+	var wg sync.WaitGroup
+
+	inputWriter, stdinErr := cmd.StdinPipe()
+	if stdinErr != nil {
+		fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
+	} else {
+		wg.Add(1)
+		go ChannelToWriter(&wg, inChan, inputWriter, errWriter)
+	}
+
+	outputReader, stdoutErr := cmd.StdoutPipe()
+	if stdoutErr != nil {
+		fmt.Fprintf(errWriter, "Failed to open StdoutPipe: %v", stdoutErr)
+	} else {
+		wg.Add(1)
+		go ReaderToChannel(&wg, outputReader, outChan, errWriter)
+	}
+
 	cmd.Stderr = errWriter
 
-	wg.Add(1)
-	go func() {
-		cmd.Run()
-		wg.Done()
-	}()
+	if startError := cmd.Start(); startError != nil {
+		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, cmd)
+		return
+	}
+	if waitError := cmd.Wait(); waitError != nil {
+		fmt.Fprintf(errWriter, "Wait error %v: %v\n", waitError, cmd)
+	}
 
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
-func TestCallingShellScripts(t *testing.T) {
+func TestCallingLuaScripts(t *testing.T) {
 
 	data := [][]byte{
 		[]byte("asdf"),
@@ -18,14 +18,25 @@ func TestCallingShellScripts(t *testing.T) {
 
 	f := flow.New()
 
-	outputChannel := f.Slice(data).Script("sh").Map("grep -v asdf").Map("awk {print}").Output()
-	// ch := f.TextFile("/etc/passwd").Script("sh").Map("sort").Output()
+	outputChannel := f.Slice(data).Script("lua").Map(`
+		function (line)
+			print(line)
+		end
+	`).Script("lua",
+		`function string.starts(String,Start)
+		   return string.sub(String,1,string.len(Start))==Start
+		end`,
+	).Filter(`
+		function (line)
+			return not string.starts(line, 'asd')
+		end
+	`).Output()
 
 	go flow.RunFlowContextSync(f)
 
 	var outputData [][]byte
 	for bytes := range outputChannel {
-		println("sh:", string(bytes))
+		println("lua:", string(bytes))
 		outputData = append(outputData, bytes)
 	}
 

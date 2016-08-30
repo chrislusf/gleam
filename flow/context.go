@@ -8,17 +8,19 @@ import (
 
 func New() (fc *FlowContext) {
 	fc = &FlowContext{
-		LastScriptType: "lua",
-		Scripts: map[string]script.Script{
-			"sh":  script.NewShellScript(),
-			"lua": script.NewLuaScript(),
+		PrevScriptType: "lua",
+		Scripts: map[string]func() script.Script{
+			"sh":  script.NewShellScript,
+			"lua": script.NewLuaScript,
 		},
 	}
 	return
 }
 
 func (fc *FlowContext) GetScript() script.Script {
-	return fc.Scripts[fc.LastScriptType]
+	s := fc.Scripts[fc.PrevScriptType]()
+	s.Init(fc.PrevScriptPart)
+	return s
 }
 
 func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {

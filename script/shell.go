@@ -12,7 +12,7 @@ type ShellScript struct {
 	operations []*Operation
 }
 
-func NewShellScript() *ShellScript {
+func NewShellScript() Script {
 	return &ShellScript{}
 }
 

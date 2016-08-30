@@ -80,6 +80,7 @@ func ExecuteTask(wg *sync.WaitGroup, task *Task) {
 		task.Step.Function(task)
 	} else if task.Step.NetworkType == OneShardToOneShard {
 		cmd := task.Step.Script.GetCommand().ToOsExecCommand()
+		// fmt.Printf("cmd: %+v\n", cmd)
 		inChan := task.Inputs[0].OutgoingChans[0]
 		outChan := task.Outputs[0].IncomingChan
 		util.Execute(wg, cmd, inChan, outChan, os.Stderr)

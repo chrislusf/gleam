@@ -12,6 +12,7 @@ import (
 func (d *Dataset) Output() (out chan []byte) {
 	out = make(chan []byte)
 	step := d.FlowContext.AddAllToOneStep(d, nil)
+	step.Name = "Output"
 	step.Function = func(task *Task) {
 		var channels []chan []byte
 		for _, shard := range task.Inputs {

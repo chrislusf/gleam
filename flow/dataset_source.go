@@ -10,6 +10,7 @@ import (
 func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
+	step.Name = "Source"
 	step.Function = func(task *Task) {
 		// println("running source task...")
 		for _, shard := range task.Outputs {
@@ -47,6 +48,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
+	step.Name = "Channel"
 	step.Function = func(task *Task) {
 		for data := range ch {
 			task.Outputs[0].IncomingChan <- data

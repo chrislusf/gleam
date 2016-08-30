@@ -14,8 +14,9 @@ const (
 )
 
 type FlowContext struct {
-	LastScriptType string
-	Scripts        map[string]script.Script
+	PrevScriptType string
+	PrevScriptPart string
+	Scripts        map[string]func() script.Script
 	Steps          []*Step
 	Datasets       []*Dataset
 }
