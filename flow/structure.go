@@ -46,7 +46,9 @@ type Step struct {
 	Tasks       []*Task
 	Name        string
 	NetworkType NetworkType
+	IsPipe      bool
 	Script      script.Script
+	Command     *script.Command
 	RunLocked
 }
 

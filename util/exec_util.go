@@ -7,8 +7,8 @@ import (
 	"sync"
 )
 
-func Execute(execWaitGroup *sync.WaitGroup, cmd *exec.Cmd,
-	inChan, outChan chan []byte, errWriter io.Writer) {
+func Execute(execWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
+	inChan, outChan chan []byte, isPipe bool, errWriter io.Writer) {
 
 	execWaitGroup.Add(1)
 	defer execWaitGroup.Done()
@@ -20,7 +20,11 @@ func Execute(execWaitGroup *sync.WaitGroup, cmd *exec.Cmd,
 		fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
 	} else {
 		wg.Add(1)
-		go ChannelToWriter(&wg, inChan, inputWriter, errWriter)
+		if isPipe {
+			go ChannelToLineWriter(&wg, name, inChan, inputWriter, errWriter)
+		} else {
+			go ChannelToWriter(&wg, name, inChan, inputWriter, errWriter)
+		}
 	}
 
 	outputReader, stdoutErr := cmd.StdoutPipe()
@@ -28,7 +32,11 @@ func Execute(execWaitGroup *sync.WaitGroup, cmd *exec.Cmd,
 		fmt.Fprintf(errWriter, "Failed to open StdoutPipe: %v", stdoutErr)
 	} else {
 		wg.Add(1)
-		go ReaderToChannel(&wg, outputReader, outChan, errWriter)
+		if isPipe {
+			go LineReaderToChannel(&wg, name, outputReader, outChan, errWriter)
+		} else {
+			go ReaderToChannel(&wg, name, outputReader, outChan, errWriter)
+		}
 	}
 
 	cmd.Stderr = errWriter

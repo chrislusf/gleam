@@ -12,7 +12,7 @@ type ShellScript struct {
 	operations []*Operation
 }
 
-func NewShellScript() Script {
+func NewShellScript() *ShellScript {
 	return &ShellScript{}
 }
 
@@ -32,23 +32,10 @@ func (c *ShellScript) GetCommand() *Command {
 	}
 }
 
-func (c *ShellScript) Map(code string) {
+func (c *ShellScript) Pipe(code string) *ShellScript {
 	c.operations = append(c.operations, &Operation{
-		Type: "map",
+		Type: "Pipe",
 		Code: code,
 	})
-}
-
-func (c *ShellScript) Reduce(code string) {
-	c.operations = append(c.operations, &Operation{
-		Type: "reduce",
-		Code: code,
-	})
-}
-
-func (c *ShellScript) Filter(code string) {
-	c.operations = append(c.operations, &Operation{
-		Type: "filter",
-		Code: code,
-	})
+	return c
 }

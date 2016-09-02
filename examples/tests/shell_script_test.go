@@ -18,7 +18,7 @@ func TestCallingShellScripts(t *testing.T) {
 
 	f := flow.New()
 
-	outputChannel := f.Slice(data).Script("sh").Map("grep -v asdf").Map("awk {print}").Output()
+	outputChannel := f.Slice(data).Pipe("grep -v asdf").Pipe("awk {print}").Output()
 	// ch := f.TextFile("/etc/passwd").Script("sh").Map("sort").Output()
 
 	go flow.RunFlowContextSync(f)

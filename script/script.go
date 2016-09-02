@@ -14,10 +14,12 @@ type Command struct {
 type Script interface {
 	Name() string
 	Init(code string)
+	GetCommand() *Command
+
 	Map(code string)
+	FlatMap(code string)
 	Reduce(code string)
 	Filter(code string)
-	GetCommand() *Command
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {

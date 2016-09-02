@@ -10,14 +10,13 @@ func New() (fc *FlowContext) {
 	fc = &FlowContext{
 		PrevScriptType: "lua",
 		Scripts: map[string]func() script.Script{
-			"sh":  script.NewShellScript,
 			"lua": script.NewLuaScript,
 		},
 	}
 	return
 }
 
-func (fc *FlowContext) GetScript() script.Script {
+func (fc *FlowContext) CreateScript() script.Script {
 	s := fc.Scripts[fc.PrevScriptType]()
 	s.Init(fc.PrevScriptPart)
 	return s

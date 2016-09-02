@@ -8,8 +8,8 @@ import (
 func main() {
 	shellFlow := flow.New()
 
-	shellOutChan := shellFlow.TextFile("/etc/passwd").Script("sh").Map("grep -v window").Map("awk {print}").Output()
-	// shellOutChan := shellFlow.TextFile("/etc/passwd").Script("sh").Map("sort").Output()
+	shellOutChan := shellFlow.TextFile("/etc/passwd").Pipe("grep -v '#'").Pipe(
+		"awk {print}").Pipe("sort").Output()
 
 	go flow.RunFlowContextSync(shellFlow)
 
@@ -18,16 +18,15 @@ func main() {
 	}
 
 	luaFlow := flow.New()
-	luaOutChan := luaFlow.TextFile("/etc/passwd").Script("lua").Map(`
+	luaOutChan := luaFlow.TextFile("/etc/passwd").FlatMap(`
 		function(line)
-			for w in line:gmatch("%w+") do print(w) end
+			return line:gmatch("%w+")
 		end
-	`).Script("sh").Map("sort").Map("uniq -c").Map("sort").Output()
+	`).Pipe("sort").Pipe("uniq -c").Pipe("sort").Output()
 
 	go flow.RunFlowContextSync(luaFlow)
 
 	for bytes := range luaOutChan {
 		println(string(bytes))
 	}
-
 }

@@ -76,13 +76,24 @@ func RunTask(wg *sync.WaitGroup, task *Task) {
 }
 
 func ExecuteTask(wg *sync.WaitGroup, task *Task) {
+	// try to run Function first
+	// if failed, try to run shell scripts
+	// if failed, try to run lua scripts
 	if task.Step.Function != nil {
 		task.Step.Function(task)
-	} else if task.Step.NetworkType == OneShardToOneShard {
-		cmd := task.Step.Script.GetCommand().ToOsExecCommand()
+		return
+	}
+
+	// get an exec.Command
+	if task.Step.Command == nil {
+		task.Step.Command = task.Step.Script.GetCommand()
+	}
+	cmd := task.Step.Command.ToOsExecCommand()
+
+	if task.Step.NetworkType == OneShardToOneShard {
 		// fmt.Printf("cmd: %+v\n", cmd)
 		inChan := task.Inputs[0].OutgoingChans[0]
 		outChan := task.Outputs[0].IncomingChan
-		util.Execute(wg, cmd, inChan, outChan, os.Stderr)
+		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, task.Step.IsPipe, os.Stderr)
 	}
 }

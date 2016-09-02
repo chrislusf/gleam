@@ -20,7 +20,7 @@ func TestCallingLuaScripts(t *testing.T) {
 
 	outputChannel := f.Slice(data).Script("lua").Map(`
 		function (line)
-			print(line)
+			return line
 		end
 	`).Script("lua",
 		`function string.starts(String,Start)
