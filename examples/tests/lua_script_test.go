@@ -30,7 +30,7 @@ func TestCallingLuaScripts(t *testing.T) {
 		function (line)
 			return not string.starts(line, 'asd')
 		end
-	`).Output()
+	`).LocalSort().Output()
 
 	go flow.RunFlowContextSync(f)
 

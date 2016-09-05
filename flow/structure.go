@@ -22,10 +22,11 @@ type FlowContext struct {
 }
 
 type Dataset struct {
-	FlowContext  *FlowContext
-	Shards       []*DatasetShard
-	Step         *Step
-	ReadingSteps []*Step
+	FlowContext   *FlowContext
+	Shards        []*DatasetShard
+	Step          *Step
+	ReadingSteps  []*Step
+	IsLocalSorted bool
 	RunLocked
 }
 

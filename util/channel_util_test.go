@@ -33,7 +33,7 @@ func TestCallingShellScript(t *testing.T) {
 	}()
 
 	cmd := exec.Command("sh", "-c", "grep asdf")
-	Execute(&wg, cmd, ch1, ch2, os.Stderr)
+	Execute(&wg, "testing shell", cmd, ch1, ch2, true, os.Stderr)
 
 	wg.Add(1)
 	go func() {
@@ -71,14 +71,6 @@ func TestCallingLuajitScript(t *testing.T) {
 	}()
 
 	cmd := exec.Command("luajit", "-e", `
-while true do
-        local line = io.read()
-        if not line then break end
-        -- Without line below, script never ends
-        io.write("NOOP ",line,"\n")
-end
-	`)
-	cmd = exec.Command("luajit", "-e", `
 			local mapper = function (line)
 				print(line .. '$')
 			end
@@ -86,8 +78,7 @@ end
 				mapper(line)
 		    end
 			`)
-	// cmd = exec.Command("luajit", "-e", `for line in io.lines() do io.write(line, "$$\n") end`)
-	Execute(&wg, cmd, ch1, ch2, os.Stderr)
+	Execute(&wg, "testing luajit", cmd, ch1, ch2, true, os.Stderr)
 
 	wg.Add(1)
 	go func() {

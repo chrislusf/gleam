@@ -17,6 +17,8 @@ func NewLuaScript() Script {
 
 func (c *LuaScript) Init(code string) {
 	c.initCode = `
+local mp = require "MessagePack"
+
 -- Read an integer in LSB order.
 function stringtonumber(str)
   if str == nil then
@@ -44,14 +46,17 @@ function readBytes()
 	if not block then return nil end
 	local length = stringtonumber(block)
 	if not length then return nil end
-	local line = io.read(length)
-	return line
+	local encoded = io.read(length)
+	local decoded = mp.unpack(encoded)
+	-- io.stderr:write("read "..string.len(decoded).."\n")
+	return decoded
 end
 
 -- write bytes
 function writeBytes(line)
-	io.write(numbertobytes(string.len(line), 4))
-	io.write(line)
+	local encoded = mp.pack(line)
+	io.write(numbertobytes(string.len(encoded), 4))
+	io.write(encoded)
 end
 ` + code
 }

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"log"
 	"os"
+
+	"github.com/chrislusf/gleam/util"
 )
 
 // Inputs: f(chan A), shardCount
@@ -32,10 +34,12 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			b0 := scanner.Bytes()
-			b1 := make([]byte, len(b0))
-			copy(b1, b0)
-			out <- b1
+			encoded, err := util.Encode(scanner.Bytes())
+			if err != nil {
+				log.Printf("Failed to encode bytes: %v", err)
+				continue
+			}
+			out <- encoded
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -51,7 +55,12 @@ func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
 	step.Name = "Channel"
 	step.Function = func(task *Task) {
 		for data := range ch {
-			task.Outputs[0].IncomingChan <- data
+			encoded, err := util.Encode(data)
+			if err != nil {
+				log.Printf("Failed to encode bytes: %v", err)
+				continue
+			}
+			task.Outputs[0].IncomingChan <- encoded
 		}
 		for _, shard := range task.Outputs {
 			close(shard.IncomingChan)

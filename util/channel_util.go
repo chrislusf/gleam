@@ -6,7 +6,21 @@ import (
 	"fmt"
 	"io"
 	"sync"
+
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
+
+/*
+Message format:
+  32 bits byte length
+  []byte encoded in msgpack format
+
+Lua scripts need to decode the input and encode the output in msgpack format.
+Go code also need to decode the input to "see" the data, e.g. Sort(),
+and encode the output, e.g. Source().
+
+Shell scripts via Pipe should see clear data, so the
+*/
 
 // setup asynchronously to merge multiple channels into one channel
 func MergeChannel(cs []chan []byte, out chan []byte) {
@@ -89,11 +103,12 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		b0 := scanner.Bytes()
-		b1 := make([]byte, len(b0))
-		copy(b1, b0)
-		// println("ReaderToChannel:", string(b1))
-		ch <- b1
+		byteEncoded, err := Encode(scanner.Bytes())
+		if err != nil {
+			fmt.Fprintf(errorOutput, "%s>Failed to encode bytes from channel to writer: %v\n", name, err)
+			return
+		}
+		ch <- byteEncoded
 	}
 	if err := scanner.Err(); err != nil {
 		// TODO: what's wrong here?
@@ -106,9 +121,14 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 	defer wg.Done()
 	defer writer.Close()
 
-	for bytes := range ch {
-		// println("ChannelToWriter:", string(bytes))
-		if _, err := writer.Write(bytes); err != nil {
+	for encodedBytes := range ch {
+		var bytesDecoded []byte
+		var err error
+		if bytesDecoded, err = Decode(encodedBytes); err != nil {
+			fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
+			return
+		}
+		if _, err := writer.Write(bytesDecoded); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
 			return
 		}
@@ -118,4 +138,15 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 		}
 	}
 
+}
+
+func Encode(rawBytes []byte) ([]byte, error) {
+	byteEncoded, err := msgpack.Marshal(rawBytes)
+	return byteEncoded, err
+}
+func Decode(encodedBytes []byte) ([]byte, error) {
+	// to be compatible with lua encoding, need to use string
+	var bytesDecoded []byte
+	err := msgpack.Unmarshal(encodedBytes, &bytesDecoded)
+	return bytesDecoded, err
 }
