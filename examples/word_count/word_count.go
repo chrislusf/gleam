@@ -2,7 +2,11 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/util"
 )
 
 func main() {
@@ -14,7 +18,8 @@ func main() {
 	go flow.RunFlowContextSync(shellFlow)
 
 	for bytes := range shellOutChan {
-		println("shell:", string(bytes))
+		util.PrintAsJSON(bytes, os.Stdout, true)
+		fmt.Fprintln(os.Stdout)
 	}
 
 	luaFlow := flow.New()
@@ -27,6 +32,7 @@ func main() {
 	go flow.RunFlowContextSync(luaFlow)
 
 	for bytes := range luaOutChan {
-		println(string(bytes))
+		util.PrintAsJSON(bytes, os.Stdout, true)
+		fmt.Fprintln(os.Stdout)
 	}
 }

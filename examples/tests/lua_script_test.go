@@ -1,9 +1,12 @@
 package tests
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/util"
 )
 
 func TestCallingLuaScripts(t *testing.T) {
@@ -36,8 +39,9 @@ func TestCallingLuaScripts(t *testing.T) {
 
 	var outputData [][]byte
 	for bytes := range outputChannel {
-		println("lua:", string(bytes))
 		outputData = append(outputData, bytes)
+		util.PrintAsJSON(bytes, os.Stdout, true)
+		fmt.Fprintln(os.Stdout)
 	}
 
 	if len(outputData) != 3 {
