@@ -2,6 +2,7 @@ package util
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -11,9 +12,36 @@ import (
 )
 
 /*
-Message format:
+On the wire Message format, pipe:
   32 bits byte length
   []byte encoded in msgpack format
+
+Channel Message format:
+  []byte
+    consequtive sections of []byte, each section is an object encoded in msgpack format
+
+	This is not actually an array object,
+	but just a consequtive list of encoded bytes for each object,
+	because msgpack can sequentially decode the objects
+
+When used by Shell scripts:
+  from input channel:
+    decode the msgpack-encoded []byte into strings that's tab and '\n' separated
+	and feed into the shell script
+  to output channel:
+    encode the tab and '\n' separated lines into msgpack-format []byte
+	and feed into the output channel
+
+When used by Lua scripts:
+  from input channel:
+    decode the msgpack-encoded []byte into array of objects
+	and pass these objects as function parameters
+  to output channel:
+    encode returned objects as an array of objects, into msgpack encoded []byte
+	and feed into the output channel
+
+Output Message format:
+  decoded objects
 
 Lua scripts need to decode the input and encode the output in msgpack format.
 Go code also need to decode the input to "see" the data, e.g. Sort(),
@@ -65,7 +93,7 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch c
 		}
 		if err != nil {
 			// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
-			// fmt.Fprintf(errorOutput, "%s>Failed to read from input to channel: %v\n", name, err)
+			fmt.Fprintf(errorOutput, "%s>Failed to read bytes length from input to channel: %v\n", name, err)
 			break
 		}
 		if length == 0 {
@@ -74,8 +102,15 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch c
 		data := make([]byte, length)
 		_, err = io.ReadFull(reader, data)
 		if err == io.EOF {
+			fmt.Fprintf(errorOutput, "%s>Getting EOF from reader to channel: %v\n", name, err)
 			break // this is not really correct, but stop anyway
 		}
+		if err != nil {
+			fmt.Fprintf(errorOutput, "%s>Getting error from reader to channel: %v\n", name, err)
+			break // this is not really correct, but stop anyway
+		}
+		// this is output from FlatMap to the output
+		// println(name + " reader -> chan output data:" + string(data))
 		ch <- data
 	}
 }
@@ -85,13 +120,14 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.
 	defer writer.Close()
 
 	for bytes := range ch {
+		// println(name + " chan -> writer input data:" + string(bytes))
 		if err := binary.Write(writer, binary.LittleEndian, int32(len(bytes))); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write length of bytes from channel to writer: %v\n", name, err)
-			return
+			//return
 		}
 		if _, err := writer.Write(bytes); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
-			return
+			//return
 		}
 	}
 }
@@ -103,12 +139,19 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		byteEncoded, err := Encode(scanner.Bytes())
-		if err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to encode bytes from channel to writer: %v\n", name, err)
-			return
+		// fmt.Printf("line input: %s\n", scanner.Text())
+		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
+		var buf bytes.Buffer
+		encoder := msgpack.NewEncoder(&buf)
+		for _, p := range parts {
+			if err := encoder.Encode(p); err != nil {
+				if err != nil {
+					fmt.Fprintf(errorOutput, "%s>Failed to encode bytes from channel to writer: %v\n", name, err)
+					return
+				}
+			}
 		}
-		ch <- byteEncoded
+		ch <- buf.Bytes()
 	}
 	if err := scanner.Err(); err != nil {
 		// TODO: what's wrong here?
@@ -121,32 +164,76 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 	defer wg.Done()
 	defer writer.Close()
 
-	for encodedBytes := range ch {
-		var bytesDecoded []byte
-		var err error
-		if bytesDecoded, err = Decode(encodedBytes); err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
-			return
-		}
-		if _, err := writer.Write(bytesDecoded); err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
-			return
-		}
-		if _, err := writer.Write([]byte("\n")); err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to write len end from channel to writer: %v\n", name, err)
-			return
-		}
+	if err := FprintRowsFromChannel(writer, ch, "\t", "\n"); err != nil {
+		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
+		return
 	}
-
 }
 
-func Encode(rawBytes []byte) ([]byte, error) {
-	byteEncoded, err := msgpack.Marshal(rawBytes)
+func EncodeRow(anyObject ...interface{}) ([]byte, error) {
+	byteEncoded, err := msgpack.Marshal(anyObject...)
 	return byteEncoded, err
 }
-func Decode(encodedBytes []byte) ([]byte, error) {
+
+func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	// to be compatible with lua encoding, need to use string
-	var bytesDecoded []byte
-	err := msgpack.Unmarshal(encodedBytes, &bytesDecoded)
-	return bytesDecoded, err
+	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
+	for {
+		var v []byte
+		if err := decoder.Decode(&v); err != nil {
+			err = fmt.Errorf("decode row error: %s\n", v)
+			break
+		}
+		objects = append(objects, v)
+	}
+	return objects, err
+}
+
+func DecodeRowTo(encodedBytes []byte, objects ...interface{}) error {
+	// to be compatible with lua encoding, need to use string
+	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
+	return decoder.Decode(objects...)
+}
+
+func FprintRow(writer io.Writer, delimiter string, decodedObjects ...interface{}) error {
+	// fmt.Printf("chan input decoded: %v\n", decodedObjects)
+	for i, obj := range decodedObjects {
+		if i != 0 {
+			if _, err := writer.Write([]byte(delimiter)); err != nil {
+				return fmt.Errorf("Failed to write tab: %v", err)
+			}
+		}
+		// only string or []byte is allowed in piping. numbers or other types need to be converted to string
+		if dat, ok := obj.(string); ok {
+			if _, err := writer.Write([]byte(dat)); err != nil {
+				return fmt.Errorf("Failed to write string: %v", err)
+			}
+		}
+		if dat, ok := obj.([]byte); ok {
+			if _, err := writer.Write(dat); err != nil {
+				return fmt.Errorf("Failed to write bytes: %v", err)
+			}
+		}
+	}
+	return nil
+}
+
+func FprintRowsFromChannel(writer io.Writer, ch chan []byte, delimiter string, lineSperator string) error {
+	for encodedBytes := range ch {
+		var decodedObjects []interface{}
+		var err error
+		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
+		if decodedObjects, err = DecodeRow(encodedBytes); err != nil {
+			return fmt.Errorf("Failed to decode byte: %v", err)
+		}
+
+		if err := FprintRow(writer, "\t", decodedObjects...); err != nil {
+			return fmt.Errorf("Failed to write row: %v", err)
+		}
+
+		if _, err := writer.Write([]byte("\n")); err != nil {
+			return fmt.Errorf("Failed to write line separator: %v", err)
+		}
+	}
+	return nil
 }

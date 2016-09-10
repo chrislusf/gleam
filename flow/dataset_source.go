@@ -15,7 +15,7 @@ func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	step.Name = "Source"
 	step.Function = func(task *Task) {
 		// println("running source task...")
-		for _, shard := range task.Outputs {
+		for _, shard := range task.OutputShards {
 			f(shard.IncomingChan)
 			close(shard.IncomingChan)
 		}
@@ -34,7 +34,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			encoded, err := util.Encode(scanner.Bytes())
+			encoded, err := util.EncodeRow(scanner.Bytes())
 			if err != nil {
 				log.Printf("Failed to encode bytes: %v", err)
 				continue
@@ -55,14 +55,14 @@ func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
 	step.Name = "Channel"
 	step.Function = func(task *Task) {
 		for data := range ch {
-			encoded, err := util.Encode(data)
+			encoded, err := util.EncodeRow(data)
 			if err != nil {
 				log.Printf("Failed to encode bytes: %v", err)
 				continue
 			}
-			task.Outputs[0].IncomingChan <- encoded
+			task.OutputShards[0].IncomingChan <- encoded
 		}
-		for _, shard := range task.Outputs {
+		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 	}

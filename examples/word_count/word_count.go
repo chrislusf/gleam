@@ -10,29 +10,37 @@ import (
 )
 
 func main() {
-	shellFlow := flow.New()
-
-	shellOutChan := shellFlow.TextFile("/etc/passwd").Pipe("grep -v '#'").Pipe(
-		"awk {print}").Pipe("sort").Output()
-
-	go flow.RunFlowContextSync(shellFlow)
-
-	for bytes := range shellOutChan {
-		util.PrintAsJSON(bytes, os.Stdout, true)
-		fmt.Fprintln(os.Stdout)
-	}
 
 	luaFlow := flow.New()
 	luaOutChan := luaFlow.TextFile("/etc/passwd").FlatMap(`
 		function(line)
-			return line:gmatch("%w+")
+			if line then
+				return line:gmatch("%w+")
+			end
 		end
-	`).Pipe("sort").Pipe("uniq -c").Pipe("sort").Output()
+	`).LocalSort().Map(`
+		function(word)
+			return word, 1
+		end
+	`).Reduce(`
+		function(x, y)
+			return x + y
+		end
+	`).Map(`
+		function(k, v)
+			return k .. "\t" .. v
+		end
+	`).Pipe("sort -n -k 2").Output()
 
 	go flow.RunFlowContextSync(luaFlow)
 
 	for bytes := range luaOutChan {
-		util.PrintAsJSON(bytes, os.Stdout, true)
-		fmt.Fprintln(os.Stdout)
+		var line string
+		if err := util.DecodeRowTo(bytes, &line); err != nil {
+			fmt.Printf("decode error: %v", err)
+			break
+		}
+		fmt.Fprintf(os.Stdout, "output>%s\n", line)
 	}
+
 }

@@ -1,2 +1,6 @@
 
 examples/word_count/word_count
+
+.DS_Store
+
+examples/word_count/word_count

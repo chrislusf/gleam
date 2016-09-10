@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"fmt"
-	"os"
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
@@ -37,14 +35,15 @@ func TestCallingLuaScripts(t *testing.T) {
 
 	go flow.RunFlowContextSync(f)
 
-	var outputData [][]byte
+	outputCounter := 0
 	for bytes := range outputChannel {
-		outputData = append(outputData, bytes)
-		util.PrintAsJSON(bytes, os.Stdout, true)
-		fmt.Fprintln(os.Stdout)
+		outputCounter++
+		var line []byte
+		util.DecodeRowTo(bytes, &line)
+		println("lua > ", string(line))
 	}
 
-	if len(outputData) != 3 {
+	if outputCounter != 3 {
 		t.Errorf("filter stops working!")
 	}
 }

@@ -1036,10 +1036,10 @@ unpackers['ext32'] = function (c)
 end
 
 
-local function cursor_string (str)
+local function cursor_string (str, start)
     return {
         s = str,
-        i = 1,
+        i = start,
         j = #str,
         underflow = function (self)
                         error "missing bytes"
@@ -1069,19 +1069,19 @@ local function cursor_loader (ld)
     }
 end
 
-function m.unpack (s)
+function m.unpack (s, start)
     checktype('unpack', 1, s, 'string')
-    local cursor = cursor_string(s)
+	if not start then
+		start = 1
+	end
+    local cursor = cursor_string(s, start)
     local data = unpackers['any'](cursor)
-    if cursor.i < cursor.j then
-        error "extra bytes"
-    end
-    return data
+    return data, cursor.i
 end
 
 function m.unpacker (src)
     if type(src) == 'string' then
-        local cursor = cursor_string(src)
+        local cursor = cursor_string(src, 1)
         return function ()
             if cursor.i <= cursor.j then
                 return cursor.i, unpackers['any'](cursor)

@@ -7,11 +7,10 @@ import (
 	"sync"
 )
 
-func Execute(execWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
+func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 	inChan, outChan chan []byte, isPipe bool, errWriter io.Writer) {
 
-	execWaitGroup.Add(1)
-	defer execWaitGroup.Done()
+	defer executeWaitGroup.Done()
 
 	var wg sync.WaitGroup
 
@@ -45,6 +44,9 @@ func Execute(execWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, cmd)
 		return
 	}
+
+	wg.Wait()
+
 	if waitError := cmd.Wait(); waitError != nil {
 		fmt.Fprintf(errWriter, "Wait error %v: %v\n", waitError, cmd)
 	}

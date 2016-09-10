@@ -12,24 +12,19 @@ type Decoder interface {
 	Decode(v interface{}) error
 }
 
-func PrintAsJSON(msgpackBytes []byte, writer io.Writer, isPrettyPrint bool) (err error) {
-	var object interface{}
+func DecodeToObject(msgpackBytes []byte) (object interface{}, err error) {
 
 	decoder := NewMsgpackDecoderBytes(msgpackBytes)
+
+	err = decoder.Decode(&object)
+
+	return
+}
+
+func PrintAsJSON(object interface{}, writer io.Writer, isPrettyPrint bool) error {
 	encoder := NewJSONEncoder(writer, isPrettyPrint)
-
-	for {
-		if err = decoder.Decode(&object); err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				return err
-			}
-		}
-
-		if err = encoder.Encode(object); err != nil {
-			return err
-		}
+	if err := encoder.Encode(object); err != nil {
+		return err
 	}
 
 	return nil

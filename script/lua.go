@@ -41,23 +41,53 @@ function numbertobytes(num, width)
 end
 
 -- read bytes
-function readBytes()
-	local block = io.read(4)
-	if not block then return nil end
-	local length = stringtonumber(block)
-	if not length then return nil end
-	local encoded = io.read(length)
-	local decoded = mp.unpack(encoded)
-	-- io.stderr:write("read "..string.len(decoded).."\n")
-	return decoded
+function readEncodedBytes()
+  local block = io.read(4)
+  if not block then return nil end
+  local length = stringtonumber(block)
+  if not length then return nil end
+  local encoded = io.read(length)
+  return encoded
+end
+
+function decodeRow(encoded)
+  if not encoded then return nil end
+  local length = string.len(encoded)
+  local decoded = {}
+  local start = 1
+  local x = nil
+  while start <= length do
+    x, start = mp.unpack(encoded, start)
+    table.insert(decoded, x)
+    if start > length then break end
+  end
+  return decoded
+end
+
+function readRow()
+  local encoded = readEncodedBytes()
+  return decodeRow(encoded)
 end
 
 -- write bytes
-function writeBytes(line)
-	local encoded = mp.pack(line)
-	io.write(numbertobytes(string.len(encoded), 4))
-	io.write(encoded)
+function writeBytes(encoded)
+  io.write(numbertobytes(string.len(encoded), 4))
+  io.write(encoded)
 end
+
+function writeRow(...)
+  local arg={...}
+  local encoded = ""
+  for i,v in ipairs(arg) do
+    if i == 1 then
+      encoded = mp.pack(v)
+	else
+      encoded = encoded .. mp.pack(v)
+	end
+  end
+  writeBytes(encoded)
+end
+
 ` + code
 }
 
@@ -68,8 +98,10 @@ func (c *LuaScript) Name() string {
 func (c *LuaScript) GetCommand() *Command {
 	return &Command{
 		Path: "luajit",
-		Args: []string{"-e", c.initCode + "\n" + c.operations[0].Code},
-		Env:  c.env,
+		Args: []string{"-e", c.initCode + "\n" + c.operations[0].Code + `
+io.flush()
+`},
+		Env: c.env,
 	}
 }
 
@@ -77,15 +109,15 @@ func (c *LuaScript) Map(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Map",
 		Code: fmt.Sprintf(`
-			local map = %s
-			while true do
-				local line = readBytes()
-				if not line then break end
+local map = %s
+while true do
+  local row = readRow()
+  if not row then break end
 
-				local t = map(line)
-				writeBytes(t)
-			end
-		`, code),
+  local t = {map(unpack(row))}
+  writeRow(unpack(t))
+end
+`, code),
 	})
 }
 
@@ -93,24 +125,49 @@ func (c *LuaScript) FlatMap(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "FlatMap",
 		Code: fmt.Sprintf(`
-			local map = %s
-			while true do
-				local line = readBytes()
-				if not line then break end
+local flatMap = %s
 
-				local t = map(line)
-				for x in t do
-					writeBytes(x)
-				end
-			end
-		`, code),
+while true do
+  local row = readRow()
+  if not row then break end
+
+  local t = flatMap(unpack(row))
+  if t then
+    for x in t do
+      writeRow(x)
+    end
+  end
+end
+`, code),
 	})
 }
 
 func (c *LuaScript) Reduce(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Reduce",
-		Code: code,
+		Code: fmt.Sprintf(`
+local reduce = %s
+
+local lastKey = nil
+local lastValue = nil
+while true do
+  local row = readRow()
+  if not row then break end
+
+  if row[1] ~= lastKey then
+    if lastKey then
+      writeRow(lastKey, lastValue)
+    end
+    lastKey, lastValue = row[1], row[2]
+  else
+    if not lastValue then lastValue = row[2] end
+    if row[2] then
+      lastValue = reduce(lastValue, row[2]) 
+    end
+  end
+end
+writeRow(lastKey, lastValue)
+`, code),
 	})
 }
 
@@ -118,15 +175,44 @@ func (c *LuaScript) Filter(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Filter",
 		Code: fmt.Sprintf(`
-			local filter = %s
-			while true do
-				local line = readBytes()
-				if not line then break end
+local filter = %s
+while true do
+  local encodedBytes = readEncodedBytes()
+  if not encodedBytes then break end
 
-				if filter(line) then
-					writeBytes(line)
-				end
-			end
-		`, code),
+  local row = decodeRow(encodedBytes)
+  if not row then break end
+
+  if filter(row[1]) then
+    writeBytes(encodedBytes)
+  end
+end
+`, code),
+	})
+}
+
+func (c *LuaScript) GroupByKey() {
+	c.operations = append(c.operations, &Operation{
+		Type: "GroupByKey",
+		Code: fmt.Sprintf(`
+local lastKey = nil
+local lastValues = {}
+while true do
+  local row = readRow()
+  if not row then break end
+
+  if row[1] ~= lastKey then
+    if lastKey then
+      writeRow(lastKey, lastValues)
+    end
+    lastKey, lastValues = row[1], {row[2]}
+  else
+    table.insert(lastValues, row[2])
+  end
+end
+if #lastValues > 0 then
+  writeRow(lastKey, lastValues)
+end
+`),
 	})
 }

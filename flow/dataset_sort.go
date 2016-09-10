@@ -27,11 +27,11 @@ func (d *Dataset) LocalSort() *Dataset {
 	step.Name = "LocalSort"
 	step.NetworkType = OneShardToOneShard
 	step.Function = func(task *Task) {
-		outChan := task.Outputs[0].OutgoingChans[0]
+		outChan := task.OutputShards[0].IncomingChan
 		defer close(outChan)
 
 		var kvs []interface{}
-		for input := range task.Inputs[0].OutgoingChans[0] {
+		for input := range task.InputShards[0].OutgoingChans[0] {
 			var key []byte
 			dec := codec.NewDecoderBytes(input, &msgpackHandler)
 			if err := dec.Decode(&key); err != nil {

@@ -147,25 +147,25 @@ func FromStepToDataset(step *Step, output *Dataset) {
 		return
 	}
 	output.Step = step
-	step.Output = output
+	step.OutputDataset = output
 }
 
 func FromDatasetToStep(input *Dataset, step *Step) {
 	if input == nil {
 		return
 	}
-	step.Inputs = append(step.Inputs, input)
+	step.InputDatasets = append(step.InputDatasets, input)
 	input.ReadingSteps = append(input.ReadingSteps, step)
 }
 
 func FromDatasetShardToTask(shard *DatasetShard, task *Task) {
 	shard.ReadingTasks = append(shard.ReadingTasks, task)
 	shard.OutgoingChans = append(shard.OutgoingChans, make(chan []byte, 16))
-	task.Inputs = append(task.Inputs, shard)
+	task.InputShards = append(task.InputShards, shard)
 }
 
 func FromTaskToDatasetShard(task *Task, shard *DatasetShard) {
 	if shard != nil {
-		task.Outputs = append(task.Outputs, shard)
+		task.OutputShards = append(task.OutputShards, shard)
 	}
 }

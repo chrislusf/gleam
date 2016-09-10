@@ -7,6 +7,7 @@ import (
 func (d *Dataset) SetupShard(n int) {
 	for i := 0; i < n; i++ {
 		ds := &DatasetShard{
+			Id:           i,
 			Dataset:      d,
 			IncomingChan: make(chan []byte, 64), // a buffered chan!
 		}

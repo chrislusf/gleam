@@ -32,6 +32,7 @@ func TestCallingShellScript(t *testing.T) {
 		wg.Done()
 	}()
 
+	wg.Add(1)
 	cmd := exec.Command("sh", "-c", "grep asdf")
 	Execute(&wg, "testing shell", cmd, ch1, ch2, true, os.Stderr)
 
@@ -70,6 +71,7 @@ func TestCallingLuajitScript(t *testing.T) {
 		wg.Done()
 	}()
 
+	wg.Add(1)
 	cmd := exec.Command("luajit", "-e", `
 			local mapper = function (line)
 				print(line .. '$')

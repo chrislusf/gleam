@@ -20,6 +20,7 @@ type Script interface {
 	FlatMap(code string)
 	Reduce(code string)
 	Filter(code string)
+	GroupByKey()
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {

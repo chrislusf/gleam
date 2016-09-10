@@ -6,6 +6,7 @@ import (
 
 func NewDataset(context *FlowContext) *Dataset {
 	d := &Dataset{
+		Id:          len(context.Datasets),
 		FlowContext: context,
 	}
 	context.Datasets = append(context.Datasets, d)

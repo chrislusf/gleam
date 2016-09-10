@@ -23,6 +23,7 @@ type FlowContext struct {
 
 type Dataset struct {
 	FlowContext   *FlowContext
+	Id            int
 	Shards        []*DatasetShard
 	Step          *Step
 	ReadingSteps  []*Step
@@ -31,32 +32,36 @@ type Dataset struct {
 }
 
 type DatasetShard struct {
+	Id            int
 	Dataset       *Dataset
 	ReadingTasks  []*Task
 	IncomingChan  chan []byte
 	OutgoingChans []chan []byte
+	Counter       int
 	ReadyTime     time.Time
 	CloseTime     time.Time
 }
 
 type Step struct {
-	FlowContext *FlowContext
-	Inputs      []*Dataset
-	Output      *Dataset
-	Function    func(*Task)
-	Tasks       []*Task
-	Name        string
-	NetworkType NetworkType
-	IsPipe      bool
-	Script      script.Script
-	Command     *script.Command
+	Id            int
+	FlowContext   *FlowContext
+	InputDatasets []*Dataset
+	OutputDataset *Dataset
+	Function      func(*Task)
+	Tasks         []*Task
+	Name          string
+	NetworkType   NetworkType
+	IsPipe        bool
+	Script        script.Script
+	Command       *script.Command
 	RunLocked
 }
 
 type Task struct {
-	Step    *Step
-	Inputs  []*DatasetShard
-	Outputs []*DatasetShard
+	Id           int
+	Step         *Step
+	InputShards  []*DatasetShard
+	OutputShards []*DatasetShard
 }
 
 type RunLocked struct {
