@@ -1,9 +1,9 @@
 package flow
 
 import (
-	"bytes"
 	"fmt"
 
+	"github.com/chrislusf/gleam/util"
 	"github.com/psilva261/timsort"
 	"github.com/ugorji/go/codec"
 )
@@ -13,7 +13,7 @@ var (
 )
 
 type pair struct {
-	key  []byte
+	key  interface{}
 	data []byte
 }
 
@@ -32,21 +32,17 @@ func (d *Dataset) LocalSort() *Dataset {
 
 		var kvs []interface{}
 		for input := range task.InputShards[0].OutgoingChans[0] {
-			var key []byte
-			dec := codec.NewDecoderBytes(input, &msgpackHandler)
-			if err := dec.Decode(&key); err != nil {
+			if key, err := util.DecodeRowKey(input); err != nil {
 				fmt.Printf("Sort>Failed to read input data %v: %+v\n", err, input)
 				break
+			} else {
+				kvs = append(kvs, pair{key: key, data: input})
 			}
-			kvs = append(kvs, pair{key: key, data: input})
 		}
 		if len(kvs) == 0 {
 			return
 		}
-		timsort.Sort(kvs, func(a interface{}, b interface{}) bool {
-			x, y := a.(pair), b.(pair)
-			return bytes.Compare(x.key, y.key) < 0
-		})
+		timsort.Sort(kvs, util.LessThan)
 
 		for _, kv := range kvs {
 			outChan <- kv.(pair).data

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestCallingShellScript(t *testing.T) {
+func xTestCallingShellScript(t *testing.T) {
 
 	data := [][]byte{
 		[]byte("asdf"),
@@ -48,7 +48,7 @@ func TestCallingShellScript(t *testing.T) {
 	wg.Wait()
 }
 
-func TestCallingLuajitScript(t *testing.T) {
+func xTestCallingLuajitScript(t *testing.T) {
 
 	data := [][]byte{
 		[]byte("asdf"),
