@@ -81,9 +81,9 @@ function writeRow(...)
   for i,v in ipairs(arg) do
     if i == 1 then
       encoded = mp.pack(v)
-	else
+    else
       encoded = encoded .. mp.pack(v)
-	end
+    end
   end
   writeBytes(encoded)
 end
@@ -109,13 +109,28 @@ func (c *LuaScript) Map(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Map",
 		Code: fmt.Sprintf(`
-local map = %s
+local _map = %s
 while true do
   local row = readRow()
   if not row then break end
 
-  local t = {map(unpack(row))}
+  local t = {_map(unpack(row))}
   writeRow(unpack(t))
+end
+`, code),
+	})
+}
+
+func (c *LuaScript) ForEach(code string) {
+	c.operations = append(c.operations, &Operation{
+		Type: "ForEach",
+		Code: fmt.Sprintf(`
+local _foreach = %s
+while true do
+  local row = readRow()
+  if not row then break end
+
+  _foreach(unpack(row))
 end
 `, code),
 	})
@@ -125,13 +140,13 @@ func (c *LuaScript) FlatMap(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "FlatMap",
 		Code: fmt.Sprintf(`
-local flatMap = %s
+local _flatMap = %s
 
 while true do
   local row = readRow()
   if not row then break end
 
-  local t = flatMap(unpack(row))
+  local t = _flatMap(unpack(row))
   if t then
     for x in t do
       writeRow(x)
@@ -146,7 +161,7 @@ func (c *LuaScript) Reduce(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Reduce",
 		Code: fmt.Sprintf(`
-local reduce = %s
+local _reduce = %s
 
 local lastKey = nil
 local lastValue = nil
@@ -162,7 +177,7 @@ while true do
   else
     if not lastValue then lastValue = row[2] end
     if row[2] then
-      lastValue = reduce(lastValue, row[2]) 
+      lastValue = _reduce(lastValue, row[2]) 
     end
   end
 end
@@ -175,7 +190,7 @@ func (c *LuaScript) Filter(code string) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Filter",
 		Code: fmt.Sprintf(`
-local filter = %s
+local _filter = %s
 while true do
   local encodedBytes = readEncodedBytes()
   if not encodedBytes then break end
@@ -183,7 +198,7 @@ while true do
   local row = decodeRow(encodedBytes)
   if not row then break end
 
-  if filter(row[1]) then
+  if _filter(row[1]) then
     writeBytes(encodedBytes)
   end
 end

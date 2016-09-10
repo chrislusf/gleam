@@ -17,6 +17,7 @@ type Script interface {
 	GetCommand() *Command
 
 	Map(code string)
+	ForEach(code string)
 	FlatMap(code string)
 	Reduce(code string)
 	Filter(code string)
