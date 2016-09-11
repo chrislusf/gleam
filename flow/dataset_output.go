@@ -23,17 +23,7 @@ func (d *Dataset) Output() (out chan []byte) {
 	return
 }
 
-func (d *Dataset) SaveTextToFile(fname string) {
-	file, err := os.Create(fname)
-	if err != nil {
-		panic(fmt.Sprintf("Can not create file %s: %v", fname, err))
-	}
-	defer file.Close()
-
-	d.SaveTextTo(file)
-}
-
-func (d *Dataset) SaveTextTo(writer io.Writer) {
+func (d *Dataset) SaveTextTo(writer io.Writer, format string) {
 	inChan := d.Output()
 
 	var wg sync.WaitGroup
@@ -41,8 +31,18 @@ func (d *Dataset) SaveTextTo(writer io.Writer) {
 	go func() {
 		defer wg.Done()
 
-		if err := util.FprintRowsFromChannel(writer, inChan, "\t", "\n"); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to pipe out: %v\n", err)
+		for encodedBytes := range inChan {
+			var decodedObjects []interface{}
+			var err error
+			// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
+			if decodedObjects, err = util.DecodeRow(encodedBytes); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
+				continue
+			}
+
+			fmt.Fprintf(writer, format, decodedObjects...)
+
+			writer.Write([]byte("\n"))
 		}
 	}()
 

@@ -1,6 +1,9 @@
 package flow
 
 import (
+	// "fmt"
+	//"os"
+
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -27,6 +30,7 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 	step.Name = "JoinPartitionedSorted"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
+		defer close(outChan)
 
 		leftChan := newChannelOfValuesWithSameKey(task.InputShards[0].OutgoingChans[0])
 		rightChan := newChannelOfValuesWithSameKey(task.InputShards[1].OutgoingChans[0])
@@ -42,7 +46,10 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 				// left and right cartician join
 				for _, a := range leftValuesWithSameKey.Values {
 					for _, b := range rightValuesWithSameKey.Values {
-						util.WriteRow(outChan, leftValuesWithSameKey.Key, a, b)
+						t := []interface{}{leftValuesWithSameKey.Key}
+						t = append(t, a.([]interface{})...)
+						t = append(t, b.([]interface{})...)
+						util.WriteRow(outChan, t...)
 					}
 				}
 				leftValuesWithSameKey, leftHasValue = <-leftChan
@@ -50,14 +57,18 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 			case x < 0:
 				if isLeftOuterJoin {
 					for _, leftValue := range leftValuesWithSameKey.Values {
-						util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValue, nil)
+						t := []interface{}{leftValuesWithSameKey.Key}
+						t = append(t, leftValue.([]interface{})...)
+						util.WriteRow(outChan, t...)
 					}
 				}
 				leftValuesWithSameKey, leftHasValue = <-leftChan
 			case x > 0:
 				if isRightOuterJoin {
 					for _, rightValue := range rightValuesWithSameKey.Values {
-						util.WriteRow(outChan, rightValuesWithSameKey.Key, nil, rightValue)
+						t := []interface{}{rightValuesWithSameKey.Key}
+						t = append(t, rightValue.([]interface{})...)
+						util.WriteRow(outChan, t...)
 					}
 				}
 				rightValuesWithSameKey, rightHasValue = <-rightChan
@@ -66,28 +77,36 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 		if leftHasValue {
 			if isLeftOuterJoin {
 				for _, leftValue := range leftValuesWithSameKey.Values {
-					util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValue, nil)
+					t := []interface{}{leftValuesWithSameKey.Key}
+					t = append(t, leftValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
 				}
 			}
 		}
 		for leftValuesWithSameKey = range leftChan {
 			if isLeftOuterJoin {
 				for _, leftValue := range leftValuesWithSameKey.Values {
-					util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValue, nil)
+					t := []interface{}{leftValuesWithSameKey.Key}
+					t = append(t, leftValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
 				}
 			}
 		}
 		if rightHasValue {
 			if isRightOuterJoin {
 				for _, rightValue := range rightValuesWithSameKey.Values {
-					util.WriteRow(outChan, rightValuesWithSameKey.Key, nil, rightValue)
+					t := []interface{}{rightValuesWithSameKey.Key}
+					t = append(t, rightValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
 				}
 			}
 		}
 		for rightValuesWithSameKey = range rightChan {
 			if isRightOuterJoin {
 				for _, rightValue := range rightValuesWithSameKey.Values {
-					util.WriteRow(outChan, rightValuesWithSameKey.Key, nil, rightValue)
+					t := []interface{}{rightValuesWithSameKey.Key}
+					t = append(t, rightValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
 				}
 			}
 		}
@@ -111,8 +130,10 @@ func newChannelOfValuesWithSameKey(sortedChan chan []byte) chan keyValues {
 
 		row, err := util.ReadRow(sortedChan)
 		if err != nil {
+			// fmt.Fprintf(os.Stderr, "join read row error: %v", err)
 			return
 		}
+		// fmt.Printf("join read len=%d, row: %s\n", len(row), row[0])
 
 		keyValues := keyValues{
 			Key:    row[0],
@@ -124,6 +145,7 @@ func newChannelOfValuesWithSameKey(sortedChan chan []byte) chan keyValues {
 				outChan <- keyValues
 				break
 			}
+			// fmt.Printf("join read len=%d, row: %s\n", len(row), row[0])
 			x := util.Compare(keyValues.Key, row[0])
 			if x == 0 {
 				keyValues.Values = append(keyValues.Values, row[1:])

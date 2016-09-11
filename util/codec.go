@@ -120,6 +120,7 @@ func FprintRowsFromChannel(writer io.Writer, ch chan []byte, delimiter string, l
 			return fmt.Errorf("Failed to decode byte: %v", err)
 		}
 
+		// fmt.Printf("> len=%d row:%s\n", len(decodedObjects), decodedObjects[0])
 		if err := FprintRow(writer, "\t", decodedObjects...); err != nil {
 			return fmt.Errorf("Failed to write row: %v", err)
 		}

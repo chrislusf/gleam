@@ -18,6 +18,12 @@ func NewLuaScript() Script {
 func (c *LuaScript) Init(code string) {
 	c.initCode = `
 local mp = require "MessagePack"
+mp.set_string 'binary'
+
+function log(message)
+  io.stderr:write(message)
+  io.stderr:write("\n")
+end
 
 -- Read an integer in LSB order.
 function stringtonumber(str)
