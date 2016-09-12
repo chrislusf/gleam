@@ -98,6 +98,6 @@ func RunTask(wg *sync.WaitGroup, task *Task) {
 		inChan := task.InputShards[0].OutgoingChans[0]
 		outChan := task.OutputShards[0].IncomingChan
 		wg.Add(1)
-		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, task.Step.IsPipe, os.Stderr)
+		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, task.Step.IsPipe, true, os.Stderr)
 	}
 }

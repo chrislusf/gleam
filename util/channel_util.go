@@ -79,10 +79,12 @@ func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
 	close(outChan)
 }
 
-func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, errorOutput io.Writer) {
+func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
 	defer reader.Close()
-	defer close(ch)
+	if closeOutput {
+		defer close(ch)
+	}
 
 	var length int32
 
@@ -132,10 +134,12 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.
 	}
 }
 
-func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, errorOutput io.Writer) {
+func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
 	defer reader.Close()
-	defer close(ch)
+	if closeOutput {
+		defer close(ch)
+	}
 
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {

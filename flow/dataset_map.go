@@ -1,9 +1,5 @@
 package flow
 
-import (
-	"github.com/chrislusf/gleam/script"
-)
-
 func (d *Dataset) Map(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Map"
@@ -37,15 +33,6 @@ func (d *Dataset) Filter(code string) *Dataset {
 	step.NetworkType = OneShardToOneShard
 	step.Script = d.FlowContext.CreateScript()
 	step.Script.Filter(code)
-	return ret
-}
-
-func (d *Dataset) Pipe(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	step.Name = "Pipe"
-	step.IsPipe = true
-	step.NetworkType = OneShardToOneShard
-	step.Command = script.NewShellScript().Pipe(code).GetCommand()
 	return ret
 }
 

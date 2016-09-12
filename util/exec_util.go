@@ -8,22 +8,25 @@ import (
 )
 
 func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
-	inChan, outChan chan []byte, isPipe bool, errWriter io.Writer) {
+	inChan, outChan chan []byte, isPipe bool, closeOutput bool, errWriter io.Writer) {
 
 	defer executeWaitGroup.Done()
 
 	var wg sync.WaitGroup
 
-	inputWriter, stdinErr := cmd.StdinPipe()
-	if stdinErr != nil {
-		fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
-	} else {
-		wg.Add(1)
-		if isPipe {
-			go ChannelToLineWriter(&wg, name, inChan, inputWriter, errWriter)
+	if inChan != nil {
+		inputWriter, stdinErr := cmd.StdinPipe()
+		if stdinErr != nil {
+			fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
 		} else {
-			go ChannelToWriter(&wg, name, inChan, inputWriter, errWriter)
+			wg.Add(1)
+			if isPipe {
+				go ChannelToLineWriter(&wg, name, inChan, inputWriter, errWriter)
+			} else {
+				go ChannelToWriter(&wg, name, inChan, inputWriter, errWriter)
+			}
 		}
+
 	}
 
 	outputReader, stdoutErr := cmd.StdoutPipe()
@@ -32,9 +35,9 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 	} else {
 		wg.Add(1)
 		if isPipe {
-			go LineReaderToChannel(&wg, name, outputReader, outChan, errWriter)
+			go LineReaderToChannel(&wg, name, outputReader, outChan, closeOutput, errWriter)
 		} else {
-			go ReaderToChannel(&wg, name, outputReader, outChan, errWriter)
+			go ReaderToChannel(&wg, name, outputReader, outChan, closeOutput, errWriter)
 		}
 	}
 
