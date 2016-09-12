@@ -53,6 +53,29 @@ func main() {
 
 ```
 
+Another way to do the similar:
+```
+package main
+
+import (
+	"os"
+
+	"github.com/chrislusf/gleam/flow"
+)
+
+func main() {
+
+	flow.New().TextFile("/etc/passwd").FlatMap(`
+		function(line)
+			if line then
+				return line:gmatch("%w+")
+			end
+		end
+	`).Pipe("sort").Pipe("uniq -c").SaveTextTo(os.Stdout, "%s")
+}
+
+```
+
 # Understand the data format
 The stdin and stdout are used to pass input and output. The data are passed around in "rows". Each row is a tuple of
 (size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
