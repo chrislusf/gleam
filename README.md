@@ -6,11 +6,27 @@ Previously I created https://github.com/chrislusf/glow, a Go based distributed c
 it's all pure Go and statically compiled. However, the related problem that it is a fixed computation flow. 
 There are no easy way to dynamically send a different computations to remote executors.
 
-Gleam can resolve this issue. The computation can be done via Luajit, or common shell script(awk, sort, uniq,...),
-or any custom program you want. Gleam provides an easy way to combine them together and distribute the work load.
+Gleam can resolve this issue. 
+
+# Execution
+The computation can be done via Luajit, or common shell script(awk, sort, uniq,...), or any custom program you want. Gleam provides an easy way to combine them together and distribute the work load.
 
 Why Luajit? Luajit is easy to dispatch to remote executors. It has fairly good performance comparable to Java.
 It's easy to learn also, trust me.
+
+## Luajit Execution
+Luajit has the first class support.
+
+## Pipe Execution
+This is basically the same as Unix's pipeline. You can use all basic unix tools, or create your own in Python/Ruby/Shell/Java/C/C++ ...
+
+Nothing to talk about, really. You just need to output your results to stdout as lines.
+
+For multiple values in a row, separate them via tab.
+
+## Other Execution
+Maybe not needed. Mostly you can just use Pipe(). However, current code allows customizable executions.
+It's possible to support Python/Ruby/... same as Luajit.
 
 # Status
 Current version is only for single machine. Distributed version will come soon if this proves to be a good framework.
