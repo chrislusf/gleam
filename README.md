@@ -80,6 +80,16 @@ func main() {
 The stdin and stdout are used to pass input and output. The data are passed around in "rows". Each row is a tuple of
 (size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
 
+# Currently Supported APIs
+1. Pipe
+2. Map, ForEach, FlatMap
+3. Filter
+4. Reduce
+5. Partition
+6. Sort, LocalSort, MergeSortedTo
+7. Join, CoGroup
+
+
 # FAQ
 1. How to see the debug message?
 Write to stderr, and do not write to stdout!
