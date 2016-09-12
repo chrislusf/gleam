@@ -92,6 +92,67 @@ func main() {
 
 ```
 
+
+# Parallel Execution
+One limitation for unix pipes is that they are easy for one single pipe, but not easy to parallel.
+
+With Gleam this becomes very easy. (And this will be in distributed mode soon.)
+
+This example get a list of file names, partitioned into 3 groups, and then process them in parallel.
+This flow can be changed to use Pipe() also, of course.
+
+```
+// word_count.go
+package main
+
+import (
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/chrislusf/gleam/flow"
+)
+
+func main() {
+
+	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-*.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	flow.New().Lines(fileNames).Partition(3).ForEach(`
+      function(fname)
+        -- Open a file for read
+        local fh,err = io.open(fname)
+        if err then return end
+        -- io.stderr:write("reading "..fname.."\n")
+        -- line by line
+        while true do
+          local line = fh:read()
+          if not line then break end
+          writeRow(line)
+        end
+        -- Following are good form
+        fh:close()
+      end
+    `).FlatMap(`
+      function(line)
+        return line:gmatch("%w+")
+      end
+    `).Map(`
+      function(word)
+        return word, 1
+      end
+    `).Reduce(`
+      function(x, y)
+        return x + y
+      end
+    `).SaveTextTo(os.Stdout, "%s\t%d")
+
+}
+
+```
+
 # Understand the data format
 The stdin and stdout are used to pass input and output. The data are passed around in "rows". Each row is a tuple of
 (size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
