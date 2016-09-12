@@ -18,7 +18,7 @@ func main() {
 				return line:gmatch("%w+")
 			end
 		end
-	`).LocalSort().Map(`
+	`).Map(`
 		function(word)
 			return word, 1
 		end
@@ -28,7 +28,7 @@ func main() {
 		end
 	`).Map(`
 		function(k, v)
-			return k .. "\t" .. v
+			return k .. " " .. v
 		end
 	`).Pipe("sort -n -k 2").Output()
 

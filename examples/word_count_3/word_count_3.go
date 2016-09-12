@@ -2,26 +2,21 @@
 package main
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
 
-	files, err := ioutil.ReadDir("/etc")
+	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-*.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fileNames := make([][]byte, 0, len(files))
-	for _, file := range files {
-		fileNames = append(fileNames, []byte("/etc/"+file.Name()))
-	}
-
-	flow.New().Slice(fileNames).Partition(3).ForEach(`
+	flow.New().Lines(fileNames).Partition(3).ForEach(`
       function(fname)
         -- Open a file for read
         fh,err = io.open(fname)

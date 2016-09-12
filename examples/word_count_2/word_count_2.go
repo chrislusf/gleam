@@ -11,11 +11,9 @@ func main() {
 
 	flow.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
-			if line then
-				return line:gmatch("%w+")
-			end
+			return line:gmatch("%w+")
 		end
-	`).LocalSort().Map(`
+	`).Map(`
 		function(word)
 			return word, 1
 		end
@@ -23,10 +21,6 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Map(`
-		function(k, v)
-			return k .. " " .. v
-		end
-	`).Pipe("sort -n -k 2").SaveTextTo(os.Stdout, "%s")
+	`).SaveTextTo(os.Stdout, "%s,%d")
 
 }

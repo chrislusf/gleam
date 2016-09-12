@@ -11,17 +11,17 @@ import (
 
 func main() {
 
-	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-03-*.txt")
+	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-*.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	flow.New().Lines(fileNames).Partition(1).ForEach(`
+	flow.New().Lines(fileNames).Partition(3).ForEach(`
       function(fname)
         -- Open a file for read
         local fh,err = io.open(fname)
         if err then return end
-		-- io.stderr:write("reading "..fname.."\n")
+        -- io.stderr:write("reading "..fname.."\n")
         -- line by line
         while true do
           local line = fh:read()
@@ -33,18 +33,16 @@ func main() {
       end
     `).FlatMap(`
       function(line)
-        if line then
-          return line:gmatch("%w+")
-        end
+        return line:gmatch("%w+")
       end
     `).Map(`
       function(word)
         return word, 1
       end
     `).Reduce(`
-		function(x, y)
-			return x + y
-		end
-	`).LocalSort().SaveTextTo(os.Stdout, "%s\t%d")
+      function(x, y)
+        return x + y
+      end
+    `).SaveTextTo(os.Stdout, "%s\t%d")
 
 }
