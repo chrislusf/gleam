@@ -143,7 +143,7 @@ The stdin and stdout are used to pass input and output. The data are passed arou
 (size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
 
 # Currently Supported APIs
-1. Pipe
+1. Pipe, PipeAsArgs
 2. Map, ForEach, FlatMap
 3. Filter
 4. Reduce
