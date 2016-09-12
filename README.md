@@ -120,22 +120,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	flow.New().Lines(fileNames).Partition(3).ForEach(`
-      function(fname)
-        -- Open a file for read
-        local fh,err = io.open(fname)
-        if err then return end
-        -- io.stderr:write("reading "..fname.."\n")
-        -- line by line
-        while true do
-          local line = fh:read()
-          if not line then break end
-          writeRow(line)
-        end
-        -- Following are good form
-        fh:close()
-      end
-    `).FlatMap(`
+	flow.New().Lines(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
       function(line)
         return line:gmatch("%w+")
       end
