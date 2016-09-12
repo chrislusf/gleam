@@ -81,3 +81,16 @@ func (fc *FlowContext) Slice(slice [][]byte) (ret *Dataset) {
 
 	return fc.Channel(inputChannel)
 }
+
+func (fc *FlowContext) Lines(slice []string) (ret *Dataset) {
+	inputChannel := make(chan []byte)
+
+	go func() {
+		for _, data := range slice {
+			inputChannel <- []byte(data)
+		}
+		close(inputChannel)
+	}()
+
+	return fc.Channel(inputChannel)
+}

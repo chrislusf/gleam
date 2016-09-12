@@ -32,7 +32,6 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
 	step.Name = "CoGroupPartitionedSorted"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
-		defer close(outChan)
 
 		leftChan := newChannelOfValuesWithSameKey(task.InputShards[0].OutgoingChans[0])
 		rightChan := newChannelOfValuesWithSameKey(task.InputShards[1].OutgoingChans[0])
@@ -63,6 +62,10 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
 		for rightHasValue {
 			util.WriteRow(outChan, rightValuesWithSameKey.Key, []interface{}{}, rightValuesWithSameKey.Values)
 			rightValuesWithSameKey, rightHasValue = <-rightChan
+		}
+
+		for _, shard := range task.OutputShards {
+			close(shard.IncomingChan)
 		}
 	}
 	return ret

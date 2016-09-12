@@ -30,7 +30,6 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 	step.Name = "JoinPartitionedSorted"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
-		defer close(outChan)
 
 		leftChan := newChannelOfValuesWithSameKey(task.InputShards[0].OutgoingChans[0])
 		rightChan := newChannelOfValuesWithSameKey(task.InputShards[1].OutgoingChans[0])
@@ -110,7 +109,9 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 				}
 			}
 		}
-
+		for _, shard := range task.OutputShards {
+			close(shard.IncomingChan)
+		}
 	}
 	return ret
 }

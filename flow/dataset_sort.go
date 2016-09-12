@@ -28,7 +28,6 @@ func (d *Dataset) LocalSort() *Dataset {
 	step.NetworkType = OneShardToOneShard
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
-		defer close(outChan)
 
 		var kvs []interface{}
 		for input := range task.InputShards[0].OutgoingChans[0] {
@@ -42,10 +41,17 @@ func (d *Dataset) LocalSort() *Dataset {
 		if len(kvs) == 0 {
 			return
 		}
-		timsort.Sort(kvs, util.LessThan)
+		timsort.Sort(kvs, func(a, b interface{}) bool {
+			x, y := a.(pair), b.(pair)
+			return util.LessThan(x.key, y.key)
+		})
 
 		for _, kv := range kvs {
 			outChan <- kv.(pair).data
+		}
+
+		for _, shard := range task.OutputShards {
+			close(shard.IncomingChan)
 		}
 	}
 	return ret
