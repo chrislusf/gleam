@@ -3,19 +3,17 @@ another go based distributed execution system. working in progress.
 
 # Why
 Previously I created https://github.com/chrislusf/glow, a Go based distributed computing system. One thing I like is that 
-it's all pure Go and statically compiled. However, the related problem that it is a fixed computation flow. 
-There are no easy way to dynamically send a different computations to remote executors.
+it's all pure Go and statically compiled. However, the related problem is that it is a fixed computation flow. 
+There are no easy way to dynamically send a different computation to remote executors.
 
 Gleam can resolve this issue. 
 
-# Execution
-The computation can be done via Luajit, or common shell script(awk, sort, uniq,...), or any custom program you want. Gleam provides an easy way to combine them together and distribute the work load.
-
-Why Luajit? Luajit is easy to dispatch to remote executors. It has fairly good performance comparable to Java.
-It's easy to learn also, trust me.
+# Computation Execution
+The computation can be done via Luajit, or common shell script(awk, sort, uniq,...), or any custom programs. Gleam provides an easy way to combine them together and distribute the work load.
 
 ## Luajit Execution
-Luajit has the first class support.
+Luajit has the first class support. It has fairly good performance comparable to Java.
+It's easy to learn also, trust me.
 
 ## Pipe Execution
 This is basically the same as Unix's pipeline. You can use all basic unix tools, or create your own in Python/Ruby/Shell/Java/C/C++ ...
@@ -136,10 +134,6 @@ func main() {
 
 ```
 
-# Understand the data format
-The stdin and stdout are used to pass input and output. The data are passed around in "rows". Each row is a tuple of
-(size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
-
 # Currently Supported APIs
 1. Pipe, PipeAsArgs
 2. Map, ForEach, FlatMap
@@ -152,5 +146,10 @@ The stdin and stdout are used to pass input and output. The data are passed arou
 
 # FAQ
 1. How to see the debug message?
+
+# Understand the data format
 Write to stderr, and do not write to stdout!
+
+The stdin and stdout are used to pass input and output. The data are passed around in "rows". Each row is a tuple of
+(size, data), where data is []byte and size is the data's size. Each row's data is encoded in MsgPack format.
 
