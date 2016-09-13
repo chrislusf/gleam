@@ -31,6 +31,7 @@ func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {
 // the tasks should run on the source dataset shard
 func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = OneShardToOneShard
 	FromStepToDataset(step, output)
 	FromDatasetToStep(input, step)
 
@@ -56,6 +57,7 @@ func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *St
 // the task should run on the destination dataset shard
 func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = AllShardToOneShard
 	FromStepToDataset(step, output)
 	FromDatasetToStep(input, step)
 
@@ -74,6 +76,7 @@ func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *St
 // input is nil for initial source dataset
 func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = OneShardToAllShard
 	FromStepToDataset(step, output)
 	FromDatasetToStep(input, step)
 
@@ -90,6 +93,7 @@ func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *St
 
 func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = OneShardToEveryNShard
 	FromStepToDataset(step, output)
 	FromDatasetToStep(input, step)
 
@@ -107,6 +111,7 @@ func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset)
 
 func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = LinkedNShardToOneShard
 	FromStepToDataset(step, output)
 	FromDatasetToStep(input, step)
 
@@ -124,6 +129,7 @@ func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset
 // All dataset should have the same number of shards.
 func (f *FlowContext) MergeDatasets1ShardTo1Step(inputs []*Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
+	step.NetworkType = MergeTwoShardToOneShard
 	FromStepToDataset(step, output)
 	for _, input := range inputs {
 		FromDatasetToStep(input, step)

@@ -18,9 +18,7 @@ func main() {
 
 	flow.New().Lines(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
       function(line)
-        if line then
-          return line:gmatch("%w+")
-        end
+        return line:gmatch("%w+")
       end
     `).Map(`
       function(word)

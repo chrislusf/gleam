@@ -14,7 +14,6 @@ func (d *Dataset) Pipe(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Pipe"
 	step.IsPipe = true
-	step.NetworkType = OneShardToOneShard
 	step.Command = script.NewShellScript().Pipe(code).GetCommand()
 	return ret
 }
@@ -24,7 +23,6 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "PipeArgs"
 	step.IsPipe = true
-	step.NetworkType = OneShardToOneShard
 	step.Name = "Output"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan

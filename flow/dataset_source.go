@@ -8,7 +8,6 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-// Inputs: f(chan A), shardCount
 func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
@@ -82,11 +81,11 @@ func (fc *FlowContext) Slice(slice [][]byte) (ret *Dataset) {
 	return fc.Channel(inputChannel)
 }
 
-func (fc *FlowContext) Lines(slice []string) (ret *Dataset) {
+func (fc *FlowContext) Lines(lines []string) (ret *Dataset) {
 	inputChannel := make(chan []byte)
 
 	go func() {
-		for _, data := range slice {
+		for _, data := range lines {
 			inputChannel <- []byte(data)
 		}
 		close(inputChannel)

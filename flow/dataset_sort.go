@@ -29,7 +29,6 @@ func (d *Dataset) LocalSort() *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = true
 	step.Name = "LocalSort"
-	step.NetworkType = OneShardToOneShard
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 

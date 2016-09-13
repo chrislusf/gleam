@@ -7,7 +7,6 @@ func (d *Dataset) Reduce(code string) (ret *Dataset) {
 func (d *Dataset) LocalReduce(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "LocalReduce"
-	step.NetworkType = OneShardToOneShard
 	step.Script = d.FlowContext.CreateScript()
 	step.Script.Reduce(code)
 	return ret

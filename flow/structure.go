@@ -11,6 +11,11 @@ type NetworkType int
 
 const (
 	OneShardToOneShard NetworkType = iota
+	OneShardToAllShard
+	AllShardToOneShard
+	OneShardToEveryNShard
+	LinkedNShardToOneShard
+	MergeTwoShardToOneShard
 )
 
 type FlowContext struct {
