@@ -138,7 +138,7 @@ func main() {
 1. Pipe, PipeAsArgs
 2. Map, ForEach, FlatMap
 3. Filter
-4. Reduce
+4. Reduce, LocalReduce
 5. Partition
 6. Sort, LocalSort, MergeSortedTo
 7. Join, CoGroup
