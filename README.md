@@ -6,7 +6,12 @@ Previously I created https://github.com/chrislusf/glow, a Go based distributed c
 it's all pure Go and statically compiled. However, the related problem is that it is a fixed computation flow. 
 There are no easy way to dynamically send a different computation to remote executors.
 
-Gleam can resolve this issue. 
+Gleam can resolve this issue. It can send Lua code, or shell scripts, over the wire and adjust the computation based on the need.
+
+Writing Lua code or shell scripts makes me feel writing hacky code. However, with Go's type checking, we can put a layer
+of type system on top of the scripts, hide the details inside reusable Go functions, make the code feel more solid and ready for production.
+
+Go's concurrent programming support easily enables parallel execution for the schell scripts.
 
 # Computation Execution
 The computation can be done via Luajit, or common shell script(awk, sort, uniq,...), or any custom programs. Gleam provides an easy way to combine them together and distribute the work load.
