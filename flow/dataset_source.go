@@ -8,6 +8,10 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
+// Source read data out of the channel.
+// Function f writes to this channel.
+// The channel should contain MsgPack encoded []byte slices.
+// Use util.EncodeRow(...) to encode the data before sending to this channel
 func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
@@ -48,7 +52,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	return fc.Source(fn)
 }
 
-func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
+func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.Name = "Channel"
@@ -68,8 +72,8 @@ func (fc *FlowContext) Channel(ch chan []byte) (ret *Dataset) {
 	return
 }
 
-func (fc *FlowContext) Slice(slice [][]byte) (ret *Dataset) {
-	inputChannel := make(chan []byte)
+func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
+	inputChannel := make(chan interface{})
 
 	go func() {
 		for _, data := range slice {
@@ -81,12 +85,25 @@ func (fc *FlowContext) Slice(slice [][]byte) (ret *Dataset) {
 	return fc.Channel(inputChannel)
 }
 
-func (fc *FlowContext) Lines(lines []string) (ret *Dataset) {
-	inputChannel := make(chan []byte)
+func (fc *FlowContext) Strings(lines []string) (ret *Dataset) {
+	inputChannel := make(chan interface{})
 
 	go func() {
 		for _, data := range lines {
 			inputChannel <- []byte(data)
+		}
+		close(inputChannel)
+	}()
+
+	return fc.Channel(inputChannel)
+}
+
+func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
+	inputChannel := make(chan interface{})
+
+	go func() {
+		for _, data := range numbers {
+			inputChannel <- data
 		}
 		close(inputChannel)
 	}()

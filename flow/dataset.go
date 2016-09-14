@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"log"
 	"time"
 )
 
@@ -19,13 +18,7 @@ func (d *Dataset) GetShards() []*DatasetShard {
 }
 
 func (d *Dataset) Script(scriptType string, scriptParts ...string) *Dataset {
-	if _, ok := d.FlowContext.Scripts[scriptType]; !ok {
-		log.Fatalf("script type %s is not registered.", scriptType)
-	}
-	d.FlowContext.PrevScriptType = scriptType
-	if len(scriptParts) > 0 {
-		d.FlowContext.PrevScriptPart = scriptParts[0]
-	}
+	d.FlowContext.Script(scriptType, scriptParts...)
 	return d
 }
 

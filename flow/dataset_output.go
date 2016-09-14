@@ -51,3 +51,25 @@ func (d *Dataset) SaveTextTo(writer io.Writer, format string) {
 
 	wg.Wait()
 }
+
+func (d *Dataset) SaveFinalRowTo(decodedObjects ...interface{}) {
+	inChan := d.Output()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		for encodedBytes := range inChan {
+			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
+				continue
+			}
+		}
+	}()
+
+	wg.Add(1)
+	RunFlowContext(&wg, d.FlowContext)
+
+	wg.Wait()
+}

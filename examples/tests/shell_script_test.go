@@ -10,33 +10,33 @@ import (
 
 func TestCallingShellScripts(t *testing.T) {
 
-	data := [][]byte{
-		[]byte("asdf"),
-		[]byte("hlkgjh"),
-		[]byte("truytyu"),
-		[]byte("34weqrqw"),
-		[]byte("asdfadfasaf"),
+	data := []string{
+		"asdf",
+		"hlkgjh",
+		"truytyu",
+		"34weqrqw",
+		"asdfadfasaf",
 	}
 
 	f := flow.New()
 
-	f.Slice(data).Pipe("grep -v asdf").Pipe("awk {print}").SaveTextTo(os.Stdout, "%s")
+	f.Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").SaveTextTo(os.Stdout, "%s")
 
 }
 
 func TestOutputObjects(t *testing.T) {
 
-	data := [][]byte{
-		[]byte("asdf"),
-		[]byte("hlkgjh"),
-		[]byte("truytyu"),
-		[]byte("34weqrqw"),
-		[]byte("asdfadfasaf"),
+	data := []string{
+		"asdf",
+		"hlkgjh",
+		"truytyu",
+		"34weqrqw",
+		"asdfadfasaf",
 	}
 
 	f := flow.New()
 
-	outputChannel := f.Slice(data).Pipe("sort").Output()
+	outputChannel := f.Strings(data).Pipe("sort").Output()
 
 	go flow.RunFlowContextSync(f)
 

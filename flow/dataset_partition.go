@@ -30,6 +30,7 @@ func (d *Dataset) partition_scatter(shardCount int) (ret *Dataset) {
 			x := util.HashByKey(keyObject, shardCount)
 			task.OutputShards[x].IncomingChan <- data
 		}
+		// println("closing scatters...")
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
@@ -46,27 +47,10 @@ func (d *Dataset) partition_collect(shardCount int) (ret *Dataset) {
 		for data := range task.MergedInputChan() {
 			outChan <- data
 		}
+		// println("closing collectors...")
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 	}
 	return
-}
-
-func HashByKey(data interface{}, shardCount int) int {
-	var x int
-	if key, ok := data.(string); ok {
-		x = int(util.Hash([]byte(key)))
-	} else if key, ok := data.([]byte); ok {
-		x = int(util.Hash(key))
-	} else if key, ok := data.(int); ok {
-		x = key
-	} else if key, ok := data.(int8); ok {
-		x = int(key)
-	} else if key, ok := data.(int64); ok {
-		x = int(key)
-	} else if key, ok := data.(int32); ok {
-		x = int(key)
-	}
-	return x % shardCount
 }

@@ -3,6 +3,8 @@
 package flow
 
 import (
+	"log"
+
 	"github.com/chrislusf/gleam/script"
 )
 
@@ -14,6 +16,17 @@ func New() (fc *FlowContext) {
 		},
 	}
 	return
+}
+
+func (fc *FlowContext) Script(scriptType string, scriptParts ...string) *FlowContext {
+	if _, ok := fc.Scripts[scriptType]; !ok {
+		log.Fatalf("script type %s is not registered.", scriptType)
+	}
+	fc.PrevScriptType = scriptType
+	if len(scriptParts) > 0 {
+		fc.PrevScriptPart = scriptParts[0]
+	}
+	return fc
 }
 
 func (fc *FlowContext) CreateScript() script.Script {

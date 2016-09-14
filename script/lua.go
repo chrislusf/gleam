@@ -169,25 +169,37 @@ func (c *LuaScript) Reduce(code string) {
 		Code: fmt.Sprintf(`
 local _reduce = %s
 
-local lastKey = nil
-local lastValue = nil
-while true do
-  local row = readRow()
-  if not row then break end
-
-  if row[1] ~= lastKey then
-    if lastKey then
-      writeRow(lastKey, lastValue)
+local row = readRow()
+if row then
+  if #row == 1 then
+    local lastValue = nil
+    while true do
+      lastValue = _reduce(lastValue, row[1]) 
+      local row = readRow()
+      if not row then break end
     end
-    lastKey, lastValue = row[1], row[2]
+    writeRow(lastValue)
   else
-    if not lastValue then lastValue = row[2] end
-    if row[2] then
-      lastValue = _reduce(lastValue, row[2]) 
+    local lastKey = nil
+    local lastValue = nil
+    while true do
+      if row[1] ~= lastKey then
+        if lastKey then
+          writeRow(lastKey, lastValue)
+        end
+        lastKey, lastValue = row[1], row[2]
+      else
+        if not lastValue then lastValue = row[2] end
+        if row[2] then
+          lastValue = _reduce(lastValue, row[2]) 
+        end
+      end
+      local row = readRow()
+      if not row then break end
     end
+    writeRow(lastKey, lastValue)
   end
 end
-writeRow(lastKey, lastValue)
 `, code),
 	})
 }

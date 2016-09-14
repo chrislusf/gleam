@@ -19,7 +19,7 @@ func TestCallingLuaScripts(t *testing.T) {
 
 	f := flow.New()
 
-	outputChannel := f.Slice(data).Script("lua").Map(`
+	outputChannel := f.Bytes(data).Script("lua").Map(`
 		function (line)
 			return line
 		end

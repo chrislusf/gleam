@@ -8,34 +8,29 @@ import (
 
 func main() {
 
-	f := flow.New()
-	left := f.TextFile("../../flow/dataset_map.go").FlatMap(`
-        function(line)
-            if line then
-                return line:gmatch("%w+")
-            end
-        end
-    `).Pipe("sort").Pipe("uniq -c").Map(`
-        function(line)
-			line = line:gsub("^%s*", "")
-            index = string.find(line, " ")
-            return line:sub(index+1), tonumber(line:sub(1,index-1))
-        end
-    `)
-	right := f.TextFile("../../flow/dataset_output.go").FlatMap(`
-        function(line)
-            if line then
-                return line:gmatch("%w+")
-            end
-        end
-    `).Pipe("sort").Pipe("uniq -c").Map(`
-        function(line)
-			line = line:gsub("^%s*", "")
-            index = string.find(line, " ")
-            return line:sub(index+1), tonumber(line:sub(1,index-1))
-        end
-    `)
+	f := flow.New().Script("lua", `
+	function splitter(line)
+        return line:gmatch("%w+")
+    end
+    function parseUniqDashC(line)
+      line = line:gsub("^%s*", "")
+      index = string.find(line, " ")
+      return line:sub(index+1), tonumber(line:sub(1,index-1))
+    end
+	`)
 
-	left.Join(right).SaveTextTo(os.Stdout, "%s,%d,%d")
+	left := f.TextFile(
+		"../../flow/dataset_map.go",
+	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+
+	right := f.TextFile(
+		"../../flow/dataset_output.go",
+	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+
+	left.Join(right).Map(`
+      function (word, leftCount, rightCount)
+	    return word, leftCount, rightCount, leftCount + rightCount
+      end
+	`).SaveTextTo(os.Stdout, "%s\t%d + %d = %d")
 
 }

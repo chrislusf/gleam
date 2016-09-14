@@ -2,21 +2,43 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/util/on_interrupt"
+)
+
+var (
+	cpuProfile = flag.String("cpuprofile", "", "cpu profile output file")
 )
 
 func main() {
+	flag.Parse()
+
+	if *cpuProfile != "" {
+		f, err := os.Create(*cpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+		on_interrupt.OnInterrupt(func() {
+			pprof.StopCPUProfile()
+		}, func() {
+			pprof.StopCPUProfile()
+		})
+	}
 
 	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-*.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	flow.New().Lines(fileNames).Partition(3).ForEach(`
+	flow.New().Strings(fileNames).Partition(3).ForEach(`
       function(fname)
         -- Open a file for read
         local fh,err = io.open(fname)
