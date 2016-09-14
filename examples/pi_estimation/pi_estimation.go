@@ -34,12 +34,10 @@ func main() {
 	}
 
 	var count int64
-	times := 1024 * 1024 * 10
+	times := 1024 * 1024 * 1
 
 	flow.New().Script("lua", `
       function count(x, y)
-	    if not x then x = 0 end
-		if not y then y = 0 end
         return x + y
       end
 	`).Source(util.Range(1, times, 1)).Partition(8).Map(`
