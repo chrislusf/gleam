@@ -24,7 +24,7 @@ func main() {
       function(word)
         return word, 1
       end
-    `).Reduce(`
+    `).ReduceByKey(`
       function(x, y)
         return x + y
       end

@@ -171,34 +171,41 @@ local _reduce = %s
 
 local row = readRow()
 if row then
-  if #row == 1 then
-    local lastValue = nil
-    while true do
+  local lastValue = row[1]
+  while true do
+    local row = readRow()
+    if not row then break end
+    if row[1] then
       lastValue = _reduce(lastValue, row[1]) 
+    end
+  end
+  writeRow(lastValue)
+end
+
+`, code),
+	})
+}
+
+func (c *LuaScript) ReduceByKey(code string) {
+	c.operations = append(c.operations, &Operation{
+		Type: "ReduceByKey",
+		Code: fmt.Sprintf(`
+local _reduce = %s
+
+local row = readRow()
+if row then
+    local lastKey, lastValue = row[1], row[2]
+    while true do
       local row = readRow()
       if not row then break end
-    end
-    writeRow(lastValue)
-  else
-    local lastKey = nil
-    local lastValue = nil
-    while true do
       if row[1] ~= lastKey then
-        if lastKey then
-          writeRow(lastKey, lastValue)
-        end
+        writeRow(lastKey, lastValue)
         lastKey, lastValue = row[1], row[2]
       else
-        if not lastValue then lastValue = row[2] end
-        if row[2] then
-          lastValue = _reduce(lastValue, row[2]) 
-        end
+        lastValue = _reduce(lastValue, row[2])
       end
-      local row = readRow()
-      if not row then break end
     end
     writeRow(lastKey, lastValue)
-  end
 end
 `, code),
 	})

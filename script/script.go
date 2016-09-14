@@ -20,6 +20,7 @@ type Script interface {
 	ForEach(code string)
 	FlatMap(code string)
 	Reduce(code string)
+	ReduceByKey(code string)
 	Filter(code string)
 	GroupByKey()
 }

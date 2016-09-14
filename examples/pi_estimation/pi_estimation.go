@@ -34,7 +34,7 @@ func main() {
 	}
 
 	var count int64
-	times := 1024 * 1024 * 100
+	times := 1024 * 1024 * 10
 
 	flow.New().Script("lua", `
       function count(x, y)
@@ -50,7 +50,7 @@ func main() {
 		  return 1
 		end
 	  end
-	`).LocalReduce("count").MergeSortedTo(1).LocalReduce("count").SaveFinalRowTo(&count)
+	`).Reduce("count").SaveFinalRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 
