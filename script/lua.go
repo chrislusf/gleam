@@ -235,22 +235,20 @@ func (c *LuaScript) GroupByKey() {
 	c.operations = append(c.operations, &Operation{
 		Type: "GroupByKey",
 		Code: fmt.Sprintf(`
-local lastKey = nil
-local lastValues = {}
-while true do
-  local row = readRow()
-  if not row then break end
+local row = readRow()
+if row then
+  local lastKey, lastValue = row[1], {row[2]}
+  while true do
+    local row = readRow()
+    if not row then break end
 
-  if row[1] ~= lastKey then
-    if lastKey then
+    if row[1] ~= lastKey then
       writeRow(lastKey, lastValues)
+      lastKey, lastValues = row[1], {row[2]}
+    else
+      table.insert(lastValues, row[2])
     end
-    lastKey, lastValues = row[1], {row[2]}
-  else
-    table.insert(lastValues, row[2])
   end
-end
-if #lastValues > 0 then
   writeRow(lastKey, lastValues)
 end
 `),

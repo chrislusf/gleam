@@ -14,14 +14,6 @@ func (d *Dataset) CoGroup(other *Dataset) *Dataset {
 	return sorted_d.CoGroupPartitionedSorted(sorted_other)
 }
 
-func (d *Dataset) LocalGroupByKey() *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	step.Name = "LocalGroupByKey"
-	step.Script = d.FlowContext.CreateScript()
-	step.Script.GroupByKey()
-	return ret
-}
-
 // CoGroupPartitionedSorted joins 2 datasets that are sharded
 // by the same key and already locally sorted within each shard.
 func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
