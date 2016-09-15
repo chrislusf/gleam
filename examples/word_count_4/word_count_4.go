@@ -57,7 +57,7 @@ func main() {
       function(line)
         return line:gmatch("%w+")
       end
-    `).Map(`
+    `).Pipe("tr 'A-Z' 'a-z'").Map(`
       function(word)
         return word, 1
       end
