@@ -122,14 +122,8 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.
 	defer writer.Close()
 
 	for bytes := range ch {
-		// println(name + " chan -> writer input data:" + string(bytes))
-		if err := binary.Write(writer, binary.LittleEndian, int32(len(bytes))); err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to write length of bytes from channel to writer: %v\n", name, err)
-			//return
-		}
-		if _, err := writer.Write(bytes); err != nil {
+		if err := WriteMessage(writer, bytes); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
-			//return
 		}
 	}
 }
@@ -168,7 +162,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 	defer wg.Done()
 	defer writer.Close()
 
-	if err := FprintRowsFromChannel(writer, ch, "\t", "\n"); err != nil {
+	if err := fprintRowsFromChannel(ch, writer, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}

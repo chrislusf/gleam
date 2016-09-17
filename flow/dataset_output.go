@@ -12,6 +12,7 @@ import (
 func (d *Dataset) Output() (out chan []byte) {
 	out = make(chan []byte)
 	step := d.FlowContext.AddAllToOneStep(d, nil)
+	step.IsOnDriverSide = true
 	step.Name = "Output"
 	step.Function = func(task *Task) {
 		var channels []chan []byte
@@ -23,7 +24,7 @@ func (d *Dataset) Output() (out chan []byte) {
 	return
 }
 
-func (d *Dataset) SaveTextTo(writer io.Writer, format string) {
+func (d *Dataset) Fprintf(writer io.Writer, format string) {
 	inChan := d.Output()
 
 	var wg sync.WaitGroup
@@ -31,19 +32,7 @@ func (d *Dataset) SaveTextTo(writer io.Writer, format string) {
 	go func() {
 		defer wg.Done()
 
-		for encodedBytes := range inChan {
-			var decodedObjects []interface{}
-			var err error
-			// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
-			if decodedObjects, err = util.DecodeRow(encodedBytes); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
-				continue
-			}
-
-			fmt.Fprintf(writer, format, decodedObjects...)
-
-			writer.Write([]byte("\n"))
-		}
+		util.Fprintf(inChan, writer, format)
 	}()
 
 	wg.Add(1)
@@ -52,7 +41,7 @@ func (d *Dataset) SaveTextTo(writer io.Writer, format string) {
 	wg.Wait()
 }
 
-func (d *Dataset) SaveFinalRowTo(decodedObjects ...interface{}) {
+func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
 	inChan := d.Output()
 
 	var wg sync.WaitGroup

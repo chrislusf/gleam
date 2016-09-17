@@ -65,6 +65,6 @@ func main() {
       function(x, y)
         return x + y
       end
-    `).SaveTextTo(os.Stdout, "%s\t%d")
+    `).Fprintf(os.Stdout, "%s\t%d\n")
 
 }

@@ -23,7 +23,7 @@ func main() {
           return 1
         end
       end
-    `).Reduce("count").SaveFinalRowTo(&count)
+    `).Reduce("count").SaveOneRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 

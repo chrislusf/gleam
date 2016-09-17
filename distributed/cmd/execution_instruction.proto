@@ -1,0 +1,73 @@
+syntax = "proto2";
+package cmd;
+
+// protoc -I=$SRC_DIR --cpp_out=$DST_DIR $SRC_DIR/filename.proto
+// protoc --go_out=. *.proto
+
+message InstructionSet {
+	repeated Instruction instructions = 1;
+}
+
+message Instruction {
+	optional ScatterPartitions scatterPartitions = 1;
+	optional CollectPartitions collectPartitions = 2;
+	optional LocalSort localSort = 3;
+	optional MergeSortedTo mergeSortedTo = 4;
+	optional JoinPartitionedSorted joinPartitionedSorted = 5;
+	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
+	optional Script script = 7;
+}
+
+message ScatterPartitions {
+	required DatasetShard InputShard = 1;
+	repeated DatasetShardLocation OutputShardLocations = 2;
+	required int32 shardCount = 3;
+}
+
+message CollectPartitions {
+	repeated DatasetShardLocation inputShardLocations = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message LocalSort {
+	required DatasetShard InputShard = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message MergeSortedTo {
+	repeated DatasetShardLocation inputShardLocations = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message JoinPartitionedSorted {
+	required DatasetShardLocation leftInputShardLocations = 1;
+	required DatasetShardLocation rightInputShardLocations = 2;
+	required DatasetShard OutputShard = 3;
+}
+
+message CoGroupPartitionedSorted {
+	required DatasetShardLocation leftInputShardLocations = 1;
+	required DatasetShardLocation rightInputShardLocations = 2;
+	required DatasetShard OutputShard = 3;
+}
+
+message Script {
+	required DatasetShard InputShard = 1;
+	required DatasetShard OutputShard = 2;
+	required string name = 3;
+	required bool isPipe = 4;
+	required string path = 5;
+	repeated string args = 6;
+}
+
+message DatasetShard {
+	required string FlowName = 1;
+	required int32 DatasetId = 2;
+	required int32 DatasetShardId = 3;
+}
+
+message DatasetShardLocation {
+	required DatasetShard shard = 1;
+	required string Host = 2;
+	required int32 Port = 3;
+}

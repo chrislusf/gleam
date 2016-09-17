@@ -1,0 +1,126 @@
+syntax = "proto2";
+package cmd;
+
+// protoc -I=$SRC_DIR --cpp_out=$DST_DIR $SRC_DIR/filename.proto
+// protoc --go_out=. *.proto
+// Install protoc on Mac
+//   brew install protobuf
+//   go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+
+message ControlMessage {
+	enum Type {
+		NoOp = 1;
+		StartRequest = 2;
+		StartResponse = 3;
+		StopRequest = 4;
+		StopResponse = 5;
+		GetStatusRequest = 6;
+		GetStatusResponse = 7;
+		DeleteDatasetShardRequest = 8;
+		DeleteDatasetShardResponse = 9;
+		LocalStatusReportRequest = 10;
+		LocalStatusReportResponse = 11;
+		ReadRequest = 12;
+		WriteRequest = 13;
+	}
+	required Type type = 1;
+
+	optional StartRequest startRequest = 2;
+	optional StartResponse startResponse = 3;
+	optional StopRequest stopRequest = 4;
+	optional StopResponse stopResponse = 5;
+	optional GetStatusRequest getStatusRequest = 6;
+	optional GetStatusResponse getStatusResponse = 7;
+	optional DeleteDatasetShardRequest deleteDatasetShardRequest = 8;
+	optional DeleteDatasetShardResponse deleteDatasetShardResponse = 9;
+	optional LocalStatusReportRequest localStatusReportRequest = 10;
+	optional LocalStatusReportResponse localStatusReportResponse = 11;
+	optional ReadRequest readRequest = 12;
+	optional WriteRequest writeRequest = 13;
+}
+
+message NetChan {
+	required string server = 1;
+	required int32 port = 2;
+}
+
+message ComputeResource {
+	required int32 cpuCount = 1;
+	required int32 cpuLevel = 2;
+	required int32 memory = 3;
+}
+
+message StartRequest {
+	required string path = 1;
+	repeated string args = 2;
+	repeated string envs = 3;
+	required string dir = 4;
+	required ComputeResource resource = 5;
+	required uint32 hashCode = 6;
+	optional string host = 7;
+	optional int32 port = 8;
+}
+
+message StartResponse {
+	required int32 pid = 1;
+	optional string error = 2;
+	optional NetChan stderr = 3;
+	repeated NetChan outputs = 4;
+}
+
+message StopRequest {
+	required uint32 startRequestHash = 1;
+}
+
+message StopResponse {
+	required uint32 startRequestHash = 1;
+	optional string error = 2;
+}
+
+message GetStatusRequest {
+	required uint32 startRequestHash = 1;
+}
+
+message ChannelStatus {
+	required int64 length = 1;
+	optional int64 startTime = 2;
+	optional int64 stopTime = 3;
+	optional string name = 4;
+}
+
+message GetStatusResponse {
+	required uint32 startRequestHash = 1;
+	optional string error = 2;
+	repeated ChannelStatus inputStatuses = 3;
+	repeated ChannelStatus outputStatuses = 4;
+	optional int64 requestTime = 5;
+	optional int64 startTime = 6;
+	optional int64 stopTime = 7;
+}
+
+message DeleteDatasetShardRequest {
+	required string name = 1;
+}
+
+message DeleteDatasetShardResponse {
+	optional string error = 1;
+}
+
+message LocalStatusReportRequest {
+	required uint32 startRequestHash = 1;
+	optional string error = 2;
+	repeated ChannelStatus inputStatuses = 3;
+	repeated ChannelStatus outputStatuses = 4;
+}
+
+message LocalStatusReportResponse {
+	optional string error = 1;
+}
+
+message WriteRequest {
+	required string name = 1;
+}
+
+message ReadRequest {
+	required string name = 1;
+}

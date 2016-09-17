@@ -21,6 +21,6 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).SaveTextTo(os.Stdout, "%s,%d")
+	`).Fprintf(os.Stdout, "%s,%d\n")
 
 }

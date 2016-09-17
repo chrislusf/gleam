@@ -15,6 +15,7 @@ import (
 func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
+	step.IsOnDriverSide = true
 	step.Name = "Source"
 	step.Function = func(task *Task) {
 		// println("running source task...")
@@ -55,6 +56,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
+	step.IsOnDriverSide = true
 	step.Name = "Channel"
 	step.Function = func(task *Task) {
 		for data := range ch {

@@ -23,7 +23,6 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "PipeArgs"
 	step.IsPipe = true
-	step.Name = "Output"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 

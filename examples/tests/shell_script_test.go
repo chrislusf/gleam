@@ -20,7 +20,7 @@ func TestCallingShellScripts(t *testing.T) {
 
 	f := flow.New()
 
-	f.Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").SaveTextTo(os.Stdout, "%s")
+	f.Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "%s\n")
 
 }
 

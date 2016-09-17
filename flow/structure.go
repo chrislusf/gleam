@@ -49,17 +49,18 @@ type DatasetShard struct {
 }
 
 type Step struct {
-	Id            int
-	FlowContext   *FlowContext
-	InputDatasets []*Dataset
-	OutputDataset *Dataset
-	Function      func(*Task)
-	Tasks         []*Task
-	Name          string
-	NetworkType   NetworkType
-	IsPipe        bool
-	Script        script.Script
-	Command       *script.Command
+	Id             int
+	FlowContext    *FlowContext
+	InputDatasets  []*Dataset
+	OutputDataset  *Dataset
+	Function       func(*Task)
+	Tasks          []*Task
+	Name           string
+	NetworkType    NetworkType
+	IsOnDriverSide bool
+	IsPipe         bool
+	Script         script.Script
+	Command        *script.Command
 	RunLocked
 }
 
