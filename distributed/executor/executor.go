@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -36,7 +37,7 @@ func NewExecutor(option *ExecutorOption, instructions *cmd.InstructionSet) *Exec
 	}
 }
 
-func (exe *Executor) Execute(finalOutputChan chan []byte) {
+func (exe *Executor) ExecuteInstructionSet(finalOutputChan chan []byte) {
 	var wg sync.WaitGroup
 
 	var outputChan chan []byte
@@ -60,5 +61,17 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 		)
 		util.Execute(wg, i.GetScript().GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), true, os.Stderr)
+	} else if i.GetLocalSort() != nil {
+		flow.LocalSort(inChan, outChan)
+		close(outChan)
+	} else if i.GetMergeSortedTo() != nil {
+		inChans := make([]chan []byte)
+		// TODO: read from the dataset shard locations
+		flow.MergeSortedTo(inChans, outChan)
+		close(outChan)
+	} else if i.GetScatterPartitions() != nil {
+	} else if i.GetCollectPartitions() != nil {
+	} else if i.GetJoinPartitionedSorted() != nil {
+	} else if i.GetCoGroupPartitionedSorted() != nil {
 	}
 }

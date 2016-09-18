@@ -8,23 +8,7 @@ package cmd;
 //   go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 
 message ControlMessage {
-	enum Type {
-		NoOp = 1;
-		StartRequest = 2;
-		StartResponse = 3;
-		StopRequest = 4;
-		StopResponse = 5;
-		GetStatusRequest = 6;
-		GetStatusResponse = 7;
-		DeleteDatasetShardRequest = 8;
-		DeleteDatasetShardResponse = 9;
-		LocalStatusReportRequest = 10;
-		LocalStatusReportResponse = 11;
-		ReadRequest = 12;
-		WriteRequest = 13;
-	}
-	required Type type = 1;
-
+	optional WriteRequest writeRequest = 1;
 	optional StartRequest startRequest = 2;
 	optional StartResponse startResponse = 3;
 	optional StopRequest stopRequest = 4;
@@ -36,7 +20,6 @@ message ControlMessage {
 	optional LocalStatusReportRequest localStatusReportRequest = 10;
 	optional LocalStatusReportResponse localStatusReportResponse = 11;
 	optional ReadRequest readRequest = 12;
-	optional WriteRequest writeRequest = 13;
 }
 
 message NetChan {

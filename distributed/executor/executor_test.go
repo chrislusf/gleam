@@ -46,7 +46,7 @@ func TestExecutorScripts(t *testing.T) {
 		},
 	})
 
-	go executor.Execute(outChan)
+	go executor.ExecuteInstructionSet(outChan)
 
 	util.Fprintf(outChan, os.Stdout, "%s\n")
 

@@ -32,26 +32,7 @@ func (d *Dataset) LocalSort() *Dataset {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		var kvs []interface{}
-		for input := range task.InputShards[0].OutgoingChans[0] {
-			if key, err := util.DecodeRowKey(input); err != nil {
-				fmt.Printf("Sort>Failed to read input data %v: %+v\n", err, input)
-				break
-			} else {
-				kvs = append(kvs, pair{key: key, data: input})
-			}
-		}
-		if len(kvs) == 0 {
-			return
-		}
-		timsort.Sort(kvs, func(a, b interface{}) bool {
-			x, y := a.(pair), b.(pair)
-			return util.LessThan(x.key, y.key)
-		})
-
-		for _, kv := range kvs {
-			outChan <- kv.(pair).data
-		}
+		LocalSort(task.InputShards[0].OutgoingChans[0], outChan)
 
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
@@ -74,29 +55,62 @@ func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		pq := util.NewPriorityQueue(func(a, b interface{}) bool {
-			x, y := a.([]byte), b.([]byte)
-			xKey, _ := util.DecodeRowKey(x)
-			yKey, _ := util.DecodeRowKey(y)
-			return util.LessThan(xKey, yKey)
-		})
-		// enqueue one item to the pq from each shard
-		for shardId, shard := range task.InputShards {
-			if x, ok := <-shard.OutgoingChans[0]; ok {
-				pq.Enqueue(x, shardId)
-			}
+		var inChans []chan []byte
+		for _, shard := range task.InputShards {
+			inChans = append(inChans, shard.OutgoingChans[0])
 		}
-		for pq.Len() > 0 {
-			t, shardId := pq.Dequeue()
-			outChan <- t.([]byte)
-			if x, ok := <-task.InputShards[shardId].OutgoingChans[0]; ok {
-				pq.Enqueue(x, shardId)
-			}
-		}
+
+		MergeSortedTo(inChans, outChan)
+
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 
 	}
 	return ret
+}
+
+func LocalSort(inChan chan []byte, outChan chan []byte) {
+	var kvs []interface{}
+	for input := range inChan {
+		if key, err := util.DecodeRowKey(input); err != nil {
+			fmt.Printf("Sort>Failed to read input data %v: %+v\n", err, input)
+			break
+		} else {
+			kvs = append(kvs, pair{key: key, data: input})
+		}
+	}
+	if len(kvs) == 0 {
+		return
+	}
+	timsort.Sort(kvs, func(a, b interface{}) bool {
+		x, y := a.(pair), b.(pair)
+		return util.LessThan(x.key, y.key)
+	})
+
+	for _, kv := range kvs {
+		outChan <- kv.(pair).data
+	}
+}
+
+func MergeSortedTo(inChans []chan []byte, outChan chan []byte) {
+	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
+		x, y := a.([]byte), b.([]byte)
+		xKey, _ := util.DecodeRowKey(x)
+		yKey, _ := util.DecodeRowKey(y)
+		return util.LessThan(xKey, yKey)
+	})
+	// enqueue one item to the pq from each channel
+	for shardId, shardChan := range inChans {
+		if x, ok := <-shardChan; ok {
+			pq.Enqueue(x, shardId)
+		}
+	}
+	for pq.Len() > 0 {
+		t, shardId := pq.Dequeue()
+		outChan <- t.([]byte)
+		if x, ok := <-inChans[shardId]; ok {
+			pq.Enqueue(x, shardId)
+		}
+	}
 }
