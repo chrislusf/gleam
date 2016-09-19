@@ -3,7 +3,6 @@
 package agent
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,7 +15,6 @@ import (
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
-	"github.com/chrislusf/glow/netchan"
 	"github.com/chrislusf/glow/resource"
 	// "github.com/chrislusf/glow/resource/service_discovery/client"
 	"github.com/chrislusf/gleam/util"
@@ -34,7 +32,6 @@ type AgentServerOption struct {
 	MemoryMB     *int64
 	CPULevel     *int
 	CleanRestart *bool
-	CertFiles    netchan.CertFiles
 }
 
 type AgentServer struct {
@@ -80,14 +77,6 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 
 func (r *AgentServer) init() (err error) {
 	r.listener, err = net.Listen("tcp", *r.Option.Host+":"+strconv.Itoa(*r.Option.Port))
-
-	tlsConfig := r.Option.CertFiles.MakeTLSConfig()
-	if tlsConfig == nil {
-		r.listener, err = net.Listen("tcp", *r.Option.Host+":"+strconv.Itoa(*r.Option.Port))
-	} else {
-		r.listener, err = tls.Listen("tcp", *r.Option.Host+":"+strconv.Itoa(*r.Option.Port), tlsConfig)
-	}
-	util.SetupHttpClient(tlsConfig)
 
 	if err != nil {
 		log.Fatal(err)
@@ -183,15 +172,15 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	command *cmd.ControlMessage) *cmd.ControlMessage {
 	reply := &cmd.ControlMessage{}
-	switch command.GetType() {
-	case cmd.ControlMessage_ReadRequest:
+	if command.GetReadRequest() != nil {
 		as.handleReadConnection(conn, *command.ReadRequest.Name)
 		return nil
-	case cmd.ControlMessage_WriteRequest:
+	}
+	if command.GetWriteRequest() != nil {
 		as.handleLocalWriteConnection(conn, *command.WriteRequest.Name)
 		return nil
-	case cmd.ControlMessage_StartRequest:
-		reply.Type = cmd.ControlMessage_StartResponse.Enum()
+	}
+	if command.GetStartRequest() != nil {
 		// println("start from", *command.StartRequest.Host)
 		if *command.StartRequest.Host == "" {
 			remoteAddress := conn.RemoteAddr().String()
@@ -203,18 +192,15 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 		// return nil to avoid writing the response to the connection.
 		// Currently the connection is used for reading outputs
 		return nil
-	case cmd.ControlMessage_DeleteDatasetShardRequest:
-		reply.Type = cmd.ControlMessage_DeleteDatasetShardResponse.Enum()
+	}
+	if command.GetDeleteDatasetShardRequest() != nil {
 		reply.DeleteDatasetShardResponse = as.handleDeleteDatasetShard(conn, command.DeleteDatasetShardRequest)
-	case cmd.ControlMessage_GetStatusRequest:
-		reply.Type = cmd.ControlMessage_GetStatusResponse.Enum()
-		reply.GetStatusResponse = as.handleGetStatusRequest(command.GetStatusRequest)
-	case cmd.ControlMessage_StopRequest:
-		reply.Type = cmd.ControlMessage_StopResponse.Enum()
-		reply.StopResponse = as.handleStopRequest(command.StopRequest)
-	case cmd.ControlMessage_LocalStatusReportRequest:
-		reply.Type = cmd.ControlMessage_LocalStatusReportResponse.Enum()
-		reply.LocalStatusReportResponse = as.handleLocalStatusReportRequest(command.LocalStatusReportRequest)
+	} else if command.GetGetStatusRequest() != nil {
+		reply.GetStatusResponse = as.handleGetStatusRequest(command.GetGetStatusRequest())
+	} else if command.GetStopRequest() != nil {
+		reply.StopResponse = as.handleStopRequest(command.GetStopRequest())
+	} else if command.GetLocalStatusReportRequest() != nil {
+		reply.LocalStatusReportResponse = as.handleLocalStatusReportRequest(command.GetLocalStatusReportRequest())
 	}
 	return reply
 }

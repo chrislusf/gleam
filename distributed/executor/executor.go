@@ -65,7 +65,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		flow.LocalSort(inChan, outChan)
 		close(outChan)
 	} else if i.GetMergeSortedTo() != nil {
-		inChans := make([]chan []byte)
+		inChans := make([]chan []byte, 16)
 		// TODO: read from the dataset shard locations
 		flow.MergeSortedTo(inChans, outChan)
 		close(outChan)

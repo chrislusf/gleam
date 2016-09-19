@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/chrislusf/glow/netchan/store"
+	"github.com/chrislusf/gleam/distributed/store"
 )
 
 type LocalDatasetShardsManager struct {

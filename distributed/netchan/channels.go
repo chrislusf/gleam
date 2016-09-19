@@ -17,6 +17,7 @@ func DialReadChannel(wg *sync.WaitGroup, address string, channelName string, out
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
+		wg.Done()
 		return fmt.Errorf("Fail to dial read %s: %v", address, err)
 	}
 	defer readWriter.Close()
@@ -34,11 +35,12 @@ func DialReadChannel(wg *sync.WaitGroup, address string, channelName string, out
 	return nil
 }
 
-func DialWriteChannel(wg *sync.WaitGroup, target string, channelName string, inChan chan []byte) error {
+func DialWriteChannel(wg *sync.WaitGroup, address string, channelName string, inChan chan []byte) error {
 
-	readWriter, err := net.Dial("tcp", target)
+	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
-		return fmt.Errorf("Fail to dial write %s: %v", target, err)
+		wg.Done()
+		return fmt.Errorf("Fail to dial write %s: %v", address, err)
 	}
 	defer readWriter.Close()
 

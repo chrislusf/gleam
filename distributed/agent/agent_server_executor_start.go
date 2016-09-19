@@ -1,14 +1,12 @@
 package agent
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
@@ -43,7 +41,7 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	stat.StartTime = time.Now()
 	cmd := exec.Command(
 		startRequest.GetPath(),
-		as.adjustArgs(startRequest.Args, startRequest.GetHashCode())...,
+		startRequest.Args...,
 	)
 	cmd.Env = startRequest.Envs
 	cmd.Dir = dir
@@ -65,40 +63,6 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	// log.Printf("Finish command %v", cmd)
 
 	return reply
-}
-
-func (as *AgentServer) adjustArgs(args []string, requestId uint32) (ret []string) {
-	ret = []string{"-glow.request.id", fmt.Sprintf("%d", requestId)}
-
-	if as.Option.CertFiles.IsEnabled() {
-		var cleanedArgs []string
-		for _, arg := range args {
-			if strings.Contains(arg, "=") {
-				cleanedArgs = append(cleanedArgs, strings.SplitN(arg, "=", 2)...)
-			} else {
-				cleanedArgs = append(cleanedArgs, arg)
-			}
-		}
-		for i := 0; i < len(cleanedArgs); i++ {
-			ret = append(ret, cleanedArgs[i])
-			switch cleanedArgs[i] {
-			case "-cert.file":
-				ret = append(ret, as.Option.CertFiles.CertFile)
-				i++
-			case "-key.file":
-				ret = append(ret, as.Option.CertFiles.KeyFile)
-				i++
-			case "-ca.file":
-				ret = append(ret, as.Option.CertFiles.CaFile)
-				i++
-			}
-		}
-	} else {
-		ret = append(ret, args...)
-	}
-
-	// fmt.Printf("cmd: %v\n", ret)
-	return
 }
 
 func (as *AgentServer) plusAllocated(allocated resource.ComputeResource) {
