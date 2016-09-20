@@ -16,6 +16,9 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 		fmt.Errorf("Failed to read message length: %v", err)
 		return
 	}
+	if length == -1 {
+		return nil, io.EOF
+	}
 	if length == 0 {
 		return
 	}
@@ -30,6 +33,13 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 	return m, nil
 }
 
+func WriteEOFMessage(writer io.Writer) (err error) {
+	if err = binary.Write(writer, binary.LittleEndian, int32(-1)); err != nil {
+		return fmt.Errorf("Failed to write message length: %v", err)
+	}
+	return
+}
+
 func WriteMessage(writer io.Writer, m []byte) (err error) {
 	if err = binary.Write(writer, binary.LittleEndian, int32(len(m))); err != nil {
 		return fmt.Errorf("Failed to write message length: %v", err)
@@ -37,16 +47,5 @@ func WriteMessage(writer io.Writer, m []byte) (err error) {
 	if _, err = writer.Write(m); err != nil {
 		return fmt.Errorf("Failed to write message content: %v", err)
 	}
-	return
-}
-
-// little endian
-func BytesToUint32(b []byte) (v uint32) {
-	length := uint(len(b))
-	for i := uint(0); i < length-1; i++ {
-		v += uint32(b[length-1-i])
-		v <<= 8
-	}
-	v += uint32(b[0])
 	return
 }

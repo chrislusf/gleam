@@ -25,6 +25,8 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 			// println("agent recv:", string(message.Bytes()))
 		}
 	}
+
+	util.WriteEOFMessage(dsStore)
 }
 
 func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,

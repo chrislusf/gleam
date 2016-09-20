@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"bytes"
+	"encoding/binary"
 	"io"
 	"log"
 	"net"
@@ -30,12 +32,16 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 			return
 		}
 
-		offset += 4
-
-		size := util.BytesToUint32(buf)
+		var size int32
+		binary.Read(bytes.NewReader(buf), binary.LittleEndian, &size)
+		if size < 0 {
+			// size == -1 means EOF
+			return
+		}
 
 		// println("reading", name, offset, "size:", size)
 
+		offset += 4
 		messageBytes := make([]byte, size)
 		_, err = dsStore.ReadAt(messageBytes, offset)
 		if err != nil {
@@ -50,8 +56,5 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 		util.WriteMessage(conn, messageBytes)
 
 	}
-
-	// wait for the close ack
-	util.ReadMessage(conn)
 
 }
