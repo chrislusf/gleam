@@ -25,40 +25,49 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		leftChan := newChannelOfValuesWithSameKey(task.InputShards[0].OutgoingChans[0])
-		rightChan := newChannelOfValuesWithSameKey(task.InputShards[1].OutgoingChans[0])
-
-		// get first value from both channels
-		leftValuesWithSameKey, leftHasValue := <-leftChan
-		rightValuesWithSameKey, rightHasValue := <-rightChan
-
-		for leftHasValue && rightHasValue {
-			x := util.Compare(leftValuesWithSameKey.Key, rightValuesWithSameKey.Key)
-			switch {
-			case x == 0:
-				util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
-				leftValuesWithSameKey, leftHasValue = <-leftChan
-				rightValuesWithSameKey, rightHasValue = <-rightChan
-			case x < 0:
-				util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, []interface{}{})
-				leftValuesWithSameKey, leftHasValue = <-leftChan
-			case x > 0:
-				util.WriteRow(outChan, rightValuesWithSameKey.Key, []interface{}{}, rightValuesWithSameKey.Values)
-				rightValuesWithSameKey, rightHasValue = <-rightChan
-			}
-		}
-		for leftHasValue {
-			util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, []interface{}{})
-			leftValuesWithSameKey, leftHasValue = <-leftChan
-		}
-		for rightHasValue {
-			util.WriteRow(outChan, rightValuesWithSameKey.Key, []interface{}{}, rightValuesWithSameKey.Values)
-			rightValuesWithSameKey, rightHasValue = <-rightChan
-		}
+		CoGroupPartitionedSorted(
+			task.InputShards[0].OutgoingChans[0],
+			task.InputShards[1].OutgoingChans[0],
+			outChan,
+		)
 
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 	}
 	return ret
+}
+
+func CoGroupPartitionedSorted(leftRawChan, rightRawChan chan []byte, outChan chan []byte) {
+	leftChan := newChannelOfValuesWithSameKey(leftRawChan)
+	rightChan := newChannelOfValuesWithSameKey(rightRawChan)
+
+	// get first value from both channels
+	leftValuesWithSameKey, leftHasValue := <-leftChan
+	rightValuesWithSameKey, rightHasValue := <-rightChan
+
+	for leftHasValue && rightHasValue {
+		x := util.Compare(leftValuesWithSameKey.Key, rightValuesWithSameKey.Key)
+		switch {
+		case x == 0:
+			util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
+			leftValuesWithSameKey, leftHasValue = <-leftChan
+			rightValuesWithSameKey, rightHasValue = <-rightChan
+		case x < 0:
+			util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, []interface{}{})
+			leftValuesWithSameKey, leftHasValue = <-leftChan
+		case x > 0:
+			util.WriteRow(outChan, rightValuesWithSameKey.Key, []interface{}{}, rightValuesWithSameKey.Values)
+			rightValuesWithSameKey, rightHasValue = <-rightChan
+		}
+	}
+	for leftHasValue {
+		util.WriteRow(outChan, leftValuesWithSameKey.Key, leftValuesWithSameKey.Values, []interface{}{})
+		leftValuesWithSameKey, leftHasValue = <-leftChan
+	}
+	for rightHasValue {
+		util.WriteRow(outChan, rightValuesWithSameKey.Key, []interface{}{}, rightValuesWithSameKey.Values)
+		rightValuesWithSameKey, rightHasValue = <-rightChan
+	}
+
 }

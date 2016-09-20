@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
 )
@@ -56,22 +57,81 @@ func (exe *Executor) ExecuteInstructionSet(finalOutputChan chan []byte) {
 }
 
 func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction) {
+	defer wg.Done()
+	defer close(outChan)
+
 	if i.GetScript() != nil {
+
 		command := exec.Command(
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 		)
-		util.Execute(wg, i.GetScript().GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), true, os.Stderr)
+		util.Execute(wg, i.GetScript().GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), false, os.Stderr)
+
 	} else if i.GetLocalSort() != nil {
+
 		flow.LocalSort(inChan, outChan)
-		close(outChan)
+
 	} else if i.GetMergeSortedTo() != nil {
-		inChans := make([]chan []byte, 16)
-		// TODO: read from the dataset shard locations
+
+		var inChans []chan []byte
+		for _, inputLocation := range i.GetMergeSortedTo().GetInputShardLocations() {
+			wg.Add(1)
+			var inChan chan []byte
+			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Topic(), inChan)
+			inChans = append(inChans, inChan)
+		}
 		flow.MergeSortedTo(inChans, outChan)
-		close(outChan)
+
 	} else if i.GetScatterPartitions() != nil {
+
+		var outChans []chan []byte
+		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
+			wg.Add(1)
+			var outChan chan []byte
+			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Topic(), outChan)
+			outChans = append(outChans, outChan)
+		}
+		flow.ScatterPartitions(inChan, outChans)
+		for _, outChan := range outChans {
+			close(outChan)
+		}
+
 	} else if i.GetCollectPartitions() != nil {
+
+		var inChans []chan []byte
+		for _, inputLocation := range i.GetCollectPartitions().GetInputShardLocations() {
+			wg.Add(1)
+			var inChan chan []byte
+			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Topic(), inChan)
+			inChans = append(inChans, inChan)
+		}
+		flow.CollectPartitions(inChans, outChan)
+
 	} else if i.GetJoinPartitionedSorted() != nil {
+
+		var leftChan, rightChan chan []byte
+		jps := i.GetJoinPartitionedSorted()
+		leftLocation := jps.GetLeftInputShardLocation()
+		rightLocation := jps.GetRightInputShardLocation()
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Topic(), leftChan)
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Topic(), rightChan)
+
+		flow.JoinPartitionedSorted(leftChan, rightChan, *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan)
+
 	} else if i.GetCoGroupPartitionedSorted() != nil {
+
+		var leftChan, rightChan chan []byte
+		jps := i.GetCoGroupPartitionedSorted()
+		leftLocation := jps.GetLeftInputShardLocation()
+		rightLocation := jps.GetRightInputShardLocation()
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Topic(), leftChan)
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Topic(), rightChan)
+
+		flow.CoGroupPartitionedSorted(leftChan, rightChan, outChan)
+
 	}
 }

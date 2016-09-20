@@ -40,14 +40,16 @@ message MergeSortedTo {
 }
 
 message JoinPartitionedSorted {
-	required DatasetShardLocation leftInputShardLocations = 1;
-	required DatasetShardLocation rightInputShardLocations = 2;
+	required DatasetShardLocation leftInputShardLocation = 1;
+	required DatasetShardLocation rightInputShardLocation = 2;
 	required DatasetShard OutputShard = 3;
+	required bool isLeftOuterJoin = 4;
+	required bool isRightOuterJoin = 5;
 }
 
 message CoGroupPartitionedSorted {
-	required DatasetShardLocation leftInputShardLocations = 1;
-	required DatasetShardLocation rightInputShardLocations = 2;
+	required DatasetShardLocation leftInputShardLocation = 1;
+	required DatasetShardLocation rightInputShardLocation = 2;
 	required DatasetShard OutputShard = 3;
 }
 

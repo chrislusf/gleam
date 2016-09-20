@@ -25,12 +25,14 @@ func (d *Dataset) partition_scatter(shardCount int) (ret *Dataset) {
 	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
 	step.Name = "Partition_scatter"
 	step.Function = func(task *Task) {
-		for data := range task.MergedInputChan() {
-			keyObject, _ := util.DecodeRowKey(data)
-			x := util.HashByKey(keyObject, shardCount)
-			task.OutputShards[x].IncomingChan <- data
+		inChan := task.InputShards[0].OutgoingChans[0]
+		var outChans []chan []byte
+		for _, shard := range task.OutputShards {
+			outChans = append(outChans, shard.IncomingChan)
 		}
-		// println("closing scatters...")
+
+		ScatterPartitions(inChan, outChans)
+
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
@@ -44,13 +46,34 @@ func (d *Dataset) partition_collect(shardCount int) (ret *Dataset) {
 	step.Name = "Partition_collect"
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
-		for data := range task.MergedInputChan() {
-			outChan <- data
+		var inChans []chan []byte
+		for _, shard := range task.InputShards {
+			inChans = append(inChans, shard.OutgoingChans...)
 		}
-		// println("closing collectors...")
+
+		CollectPartitions(inChans, outChan)
+
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 	}
 	return
+}
+
+func ScatterPartitions(inChan chan []byte, outChans []chan []byte) {
+	shardCount := len(outChans)
+
+	for data := range inChan {
+		keyObject, _ := util.DecodeRowKey(data)
+		x := util.HashByKey(keyObject, shardCount)
+		outChans[x] <- data
+	}
+}
+
+func CollectPartitions(inChans []chan []byte, outChan chan []byte) {
+	inputChan := make(chan []byte)
+	util.MergeChannel(inChans, inputChan)
+	for data := range inputChan {
+		outChan <- data
+	}
 }

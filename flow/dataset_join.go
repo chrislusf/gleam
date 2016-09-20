@@ -31,89 +31,101 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		leftChan := newChannelOfValuesWithSameKey(task.InputShards[0].OutgoingChans[0])
-		rightChan := newChannelOfValuesWithSameKey(task.InputShards[1].OutgoingChans[0])
+		JoinPartitionedSorted(
+			task.InputShards[0].OutgoingChans[0],
+			task.InputShards[1].OutgoingChans[0],
+			isLeftOuterJoin,
+			isRightOuterJoin,
+			outChan,
+		)
 
-		// get first value from both channels
-		leftValuesWithSameKey, leftHasValue := <-leftChan
-		rightValuesWithSameKey, rightHasValue := <-rightChan
-
-		for leftHasValue && rightHasValue {
-			x := util.Compare(leftValuesWithSameKey.Key, rightValuesWithSameKey.Key)
-			switch {
-			case x == 0:
-				// left and right cartician join
-				for _, a := range leftValuesWithSameKey.Values {
-					for _, b := range rightValuesWithSameKey.Values {
-						t := []interface{}{leftValuesWithSameKey.Key}
-						t = append(t, a.([]interface{})...)
-						t = append(t, b.([]interface{})...)
-						util.WriteRow(outChan, t...)
-					}
-				}
-				leftValuesWithSameKey, leftHasValue = <-leftChan
-				rightValuesWithSameKey, rightHasValue = <-rightChan
-			case x < 0:
-				if isLeftOuterJoin {
-					for _, leftValue := range leftValuesWithSameKey.Values {
-						t := []interface{}{leftValuesWithSameKey.Key}
-						t = append(t, leftValue.([]interface{})...)
-						util.WriteRow(outChan, t...)
-					}
-				}
-				leftValuesWithSameKey, leftHasValue = <-leftChan
-			case x > 0:
-				if isRightOuterJoin {
-					for _, rightValue := range rightValuesWithSameKey.Values {
-						t := []interface{}{rightValuesWithSameKey.Key}
-						t = append(t, rightValue.([]interface{})...)
-						util.WriteRow(outChan, t...)
-					}
-				}
-				rightValuesWithSameKey, rightHasValue = <-rightChan
-			}
-		}
-		if leftHasValue {
-			if isLeftOuterJoin {
-				for _, leftValue := range leftValuesWithSameKey.Values {
-					t := []interface{}{leftValuesWithSameKey.Key}
-					t = append(t, leftValue.([]interface{})...)
-					util.WriteRow(outChan, t...)
-				}
-			}
-		}
-		for leftValuesWithSameKey = range leftChan {
-			if isLeftOuterJoin {
-				for _, leftValue := range leftValuesWithSameKey.Values {
-					t := []interface{}{leftValuesWithSameKey.Key}
-					t = append(t, leftValue.([]interface{})...)
-					util.WriteRow(outChan, t...)
-				}
-			}
-		}
-		if rightHasValue {
-			if isRightOuterJoin {
-				for _, rightValue := range rightValuesWithSameKey.Values {
-					t := []interface{}{rightValuesWithSameKey.Key}
-					t = append(t, rightValue.([]interface{})...)
-					util.WriteRow(outChan, t...)
-				}
-			}
-		}
-		for rightValuesWithSameKey = range rightChan {
-			if isRightOuterJoin {
-				for _, rightValue := range rightValuesWithSameKey.Values {
-					t := []interface{}{rightValuesWithSameKey.Key}
-					t = append(t, rightValue.([]interface{})...)
-					util.WriteRow(outChan, t...)
-				}
-			}
-		}
 		for _, shard := range task.OutputShards {
 			close(shard.IncomingChan)
 		}
 	}
 	return ret
+}
+
+func JoinPartitionedSorted(leftRawChan, rightRawChan chan []byte, isLeftOuterJoin, isRightOuterJoin bool, outChan chan []byte) {
+	leftChan := newChannelOfValuesWithSameKey(leftRawChan)
+	rightChan := newChannelOfValuesWithSameKey(rightRawChan)
+
+	// get first value from both channels
+	leftValuesWithSameKey, leftHasValue := <-leftChan
+	rightValuesWithSameKey, rightHasValue := <-rightChan
+
+	for leftHasValue && rightHasValue {
+		x := util.Compare(leftValuesWithSameKey.Key, rightValuesWithSameKey.Key)
+		switch {
+		case x == 0:
+			// left and right cartician join
+			for _, a := range leftValuesWithSameKey.Values {
+				for _, b := range rightValuesWithSameKey.Values {
+					t := []interface{}{leftValuesWithSameKey.Key}
+					t = append(t, a.([]interface{})...)
+					t = append(t, b.([]interface{})...)
+					util.WriteRow(outChan, t...)
+				}
+			}
+			leftValuesWithSameKey, leftHasValue = <-leftChan
+			rightValuesWithSameKey, rightHasValue = <-rightChan
+		case x < 0:
+			if isLeftOuterJoin {
+				for _, leftValue := range leftValuesWithSameKey.Values {
+					t := []interface{}{leftValuesWithSameKey.Key}
+					t = append(t, leftValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
+				}
+			}
+			leftValuesWithSameKey, leftHasValue = <-leftChan
+		case x > 0:
+			if isRightOuterJoin {
+				for _, rightValue := range rightValuesWithSameKey.Values {
+					t := []interface{}{rightValuesWithSameKey.Key}
+					t = append(t, rightValue.([]interface{})...)
+					util.WriteRow(outChan, t...)
+				}
+			}
+			rightValuesWithSameKey, rightHasValue = <-rightChan
+		}
+	}
+	if leftHasValue {
+		if isLeftOuterJoin {
+			for _, leftValue := range leftValuesWithSameKey.Values {
+				t := []interface{}{leftValuesWithSameKey.Key}
+				t = append(t, leftValue.([]interface{})...)
+				util.WriteRow(outChan, t...)
+			}
+		}
+	}
+	for leftValuesWithSameKey = range leftChan {
+		if isLeftOuterJoin {
+			for _, leftValue := range leftValuesWithSameKey.Values {
+				t := []interface{}{leftValuesWithSameKey.Key}
+				t = append(t, leftValue.([]interface{})...)
+				util.WriteRow(outChan, t...)
+			}
+		}
+	}
+	if rightHasValue {
+		if isRightOuterJoin {
+			for _, rightValue := range rightValuesWithSameKey.Values {
+				t := []interface{}{rightValuesWithSameKey.Key}
+				t = append(t, rightValue.([]interface{})...)
+				util.WriteRow(outChan, t...)
+			}
+		}
+	}
+	for rightValuesWithSameKey = range rightChan {
+		if isRightOuterJoin {
+			for _, rightValue := range rightValuesWithSameKey.Values {
+				t := []interface{}{rightValuesWithSameKey.Key}
+				t = append(t, rightValue.([]interface{})...)
+				util.WriteRow(outChan, t...)
+			}
+		}
+	}
+
 }
 
 type keyValues struct {
