@@ -65,6 +65,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		command := exec.Command(
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 		)
+		wg.Add(1)
 		util.Execute(wg, i.GetScript().GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), false, os.Stderr)
 
 	} else if i.GetLocalSort() != nil {
