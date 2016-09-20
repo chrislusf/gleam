@@ -34,13 +34,12 @@ var (
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
 	}
 
-	writer             = app.Command("write", "Write data to a channel")
-	writeToChanName    = writer.Flag("to", "Name of a channel").Required().String()
-	writeFile          = writer.Flag("file", "file to post.").ExistingFile()
+	writer             = app.Command("write", "Write data to a topic")
+	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
 	writerAgentAddress = writer.Flag("agent", "agent host:port").Default("localhost:45326").String()
 
-	reader             = app.Command("read", "Read data from a channel")
-	readFromChanName   = reader.Flag("from", "Name of a source channel").Required().String()
+	reader             = app.Command("read", "Read data from a topic")
+	readTopic          = reader.Flag("topic", "Name of a source topic").Required().String()
 	readerAgentAddress = reader.Flag("agent", "agent host:port").Default("localhost:45326").String()
 )
 
@@ -54,7 +53,7 @@ func main() {
 		inChan := make(chan []byte, 16)
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialWriteChannel(&wg, *writerAgentAddress, *writeToChanName, inChan)
+		go netchan.DialWriteChannel(&wg, *writerAgentAddress, *writeTopic, inChan)
 		wg.Add(1)
 		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan, true, os.Stderr)
 		wg.Wait()
@@ -63,7 +62,7 @@ func main() {
 
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialReadChannel(&wg, *readerAgentAddress, *readFromChanName, outChan)
+		go netchan.DialReadChannel(&wg, *readerAgentAddress, *readTopic, outChan)
 		wg.Add(1)
 		util.ChannelToLineWriter(&wg, "stdout", outChan, os.Stdout, os.Stderr)
 		wg.Wait()
