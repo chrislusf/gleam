@@ -22,6 +22,7 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.Name = "CoGroupPartitionedSorted"
+	step.FunctionType = TypeCoGroupPartitionedSorted
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 

@@ -3,8 +3,8 @@ package agent
 import (
 	"time"
 
-	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/distributed/driver"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -14,8 +14,8 @@ func (as *AgentServer) handleGetStatusRequest(getStatusRequest *cmd.GetStatusReq
 
 	reply := &cmd.GetStatusResponse{
 		StartRequestHash: proto.Uint32(requestId),
-		InputStatuses:    distributed.ToProto(stat.InputChannelStatuses),
-		OutputStatuses:   distributed.ToProto(stat.OutputChannelStatuses),
+		InputStatuses:    driver.ToProto(stat.InputChannelStatuses),
+		OutputStatuses:   driver.ToProto(stat.OutputChannelStatuses),
 		RequestTime:      proto.Int64(stat.RequestTime.Unix()),
 		StartTime:        proto.Int64(stat.StartTime.Unix()),
 		StopTime:         proto.Int64(stat.StopTime.Unix()),
@@ -28,8 +28,8 @@ func (as *AgentServer) handleLocalStatusReportRequest(localStatusRequest *cmd.Lo
 	requestId := localStatusRequest.GetStartRequestHash()
 	stat := as.localExecutorManager.getExecutorStatus(requestId)
 
-	stat.InputChannelStatuses = distributed.FromProto(localStatusRequest.GetInputStatuses())
-	stat.OutputChannelStatuses = distributed.FromProto(localStatusRequest.GetOutputStatuses())
+	stat.InputChannelStatuses = driver.FromProto(localStatusRequest.GetInputStatuses())
+	stat.OutputChannelStatuses = driver.FromProto(localStatusRequest.GetOutputStatuses())
 	stat.LastAccessTime = time.Now()
 
 	reply := &cmd.LocalStatusReportResponse{}

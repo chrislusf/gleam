@@ -29,6 +29,7 @@ func (d *Dataset) LocalSort() *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = true
 	step.Name = "LocalSort"
+	step.FunctionType = TypeLocalSort
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
@@ -52,6 +53,7 @@ func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
 	}
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
 	step.Name = fmt.Sprintf("MergeSortedTo %d", partitionCount)
+	step.FunctionType = TypeMergeSortedTo
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 

@@ -28,6 +28,7 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.Name = "JoinPartitionedSorted"
+	step.FunctionType = TypeJoinPartitionedSorted
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 

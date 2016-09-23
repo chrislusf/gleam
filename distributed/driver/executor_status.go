@@ -1,12 +1,12 @@
-package distributed
+package driver
 
 import (
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/distributed/plan"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/util"
-	"github.com/chrislusf/glow/driver/plan"
-	"github.com/chrislusf/glow/resource"
 	"github.com/golang/protobuf/proto"
 )
 

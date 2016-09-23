@@ -7,6 +7,19 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
+type FunctionType int
+
+const (
+	TypeScript FunctionType = iota
+	TypeLocalSort
+	TypeMergeSortedTo
+	TypeJoinPartitionedSorted
+	TypeCoGroupPartitionedSorted
+	TypeCollectPartitions
+	TypeScatterPartitions
+	TypePipeAsArgs
+)
+
 type NetworkType int
 
 const (
@@ -56,11 +69,13 @@ type Step struct {
 	Function       func(*Task)
 	Tasks          []*Task
 	Name           string
+	FunctionType   FunctionType
 	NetworkType    NetworkType
 	IsOnDriverSide bool
 	IsPipe         bool
 	Script         script.Script
-	Command        *script.Command
+	Command        *script.Command // used in Pipe()
+	Params         map[string]interface{}
 	RunLocked
 }
 

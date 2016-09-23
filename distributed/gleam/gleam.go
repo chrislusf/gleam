@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bufio"
+	"encoding/binary"
+	"log"
 	"os"
 	"runtime"
 	"strconv"
@@ -9,9 +12,11 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	a "github.com/chrislusf/gleam/distributed/agent"
+	"github.com/chrislusf/gleam/distributed/cmd"
 	exe "github.com/chrislusf/gleam/distributed/executor"
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/util"
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -48,8 +53,19 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case executor.FullCommand():
-		exe.NewExecutor(nil, nil).ExecuteInstructionSet(nil)
+
+		reader := bufio.NewReader(os.Stdin)
+		var dataLen int32
+		binary.Read(reader, binary.LittleEndian, dataLen)
+		data := make([]byte, dataLen)
+		instructions := &cmd.InstructionSet{}
+		if err := proto.Unmarshal(data, instructions); err != nil {
+			log.Fatal("unmarshaling instructions error: ", err)
+		}
+		exe.NewExecutor(nil, instructions).ExecuteInstructionSet(nil)
+
 	case writer.FullCommand():
+
 		inChan := make(chan []byte, 16)
 		var wg sync.WaitGroup
 		wg.Add(1)
@@ -57,9 +73,10 @@ func main() {
 		wg.Add(1)
 		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan, true, os.Stderr)
 		wg.Wait()
-	case reader.FullCommand():
-		outChan := make(chan []byte, 16)
 
+	case reader.FullCommand():
+
+		outChan := make(chan []byte, 16)
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go netchan.DialReadChannel(&wg, *readerAgentAddress, *readTopic, outChan)
@@ -68,6 +85,7 @@ func main() {
 		wg.Wait()
 
 	case agent.FullCommand():
+
 		agentServer := a.NewAgentServer(agentOption)
 		agentServer.Run()
 	}

@@ -24,6 +24,7 @@ func (d *Dataset) partition_scatter(shardCount int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(len(d.Shards) * shardCount)
 	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
 	step.Name = "Partition_scatter"
+	step.FunctionType = TypeScatterPartitions
 	step.Function = func(task *Task) {
 		inChan := task.InputShards[0].OutgoingChans[0]
 		var outChans []chan []byte
@@ -44,6 +45,7 @@ func (d *Dataset) partition_collect(shardCount int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(shardCount)
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.Name = "Partition_collect"
+	step.FunctionType = TypeCollectPartitions
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 		var inChans []chan []byte

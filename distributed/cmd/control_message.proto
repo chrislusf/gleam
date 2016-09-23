@@ -30,18 +30,97 @@ message NetChan {
 message ComputeResource {
 	required int32 cpuCount = 1;
 	required int32 cpuLevel = 2;
-	required int32 memory = 3;
+	required int32 gpuCount = 3;
+	required int32 gpuLevel = 4;
+	required int32 memory = 5;
 }
 
 message StartRequest {
-	required string path = 1;
-	repeated string args = 2;
-	repeated string envs = 3;
-	required string dir = 4;
-	required ComputeResource resource = 5;
-	required uint32 hashCode = 6;
-	optional string host = 7;
-	optional int32 port = 8;
+	required InstructionSet instructions = 1;
+	repeated string files = 2;
+	required string dir = 3;
+	required ComputeResource resource = 4;
+	required string host = 5;
+	required int32 port = 6;
+	required uint32 hashCode = 7;
+}
+
+message InstructionSet {
+	repeated Instruction instructions = 1;
+}
+
+message Instruction {
+	optional ScatterPartitions scatterPartitions = 1;
+	optional CollectPartitions collectPartitions = 2;
+	optional LocalSort localSort = 3;
+	optional MergeSortedTo mergeSortedTo = 4;
+	optional JoinPartitionedSorted joinPartitionedSorted = 5;
+	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
+	optional PipeAsArgs pipeAsArgs = 7;
+	optional Script script = 8;
+}
+
+message ScatterPartitions {
+	required DatasetShard InputShard = 1;
+	repeated DatasetShardLocation OutputShardLocations = 2;
+	required int32 shardCount = 3;
+}
+
+message CollectPartitions {
+	repeated DatasetShardLocation inputShardLocations = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message LocalSort {
+	required DatasetShard InputShard = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message MergeSortedTo {
+	repeated DatasetShardLocation inputShardLocations = 1;
+	required DatasetShard OutputShard = 2;
+}
+
+message JoinPartitionedSorted {
+	required DatasetShardLocation leftInputShardLocation = 1;
+	required DatasetShardLocation rightInputShardLocation = 2;
+	required DatasetShard OutputShard = 3;
+	required bool isLeftOuterJoin = 4;
+	required bool isRightOuterJoin = 5;
+}
+
+message CoGroupPartitionedSorted {
+	required DatasetShardLocation leftInputShardLocation = 1;
+	required DatasetShardLocation rightInputShardLocation = 2;
+	required DatasetShard OutputShard = 3;
+}
+
+message PipeAsArgs {
+	required DatasetShard InputShard = 1;
+	required DatasetShard OutputShard = 2;
+	required string code = 3;
+}
+
+message Script {
+	required DatasetShard InputShard = 1;
+	required DatasetShard OutputShard = 2;
+	required string name = 3;
+	required bool isPipe = 4;
+	required string path = 5;
+	repeated string args = 6;
+	repeated string env = 7;
+}
+
+message DatasetShard {
+	required string FlowName = 1;
+	required int32 DatasetId = 2;
+	required int32 DatasetShardId = 3;
+}
+
+message DatasetShardLocation {
+	required DatasetShard shard = 1;
+	required string Host = 2;
+	required int32 Port = 3;
 }
 
 message StartResponse {

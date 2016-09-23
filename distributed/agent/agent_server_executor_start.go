@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/binary"
 	"log"
 	"net"
 	"os"
@@ -10,8 +11,8 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
-	"github.com/chrislusf/glow/driver/rsync"
-	"github.com/chrislusf/glow/resource"
+	"github.com/chrislusf/gleam/distributed/resource"
+	"github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -38,12 +39,17 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
+	// start the command
 	stat.StartTime = time.Now()
 	cmd := exec.Command(
-		startRequest.GetPath(),
-		startRequest.Args...,
+		os.Args[0],
+		"execute",
 	)
-	cmd.Env = startRequest.Envs
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	// cmd.Env = startRequest.Envs
 	cmd.Dir = dir
 	cmd.Stdout = conn
 	cmd.Stderr = conn
@@ -57,6 +63,12 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	}
 	stat.Process = cmd.Process
 
+	// send instruction set to executor
+	cmdMessageBytes, _ := proto.Marshal(startRequest.GetInstructions())
+	binary.Write(stdin, binary.LittleEndian, len(cmdMessageBytes))
+	stdin.Write(cmdMessageBytes)
+
+	// wait for finish
 	cmd.Wait()
 	stat.StopTime = time.Now()
 

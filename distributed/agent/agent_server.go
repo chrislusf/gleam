@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	// "net/url"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,8 +15,8 @@ import (
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
-	"github.com/chrislusf/glow/resource"
-	// "github.com/chrislusf/glow/resource/service_discovery/client"
+	"github.com/chrislusf/gleam/distributed/resource"
+	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -102,14 +102,12 @@ func (r *AgentServer) init() (err error) {
 
 func (as *AgentServer) Run() {
 	//register agent
-	/*
-		killHeartBeaterChan := make(chan bool, 1)
-		go client.NewHeartBeater(*as.Option.Host, *as.Option.Port, as.Master).StartAgentHeartBeat(killHeartBeaterChan, func(values url.Values) {
-			resource.AddToValues(values, as.computeResource, as.allocatedResource)
-			values.Add("dataCenter", *as.Option.DataCenter)
-			values.Add("rack", *as.Option.Rack)
-		})
-	*/
+	killHeartBeaterChan := make(chan bool, 1)
+	go client.NewHeartBeater(*as.Option.Host, *as.Option.Port, as.Master).StartAgentHeartBeat(killHeartBeaterChan, func(values url.Values) {
+		resource.AddToValues(values, as.computeResource, as.allocatedResource)
+		values.Add("dataCenter", *as.Option.DataCenter)
+		values.Add("rack", *as.Option.Rack)
+	})
 
 	for {
 		// Listen for an incoming connection.
@@ -137,17 +135,6 @@ func (r *AgentServer) Stop() {
 func (r *AgentServer) handleRequest(conn net.Conn) {
 
 	data, err := util.ReadMessage(conn)
-
-	/*
-		tlscon, ok := conn.(*tls.Conn)
-		if ok {
-			state := tlscon.ConnectionState()
-			if !state.HandshakeComplete {
-				log.Printf("Failed to tls handshake with: %+v", tlscon.RemoteAddr())
-				return
-			}
-		}
-	*/
 
 	if err != nil {
 		log.Printf("Failed to read command %s:%v", err)

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -42,4 +43,8 @@ func (s *DatasetShard) TimeTaken() time.Duration {
 		return s.CloseTime.Sub(s.ReadyTime)
 	}
 	return time.Now().Sub(s.ReadyTime)
+}
+
+func (s *DatasetShard) Name() string {
+	return fmt.Sprintf("d%d-s%d", s.Dataset.Id, s.Id)
 }
