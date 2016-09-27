@@ -11,7 +11,7 @@ func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) 
 	firstTask := tg.Tasks[0]
 	cost := float64(1)
 	for _, input := range firstTask.InputShards {
-		_, dataLocation, found := s.GetShardLocation(input)
+		dataLocation, found := s.GetShardLocation(input)
 		if !found {
 			// log.Printf("Strange1: %s not allocated yet.", input.Name())
 			continue

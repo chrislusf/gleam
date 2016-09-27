@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"encoding/binary"
+	//"encoding/binary"
 	"log"
 	"net"
 	"os"
@@ -14,12 +14,15 @@ import (
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/golang/protobuf/proto"
+	"github.com/kardianos/osext"
 )
 
 func (as *AgentServer) handleStart(conn net.Conn,
 	startRequest *cmd.StartRequest) *cmd.StartResponse {
+
+	// println("starting", startRequest.GetInstructions())
 	reply := &cmd.StartResponse{}
-	stat := as.localExecutorManager.getExecutorStatus(startRequest.GetHashCode())
+	stat := as.localExecutorManager.getExecutorStatus(*startRequest.GetInstructions().FlowHashCode)
 	stat.RequestTime = time.Now()
 
 	dir := path.Join(*as.Option.Dir, startRequest.GetDir())
@@ -40,9 +43,10 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	defer as.minusAllocated(allocated)
 
 	// start the command
+	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
 	cmd := exec.Command(
-		os.Args[0],
+		executableFullFilename,
 		"execute",
 	)
 	stdin, err := cmd.StdinPipe()
@@ -62,17 +66,29 @@ func (as *AgentServer) handleStart(conn net.Conn,
 		reply.Pid = proto.Int32(int32(cmd.Process.Pid))
 	}
 	stat.Process = cmd.Process
+	println("Process id:", cmd.Process.Pid)
 
 	// send instruction set to executor
-	cmdMessageBytes, _ := proto.Marshal(startRequest.GetInstructions())
-	binary.Write(stdin, binary.LittleEndian, len(cmdMessageBytes))
-	stdin.Write(cmdMessageBytes)
+	cmdMessageBytes, err := proto.Marshal(startRequest.GetInstructions())
+	if err != nil {
+		log.Printf("Failed to marshal command %s: %v",
+			startRequest.GetInstructions().String(), err)
+	}
+	_, err = stdin.Write(cmdMessageBytes)
+	if err != nil {
+		log.Printf("Failed to write command: %v", err)
+	}
+	err = stdin.Close()
+	if err != nil {
+		log.Printf("Failed to close command: %v", err)
+	}
 
 	// wait for finish
 	cmd.Wait()
+	// println("finished", startRequest.GetInstructions().String())
 	stat.StopTime = time.Now()
 
-	// log.Printf("Finish command %v", cmd)
+	// log.Printf("Finish command %+v", cmd)
 
 	return reply
 }

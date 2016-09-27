@@ -40,8 +40,11 @@ func findAncestorStepId(step *flow.Step) (int, bool) {
 			// no dataset inputs
 			break
 		}
-
 		if !isMergeableDataset(current.InputDatasets[0], taskCount) {
+			break
+		}
+		if (!current.IsOnDriverSide && current.InputDatasets[0].Step.IsOnDriverSide) ||
+			(current.IsOnDriverSide && !current.InputDatasets[0].Step.IsOnDriverSide) {
 			break
 		}
 

@@ -62,7 +62,6 @@ func RunMaster(tlsConfig *tls.Config, listenOn string) {
 	if err != nil {
 		log.Fatalf("Volume server fail to serve public: %v", err)
 	}
-	util.SetupHttpClient(tlsConfig)
 
 	if e := http.Serve(listener, masterMux); e != nil {
 		log.Fatalf("Volume server fail to serve public: %v", e)

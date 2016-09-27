@@ -46,5 +46,5 @@ func (s *DatasetShard) TimeTaken() time.Duration {
 }
 
 func (s *DatasetShard) Name() string {
-	return fmt.Sprintf("d%d-s%d", s.Dataset.Id, s.Id)
+	return fmt.Sprintf("f%d-d%d-s%d", s.Dataset.FlowContext.HashCode, s.Dataset.Id, s.Id)
 }

@@ -62,6 +62,8 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 				LeftInputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				RightInputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[1]),
 				OutputShard:             flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				IsLeftOuterJoin:         proto.Bool(false),
+				IsRightOuterJoin:        proto.Bool(false),
 			},
 		}
 	}
@@ -97,7 +99,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 
 	// Command can come from Pipe() directly
 	// get an exec.Command
-	println("processing step:", task.Step.Name)
+	// println("processing step:", task.Step.Name)
 	if task.Step.Command == nil {
 		task.Step.Command = task.Step.Script.GetCommand()
 	}
@@ -105,13 +107,13 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 
 	return &cmd.Instruction{
 		Script: &cmd.Script{
-			InputShard:  flowDatasetShardToCmdDatasetShard(task.InputShards[0]),
-			OutputShard: flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
-			Name:        proto.String(task.Step.Name),
-			IsPipe:      proto.Bool(task.Step.IsPipe),
-			Path:        proto.String(command.Path),
-			Args:        command.Args,
-			Env:         command.Env,
+			InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+			OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+			Name:                proto.String(task.Step.Name),
+			IsPipe:              proto.Bool(task.Step.IsPipe),
+			Path:                proto.String(command.Path),
+			Args:                command.Args,
+			Env:                 command.Env,
 		},
 	}
 }
@@ -121,6 +123,7 @@ func flowDatasetShardToCmdDatasetShard(shard *flow.DatasetShard) *cmd.DatasetSha
 		FlowName:       proto.String(""),
 		DatasetId:      proto.Int32(int32(shard.Dataset.Id)),
 		DatasetShardId: proto.Int32(int32(shard.Id)),
+		FlowHashCode:   proto.Uint32(shard.Dataset.FlowContext.HashCode),
 	}
 }
 
@@ -134,5 +137,7 @@ func flowDatasetShardsToCmdDatasetShardLocations(shards []*flow.DatasetShard) (r
 func flowDatasetShardsToCmdDatasetShardLocation(shard *flow.DatasetShard) *cmd.DatasetShardLocation {
 	return &cmd.DatasetShardLocation{
 		Shard: flowDatasetShardToCmdDatasetShard(shard),
+		Host:  proto.String("localhost"),
+		Port:  proto.Int32(45326),
 	}
 }

@@ -30,16 +30,16 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 		})
 	}
 
-	result, err := Assign(s.Leader, &request)
+	result, err := Assign(s.Master, &request)
 	if err != nil {
-		log.Printf("%s Failed to allocate: %v", s.Leader, err)
+		log.Printf("%s Failed to allocate: %v", s.Master, err)
 		time.Sleep(time.Millisecond * time.Duration(15000+rand.Int63n(5000)))
 	} else {
 		if len(result.Allocations) == 0 {
-			log.Printf("%s Failed to allocate any executor.", s.Leader)
+			log.Printf("%s Failed to allocate any executor.", s.Master)
 			time.Sleep(time.Millisecond * time.Duration(2000+rand.Int63n(1000)))
 		} else {
-			log.Printf("%s allocated %d executors.", s.Leader, len(result.Allocations))
+			log.Printf("%s allocated %d executors.", s.Master, len(result.Allocations))
 			for _, allocation := range result.Allocations {
 				s.Market.AddSupply(market.Supply{
 					Object: allocation,
@@ -52,7 +52,7 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 func (s *Scheduler) findTaskGroupInputs(tg *plan.TaskGroup) (ret []resource.DataResource) {
 	firstTask := tg.Tasks[0]
 	for _, input := range firstTask.InputShards {
-		_, dataLocation, found := s.GetShardLocation(input)
+		dataLocation, found := s.GetShardLocation(input)
 		if !found {
 			// log.Printf("Strange2: %s not allocated yet.", input.Name())
 			continue

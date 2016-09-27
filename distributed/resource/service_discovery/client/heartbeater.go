@@ -74,8 +74,8 @@ func (h *HeartBeater) beat(fn func(url.Values) string) bool {
 	values.Add("serviceIp", h.ServiceIp)
 	ret := false
 	for _, leader := range h.Leaders {
-		_, err := util.Post(util.SchemePrefix+leader+beatToPath, values)
 		// println("heart beat to", leader, beatToPath)
+		_, err := util.Post(util.SchemePrefix+leader+beatToPath, values)
 		if err != nil {
 			println("Failed to heart beat to", leader, beatToPath)
 		} else {

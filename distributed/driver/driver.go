@@ -15,7 +15,7 @@ import (
 )
 
 type DriverOption struct {
-	Leader       string
+	Master       string
 	DataCenter   string
 	Rack         string
 	TaskMemoryMB int
@@ -28,7 +28,7 @@ type DriverOption struct {
 var driverOption DriverOption
 
 func init() {
-	driverOption.Leader = "localhost:45236"
+	driverOption.Master = "localhost:45237"
 	driverOption.TaskMemoryMB = 64
 	driverOption.FlowBid = 100.0
 	driverOption.Host = "localhost"
@@ -64,7 +64,7 @@ func (fcd *FlowContextDriver) Run(fc *flow.FlowContext) {
 
 	// create thes cheduler
 	sched := scheduler.NewScheduler(
-		fcd.Option.Leader,
+		fcd.Option.Master,
 		&scheduler.SchedulerOption{
 			DataCenter:         fcd.Option.DataCenter,
 			Rack:               fcd.Option.Rack,
@@ -79,7 +79,7 @@ func (fcd *FlowContextDriver) Run(fc *flow.FlowContext) {
 
 	// best effort to clean data on agent disk
 	// this may need more improvements
-	defer fcd.Cleanup(sched, fc)
+	defer fcd.cleanup(sched, fc)
 
 	go sched.EventLoop()
 
@@ -106,7 +106,7 @@ func (fcd *FlowContextDriver) Run(fc *flow.FlowContext) {
 
 }
 
-func (fcd *FlowContextDriver) Cleanup(sched *scheduler.Scheduler, fc *flow.FlowContext) {
+func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowContext) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	sched.EventChan <- scheduler.ReleaseTaskGroupInputs{

@@ -9,6 +9,7 @@ import (
 func TestEncodingDecoding(t *testing.T) {
 
 	instructions := &InstructionSet{
+		FlowHashCode: proto.Uint32(1234567),
 		Instructions: []*Instruction{
 			&Instruction{
 				Script: &Script{

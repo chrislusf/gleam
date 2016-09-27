@@ -42,11 +42,11 @@ message StartRequest {
 	required ComputeResource resource = 4;
 	required string host = 5;
 	required int32 port = 6;
-	required uint32 hashCode = 7;
 }
 
 message InstructionSet {
 	repeated Instruction instructions = 1;
+	optional uint32 flowHashCode = 2;
 }
 
 message Instruction {
@@ -102,8 +102,8 @@ message PipeAsArgs {
 }
 
 message Script {
-	required DatasetShard InputShard = 1;
-	required DatasetShard OutputShard = 2;
+	required DatasetShardLocation inputShardLocation = 1;
+	required DatasetShardLocation outputShardLocation = 2;
 	required string name = 3;
 	required bool isPipe = 4;
 	required string path = 5;
@@ -115,6 +115,7 @@ message DatasetShard {
 	required string FlowName = 1;
 	required int32 DatasetId = 2;
 	required int32 DatasetShardId = 3;
+	optional uint32 FlowHashCode = 4; //uint32 must be optional
 }
 
 message DatasetShardLocation {

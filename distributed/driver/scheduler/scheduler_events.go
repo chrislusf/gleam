@@ -1,10 +1,9 @@
 package scheduler
 
 import (
-	"fmt"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
+	//"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
@@ -39,20 +38,55 @@ func (s *Scheduler) EventLoop() {
 			go func() {
 				defer event.WaitGroup.Done()
 				tasks := event.TaskGroup.Tasks
+				if tasks[0].Step.IsOnDriverSide {
+					// these should be only one task on the driver side
+					lastTask := tasks[len(tasks)-1]
+					s.localExecute(event.FlowContext, lastTask, event.WaitGroup)
+				} else {
+					if !needsInputFromDriver(tasks[0]) {
+						// wait until inputs are registed
+						s.shardLocator.waitForInputDatasetShardLocations(tasks[0])
+					} else {
+						// do not wait for driver is started
+					}
 
-				// wait until inputs are registed
-				s.shardLocator.waitForInputDatasetShardLocations(tasks[0])
-				// fmt.Printf("inputs of %s is %s\n", tasks[0].Name(), s.allInputLocations(tasks[0]))
+					// fmt.Printf("inputs of %s is %s\n", tasks[0].Name(), s.allInputLocations(tasks[0]))
 
-				pickedServerChan := make(chan market.Supply, 1)
-				s.Market.AddDemand(market.Requirement(taskGroup), event.Bid, pickedServerChan)
+					/*
+						pickedServerChan := make(chan market.Supply, 1)
+						s.Market.AddDemand(market.Requirement(taskGroup), event.Bid, pickedServerChan)
 
-				// get assigned executor location
-				supply := <-pickedServerChan
-				allocation := supply.Object.(resource.Allocation)
-				defer s.Market.ReturnSupply(supply)
+						// get assigned executor location
+						supply := <-pickedServerChan
+						allocation := supply.Object.(resource.Allocation)
+						defer s.Market.ReturnSupply(supply)
+					*/
+					allocation := resource.Allocation{
+						Location: resource.Location{
+							Server: "localhost",
+							Port:   45326,
+						},
+						Allocated: resource.ComputeResource{
+							CPUCount: 1,
+							MemoryMB: 64,
+						},
+					}
 
-				s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
+					if needsInputFromDriver(tasks[0]) {
+						// tell the driver to write to me
+						for _, shard := range tasks[0].InputShards {
+							println("registering", shard.Name(), "at", allocation.Location.URL())
+							s.SetShardLocation(shard, allocation.Location)
+						}
+					}
+
+					for _, shard := range tasks[len(tasks)-1].OutputShards {
+						println("registering", shard.Name(), "at", allocation.Location.URL())
+						s.SetShardLocation(shard, allocation.Location)
+					}
+					println("sending task group started with:", tasks[0].Step.Name)
+					s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
+				}
 			}()
 		case ReleaseTaskGroupInputs:
 			go func() {
@@ -61,8 +95,8 @@ func (s *Scheduler) EventLoop() {
 				for _, taskGroup := range event.TaskGroups {
 					tasks := taskGroup.Tasks
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
-						shardName, location, _ := s.GetShardLocation(shard)
-						request := NewDeleteDatasetShardRequest(shardName)
+						location, _ := s.GetShardLocation(shard)
+						request := NewDeleteDatasetShardRequest(shard.Name())
 						// println("deleting", ds.Name(), "on", location.URL())
 						if err := RemoteDirectExecute(location.URL(), request); err != nil {
 							println("Purging dataset error:", err.Error())
@@ -75,21 +109,20 @@ func (s *Scheduler) EventLoop() {
 	}
 }
 
-func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (string, resource.Location, bool) {
-	shardName := s.GetUniqueShardName(shard)
-	location, found := s.shardLocator.GetShardLocation(shardName)
-	return shardName, location, found
+func needsInputFromDriver(task *flow.Task) bool {
+	for _, shard := range task.InputShards {
+		if shard.Dataset.Step.IsOnDriverSide {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (resource.Location, bool) {
+	location, found := s.shardLocator.GetShardLocation(shard.Name())
+	return location, found
 }
 
 func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc resource.Location) {
-	shardName := s.GetUniqueShardName(shard)
-	s.shardLocator.SetShardLocation(shardName, loc)
-}
-
-func (s *Scheduler) GetUniqueShardName(shard *flow.DatasetShard) string {
-	return GetUniqueShardName(s.Option.ExecutableFileHash, shard)
-}
-
-func GetUniqueShardName(executableFileHash uint32, shard *flow.DatasetShard) string {
-	return fmt.Sprintf("%d-%s", executableFileHash, shard.Name())
+	s.shardLocator.SetShardLocation(shard.Name(), loc)
 }

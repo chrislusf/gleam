@@ -1,8 +1,7 @@
 package main
 
 import (
-	"bufio"
-	"encoding/binary"
+	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
@@ -15,12 +14,16 @@ import (
 	"github.com/chrislusf/gleam/distributed/cmd"
 	exe "github.com/chrislusf/gleam/distributed/executor"
 	"github.com/chrislusf/gleam/distributed/netchan"
+	m "github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
 
 var (
 	app = kingpin.New("gleamd", "distributed gleam, acts as master, agent, or executor")
+
+	master        = app.Command("master", "Start a master process")
+	masterAddress = master.Flag("address", "listening address host:port").Default(":45327").String()
 
 	executor               = app.Command("execute", "Execute an instruction set")
 	executorInstructionSet = app.Command("execute.instructions", "The instruction set")
@@ -30,7 +33,7 @@ var (
 		Dir:          agent.Flag("dir", "agent folder to store computed data").Default(os.TempDir()).String(),
 		Host:         agent.Flag("host", "agent listening host address. Required in 2-way SSL mode.").Default("").String(),
 		Port:         agent.Flag("port", "agent listening port").Default("45326").Int(),
-		Master:       agent.Flag("master", "master address").Default("localhost:8930").String(),
+		Master:       agent.Flag("master", "master address").Default("localhost:45327").String(),
 		DataCenter:   agent.Flag("dataCenter", "data center name").Default("defaultDataCenter").String(),
 		Rack:         agent.Flag("rack", "rack name").Default("defaultRack").String(),
 		MaxExecutor:  agent.Flag("max.executors", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
@@ -52,17 +55,21 @@ func main() {
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
+	case master.FullCommand():
+		println("listening on", *masterAddress)
+		m.RunMaster(nil, *masterAddress)
+
 	case executor.FullCommand():
 
-		reader := bufio.NewReader(os.Stdin)
-		var dataLen int32
-		binary.Read(reader, binary.LittleEndian, dataLen)
-		data := make([]byte, dataLen)
-		instructions := &cmd.InstructionSet{}
-		if err := proto.Unmarshal(data, instructions); err != nil {
+		rawData, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("failed to read stdin: %v", err)
+		}
+		instructions := cmd.InstructionSet{}
+		if err := proto.Unmarshal(rawData, &instructions); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
 		}
-		exe.NewExecutor(nil, instructions).ExecuteInstructionSet(nil)
+		exe.NewExecutor(nil, &instructions).ExecuteInstructionSet(nil)
 
 	case writer.FullCommand():
 

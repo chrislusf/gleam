@@ -22,6 +22,7 @@ type ExecutorOption struct {
 	MemoryMB     *int64
 	CPULevel     *int
 	CleanRestart *bool
+	HashCode     *uint32
 }
 
 type Executor struct {
@@ -50,17 +51,32 @@ func (exe *Executor) ExecuteInstructionSet(finalOutputChan chan []byte) {
 			outputChan = make(chan []byte, 16)
 		}
 		wg.Add(1)
-		go exe.ExecuteInstruction(&wg, inputChan, outputChan, instruction)
+		go exe.ExecuteInstruction(&wg, inputChan, outputChan, instruction, index == 0, index == len(exe.instructions.GetInstructions())-1)
 	}
 
 	wg.Wait()
 }
 
-func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction) {
+func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction, isFirst, isLast bool) {
 	defer wg.Done()
-	defer close(outChan)
+	if outChan != nil {
+		defer close(outChan)
+	}
+
+	println("start executing ...", i.String())
 
 	if i.GetScript() != nil {
+
+		if isFirst {
+			inputLocation := i.GetScript().GetInputShardLocation()
+			wg.Add(1)
+			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
+		}
+		if isLast {
+			outputLocation := i.GetScript().GetInputShardLocation()
+			wg.Add(1)
+			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
+		}
 
 		command := exec.Command(
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
@@ -78,7 +94,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, inputLocation := range i.GetMergeSortedTo().GetInputShardLocations() {
 			wg.Add(1)
 			var inChan chan []byte
-			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Topic(), inChan)
+			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
 			inChans = append(inChans, inChan)
 		}
 		flow.MergeSortedTo(inChans, outChan)
@@ -89,7 +105,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
 			wg.Add(1)
 			var outChan chan []byte
-			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Topic(), outChan)
+			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
 			outChans = append(outChans, outChan)
 		}
 		flow.ScatterPartitions(inChan, outChans)
@@ -103,7 +119,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, inputLocation := range i.GetCollectPartitions().GetInputShardLocations() {
 			wg.Add(1)
 			var inChan chan []byte
-			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Topic(), inChan)
+			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
 			inChans = append(inChans, inChan)
 		}
 		flow.CollectPartitions(inChans, outChan)
@@ -115,9 +131,9 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		leftLocation := jps.GetLeftInputShardLocation()
 		rightLocation := jps.GetRightInputShardLocation()
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Topic(), leftChan)
+		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Topic(), rightChan)
+		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
 
 		flow.JoinPartitionedSorted(leftChan, rightChan, *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan)
 
@@ -128,9 +144,9 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		leftLocation := jps.GetLeftInputShardLocation()
 		rightLocation := jps.GetRightInputShardLocation()
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Topic(), leftChan)
+		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Topic(), rightChan)
+		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
 
 		flow.CoGroupPartitionedSorted(leftChan, rightChan, outChan)
 

@@ -13,7 +13,7 @@ import (
 type Scheduler struct {
 	sync.Mutex
 
-	Leader                 string
+	Master                 string
 	EventChan              chan interface{}
 	Market                 *market.Market
 	Option                 *SchedulerOption
@@ -45,7 +45,7 @@ type SchedulerOption struct {
 
 func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
 	s := &Scheduler{
-		Leader:                 leader,
+		Master:                 leader,
 		EventChan:              make(chan interface{}),
 		Market:                 market.NewMarket(),
 		shardLocator:           NewDatasetShardLocator(option.ExecutableFileHash),

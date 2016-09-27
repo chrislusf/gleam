@@ -4,6 +4,7 @@ package flow
 
 import (
 	"log"
+	"math/rand"
 
 	"github.com/chrislusf/gleam/script"
 )
@@ -14,6 +15,7 @@ func New() (fc *FlowContext) {
 		Scripts: map[string]func() script.Script{
 			"lua": script.NewLuaScript,
 		},
+		HashCode: rand.Uint32(),
 	}
 	return
 }

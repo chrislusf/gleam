@@ -1,10 +1,11 @@
-package plan
+package driver
 
 import (
 	"os"
 	"testing"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -35,13 +36,18 @@ func TestPlanning(t *testing.T) {
       end
 	`).Fprintf(os.Stdout, "%s\t%d + %d = %d\n")
 
-	_, taskGroups := GroupTasks(f)
+	_, taskGroups := plan.GroupTasks(f)
 
 	for _, taskGroup := range taskGroups {
 		println("processing step:", taskGroup.Tasks[0].Step.Name)
-		ins := TranslateToInstructionSet(taskGroup)
-		PrintInstructionSet(ins)
+		// ins := plan.TranslateToInstructionSet(taskGroup)
+		// PrintInstructionSet(ins)
 	}
+
+	println("=============================================================")
+
+	d := NewFlowContextDriver(&driverOption)
+	d.Run(f)
 }
 
 func PrintInstructionSet(instructions *cmd.InstructionSet) {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"time"
 
@@ -25,20 +24,13 @@ func NewStartRequest(path string, dir string, instructions *cmd.InstructionSet, 
 				CpuCount: proto.Int32(int32(allocated.CPUCount)),
 				CpuLevel: proto.Int32(int32(allocated.CPULevel)),
 				Memory:   proto.Int32(int32(allocated.MemoryMB)),
+				GpuCount: proto.Int32(int32(allocated.GPUCount)),
+				GpuLevel: proto.Int32(int32(allocated.GPULevel)),
 			},
-			Host:     proto.String(host),
-			Port:     proto.Int32(port),
-			HashCode: proto.Uint32(0),
+			Host: proto.String(host),
+			Port: proto.Int32(port),
 		},
 	}
-
-	// generate a unique hash code for the request
-	data, err := proto.Marshal(request)
-	if err != nil {
-		log.Fatalf("marshaling start request error: %v", err)
-		return nil
-	}
-	request.StartRequest.HashCode = proto.Uint32(uint32(util.Hash(data)))
 
 	return request
 }

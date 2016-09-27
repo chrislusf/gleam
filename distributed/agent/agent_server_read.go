@@ -12,9 +12,11 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
+	println(name, "waiting to read", name, "...")
+
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(name)
 
-	// println(name, "start reading from:", offset)
+	println(name, "start reading ...")
 
 	var offset int64
 
@@ -57,4 +59,5 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
 	}
 
+	println(name, "finish reading ...")
 }

@@ -12,7 +12,7 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 
 	dsStore := as.storageBackend.CreateNamedDatasetShard(name)
 
-	// println(name, "start writing.")
+	println(name, "start writing.")
 
 	for {
 		message, err := util.ReadMessage(r)
@@ -26,6 +26,7 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 		}
 	}
 
+	println(name, "finish writing.")
 	util.WriteEOFMessage(dsStore)
 }
 

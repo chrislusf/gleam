@@ -12,6 +12,8 @@ type ComputeResource struct {
 	CPUCount int   `json:"cpuCount,omitempty"`
 	CPULevel int   `json:"cpuLevel,omitempty"` // higher number means higher compute power
 	MemoryMB int64 `json:"memoryMB,omitempty"`
+	GPUCount int   `json:"cpuCount,omitempty"`
+	GPULevel int   `json:"cpuLevel,omitempty"` // higher number means higher compute power
 }
 
 func (a ComputeResource) String() string {

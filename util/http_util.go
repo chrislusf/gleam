@@ -1,7 +1,6 @@
 package util
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,18 +11,12 @@ import (
 var (
 	client       *http.Client
 	Transport    *http.Transport
-	SchemePrefix string
+	SchemePrefix = "http://"
 )
 
-func SetupHttpClient(tlsConfig *tls.Config) {
-	if tlsConfig == nil {
-		SchemePrefix = "http://"
-	} else {
-		SchemePrefix = "https://"
-	}
+func init() {
 	Transport = &http.Transport{
 		MaxIdleConnsPerHost: 1024,
-		TLSClientConfig:     tlsConfig,
 	}
 	client = &http.Client{Transport: Transport}
 }

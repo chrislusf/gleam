@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"bytes"
+	"fmt"
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/resource"
@@ -10,7 +11,6 @@ import (
 
 type DatasetShardLocator struct {
 	sync.Mutex
-	executableFileHash        uint32
 	datasetShard2Location     map[string]resource.Location
 	datasetShard2LocationLock sync.Mutex
 	waitForAllInputs          *sync.Cond
@@ -18,7 +18,6 @@ type DatasetShardLocator struct {
 
 func NewDatasetShardLocator(executableFileHash uint32) *DatasetShardLocator {
 	l := &DatasetShardLocator{
-		executableFileHash:    executableFileHash,
 		datasetShard2Location: make(map[string]resource.Location),
 	}
 	l.waitForAllInputs = sync.NewCond(l)
@@ -44,14 +43,13 @@ func (l *DatasetShardLocator) SetShardLocation(name string, location resource.Lo
 	l.waitForAllInputs.Broadcast()
 }
 
-func (l *DatasetShardLocator) allInputsAreRegistered(task *flow.Task) bool {
+func (l *DatasetShardLocator) isDatasetShardRegistered(shard *flow.DatasetShard) bool {
 
-	for _, input := range task.InputShards {
-		if _, hasValue := l.GetShardLocation(GetUniqueShardName(l.executableFileHash, input)); !hasValue {
-			// fmt.Printf("%s's input %s is not ready\n", task.Name(), input.Name())
-			return false
-		}
+	if _, hasValue := l.GetShardLocation(shard.Name()); !hasValue {
+		fmt.Printf("%s's waiting for %s, but it is not ready\n", shard.Dataset.Step.Name, shard.Name())
+		return false
 	}
+	fmt.Printf("%s knows %s is ready\n", shard.Dataset.Step.Name, shard.Name())
 	return true
 }
 
@@ -59,8 +57,21 @@ func (l *DatasetShardLocator) waitForInputDatasetShardLocations(task *flow.Task)
 	l.Lock()
 	defer l.Unlock()
 
-	for !l.allInputsAreRegistered(task) {
-		l.waitForAllInputs.Wait()
+	for _, input := range task.InputShards {
+		for !l.isDatasetShardRegistered(input) {
+			l.waitForAllInputs.Wait()
+		}
+	}
+}
+
+func (l *DatasetShardLocator) waitForOutputDatasetShardLocations(task *flow.Task) {
+	l.Lock()
+	defer l.Unlock()
+
+	for _, output := range task.OutputShards {
+		for !l.isDatasetShardRegistered(output) {
+			l.waitForAllInputs.Wait()
+		}
 	}
 }
 
@@ -70,7 +81,7 @@ func (l *DatasetShardLocator) allInputLocations(task *flow.Task) string {
 
 	var buf bytes.Buffer
 	for i, input := range task.InputShards {
-		name := GetUniqueShardName(l.executableFileHash, input)
+		name := input.Name()
 		location, hasValue := l.GetShardLocation(name)
 		if !hasValue {
 			panic("hmmm, we just checked all inputs are registered!")

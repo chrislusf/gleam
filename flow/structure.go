@@ -37,6 +37,7 @@ type FlowContext struct {
 	Scripts        map[string]func() script.Script
 	Steps          []*Step
 	Datasets       []*Dataset
+	HashCode       uint32
 }
 
 type Dataset struct {
