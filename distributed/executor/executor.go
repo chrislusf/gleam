@@ -39,19 +39,17 @@ func NewExecutor(option *ExecutorOption, instructions *cmd.InstructionSet) *Exec
 	}
 }
 
-func (exe *Executor) ExecuteInstructionSet(finalOutputChan chan []byte) {
+func (exe *Executor) ExecuteInstructionSet() {
 	var wg sync.WaitGroup
 
+	prevOutputChan := make(chan []byte, 16)
 	var outputChan chan []byte
 	for index, instruction := range exe.instructions.GetInstructions() {
-		inputChan := outputChan
-		if index == len(exe.instructions.GetInstructions())-1 {
-			outputChan = finalOutputChan
-		} else {
-			outputChan = make(chan []byte, 16)
-		}
+		inputChan := prevOutputChan
+		outputChan = make(chan []byte, 16)
 		wg.Add(1)
 		go exe.ExecuteInstruction(&wg, inputChan, outputChan, instruction, index == 0, index == len(exe.instructions.GetInstructions())-1)
+		prevOutputChan = outputChan
 	}
 
 	wg.Wait()
@@ -63,7 +61,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		defer close(outChan)
 	}
 
-	println("start executing ...", i.String())
+	println("start executing ...", inChan == nil, i.String())
 
 	if i.GetScript() != nil {
 
@@ -73,8 +71,9 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
 		}
 		if isLast {
-			outputLocation := i.GetScript().GetInputShardLocation()
+			outputLocation := i.GetScript().GetOutputShardLocation()
 			wg.Add(1)
+			println("script executor going to write to", outputLocation.GetShard().Name())
 			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
 		}
 
@@ -105,6 +104,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
 			wg.Add(1)
 			var outChan chan []byte
+			println("partitioner executor going to write to", outputLocation.GetShard().Name())
 			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
 			outChans = append(outChans, outChan)
 		}

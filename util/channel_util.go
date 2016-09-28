@@ -112,7 +112,7 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch c
 			break // this is not really correct, but stop anyway
 		}
 		// this is output from FlatMap to the output
-		println(name + " reader -> chan output data:" + string(data))
+		// println(name + " reader -> chan output data:" + string(data))
 		ch <- data
 	}
 }

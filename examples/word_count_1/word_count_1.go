@@ -11,7 +11,7 @@ import (
 func main() {
 
 	luaFlow := flow.New()
-	outChan := luaFlow.TextFile("/etc/passwd").FlatMap(`
+	luaFlow.TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end
@@ -23,18 +23,18 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Output()
-
-	go flow.RunFlowContextSync(luaFlow)
-
-	var word string
-	var count int
-	for bytes := range outChan {
-		if err := util.DecodeRowTo(bytes, &word, &count); err != nil {
-			fmt.Printf("decode error: %v", err)
-			break
+	`).Output(func(inChan chan []byte) {
+		var word string
+		var count int
+		for bytes := range inChan {
+			if err := util.DecodeRowTo(bytes, &word, &count); err != nil {
+				fmt.Printf("decode error: %v", err)
+				break
+			}
+			fmt.Printf("%s\t%d\n", word, count)
 		}
-		fmt.Printf("%s\t%d\n", word, count)
-	}
+	})
+
+	flow.RunFlowContextSync(luaFlow)
 
 }

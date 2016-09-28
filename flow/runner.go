@@ -21,10 +21,22 @@ func RunFlowContext(wg *sync.WaitGroup, fc *FlowContext) {
 
 	on_interrupt.OnInterrupt(fc.OnInterrupt, nil)
 
+	/*
+		for _, ds := range fc.Datasets {
+			if ds.IsFinal() {
+				wg.Add(1)
+				go func(ds *Dataset) {
+					RunDataset(wg, ds)
+				}(ds)
+			}
+		}
+	*/
 	for _, step := range fc.Steps {
 		if step.OutputDataset == nil {
 			wg.Add(1)
-			go RunStep(wg, step)
+			go func(step *Step) {
+				RunStep(wg, step)
+			}(step)
 		}
 	}
 }
@@ -40,11 +52,13 @@ func RunDataset(wg *sync.WaitGroup, d *Dataset) {
 
 	for _, shard := range d.Shards {
 		wg.Add(1)
-		go RunDatasetShard(wg, shard)
+		go func(shard *DatasetShard) {
+			RunDatasetShard(wg, shard)
+		}(shard)
 	}
 
 	wg.Add(1)
-	go RunStep(wg, d.Step)
+	RunStep(wg, d.Step)
 }
 
 func RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
@@ -67,12 +81,16 @@ func RunStep(wg *sync.WaitGroup, step *Step) {
 
 	for _, task := range step.Tasks {
 		wg.Add(1)
-		go RunTask(wg, task)
+		go func(task *Task) {
+			RunTask(wg, task)
+		}(task)
 	}
 
 	for _, ds := range step.InputDatasets {
 		wg.Add(1)
-		go RunDataset(wg, ds)
+		go func(ds *Dataset) {
+			RunDataset(wg, ds)
+		}(ds)
 	}
 }
 

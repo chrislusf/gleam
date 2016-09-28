@@ -9,7 +9,36 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
-func TestPlanning(t *testing.T) {
+func TestInstructionSet(t *testing.T) {
+
+	f := flow.New().Script("lua", `
+	function splitter(line)
+        return line:gmatch("%w+")
+    end
+    function parseUniqDashC(line)
+      line = line:gsub("^%s*", "")
+      index = string.find(line, " ")
+      return line:sub(index+1), tonumber(line:sub(1,index-1))
+    end
+	`)
+
+	f.TextFile(
+		"../../flow/dataset_map.go",
+	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n")
+
+	_, taskGroups := plan.GroupTasks(f)
+
+	for _, taskGroup := range taskGroups {
+		println("processing step:", taskGroup.Tasks[0].Step.Name)
+	}
+
+	println("=============================================================")
+
+	d := NewFlowContextDriver(&driverOption)
+	d.Run(f)
+}
+
+func xTestPlanning(t *testing.T) {
 
 	f := flow.New().Script("lua", `
 	function splitter(line)

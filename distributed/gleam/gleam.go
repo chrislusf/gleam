@@ -69,7 +69,7 @@ func main() {
 		if err := proto.Unmarshal(rawData, &instructions); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
 		}
-		exe.NewExecutor(nil, &instructions).ExecuteInstructionSet(nil)
+		exe.NewExecutor(nil, &instructions).ExecuteInstructionSet()
 
 	case writer.FullCommand():
 

@@ -20,9 +20,9 @@ func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 	step.Function = func(task *Task) {
 		// println("running source task...")
 		for _, shard := range task.OutputShards {
-			println("writing to source output channel for shard", shard.Name(), shard.IncomingChan)
+			// println("writing to source output channel for shard", shard.Name(), shard.IncomingChan)
 			f(shard.IncomingChan)
-			println("closing source output channel for shard", shard.Name(), shard.IncomingChan)
+			// println("closing source output channel for shard", shard.Name(), shard.IncomingChan)
 			close(shard.IncomingChan)
 		}
 	}

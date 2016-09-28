@@ -5,17 +5,20 @@ package flow
 import (
 	"log"
 	"math/rand"
+	"time"
 
 	"github.com/chrislusf/gleam/script"
 )
 
 func New() (fc *FlowContext) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	fc = &FlowContext{
 		PrevScriptType: "lua",
 		Scripts: map[string]func() script.Script{
 			"lua": script.NewLuaScript,
 		},
-		HashCode: rand.Uint32(),
+		HashCode: r.Uint32(),
 	}
 	return
 }

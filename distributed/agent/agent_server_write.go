@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io"
+	"log"
 	"net"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
@@ -14,6 +15,8 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 
 	println(name, "start writing.")
 
+	var count int64
+
 	for {
 		message, err := util.ReadMessage(r)
 		if err == io.EOF {
@@ -21,12 +24,15 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 			break
 		}
 		if err == nil {
+			count += int64(len(message))
 			util.WriteMessage(dsStore, message)
 			// println("agent recv:", string(message.Bytes()))
+		} else {
+			log.Printf("Failed to read message: %v", err)
 		}
 	}
 
-	println(name, "finish writing.")
+	println(name, "finish writing data", count, "bytes")
 	util.WriteEOFMessage(dsStore)
 }
 

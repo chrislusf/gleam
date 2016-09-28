@@ -12,7 +12,7 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
-	println(name, "waiting to read", name, "...")
+	println(name, "is waited to read")
 
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(name)
 
@@ -21,6 +21,8 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 	var offset int64
 
 	buf := make([]byte, 4)
+
+	var count int64
 
 	// loop for every read
 	for {
@@ -57,7 +59,9 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
 		util.WriteMessage(conn, messageBytes)
 
+		count += int64(size)
+
 	}
 
-	println(name, "finish reading ...")
+	println(name, "finish reading", count, "bytes")
 }

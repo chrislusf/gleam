@@ -9,32 +9,32 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (d *Dataset) Output() (out chan []byte) {
-	out = make(chan []byte)
+func (d *Dataset) Output(f func(chan []byte)) {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
 	step.Function = func(task *Task) {
-		var channels []chan []byte
+		var wg sync.WaitGroup
 		for _, shard := range task.InputShards {
-			channels = append(channels, shard.OutgoingChans...)
+			for _, c := range shard.OutgoingChans {
+				wg.Add(1)
+				go func(c chan []byte) {
+					defer wg.Done()
+					f(c)
+				}(c)
+			}
 		}
-		util.MergeChannel(channels, out)
+		wg.Wait()
 	}
-	return
 }
 
 func (d *Dataset) Fprintf(writer io.Writer, format string) {
-	inChan := d.Output()
+	fn := func(inChan chan []byte) {
+		util.Fprintf(inChan, writer, format)
+	}
+	d.Output(fn)
 
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		util.Fprintf(inChan, writer, format)
-	}()
-
 	wg.Add(1)
 	RunFlowContext(&wg, d.FlowContext)
 
@@ -42,21 +42,17 @@ func (d *Dataset) Fprintf(writer io.Writer, format string) {
 }
 
 func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
-	inChan := d.Output()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	fn := func(inChan chan []byte) {
 		for encodedBytes := range inChan {
 			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				continue
 			}
 		}
-	}()
+	}
+	d.Output(fn)
 
+	var wg sync.WaitGroup
 	wg.Add(1)
 	RunFlowContext(&wg, d.FlowContext)
 
