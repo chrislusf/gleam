@@ -31,8 +31,8 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	if task.Step.FunctionType == flow.TypeLocalSort {
 		return &cmd.Instruction{
 			LocalSort: &cmd.LocalSort{
-				InputShard:  flowDatasetShardToCmdDatasetShard(task.InputShards[0]),
-				OutputShard: flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 			},
 		}
 	}
@@ -40,9 +40,9 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	if task.Step.FunctionType == flow.TypePipeAsArgs {
 		return &cmd.Instruction{
 			PipeAsArgs: &cmd.PipeAsArgs{
-				InputShard:  flowDatasetShardToCmdDatasetShard(task.InputShards[0]),
-				OutputShard: flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
-				Code:        proto.String(task.Step.Params["code"].(string)),
+				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				Code:                proto.String(task.Step.Params["code"].(string)),
 			},
 		}
 	}
@@ -51,7 +51,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		return &cmd.Instruction{
 			MergeSortedTo: &cmd.MergeSortedTo{
 				InputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.InputShards),
-				OutputShard:         flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 			},
 		}
 	}
@@ -61,7 +61,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			JoinPartitionedSorted: &cmd.JoinPartitionedSorted{
 				LeftInputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				RightInputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[1]),
-				OutputShard:             flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				OutputShardLocation:     flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 				IsLeftOuterJoin:         proto.Bool(false),
 				IsRightOuterJoin:        proto.Bool(false),
 			},
@@ -73,7 +73,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			CoGroupPartitionedSorted: &cmd.CoGroupPartitionedSorted{
 				LeftInputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				RightInputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[1]),
-				OutputShard:             flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				OutputShardLocation:     flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 			},
 		}
 	}
@@ -82,7 +82,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		return &cmd.Instruction{
 			CollectPartitions: &cmd.CollectPartitions{
 				InputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.InputShards),
-				OutputShard:         flowDatasetShardToCmdDatasetShard(task.OutputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 			},
 		}
 	}
@@ -90,7 +90,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	if task.Step.FunctionType == flow.TypeScatterPartitions {
 		return &cmd.Instruction{
 			ScatterPartitions: &cmd.ScatterPartitions{
-				InputShard:           flowDatasetShardToCmdDatasetShard(task.InputShards[0]),
+				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
 				ShardCount:           proto.Int32(task.Step.Params["shardCount"].(int32)),
 			},

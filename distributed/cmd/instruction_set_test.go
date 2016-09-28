@@ -8,59 +8,44 @@ import (
 
 func TestEncodingDecoding(t *testing.T) {
 
+	oneDatasetShardLocation := &DatasetShardLocation{
+		Shard: &DatasetShard{
+			FlowName:       proto.String("test"),
+			DatasetId:      proto.Int(1),
+			DatasetShardId: proto.Int(0),
+		},
+		Host: proto.String("localhost"),
+		Port: proto.Int32(45326),
+	}
 	instructions := &InstructionSet{
 		FlowHashCode: proto.Uint32(1234567),
 		Instructions: []*Instruction{
 			&Instruction{
 				Script: &Script{
-					InputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(1),
-						DatasetShardId: proto.Int(0),
-					},
-					OutputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(2),
-						DatasetShardId: proto.Int(0),
-					},
-					Name:   proto.String("map1"),
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("cat"),
-					Args:   []string{"/etc/passwd"},
+					InputShardLocation:  oneDatasetShardLocation,
+					OutputShardLocation: oneDatasetShardLocation,
+					Name:                proto.String("map1"),
+					IsPipe:              proto.Bool(true),
+					Path:                proto.String("cat"),
+					Args:                []string{"/etc/passwd"},
 				},
 			},
 			&Instruction{
 				Script: &Script{
-					InputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(2),
-						DatasetShardId: proto.Int(0),
-					},
-					OutputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(3),
-						DatasetShardId: proto.Int(0),
-					},
-					Name:   proto.String("map2"),
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("sort"),
+					InputShardLocation:  oneDatasetShardLocation,
+					OutputShardLocation: oneDatasetShardLocation,
+					Name:                proto.String("map2"),
+					IsPipe:              proto.Bool(true),
+					Path:                proto.String("sort"),
 				},
 			},
 			&Instruction{
 				Script: &Script{
-					InputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(3),
-						DatasetShardId: proto.Int(0),
-					},
-					OutputShard: &DatasetShard{
-						FlowName:       proto.String("test"),
-						DatasetId:      proto.Int(4),
-						DatasetShardId: proto.Int(0),
-					},
-					Name:   proto.String("map4"),
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("cat"),
+					InputShardLocation:  oneDatasetShardLocation,
+					OutputShardLocation: oneDatasetShardLocation,
+					Name:                proto.String("map4"),
+					IsPipe:              proto.Bool(true),
+					Path:                proto.String("cat"),
 				},
 			},
 		},

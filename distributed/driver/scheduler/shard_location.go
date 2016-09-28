@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"bytes"
-	"fmt"
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/resource"
@@ -46,10 +45,10 @@ func (l *DatasetShardLocator) SetShardLocation(name string, location resource.Lo
 func (l *DatasetShardLocator) isDatasetShardRegistered(shard *flow.DatasetShard) bool {
 
 	if _, hasValue := l.GetShardLocation(shard.Name()); !hasValue {
-		fmt.Printf("%s's waiting for %s, but it is not ready\n", shard.Dataset.Step.Name, shard.Name())
+		// fmt.Printf("%s's waiting for %s, but it is not ready\n", shard.Dataset.Step.Name, shard.Name())
 		return false
 	}
-	fmt.Printf("%s knows %s is ready\n", shard.Dataset.Step.Name, shard.Name())
+	// fmt.Printf("%s knows %s is ready\n", shard.Dataset.Step.Name, shard.Name())
 	return true
 }
 

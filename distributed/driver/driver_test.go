@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
-	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -26,19 +25,13 @@ func TestInstructionSet(t *testing.T) {
 		"../../flow/dataset_map.go",
 	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n")
 
-	_, taskGroups := plan.GroupTasks(f)
-
-	for _, taskGroup := range taskGroups {
-		println("processing step:", taskGroup.Tasks[0].Step.Name)
-	}
-
 	println("=============================================================")
 
 	d := NewFlowContextDriver(&driverOption)
 	d.Run(f)
 }
 
-func xTestPlanning(t *testing.T) {
+func TestPlanning(t *testing.T) {
 
 	f := flow.New().Script("lua", `
 	function splitter(line)
@@ -64,14 +57,6 @@ func xTestPlanning(t *testing.T) {
 	    return word, leftCount, rightCount, leftCount + rightCount
       end
 	`).Fprintf(os.Stdout, "%s\t%d + %d = %d\n")
-
-	_, taskGroups := plan.GroupTasks(f)
-
-	for _, taskGroup := range taskGroups {
-		println("processing step:", taskGroup.Tasks[0].Step.Name)
-		// ins := plan.TranslateToInstructionSet(taskGroup)
-		// PrintInstructionSet(ins)
-	}
 
 	println("=============================================================")
 

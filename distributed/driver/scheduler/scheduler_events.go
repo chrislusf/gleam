@@ -75,16 +75,16 @@ func (s *Scheduler) EventLoop() {
 					if needsInputFromDriver(tasks[0]) {
 						// tell the driver to write to me
 						for _, shard := range tasks[0].InputShards {
-							println("registering", shard.Name(), "at", allocation.Location.URL())
+							// println("registering", shard.Name(), "at", allocation.Location.URL())
 							s.SetShardLocation(shard, allocation.Location)
 						}
 					}
 
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
-						println("registering", shard.Name(), "at", allocation.Location.URL())
+						// println("registering", shard.Name(), "at", allocation.Location.URL())
 						s.SetShardLocation(shard, allocation.Location)
 					}
-					println("sending task group started with:", tasks[0].Step.Name)
+					// println("sending task group started with:", tasks[0].Step.Name)
 					s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
 				}
 			}()

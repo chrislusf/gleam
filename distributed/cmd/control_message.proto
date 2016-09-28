@@ -61,30 +61,30 @@ message Instruction {
 }
 
 message ScatterPartitions {
-	required DatasetShard InputShard = 1;
+	required DatasetShardLocation inputShardLocation = 1;
 	repeated DatasetShardLocation OutputShardLocations = 2;
 	required int32 shardCount = 3;
 }
 
 message CollectPartitions {
 	repeated DatasetShardLocation inputShardLocations = 1;
-	required DatasetShard OutputShard = 2;
+	required DatasetShardLocation outputShardLocation = 2;
 }
 
 message LocalSort {
-	required DatasetShard InputShard = 1;
-	required DatasetShard OutputShard = 2;
+	required DatasetShardLocation inputShardLocation = 1;
+	required DatasetShardLocation outputShardLocation = 2;
 }
 
 message MergeSortedTo {
 	repeated DatasetShardLocation inputShardLocations = 1;
-	required DatasetShard OutputShard = 2;
+	required DatasetShardLocation outputShardLocation = 2;
 }
 
 message JoinPartitionedSorted {
 	required DatasetShardLocation leftInputShardLocation = 1;
 	required DatasetShardLocation rightInputShardLocation = 2;
-	required DatasetShard OutputShard = 3;
+	required DatasetShardLocation outputShardLocation = 3;
 	required bool isLeftOuterJoin = 4;
 	required bool isRightOuterJoin = 5;
 }
@@ -92,12 +92,12 @@ message JoinPartitionedSorted {
 message CoGroupPartitionedSorted {
 	required DatasetShardLocation leftInputShardLocation = 1;
 	required DatasetShardLocation rightInputShardLocation = 2;
-	required DatasetShard OutputShard = 3;
+	required DatasetShardLocation outputShardLocation = 3;
 }
 
 message PipeAsArgs {
-	required DatasetShard InputShard = 1;
-	required DatasetShard OutputShard = 2;
+	required DatasetShardLocation inputShardLocation = 1;
+	required DatasetShardLocation outputShardLocation = 2;
 	required string code = 3;
 }
 

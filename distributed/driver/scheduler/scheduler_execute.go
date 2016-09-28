@@ -36,14 +36,14 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		int32(s.Option.DriverPort),
 	)
 
-	status, isOld := s.getRemoteExecutorStatus(*instructions.FlowHashCode)
+	status, isOld := s.getRemoteExecutorStatus(instructions.HashCode())
 	if isOld {
 		log.Printf("Replacing old request: %v", status)
 	}
 	status.RequestTime = time.Now()
 	status.Allocation = allocation
 	status.Request = request
-	taskGroup.RequestId = *instructions.FlowHashCode
+	taskGroup.RequestId = instructions.HashCode()
 
 	// fmt.Printf("starting on %s: %v\n", allocation.Allocated, request)
 
@@ -64,28 +64,22 @@ func (s *Scheduler) localExecute(flowContext *flow.FlowContext, task *flow.Task,
 func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
 
-	println("starting source:", task.Step.Name)
 	for _, shard := range task.OutputShards {
 		location, _ := s.GetShardLocation(shard)
 		shard.IncomingChan = make(chan []byte, 16)
 		wg.Add(1)
 		go func() {
-			println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
-			println("local executor going to write to", shard.Name())
 			if err := netchan.DialWriteChannel(wg, location.URL(), shard.Name(), shard.IncomingChan); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
-			println("completed:", task.Step.Name, "writing.")
 		}()
 	}
 	task.Step.Function(task)
-	println("completed:", task.Step.Name)
 }
 
 func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
-	println("starting output:", task.Step.Name)
 	for _, shard := range task.InputShards {
 		shard.OutgoingChans = make([]chan []byte, 0)
 		location, _ := s.GetShardLocation(shard)
@@ -93,14 +87,11 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 		shard.OutgoingChans = append(shard.OutgoingChans, outChan)
 		wg.Add(1)
 		go func() {
-			println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", outChan)
+			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", outChan)
 			if err := netchan.DialReadChannel(wg, location.URL(), shard.Name(), outChan); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()
 	}
-	// FIXME Need to output channel to the task
-	println("input chan:", task.InputShards[0].OutgoingChans[0])
 	task.Step.Function(task)
-	println("completed:", task.Step.Name)
 }
