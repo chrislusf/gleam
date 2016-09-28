@@ -66,7 +66,6 @@ func (as *AgentServer) handleStart(conn net.Conn,
 		reply.Pid = proto.Int32(int32(cmd.Process.Pid))
 	}
 	stat.Process = cmd.Process
-	println("Process id:", cmd.Process.Pid)
 
 	// send instruction set to executor
 	cmdMessageBytes, err := proto.Marshal(startRequest.GetInstructions())

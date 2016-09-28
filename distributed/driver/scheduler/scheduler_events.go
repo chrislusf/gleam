@@ -3,7 +3,7 @@ package scheduler
 import (
 	"sync"
 
-	//"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
+	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
@@ -52,25 +52,25 @@ func (s *Scheduler) EventLoop() {
 
 					// fmt.Printf("inputs of %s is %s\n", tasks[0].Name(), s.allInputLocations(tasks[0]))
 
-					/*
-						pickedServerChan := make(chan market.Supply, 1)
-						s.Market.AddDemand(market.Requirement(taskGroup), event.Bid, pickedServerChan)
+					pickedServerChan := make(chan market.Supply, 1)
+					s.Market.AddDemand(market.Requirement(taskGroup), event.Bid, pickedServerChan)
 
-						// get assigned executor location
-						supply := <-pickedServerChan
-						allocation := supply.Object.(resource.Allocation)
-						defer s.Market.ReturnSupply(supply)
+					// get assigned executor location
+					supply := <-pickedServerChan
+					allocation := supply.Object.(resource.Allocation)
+					defer s.Market.ReturnSupply(supply)
+					/*
+						allocation := resource.Allocation{
+							Location: resource.Location{
+								Server: "localhost",
+								Port:   45326,
+							},
+							Allocated: resource.ComputeResource{
+								CPUCount: 1,
+								MemoryMB: 64,
+							},
+						}
 					*/
-					allocation := resource.Allocation{
-						Location: resource.Location{
-							Server: "localhost",
-							Port:   45326,
-						},
-						Allocated: resource.ComputeResource{
-							CPUCount: 1,
-							MemoryMB: 64,
-						},
-					}
 
 					if needsInputFromDriver(tasks[0]) {
 						// tell the driver to write to me

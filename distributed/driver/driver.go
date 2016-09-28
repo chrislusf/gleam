@@ -28,7 +28,8 @@ type DriverOption struct {
 var driverOption DriverOption
 
 func init() {
-	driverOption.Master = "localhost:45237"
+	// TODO fix resource allocation
+	driverOption.Master = "localhost:45327"
 	driverOption.TaskMemoryMB = 64
 	driverOption.FlowBid = 100.0
 	driverOption.Host = "localhost"

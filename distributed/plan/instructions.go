@@ -137,7 +137,8 @@ func flowDatasetShardsToCmdDatasetShardLocations(shards []*flow.DatasetShard) (r
 func flowDatasetShardsToCmdDatasetShardLocation(shard *flow.DatasetShard) *cmd.DatasetShardLocation {
 	return &cmd.DatasetShardLocation{
 		Shard: flowDatasetShardToCmdDatasetShard(shard),
-		Host:  proto.String("localhost"),
-		Port:  proto.Int32(45326),
+		// TODO fix resource allocation
+		Host: proto.String("localhost"),
+		Port: proto.Int32(45326),
 	}
 }
