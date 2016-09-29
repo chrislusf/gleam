@@ -15,7 +15,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewStartRequest(path string, dir string, instructions *cmd.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *cmd.ControlMessage {
+func NewStartRequest(dir string, instructions *cmd.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *cmd.ControlMessage {
 	request := &cmd.ControlMessage{
 		StartRequest: &cmd.StartRequest{
 			Instructions: instructions,

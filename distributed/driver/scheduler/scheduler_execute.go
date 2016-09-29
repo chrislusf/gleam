@@ -10,7 +10,6 @@ import (
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
-	"github.com/kardianos/osext"
 )
 
 func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup, allocation resource.Allocation, wg *sync.WaitGroup) {
@@ -23,11 +22,21 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		args = append(args, arg)
 	}
 	instructions := plan.TranslateToInstructionSet(taskGroup)
+	firstInstruction := instructions.GetInstructions()[0]
+	firstTask := taskGroup.Tasks[0]
+	var inputLocations []resource.Location
+	for _, shard := range firstTask.InputShards {
+		loc, hasLocation := s.GetShardLocation(shard)
+		if !hasLocation {
+			log.Printf("The shard is missing?: %s", shard.Name())
+			continue
+		}
+		inputLocations = append(inputLocations, loc)
+	}
+	firstInstruction.SetInputLocations(inputLocations...)
+
 	instructions.FlowHashCode = &flowContext.HashCode
-	executableFullFileName, _ := osext.Executable()
 	request := NewStartRequest(
-		executableFullFileName,
-		// filepath.Join(".", filepath.Base(os.Args[0])),
 		s.Option.Module,
 		instructions,
 		allocation.Allocated,

@@ -34,11 +34,7 @@ func (d *Dataset) Fprintf(writer io.Writer, format string) {
 	}
 	d.Output(fn)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	RunFlowContext(&wg, d.FlowContext)
-
-	wg.Wait()
+	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
 }
 
 func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
@@ -52,9 +48,5 @@ func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
 	}
 	d.Output(fn)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	RunFlowContext(&wg, d.FlowContext)
-
-	wg.Wait()
+	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
 }

@@ -19,8 +19,14 @@ func New() (fc *FlowContext) {
 			"lua": script.NewLuaScript,
 		},
 		HashCode: r.Uint32(),
+		Runner:   &Local,
 	}
 	return
+}
+
+func (fc *FlowContext) SetRunner(runner FlowRunner) *FlowContext {
+	fc.Runner = runner
+	return fc
 }
 
 func (fc *FlowContext) Script(scriptType string, scriptParts ...string) *FlowContext {

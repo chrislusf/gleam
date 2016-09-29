@@ -92,7 +92,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			ScatterPartitions: &cmd.ScatterPartitions{
 				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
-				ShardCount:           proto.Int32(task.Step.Params["shardCount"].(int32)),
+				ShardCount:           proto.Int32(int32(task.Step.Params["shardCount"].(int))),
 			},
 		}
 	}

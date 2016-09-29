@@ -1,7 +1,9 @@
 package driver
 
 import (
+	"log"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/chrislusf/gleam/distributed/cmd"
@@ -10,30 +12,35 @@ import (
 
 func TestInstructionSet(t *testing.T) {
 
-	f := flow.New().Script("lua", `
-	function splitter(line)
+	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-03-*.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	f := flow.New().SetRunner(Distributed)
+	f.Strings(fileNames).Partition(3).PipeAsArgs("ls -l $1").FlatMap(`
+      function(line)
         return line:gmatch("%w+")
-    end
-    function parseUniqDashC(line)
-      line = line:gsub("^%s*", "")
-      index = string.find(line, " ")
-      return line:sub(index+1), tonumber(line:sub(1,index-1))
-    end
-	`)
+      end
+    `).Map(`
+      function(word)
+        return word, 1
+      end
+    `).ReduceByKey(`
+      function(x, y)
+        return x + y
+      end
+    `).Map(`
+      function(k, v)
+        return k .. " " .. v
+      end
+    `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n")
 
-	f.TextFile(
-		"../../flow/dataset_map.go",
-	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n")
-
-	println("=============================================================")
-
-	d := NewFlowContextDriver(&driverOption)
-	d.Run(f)
 }
 
 func TestPlanning(t *testing.T) {
 
-	f := flow.New().Script("lua", `
+	f := flow.New().SetRunner(Distributed).Script("lua", `
 	function splitter(line)
         return line:gmatch("%w+")
     end
@@ -58,14 +65,4 @@ func TestPlanning(t *testing.T) {
       end
 	`).Fprintf(os.Stdout, "%s\t%d + %d = %d\n")
 
-	println("=============================================================")
-
-	d := NewFlowContextDriver(&driverOption)
-	d.Run(f)
-}
-
-func PrintInstructionSet(instructions *cmd.InstructionSet) {
-	for _, ins := range instructions.GetInstructions() {
-		println(ins.String())
-	}
 }

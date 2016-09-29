@@ -38,6 +38,7 @@ type FlowContext struct {
 	Steps          []*Step
 	Datasets       []*Dataset
 	HashCode       uint32
+	Runner         FlowRunner
 }
 
 type Dataset struct {

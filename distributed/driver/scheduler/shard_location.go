@@ -15,7 +15,7 @@ type DatasetShardLocator struct {
 	waitForAllInputs          *sync.Cond
 }
 
-func NewDatasetShardLocator(executableFileHash uint32) *DatasetShardLocator {
+func NewDatasetShardLocator() *DatasetShardLocator {
 	l := &DatasetShardLocator{
 		datasetShard2Location: make(map[string]resource.Location),
 	}

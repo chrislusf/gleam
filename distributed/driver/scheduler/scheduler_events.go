@@ -46,8 +46,6 @@ func (s *Scheduler) EventLoop() {
 					if !needsInputFromDriver(tasks[0]) {
 						// wait until inputs are registed
 						s.shardLocator.waitForInputDatasetShardLocations(tasks[0])
-					} else {
-						// do not wait for driver is started
 					}
 
 					// fmt.Printf("inputs of %s is %s\n", tasks[0].Name(), s.allInputLocations(tasks[0]))

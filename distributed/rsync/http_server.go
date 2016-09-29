@@ -52,14 +52,6 @@ func NewRsyncServer(file string, relatedFiles []string) (*RsyncServer, error) {
 	return rs, nil
 }
 
-func (rs *RsyncServer) ExecutableFileHash() uint32 {
-	if len(rs.fileHashes) == 0 {
-		return 0
-	}
-	hash := rs.fileHashes[0].Hash
-	return hash
-}
-
 func (rs *RsyncServer) listHandler(w http.ResponseWriter, r *http.Request) {
 	util.Json(w, r, http.StatusAccepted, ListFileResult{rs.fileHashes})
 }

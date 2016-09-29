@@ -66,6 +66,7 @@ func connectInputOutput(wg *sync.WaitGroup, inChan, outChan chan []byte, inLocat
 	}
 }
 
+// TODO: refactor this
 func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction, isFirst, isLast bool) {
 	defer wg.Done()
 	if outChan != nil {
@@ -87,6 +88,12 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 
 		flow.LocalSort(inChan, outChan)
 
+	} else if i.GetPipeAsArgs() != nil {
+
+		connectInputOutput(wg, inChan, outChan, i.GetPipeAsArgs().GetInputShardLocation(), i.GetPipeAsArgs().GetOutputShardLocation(), isFirst, isLast)
+
+		flow.PipeAsArgs(inChan, i.GetPipeAsArgs().GetCode(), outChan)
+
 	} else if i.GetMergeSortedTo() != nil {
 
 		var inChans []chan []byte
@@ -105,7 +112,6 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
 			wg.Add(1)
 			outChan := make(chan []byte, 16)
-			println("partitioner executor going to write to", outputLocation.GetShard().Name())
 			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
 			outChans = append(outChans, outChan)
 		}
@@ -155,5 +161,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		connectInputOutput(wg, nil, outChan, nil, i.GetCoGroupPartitionedSorted().GetOutputShardLocation(), isFirst, isLast)
 		flow.CoGroupPartitionedSorted(leftChan, rightChan, outChan)
 
+	} else {
+		panic("what is this? " + i.String())
 	}
 }

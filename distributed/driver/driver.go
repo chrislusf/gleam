@@ -25,18 +25,6 @@ type DriverOption struct {
 	Port         int
 }
 
-var driverOption DriverOption
-
-func init() {
-	// TODO fix resource allocation
-	driverOption.Master = "localhost:45327"
-	driverOption.TaskMemoryMB = 64
-	driverOption.FlowBid = 100.0
-	driverOption.Host = "localhost"
-	driverOption.Port = 0
-
-}
-
 type FlowContextDriver struct {
 	Option *DriverOption
 
@@ -61,20 +49,16 @@ func (fcd *FlowContextDriver) Run(fc *flow.FlowContext) {
 	}
 	rsyncServer.StartRsyncServer(fcd.Option.Host + ":" + strconv.Itoa(fcd.Option.Port))
 
-	driverHost := fcd.Option.Host
-
 	// create thes cheduler
 	sched := scheduler.NewScheduler(
 		fcd.Option.Master,
 		&scheduler.SchedulerOption{
-			DataCenter:         fcd.Option.DataCenter,
-			Rack:               fcd.Option.Rack,
-			TaskMemoryMB:       fcd.Option.TaskMemoryMB,
-			DriverHost:         driverHost,
-			DriverPort:         rsyncServer.Port,
-			Module:             fcd.Option.Module,
-			ExecutableFile:     os.Args[0],
-			ExecutableFileHash: rsyncServer.ExecutableFileHash(),
+			DataCenter:   fcd.Option.DataCenter,
+			Rack:         fcd.Option.Rack,
+			TaskMemoryMB: fcd.Option.TaskMemoryMB,
+			DriverHost:   fcd.Option.Host,
+			DriverPort:   rsyncServer.Port,
+			Module:       fcd.Option.Module,
 		},
 	)
 

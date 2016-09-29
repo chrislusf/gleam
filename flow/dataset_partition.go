@@ -24,6 +24,7 @@ func (d *Dataset) partition_scatter(shardCount int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(len(d.Shards) * shardCount)
 	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
 	step.Name = "Partition_scatter"
+	step.Params["shardCount"] = shardCount
 	step.FunctionType = TypeScatterPartitions
 	step.Function = func(task *Task) {
 		inChan := task.InputShards[0].OutgoingChans[0]

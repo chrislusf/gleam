@@ -33,14 +33,12 @@ type RemoteExecutorStatus struct {
 }
 
 type SchedulerOption struct {
-	DataCenter         string
-	Rack               string
-	TaskMemoryMB       int
-	DriverHost         string
-	DriverPort         int
-	Module             string
-	ExecutableFile     string
-	ExecutableFileHash uint32
+	DataCenter   string
+	Rack         string
+	TaskMemoryMB int
+	DriverHost   string
+	DriverPort   int
+	Module       string
 }
 
 func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
@@ -48,7 +46,7 @@ func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
 		Master:                 leader,
 		EventChan:              make(chan interface{}),
 		Market:                 market.NewMarket(),
-		shardLocator:           NewDatasetShardLocator(option.ExecutableFileHash),
+		shardLocator:           NewDatasetShardLocator(),
 		Option:                 option,
 		RemoteExecutorStatuses: make(map[uint32]*RemoteExecutorStatus),
 	}
