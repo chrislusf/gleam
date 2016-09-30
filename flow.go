@@ -5,10 +5,10 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
-func NewFlow() (fc *flow.FlowContext) {
+func New() (fc *flow.FlowContext) {
 	return flow.New()
 }
 
-func NewDistributedFlow() (fc *flow.FlowContext) {
+func NewDistributed() (fc *flow.FlowContext) {
 	return flow.New().SetRunner(driver.Distributed)
 }

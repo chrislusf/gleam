@@ -121,11 +121,13 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.
 	defer wg.Done()
 	defer writer.Close()
 
+	w := bufio.NewWriterSize(writer, 1024*16)
 	for bytes := range ch {
-		if err := WriteMessage(writer, bytes); err != nil {
+		if err := WriteMessage(w, bytes); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
 		}
 	}
+	w.Flush()
 }
 
 func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, closeOutput bool, errorOutput io.Writer) {
@@ -135,7 +137,9 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 		defer close(ch)
 	}
 
-	scanner := bufio.NewScanner(reader)
+	r := bufio.NewReaderSize(reader, 1024*16)
+
+	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		// fmt.Printf("line input: %s\n", scanner.Text())
 		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
@@ -162,8 +166,11 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 	defer wg.Done()
 	defer writer.Close()
 
-	if err := fprintRowsFromChannel(ch, writer, "\t", "\n"); err != nil {
+	w := bufio.NewWriterSize(writer, 1024*16)
+
+	if err := fprintRowsFromChannel(ch, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}
+	w.Flush()
 }

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	//"bufio"
 	"bytes"
 	"encoding/binary"
 	"io"
@@ -12,11 +13,13 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
-	println(name, "is waited to read")
+	// println(name, "is waited to read")
 
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(name)
 
 	println(name, "start reading ...")
+
+	// writer := bufio.NewWriterSize(conn, 1024*16)
 
 	var offset int64
 
@@ -62,6 +65,8 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 		count += int64(size)
 
 	}
+
+	// writer.Flush()
 
 	println(name, "finish reading", count, "bytes")
 }

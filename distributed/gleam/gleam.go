@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"runtime/pprof"
 	"strconv"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/netchan"
 	m "github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
 	"github.com/chrislusf/gleam/util"
+	"github.com/chrislusf/gleam/util/on_interrupt"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -36,11 +38,13 @@ var (
 		Master:       agent.Flag("master", "master address").Default("localhost:45327").String(),
 		DataCenter:   agent.Flag("dataCenter", "data center name").Default("defaultDataCenter").String(),
 		Rack:         agent.Flag("rack", "rack name").Default("defaultRack").String(),
-		MaxExecutor:  agent.Flag("max.executors", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
-		CPULevel:     agent.Flag("cpu.level", "relative computing power of single cpu core").Default("1").Int(),
-		MemoryMB:     agent.Flag("memory", "memory size in MB").Default("1024").Int64(),
+		MaxExecutor:  agent.Flag("executor.max", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
+		CPULevel:     agent.Flag("executor.cpu.level", "relative computing power of single cpu core").Default("1").Int(),
+		MemoryMB:     agent.Flag("executor.memory", "memory size in MB").Default("1024").Int64(),
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
+		InMemory:     agent.Flag("memory.only", "data do not spill to disk but back pressured").Bool(),
 	}
+	cpuProfile = agent.Flag("cpuprofile", "cpu profile output file").Default("").String()
 
 	writer             = app.Command("write", "Write data to a topic")
 	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
@@ -93,6 +97,23 @@ func main() {
 
 	case agent.FullCommand():
 
+		if *cpuProfile != "" {
+			f, err := os.Create(*cpuProfile)
+			if err != nil {
+				log.Fatal(err)
+			}
+			pprof.StartCPUProfile(f)
+			defer pprof.StopCPUProfile()
+			on_interrupt.OnInterrupt(func() {
+				pprof.StopCPUProfile()
+			}, func() {
+				pprof.StopCPUProfile()
+			})
+		}
+
+		if *agentOption.InMemory {
+			println("running in memory only mode")
+		}
 		agentServer := a.NewAgentServer(agentOption)
 		agentServer.Run()
 	}

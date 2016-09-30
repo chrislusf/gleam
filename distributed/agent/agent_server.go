@@ -32,6 +32,7 @@ type AgentServerOption struct {
 	MemoryMB     *int64
 	CPULevel     *int
 	CleanRestart *bool
+	InMemory     *bool
 }
 
 type AgentServer struct {
@@ -43,6 +44,7 @@ type AgentServer struct {
 	allocatedResource     *resource.ComputeResource
 	allocatedResourceLock sync.Mutex
 	storageBackend        *LocalDatasetShardsManager
+	inMemoryChannels      *LocalDatasetShardsManagerInMemory
 	localExecutorManager  *LocalExecutorManager
 }
 
@@ -55,9 +57,10 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 	option.Dir = &absoluteDir
 
 	as := &AgentServer{
-		Option:         option,
-		Master:         *option.Master,
-		storageBackend: NewLocalDatasetShardsManager(*option.Dir, *option.Port),
+		Option:           option,
+		Master:           *option.Master,
+		storageBackend:   NewLocalDatasetShardsManager(*option.Dir, *option.Port),
+		inMemoryChannels: NewLocalDatasetShardsManagerInMemory(),
 		computeResource: &resource.ComputeResource{
 			CPUCount: *option.MaxExecutor,
 			CPULevel: *option.CPULevel,
@@ -160,11 +163,19 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	command *cmd.ControlMessage) *cmd.ControlMessage {
 	reply := &cmd.ControlMessage{}
 	if command.GetReadRequest() != nil {
-		as.handleReadConnection(conn, *command.ReadRequest.Name)
+		if *as.Option.InMemory {
+			as.handleInMemoryReadConnection(conn, *command.ReadRequest.Name)
+		} else {
+			as.handleReadConnection(conn, *command.ReadRequest.Name)
+		}
 		return nil
 	}
 	if command.GetWriteRequest() != nil {
-		as.handleLocalWriteConnection(conn, *command.WriteRequest.Name)
+		if *as.Option.InMemory {
+			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.Name)
+		} else {
+			as.handleLocalWriteConnection(conn, *command.WriteRequest.Name)
+		}
 		return nil
 	}
 	if command.GetStartRequest() != nil {

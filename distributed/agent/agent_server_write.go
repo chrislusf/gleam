@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"net"
@@ -17,8 +18,10 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, name string)
 
 	var count int64
 
+	r := bufio.NewReaderSize(reader, 1024*16)
+
 	for {
-		message, err := util.ReadMessage(reader)
+		message, err := util.ReadMessage(r)
 		if err == io.EOF {
 			// println("agent recv eof:", string(message.Bytes()))
 			break
