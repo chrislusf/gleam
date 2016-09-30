@@ -9,7 +9,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
+func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, name string) {
 
 	dsStore := as.storageBackend.CreateNamedDatasetShard(name)
 
@@ -18,7 +18,7 @@ func (as *AgentServer) handleLocalWriteConnection(r io.Reader, name string) {
 	var count int64
 
 	for {
-		message, err := util.ReadMessage(r)
+		message, err := util.ReadMessage(reader)
 		if err == io.EOF {
 			// println("agent recv eof:", string(message.Bytes()))
 			break
