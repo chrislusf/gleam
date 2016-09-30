@@ -1,7 +1,7 @@
 package agent
 
 import (
-	//"bufio"
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"io"
@@ -19,7 +19,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
 	println(name, "start reading ...")
 
-	// writer := bufio.NewWriterSize(conn, 1024*16)
+	writer := bufio.NewWriterSize(conn, 1024*16)
 
 	var offset int64
 
@@ -36,14 +36,14 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 				log.Printf("Read size from %s offset %d: %v", name, offset, err)
 			}
 			// println("got problem reading", name, offset, err.Error())
-			return
+			break
 		}
 
 		var size int32
 		binary.Read(bytes.NewReader(buf), binary.LittleEndian, &size)
 		if size < 0 {
 			// size == -1 means EOF
-			return
+			break
 		}
 
 		// println("reading", name, offset, "size:", size)
@@ -56,17 +56,17 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 			if err != io.EOF {
 				log.Printf("Read data from %s offset %d: %v", name, offset, err)
 			}
-			return
+			break
 		}
 		offset += int64(size)
 
-		util.WriteMessage(conn, messageBytes)
+		util.WriteMessage(writer, messageBytes)
 
 		count += int64(size)
 
 	}
 
-	// writer.Flush()
+	writer.Flush()
 
 	println(name, "finish reading", count, "bytes")
 }
