@@ -14,12 +14,11 @@ func main() {
 
 	times := 1024 * 1024 * 10
 
-	testPureGo(times)
 	testLuajit(times)
-	testFlow(times)
-
-	testDistributedGleam(times)
+	testPureGo(times)
 	testLocalGleam(times)
+	testLocalFlow(times)
+	testDistributedGleam(times)
 }
 
 func testDistributedGleam(times int) {
@@ -65,7 +64,7 @@ func testLocalGleam(times int) {
 	fmt.Println()
 }
 
-func testFlow(times int) {
+func testLocalFlow(times int) {
 	startTime := time.Now()
 	ch := make(chan int)
 	go func() {
@@ -94,7 +93,7 @@ func testFlow(times int) {
 func testPureGo(times int) {
 	startTime := time.Now()
 
-	var count int64
+	var count int
 	for i := 0; i < times; i++ {
 		x, y := rand.Float64(), rand.Float64()
 		if x*x+y*y < 1 {
