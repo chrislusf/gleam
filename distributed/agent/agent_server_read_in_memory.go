@@ -15,7 +15,7 @@ func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, c
 
 	var count int64
 
-	writer := bufio.NewWriterSize(conn, 1024*16)
+	writer := bufio.NewWriterSize(conn, util.BUFFER_SIZE)
 
 	// loop for every read
 	for messageBytes := range ch {

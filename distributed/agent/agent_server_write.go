@@ -18,7 +18,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	var count int64
 
-	r := bufio.NewReaderSize(reader, 1024*16)
+	r := bufio.NewReaderSize(reader, util.BUFFER_SIZE)
 
 	for {
 		message, err := util.ReadMessage(r)

@@ -50,6 +50,10 @@ and encode the output, e.g. Source().
 Shell scripts via Pipe should see clear data, so the
 */
 
+const (
+	BUFFER_SIZE = 1024 * 32
+)
+
 // setup asynchronously to merge multiple channels into one channel
 func MergeChannel(cs []chan []byte, out chan []byte) {
 	var wg sync.WaitGroup
@@ -86,10 +90,12 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch c
 		defer close(ch)
 	}
 
+	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+
 	var length int32
 
 	for {
-		err := binary.Read(reader, binary.LittleEndian, &length)
+		err := binary.Read(r, binary.LittleEndian, &length)
 		if err == io.EOF {
 			break
 		}
@@ -102,7 +108,7 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch c
 			continue
 		}
 		data := make([]byte, length)
-		_, err = io.ReadFull(reader, data)
+		_, err = io.ReadFull(r, data)
 		if err == io.EOF {
 			fmt.Fprintf(errorOutput, "%s>Getting EOF from reader to channel: %v\n", name, err)
 			break // this is not really correct, but stop anyway
@@ -121,7 +127,7 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.
 	defer wg.Done()
 	defer writer.Close()
 
-	w := bufio.NewWriterSize(writer, 1024*16)
+	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
 	for bytes := range ch {
 		if err := WriteMessage(w, bytes); err != nil {
 			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
@@ -137,7 +143,7 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 		defer close(ch)
 	}
 
-	r := bufio.NewReaderSize(reader, 1024*16)
+	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -166,7 +172,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer
 	defer wg.Done()
 	defer writer.Close()
 
-	w := bufio.NewWriterSize(writer, 1024*16)
+	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
 
 	if err := fprintRowsFromChannel(ch, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)

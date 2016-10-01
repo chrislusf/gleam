@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"time"
 
 	"github.com/chrislusf/gleam"
@@ -11,14 +14,28 @@ import (
 )
 
 func main() {
+	f, _ := os.Create("p.prof")
+	pprof.StartCPUProfile(f)
+	defer pprof.StopCPUProfile()
 
 	times := 1024 * 1024 * 10
 
-	testLuajit(times)
-	testPureGo(times)
-	testLocalGleam(times)
-	testLocalFlow(times)
-	testDistributedGleam(times)
+	testUnixPipe(times)
+	//testLuajit(times)
+	//testPureGo(times)
+	//testLocalGleam(times)
+	//testLocalFlow(times)
+	//testDistributedGleam(times)
+}
+
+func testUnixPipe(times int) {
+	startTime := time.Now()
+	gleam.New().Source(
+		util.Range(1, 100, 1),
+	).PipeAsArgs("echo foo bar $1").Fprintf(ioutil.Discard, "%s\n")
+
+	fmt.Printf("gleam pipe time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Println()
 }
 
 func testDistributedGleam(times int) {
@@ -100,7 +117,6 @@ func testPureGo(times int) {
 			count++
 		}
 	}
-	println("=>", count)
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("pure go time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()

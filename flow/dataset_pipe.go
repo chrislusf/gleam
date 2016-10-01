@@ -51,7 +51,12 @@ func PipeAsArgs(inChan chan []byte, code string, outChan chan []byte) {
 		// feed parts as input to the code
 		actualCode := code
 		for i := 1; i <= len(parts); i++ {
-			arg := string(parts[i-1].([]byte))
+			var arg string
+			if b, ok := parts[i-1].([]byte); ok {
+				arg = string(b)
+			} else {
+				arg = fmt.Sprintf("%d", parts[i-1].(uint64))
+			}
 			actualCode = strings.Replace(actualCode, fmt.Sprintf("$%d", i), arg, -1)
 		}
 

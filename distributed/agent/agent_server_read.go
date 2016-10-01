@@ -19,7 +19,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 
 	// println(readerName, "start reading", channelName)
 
-	writer := bufio.NewWriterSize(conn, 1024*16)
+	writer := bufio.NewWriterSize(conn, util.BUFFER_SIZE)
 
 	var offset int64
 
