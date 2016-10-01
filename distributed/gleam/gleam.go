@@ -80,7 +80,7 @@ func main() {
 		inChan := make(chan []byte, 16)
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialWriteChannel(&wg, *writerAgentAddress, *writeTopic, inChan)
+		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, inChan, 1)
 		wg.Add(1)
 		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan, true, os.Stderr)
 		wg.Wait()
@@ -90,7 +90,7 @@ func main() {
 		outChan := make(chan []byte, 16)
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialReadChannel(&wg, *readerAgentAddress, *readTopic, outChan)
+		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, outChan)
 		wg.Add(1)
 		util.ChannelToLineWriter(&wg, "stdout", outChan, os.Stdout, os.Stderr)
 		wg.Wait()

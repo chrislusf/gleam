@@ -8,11 +8,13 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, name string) {
+func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerName, channelName string, readerCount int) {
 
-	ch := as.inMemoryChannels.CreateNamedDatasetShard(name)
+	ch := as.inMemoryChannels.CreateNamedDatasetShard(channelName, readerCount)
+	defer as.inMemoryChannels.Cleanup(channelName)
+	defer close(ch)
 
-	println(name, "start writing.")
+	// println(writerName, "start in memory writing to", channelName, "expected reader:", readerCount)
 
 	var count int64
 
@@ -33,6 +35,5 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, name stri
 		}
 	}
 
-	println(name, "finish writing data", count, "bytes")
-	close(ch)
+	// println(writerName, "finish writing to", channelName, count, "bytes")
 }

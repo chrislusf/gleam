@@ -78,7 +78,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 		shard.IncomingChan = make(chan []byte, 16)
 		wg.Add(1)
 		go func() {
-			if err := netchan.DialWriteChannel(wg, location.URL(), shard.Name(), shard.IncomingChan); err != nil {
+			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.IncomingChan, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()
@@ -97,7 +97,7 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func() {
 			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", outChan)
-			if err := netchan.DialReadChannel(wg, location.URL(), shard.Name(), outChan); err != nil {
+			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), outChan); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()

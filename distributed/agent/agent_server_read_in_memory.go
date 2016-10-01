@@ -7,13 +7,11 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, name string) {
+func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, channelName string) {
 
-	// println(name, "is waited to read")
+	// println(readerName, "start reading", channelName)
 
-	ch := as.inMemoryChannels.WaitForNamedDatasetShard(name)
-
-	println(name, "start reading ...")
+	ch := as.inMemoryChannels.WaitForNamedDatasetShard(channelName)
 
 	var count int64
 
@@ -26,5 +24,5 @@ func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, name string) 
 		count += int64(len(messageBytes))
 	}
 	writer.Flush()
-	println(name, "finish reading", count, "bytes")
+	// println(readerName, "finish reading", channelName, count, "bytes")
 }

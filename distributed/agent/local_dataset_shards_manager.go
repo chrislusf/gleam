@@ -75,7 +75,7 @@ func (m *LocalDatasetShardsManager) WaitForNamedDatasetShard(name string) store.
 		if ds, ok := m.name2Store[name]; ok {
 			return ds
 		}
-		println(name, "is waiting to read...")
+		// println(name, "is waiting to read...")
 		m.name2StoreCond.Wait()
 	}
 

@@ -11,13 +11,13 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
+func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelName string) {
 
 	// println(name, "is waited to read")
 
-	dsStore := as.storageBackend.WaitForNamedDatasetShard(name)
+	dsStore := as.storageBackend.WaitForNamedDatasetShard(channelName)
 
-	println(name, "start reading ...")
+	// println(readerName, "start reading", channelName)
 
 	writer := bufio.NewWriterSize(conn, 1024*16)
 
@@ -33,9 +33,9 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 		if err != nil {
 			// connection is closed
 			if err != io.EOF {
-				log.Printf("Read size from %s offset %d: %v", name, offset, err)
+				log.Printf("Read size from %s offset %d: %v", channelName, offset, err)
 			}
-			// println("got problem reading", name, offset, err.Error())
+			// println("got problem reading", channelName, offset, err.Error())
 			break
 		}
 
@@ -46,7 +46,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 			break
 		}
 
-		// println("reading", name, offset, "size:", size)
+		// println("reading", channelName, offset, "size:", size)
 
 		offset += 4
 		messageBytes := make([]byte, size)
@@ -54,7 +54,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 		if err != nil {
 			// connection is closed
 			if err != io.EOF {
-				log.Printf("Read data from %s offset %d: %v", name, offset, err)
+				log.Printf("Read data from %s offset %d: %v", channelName, offset, err)
 			}
 			break
 		}
@@ -68,5 +68,5 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, name string) {
 
 	writer.Flush()
 
-	println(name, "finish reading", count, "bytes")
+	// println(readerName, "finish reading", channelName, count, "bytes")
 }

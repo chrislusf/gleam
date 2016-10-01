@@ -10,11 +10,11 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, name string) {
+func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, channelName string, readerCount int) {
 
-	dsStore := as.storageBackend.CreateNamedDatasetShard(name)
+	dsStore := as.storageBackend.CreateNamedDatasetShard(channelName)
 
-	println(name, "start writing.")
+	// println(writerName, "start writing to", channelName, "expected reader:", readerCount)
 
 	var count int64
 
@@ -35,7 +35,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, name string)
 		}
 	}
 
-	println(name, "finish writing data", count, "bytes")
+	// println(writerName, "finish writing to", channelName, count, "bytes")
 	util.WriteEOFMessage(dsStore)
 }
 

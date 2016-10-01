@@ -48,49 +48,50 @@ func (exe *Executor) ExecuteInstructionSet() {
 		inputChan := prevOutputChan
 		outputChan = make(chan []byte, 16)
 		wg.Add(1)
-		go exe.ExecuteInstruction(&wg, inputChan, outputChan, instruction, index == 0, index == len(exe.instructions.GetInstructions())-1)
+		go exe.ExecuteInstruction(&wg, inputChan, outputChan, instruction,
+			index == 0, index == len(exe.instructions.GetInstructions())-1, int(exe.instructions.GetReaderCount()))
 		prevOutputChan = outputChan
 	}
 
 	wg.Wait()
 }
 
-func connectInputOutput(wg *sync.WaitGroup, inChan, outChan chan []byte, inLocation, outLocation *cmd.DatasetShardLocation, isFirst, isLast bool) {
+func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan chan []byte, inLocation, outLocation *cmd.DatasetShardLocation, isFirst, isLast bool, readerCount int) {
 	if isFirst && inChan != nil {
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, inLocation.Address(), inLocation.GetShard().Name(), inChan)
+		go netchan.DialReadChannel(wg, executorName, inLocation.Address(), inLocation.GetShard().Name(), inChan)
 	}
 	if isLast && outChan != nil {
 		wg.Add(1)
-		go netchan.DialWriteChannel(wg, outLocation.Address(), outLocation.GetShard().Name(), outChan)
+		go netchan.DialWriteChannel(wg, executorName, outLocation.Address(), outLocation.GetShard().Name(), outChan, readerCount)
 	}
 }
 
 // TODO: refactor this
-func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction, isFirst, isLast bool) {
+func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan []byte, i *cmd.Instruction, isFirst, isLast bool, readerCount int) {
 	defer wg.Done()
 	if outChan != nil {
 		defer close(outChan)
 	}
 
 	if i.GetScript() != nil {
-		connectInputOutput(wg, inChan, outChan, i.GetScript().GetInputShardLocation(), i.GetScript().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetScript().GetInputShardLocation(), i.GetScript().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
 		command := exec.Command(
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 		)
 		wg.Add(1)
-		util.Execute(wg, i.GetScript().GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), false, os.Stderr)
+		util.Execute(wg, i.GetName(), command, inChan, outChan, i.GetScript().GetIsPipe(), false, os.Stderr)
 
 	} else if i.GetLocalSort() != nil {
 
-		connectInputOutput(wg, inChan, outChan, i.GetLocalSort().GetInputShardLocation(), i.GetLocalSort().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetLocalSort().GetInputShardLocation(), i.GetLocalSort().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
 		flow.LocalSort(inChan, outChan)
 
 	} else if i.GetPipeAsArgs() != nil {
 
-		connectInputOutput(wg, inChan, outChan, i.GetPipeAsArgs().GetInputShardLocation(), i.GetPipeAsArgs().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetPipeAsArgs().GetInputShardLocation(), i.GetPipeAsArgs().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
 		flow.PipeAsArgs(inChan, i.GetPipeAsArgs().GetCode(), outChan)
 
@@ -100,10 +101,10 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, inputLocation := range i.GetMergeSortedTo().GetInputShardLocations() {
 			wg.Add(1)
 			inChan := make(chan []byte, 16)
-			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
+			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
 			inChans = append(inChans, inChan)
 		}
-		connectInputOutput(wg, nil, outChan, nil, i.GetMergeSortedTo().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetMergeSortedTo().GetOutputShardLocation(), isFirst, isLast, readerCount)
 		flow.MergeSortedTo(inChans, outChan)
 
 	} else if i.GetScatterPartitions() != nil {
@@ -112,10 +113,10 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
 			wg.Add(1)
 			outChan := make(chan []byte, 16)
-			go netchan.DialWriteChannel(wg, outputLocation.Address(), outputLocation.GetShard().Name(), outChan)
+			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetShard().Name(), outChan, 1)
 			outChans = append(outChans, outChan)
 		}
-		connectInputOutput(wg, inChan, nil, i.GetScatterPartitions().GetInputShardLocation(), nil, isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), inChan, nil, i.GetScatterPartitions().GetInputShardLocation(), nil, isFirst, isLast, readerCount)
 		flow.ScatterPartitions(inChan, outChans)
 		for _, outChan := range outChans {
 			close(outChan)
@@ -127,10 +128,10 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		for _, inputLocation := range i.GetCollectPartitions().GetInputShardLocations() {
 			wg.Add(1)
 			inChan := make(chan []byte, 16)
-			go netchan.DialReadChannel(wg, inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
+			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetShard().Name(), inChan)
 			inChans = append(inChans, inChan)
 		}
-		connectInputOutput(wg, nil, outChan, nil, i.GetCollectPartitions().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetCollectPartitions().GetOutputShardLocation(), isFirst, isLast, readerCount)
 		flow.CollectPartitions(inChans, outChan)
 
 	} else if i.GetJoinPartitionedSorted() != nil {
@@ -140,11 +141,11 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		leftLocation := jps.GetLeftInputShardLocation()
 		rightLocation := jps.GetRightInputShardLocation()
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
+		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
+		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
 
-		connectInputOutput(wg, nil, outChan, nil, i.GetJoinPartitionedSorted().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetJoinPartitionedSorted().GetOutputShardLocation(), isFirst, isLast, readerCount)
 		flow.JoinPartitionedSorted(leftChan, rightChan, *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan)
 
 	} else if i.GetCoGroupPartitionedSorted() != nil {
@@ -154,11 +155,11 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan chan
 		leftLocation := jps.GetLeftInputShardLocation()
 		rightLocation := jps.GetRightInputShardLocation()
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
+		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetShard().Name(), leftChan)
 		wg.Add(1)
-		go netchan.DialReadChannel(wg, rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
+		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetShard().Name(), rightChan)
 
-		connectInputOutput(wg, nil, outChan, nil, i.GetCoGroupPartitionedSorted().GetOutputShardLocation(), isFirst, isLast)
+		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetCoGroupPartitionedSorted().GetOutputShardLocation(), isFirst, isLast, readerCount)
 		flow.CoGroupPartitionedSorted(leftChan, rightChan, outChan)
 
 	} else {

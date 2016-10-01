@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam"
 )
 
 func main() {
 
-	f := flow.New().Script("lua", `
+	f := gleam.NewDistributed().Script("lua", `
 	function splitter(line)
         return line:gmatch("%w+")
     end
@@ -23,11 +23,13 @@ func main() {
 		"../../flow/dataset_map.go",
 	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
 
-	right := f.TextFile(
-		"../../flow/dataset_output.go",
-	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+	/*
+		_ = f.TextFile(
+			"../../flow/dataset_output.go",
+		).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+	*/
 
-	left.Join(right).Map(`
+	left.Join(left).Map(`
       function (word, leftCount, rightCount)
 	    return word, leftCount, rightCount, leftCount + rightCount
       end

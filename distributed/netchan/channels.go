@@ -13,7 +13,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func DialReadChannel(wg *sync.WaitGroup, address string, channelName string, outChan chan []byte) error {
+func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, outChan chan []byte) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -24,7 +24,8 @@ func DialReadChannel(wg *sync.WaitGroup, address string, channelName string, out
 
 	data, err := proto.Marshal(&cmd.ControlMessage{
 		ReadRequest: &cmd.ReadRequest{
-			Name: proto.String(channelName),
+			ChannelName: proto.String(channelName),
+			ReaderName:  proto.String(readerName),
 		},
 	})
 
@@ -35,7 +36,7 @@ func DialReadChannel(wg *sync.WaitGroup, address string, channelName string, out
 	return nil
 }
 
-func DialWriteChannel(wg *sync.WaitGroup, address string, channelName string, inChan chan []byte) error {
+func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, inChan chan []byte, readerCount int) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -46,7 +47,9 @@ func DialWriteChannel(wg *sync.WaitGroup, address string, channelName string, in
 
 	data, err := proto.Marshal(&cmd.ControlMessage{
 		WriteRequest: &cmd.WriteRequest{
-			Name: proto.String(channelName),
+			ChannelName: proto.String(channelName),
+			ReaderCount: proto.Int32(int32(readerCount)),
+			WriterName:  proto.String(writerName),
 		},
 	})
 

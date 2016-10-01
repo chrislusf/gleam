@@ -164,17 +164,17 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	reply := &cmd.ControlMessage{}
 	if command.GetReadRequest() != nil {
 		if *as.Option.InMemory {
-			as.handleInMemoryReadConnection(conn, *command.ReadRequest.Name)
+			as.handleInMemoryReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
 		} else {
-			as.handleReadConnection(conn, *command.ReadRequest.Name)
+			as.handleReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
 		}
 		return nil
 	}
 	if command.GetWriteRequest() != nil {
 		if *as.Option.InMemory {
-			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.Name)
+			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		} else {
-			as.handleLocalWriteConnection(conn, *command.WriteRequest.Name)
+			as.handleLocalWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		}
 		return nil
 	}

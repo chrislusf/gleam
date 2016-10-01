@@ -46,18 +46,20 @@ message StartRequest {
 
 message InstructionSet {
 	repeated Instruction instructions = 1;
-	optional uint32 flowHashCode = 2;
+	required int32 readerCount = 2;
+	optional uint32 flowHashCode = 3;
 }
 
 message Instruction {
-	optional ScatterPartitions scatterPartitions = 1;
-	optional CollectPartitions collectPartitions = 2;
+	required string name = 1;
+	optional Script script = 2;
 	optional LocalSort localSort = 3;
 	optional MergeSortedTo mergeSortedTo = 4;
 	optional JoinPartitionedSorted joinPartitionedSorted = 5;
 	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
 	optional PipeAsArgs pipeAsArgs = 7;
-	optional Script script = 8;
+	optional ScatterPartitions scatterPartitions = 8;
+	optional CollectPartitions collectPartitions = 9;
 }
 
 message ScatterPartitions {
@@ -104,11 +106,10 @@ message PipeAsArgs {
 message Script {
 	required DatasetShardLocation inputShardLocation = 1;
 	required DatasetShardLocation outputShardLocation = 2;
-	required string name = 3;
-	required bool isPipe = 4;
-	required string path = 5;
-	repeated string args = 6;
-	repeated string env = 7;
+	required bool isPipe = 3;
+	required string path = 4;
+	repeated string args = 5;
+	repeated string env = 6;
 }
 
 message DatasetShard {
@@ -181,9 +182,12 @@ message LocalStatusReportResponse {
 }
 
 message WriteRequest {
-	required string name = 1;
+	required string channelName = 1;
+	required string writerName = 2;
+	required int32 readerCount = 3;
 }
 
 message ReadRequest {
-	required string name = 1;
+	required string channelName = 1;
+	required string readerName = 2;
 }
