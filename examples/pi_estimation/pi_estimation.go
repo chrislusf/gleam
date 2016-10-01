@@ -20,7 +20,9 @@ func main() {
 
 	times := 1024 * 1024 * 10
 
-	testUnixPipe(times)
+	benchmark(times, "gleam single pipe", testUnixPipeThroughput)
+	//benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
+	//testUnixPipe(times)
 	//testLuajit(times)
 	//testPureGo(times)
 	//testLocalGleam(times)
@@ -28,7 +30,40 @@ func main() {
 	//testDistributedGleam(times)
 }
 
+func benchmark(times int, name string, f func(int)) {
+	startTime := time.Now()
+
+	f(times)
+
+	fmt.Printf("%s: %s\n", name, time.Now().Sub(startTime))
+	fmt.Println()
+}
+
+func testUnixPipeThroughput(times int) {
+	_ = `
+	the time stays constant for unix connected pipes
+	time bash -c "cat /Users/chris/Downloads/txt/en/ep-08-*.txt | cat | cat | wc"
+	136360 4422190 26959761
+
+	real	0m0.177s
+	user	0m0.161s
+	sys	0m0.078s
+	
+	Current implementation is slower for each additional pipe step
+	`
+	out := gleam.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1")
+	for i := 0; i < 10; i++ {
+		out = out.Pipe("cat")
+	}
+	out.Fprintf(ioutil.Discard, "%s\n")
+}
+
+func testGleamUnixPipeThroughput(times int) {
+	gleam.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1").Pipe("wc").Fprintf(ioutil.Discard, "%s\n")
+}
+
 func testUnixPipe(times int) {
+	// PipeAsArgs has 4ms cost to startup a process
 	startTime := time.Now()
 	gleam.New().Source(
 		util.Range(1, 100, 1),
