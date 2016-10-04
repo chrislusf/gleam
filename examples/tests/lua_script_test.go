@@ -1,10 +1,10 @@
 package tests
 
 import (
+	"os"
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
-	"github.com/chrislusf/gleam/util"
 )
 
 func TestCallingLuaScripts(t *testing.T) {
@@ -17,9 +17,7 @@ func TestCallingLuaScripts(t *testing.T) {
 		[]byte("asdfadfasaf"),
 	}
 
-	f := flow.New()
-
-	outputChannel := f.Bytes(data).Script("lua").Map(`
+	flow.New().Bytes(data).Map(`
 		function (line)
 			return line
 		end
@@ -31,19 +29,6 @@ func TestCallingLuaScripts(t *testing.T) {
 		function (line)
 			return not string.starts(line, 'asd')
 		end
-	`).LocalSort().Output()
+	`).LocalSort().Fprintf(os.Stdout, "lua > %s\n")
 
-	go flow.RunFlowContextSync(f)
-
-	outputCounter := 0
-	for bytes := range outputChannel {
-		outputCounter++
-		var line []byte
-		util.DecodeRowTo(bytes, &line)
-		println("lua > ", string(line))
-	}
-
-	if outputCounter != 3 {
-		t.Errorf("filter stops working!")
-	}
 }

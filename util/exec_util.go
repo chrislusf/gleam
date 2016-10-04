@@ -1,57 +1,75 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"os/exec"
 	"sync"
 )
 
+// all data passing through pipe are all (size, msgpack_encoded) tuples
+// The input and output should all be this msgpack format.
+// Only the stdin and stdout of Pipe() is line based text.
 func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
-	inChan, outChan chan []byte, isPipe bool, closeOutput bool, errWriter io.Writer) {
+	inChan *Piper, outChan *Piper, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) {
 
 	defer executeWaitGroup.Done()
 
 	var wg sync.WaitGroup
 
 	if inChan != nil {
-		inputWriter, stdinErr := cmd.StdinPipe()
-		if stdinErr != nil {
-			fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
+		if prevIsPipe && isPipe {
+			// println("step", name, "input is lines->lines")
+			cmd.Stdin = inChan.Reader
+		} else if !prevIsPipe && !isPipe {
+			// println("step", name, "input is msgpack->msgpack")
+			cmd.Stdin = inChan.Reader
 		} else {
-			wg.Add(1)
-			if isPipe {
-				go ChannelToLineWriter(&wg, name, inChan, inputWriter, errWriter)
+			inputWriter, stdinErr := cmd.StdinPipe()
+			if stdinErr != nil {
+				fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
 			} else {
-				go ChannelToWriter(&wg, name, inChan, inputWriter, errWriter)
+				wg.Add(1)
+				if !prevIsPipe && isPipe {
+					// println("step", name, "input is msgpack->lines")
+					go ChannelToLineWriter(&wg, name, inChan.Reader, inputWriter, errWriter)
+				} else {
+					// println("step", name, "input is lines->msgpack")
+					go LineReaderToChannel(&wg, name, inChan.Reader, inputWriter, true, errWriter)
+				}
 			}
 		}
-
 	}
 
-	outputReader, stdoutErr := cmd.StdoutPipe()
-	if stdoutErr != nil {
-		fmt.Fprintf(errWriter, "Failed to open StdoutPipe: %v", stdoutErr)
-	} else {
-		wg.Add(1)
-		if isPipe {
-			go LineReaderToChannel(&wg, name, outputReader, outChan, closeOutput, errWriter)
-		} else {
-			go ReaderToChannel(&wg, name, outputReader, outChan, closeOutput, errWriter)
-		}
-	}
+	cmd.Stdout = outChan.Writer
 
-	cmd.Stderr = errWriter
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	if startError := cmd.Start(); startError != nil {
 		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, cmd)
 		return
 	}
 
+	// fmt.Printf("Command is waiting.\n")
+
 	wg.Wait()
 
 	if waitError := cmd.Wait(); waitError != nil {
-		fmt.Fprintf(errWriter, "Wait error %v: %v\n", waitError, cmd)
+		fmt.Fprintf(errWriter, "Wait error %+v. command:%+v\n", waitError, cmd)
+		fmt.Fprintf(errWriter, "Error:"+stderr.String()+"\n")
 	}
 
+	// fmt.Printf("Command is finished.\n %+v\n", cmd)
+
+	if inChan != nil {
+		// inChan.Writer.Close()
+		inChan.Reader.Close()
+	}
+
+	// fmt.Println(name, "stopping output writer.")
+	if closeOutput {
+		outChan.Writer.Close()
+	}
 }

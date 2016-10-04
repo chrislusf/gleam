@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
-	"github.com/chrislusf/gleam/util"
 )
 
 func TestCallingShellScripts(t *testing.T) {
@@ -18,9 +17,7 @@ func TestCallingShellScripts(t *testing.T) {
 		"asdfadfasaf",
 	}
 
-	f := flow.New()
-
-	f.Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "%s\n")
+	flow.New().Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "%s\n")
 
 }
 
@@ -34,15 +31,6 @@ func TestOutputObjects(t *testing.T) {
 		"asdfadfasaf",
 	}
 
-	f := flow.New()
+	flow.New().Strings(data).Pipe("sort").Fprintf(os.Stdout, "shell> %s\n")
 
-	outputChannel := f.Strings(data).Pipe("sort").Output()
-
-	go flow.RunFlowContextSync(f)
-
-	for bytes := range outputChannel {
-		var line string
-		util.DecodeRowTo(bytes, &line)
-		println("sorted:", line)
-	}
 }

@@ -3,26 +3,36 @@ package util
 import (
 	"fmt"
 	"io"
-	"os"
 )
 
-func Fprintf(inChan chan []byte, writer io.Writer, format string) {
+func TsvPrintf(inChan io.Reader, writer io.Writer, format string) error {
+	return TakeTsv(inChan, -1, func(args []string) error {
+		var objects []interface{}
+		for _, arg := range args {
+			objects = append(objects, arg)
+		}
+		_, err := fmt.Fprintf(writer, format, objects...)
+		return err
+	})
+}
 
-	for encodedBytes := range inChan {
+func Fprintf(inChan io.Reader, writer io.Writer, format string) error {
+
+	return ProcessMessage(inChan, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
 		if decodedObjects, err = DecodeRow(encodedBytes); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
-			continue
+			return fmt.Errorf("Failed to decode byte: %v\n", err)
 		}
 
 		fmt.Fprintf(writer, format, decodedObjects...)
-	}
+		return nil
+	})
 }
 
-func fprintRowsFromChannel(ch chan []byte, writer io.Writer, delimiter string, lineSperator string) error {
-	for encodedBytes := range ch {
+func fprintRowsFromChannel(ch io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
+	return ProcessMessage(ch, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
@@ -38,8 +48,8 @@ func fprintRowsFromChannel(ch chan []byte, writer io.Writer, delimiter string, l
 		if _, err := writer.Write([]byte("\n")); err != nil {
 			return fmt.Errorf("Failed to write line separator: %v", err)
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func fprintRow(writer io.Writer, delimiter string, decodedObjects ...interface{}) error {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/script"
+	"github.com/chrislusf/gleam/util"
 )
 
 func New() (fc *FlowContext) {
@@ -190,7 +191,7 @@ func FromDatasetToStep(input *Dataset, step *Step) {
 
 func FromDatasetShardToTask(shard *DatasetShard, task *Task) {
 	shard.ReadingTasks = append(shard.ReadingTasks, task)
-	shard.OutgoingChans = append(shard.OutgoingChans, make(chan []byte, 16))
+	shard.OutgoingChans = append(shard.OutgoingChans, util.NewPiper())
 	task.InputShards = append(task.InputShards, shard)
 }
 

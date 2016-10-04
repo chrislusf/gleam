@@ -3,6 +3,7 @@ package flow
 import (
 	// "fmt"
 	//"os"
+	"io"
 
 	"github.com/chrislusf/gleam/util"
 )
@@ -33,21 +34,21 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 		outChan := task.OutputShards[0].IncomingChan
 
 		JoinPartitionedSorted(
-			task.InputShards[0].OutgoingChans[0],
-			task.InputShards[1].OutgoingChans[0],
+			task.InputShards[0].OutgoingChans[0].Reader,
+			task.InputShards[1].OutgoingChans[0].Reader,
 			isLeftOuterJoin,
 			isRightOuterJoin,
-			outChan,
+			outChan.Writer,
 		)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return ret
 }
 
-func JoinPartitionedSorted(leftRawChan, rightRawChan chan []byte, isLeftOuterJoin, isRightOuterJoin bool, outChan chan []byte) {
+func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, isLeftOuterJoin, isRightOuterJoin bool, outChan io.Writer) {
 	leftChan := newChannelOfValuesWithSameKey(leftRawChan)
 	rightChan := newChannelOfValuesWithSameKey(rightRawChan)
 
@@ -136,7 +137,7 @@ type keyValues struct {
 
 // create a channel to aggregate values of the same key
 // automatically close original sorted channel
-func newChannelOfValuesWithSameKey(sortedChan chan []byte) chan keyValues {
+func newChannelOfValuesWithSameKey(sortedChan io.Reader) chan keyValues {
 	outChan := make(chan keyValues)
 	go func() {
 

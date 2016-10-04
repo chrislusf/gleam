@@ -1,6 +1,7 @@
 package util
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 )
@@ -18,11 +19,10 @@ func ListFiles(dir string, pattern string) (fileNames []string) {
 	return
 }
 
-func Range(from, to, step int) func(chan []byte) {
-	return func(outChan chan []byte) {
+func Range(from, to, step int) func(io.Writer) {
+	return func(outChan io.Writer) {
 		for i := from; ; i += step {
-			b, _ := EncodeRow(i)
-			outChan <- b
+			WriteRow(outChan, i)
 			if i == to {
 				break
 			}

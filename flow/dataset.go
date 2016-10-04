@@ -3,6 +3,8 @@ package flow
 import (
 	"fmt"
 	"time"
+
+	"github.com/chrislusf/gleam/util"
 )
 
 func NewDataset(context *FlowContext) *Dataset {
@@ -28,7 +30,7 @@ func (d *Dataset) SetupShard(n int) {
 		ds := &DatasetShard{
 			Id:           i,
 			Dataset:      d,
-			IncomingChan: make(chan []byte, 64), // a buffered chan!
+			IncomingChan: util.NewPiper(),
 		}
 		d.Shards = append(d.Shards, ds)
 	}

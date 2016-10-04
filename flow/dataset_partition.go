@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"io"
+
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -15,7 +17,10 @@ func (d *Dataset) Partition(shard int) *Dataset {
 	if 1 == len(d.Shards) && shard == 1 {
 		return d
 	}
-	ret := d.partition_scatter(shard).partition_collect(shard)
+	ret := d.partition_scatter(shard)
+	if len(d.Shards) > 1 {
+		ret = ret.partition_collect(shard)
+	}
 	ret.IsKeyPartitioned = true
 	return ret
 }
@@ -28,15 +33,16 @@ func (d *Dataset) partition_scatter(shardCount int) (ret *Dataset) {
 	step.FunctionType = TypeScatterPartitions
 	step.Function = func(task *Task) {
 		inChan := task.InputShards[0].OutgoingChans[0]
-		var outChans []chan []byte
+		var outChans []io.Writer
 		for _, shard := range task.OutputShards {
-			outChans = append(outChans, shard.IncomingChan)
+			outChans = append(outChans, shard.IncomingChan.Writer)
+			// println("writing to shard", shard, "channel", shard.IncomingChan, "=>", shard.OutgoingChans[0])
 		}
 
-		ScatterPartitions(inChan, outChans)
+		ScatterPartitions(inChan.Reader, outChans)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return
@@ -49,34 +55,41 @@ func (d *Dataset) partition_collect(shardCount int) (ret *Dataset) {
 	step.FunctionType = TypeCollectPartitions
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
-		var inChans []chan []byte
+		var inChans []io.Reader
 		for _, shard := range task.InputShards {
-			inChans = append(inChans, shard.OutgoingChans...)
+			for _, out := range shard.OutgoingChans {
+				// println("collect from shard", shard, "channel", out)
+				inChans = append(inChans, out.Reader)
+			}
 		}
 
-		CollectPartitions(inChans, outChan)
+		CollectPartitions(inChans, outChan.Writer)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return
 }
 
-func ScatterPartitions(inChan chan []byte, outChans []chan []byte) {
+func ScatterPartitions(inChan io.Reader, outChans []io.Writer) {
 	shardCount := len(outChans)
 
-	for data := range inChan {
+	util.ProcessMessage(inChan, func(data []byte) error {
 		keyObject, _ := util.DecodeRowKey(data)
 		x := util.HashByKey(keyObject, shardCount)
-		outChans[x] <- data
-	}
+		util.WriteMessage(outChans[x], data)
+		return nil
+	})
 }
 
-func CollectPartitions(inChans []chan []byte, outChan chan []byte) {
-	inputChan := make(chan []byte)
-	util.MergeChannel(inChans, inputChan)
-	for data := range inputChan {
-		outChan <- data
+func CollectPartitions(inChans []io.Reader, outChan io.Writer) {
+	println("starting to collect data from partitions...", len(inChans))
+
+	if len(inChans) == 1 {
+		io.Copy(outChan, inChans[0])
+		return
 	}
+
+	util.CopyMultipleReaders(inChans, outChan)
 }

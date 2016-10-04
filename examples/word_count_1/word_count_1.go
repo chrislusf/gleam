@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
@@ -23,18 +24,20 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Output(func(inChan chan []byte) {
+	`).Output(func(inChan io.Reader) error {
 		var word string
 		var count int
-		for bytes := range inChan {
+		util.ProcessMessage(inChan, func(bytes []byte) error {
 			if err := util.DecodeRowTo(bytes, &word, &count); err != nil {
 				fmt.Printf("decode error: %v", err)
-				break
+				return err
 			}
 			fmt.Printf("%s\t%d\n", word, count)
-		}
+			return nil
+		})
+		return nil
 	})
 
-	flow.RunFlowContextSync(luaFlow)
+	luaFlow.Runner.RunFlowContext(luaFlow)
 
 }

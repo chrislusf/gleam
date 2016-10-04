@@ -3,7 +3,6 @@ package util
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"sync"
@@ -55,23 +54,29 @@ const (
 )
 
 // setup asynchronously to merge multiple channels into one channel
-func MergeChannel(cs []chan []byte, out chan []byte) {
+func CopyMultipleReaders(readers []io.Reader, writer io.Writer) {
+	writerChan := make(chan []byte, 16*len(readers))
 	var wg sync.WaitGroup
-
-	for _, c := range cs {
+	for i, reader := range readers {
 		wg.Add(1)
-		go func(c chan []byte) {
+		go func(i int, reader io.Reader) {
 			defer wg.Done()
-			for n := range c {
-				out <- n
-			}
-		}(c)
+			ProcessMessage(reader, func(data []byte) error {
+				println(i, "-> ", string(data))
+				writerChan <- data
+				return nil
+			})
+		}(i, reader)
 	}
-
 	go func() {
 		wg.Wait()
-		close(out)
+		close(writerChan)
 	}()
+	println("ready to read data...")
+	for data := range writerChan {
+		println("==> ", string(data))
+		WriteMessage(writer, data)
+	}
 }
 
 func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
@@ -83,71 +88,51 @@ func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
 	close(outChan)
 }
 
-func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, closeOutput bool, errorOutput io.Writer) {
+func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
 	defer reader.Close()
 	if closeOutput {
-		defer close(ch)
+		defer writer.Close()
 	}
-
 	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
+	defer w.Flush()
 
-	var length int32
-
-	for {
-		err := binary.Read(r, binary.LittleEndian, &length)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
-			fmt.Fprintf(errorOutput, "%s>Failed to read bytes length from input to channel: %v\n", name, err)
-			break
-		}
-		if length == 0 {
-			continue
-		}
-		data := make([]byte, length)
-		_, err = io.ReadFull(r, data)
-		if err == io.EOF {
-			fmt.Fprintf(errorOutput, "%s>Getting EOF from reader to channel: %v\n", name, err)
-			break // this is not really correct, but stop anyway
-		}
-		if err != nil {
-			fmt.Fprintf(errorOutput, "%s>Getting error from reader to channel: %v\n", name, err)
-			break // this is not really correct, but stop anyway
-		}
-		// this is output from FlatMap to the output
-		// println(name + " reader -> chan output data:" + string(data))
-		ch <- data
+	_, err := io.Copy(w, r)
+	if err != nil {
+		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
+		fmt.Fprintf(errorOutput, "%s>Failed to read bytes length from input to channel: %v\n", name, err)
 	}
 }
 
-func ChannelToWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.WriteCloser, errorOutput io.Writer) {
+func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
 	defer wg.Done()
 	defer writer.Close()
 
+	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
 	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
-	for bytes := range ch {
-		if err := WriteMessage(w, bytes); err != nil {
-			fmt.Fprintf(errorOutput, "%s>Failed to write bytes from channel to writer: %v\n", name, err)
-		}
+	defer w.Flush()
+
+	_, err := io.Copy(w, r)
+	if err != nil {
+		fmt.Fprintf(errorOutput, "%s> Failed to move data: %v", name, err)
 	}
-	w.Flush()
 }
 
-func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch chan []byte, closeOutput bool, errorOutput io.Writer) {
+func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
 	defer reader.Close()
 	if closeOutput {
-		defer close(ch)
+		defer ch.Close()
 	}
 
 	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+	w := bufio.NewWriterSize(ch, BUFFER_SIZE)
+	defer w.Flush()
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		// fmt.Printf("line input: %s\n", scanner.Text())
+		// fmt.Printf("%s>line input: %s\n", name, scanner.Text())
 		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
 		var buf bytes.Buffer
 		encoder := msgpack.NewEncoder(&buf)
@@ -159,24 +144,27 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 				}
 			}
 		}
-		ch <- buf.Bytes()
+		// fmt.Printf("%s>encoded input: %s\n", name, string(buf.Bytes()))
+		WriteMessage(w, buf.Bytes())
 	}
 	if err := scanner.Err(); err != nil {
 		// TODO: what's wrong here?
 		// seems the program could have ended when reading the output.
-		// fmt.Fprintf(errorOutput, "Failed to read from input to channel: %v\n", err)
+		fmt.Fprintf(errorOutput, "Failed to read from input to channel: %v\n", err)
 	}
 }
 
-func ChannelToLineWriter(wg *sync.WaitGroup, name string, ch chan []byte, writer io.WriteCloser, errorOutput io.Writer) {
+func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
 	defer wg.Done()
 	defer writer.Close()
-
 	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
+	defer w.Flush()
 
-	if err := fprintRowsFromChannel(ch, w, "\t", "\n"); err != nil {
+	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+
+	if err := fprintRowsFromChannel(r, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}
-	w.Flush()
+
 }

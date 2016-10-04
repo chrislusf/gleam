@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"io"
+
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -27,19 +29,19 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset) (ret *Dataset) {
 		outChan := task.OutputShards[0].IncomingChan
 
 		CoGroupPartitionedSorted(
-			task.InputShards[0].OutgoingChans[0],
-			task.InputShards[1].OutgoingChans[0],
-			outChan,
+			task.InputShards[0].OutgoingChans[0].Reader,
+			task.InputShards[1].OutgoingChans[0].Reader,
+			outChan.Writer,
 		)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return ret
 }
 
-func CoGroupPartitionedSorted(leftRawChan, rightRawChan chan []byte, outChan chan []byte) {
+func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, outChan io.Writer) {
 	leftChan := newChannelOfValuesWithSameKey(leftRawChan)
 	rightChan := newChannelOfValuesWithSameKey(rightRawChan)
 

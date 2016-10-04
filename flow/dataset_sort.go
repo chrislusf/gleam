@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/chrislusf/gleam/util"
 	"github.com/psilva261/timsort"
@@ -33,10 +34,10 @@ func (d *Dataset) LocalSort() *Dataset {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		LocalSort(task.InputShards[0].OutgoingChans[0], outChan)
+		LocalSort(task.InputShards[0].OutgoingChans[0].Reader, outChan.Writer)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return ret
@@ -57,30 +58,33 @@ func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		var inChans []chan []byte
+		var inChans []io.Reader
 		for _, shard := range task.InputShards {
-			inChans = append(inChans, shard.OutgoingChans[0])
+			inChans = append(inChans, shard.OutgoingChans[0].Reader)
 		}
 
-		MergeSortedTo(inChans, outChan)
+		MergeSortedTo(inChans, outChan.Writer)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 
 	}
 	return ret
 }
 
-func LocalSort(inChan chan []byte, outChan chan []byte) {
+func LocalSort(inChan io.Reader, outChan io.Writer) {
 	var kvs []interface{}
-	for input := range inChan {
+	err := util.ProcessMessage(inChan, func(input []byte) error {
 		if key, err := util.DecodeRowKey(input); err != nil {
-			fmt.Printf("Sort>Failed to read input data %v: %+v\n", err, input)
-			break
+			return fmt.Errorf("%v: %+v", err, input)
 		} else {
 			kvs = append(kvs, pair{key: key, data: input})
 		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("Sort>Failed to read input data:%v\n", err)
 	}
 	if len(kvs) == 0 {
 		return
@@ -91,11 +95,12 @@ func LocalSort(inChan chan []byte, outChan chan []byte) {
 	})
 
 	for _, kv := range kvs {
-		outChan <- kv.(pair).data
+		// println("sorted key", string(kv.(pair).key.([]byte)))
+		util.WriteMessage(outChan, kv.(pair).data)
 	}
 }
 
-func MergeSortedTo(inChans []chan []byte, outChan chan []byte) {
+func MergeSortedTo(inChans []io.Reader, outChan io.Writer) {
 	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
 		x, y := a.([]byte), b.([]byte)
 		xKey, _ := util.DecodeRowKey(x)
@@ -104,14 +109,14 @@ func MergeSortedTo(inChans []chan []byte, outChan chan []byte) {
 	})
 	// enqueue one item to the pq from each channel
 	for shardId, shardChan := range inChans {
-		if x, ok := <-shardChan; ok {
+		if x, err := util.ReadMessage(shardChan); err == nil {
 			pq.Enqueue(x, shardId)
 		}
 	}
 	for pq.Len() > 0 {
 		t, shardId := pq.Dequeue()
-		outChan <- t.([]byte)
-		if x, ok := <-inChans[shardId]; ok {
+		util.WriteMessage(outChan, t.([]byte))
+		if x, err := util.ReadMessage(inChans[shardId]); err == nil {
 			pq.Enqueue(x, shardId)
 		}
 	}

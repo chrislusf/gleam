@@ -16,8 +16,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	flow.New().Strings(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
+	flow.New().Strings(fileNames).Partition(3).PipeAsArgs("ls -l $1").FlatMap(`
       function(line)
+	    log("input:"..line)
         return line:gmatch("%w+")
       end
     `).Map(`

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -74,14 +75,14 @@ func (r *LocalDriver) RunDataset(wg *sync.WaitGroup, d *Dataset) {
 func (r *LocalDriver) RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 	defer wg.Done()
 	shard.ReadyTime = time.Now()
-	for bytes := range shard.IncomingChan {
-		shard.Counter++
-		for _, outgoingChan := range shard.OutgoingChans {
-			outgoingChan <- bytes
-		}
-	}
+	var writers []io.Writer
 	for _, outgoingChan := range shard.OutgoingChans {
-		close(outgoingChan)
+		writers = append(writers, outgoingChan.Writer)
+	}
+	w := io.MultiWriter(writers...)
+	io.Copy(w, shard.IncomingChan.Reader)
+	for _, outgoingChan := range shard.OutgoingChans {
+		outgoingChan.Writer.Close()
 	}
 	shard.CloseTime = time.Now()
 }
@@ -111,6 +112,8 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 	// if failed, try to run shell scripts
 	// if failed, try to run lua scripts
 	if task.Step.Function != nil {
+		// each function should close its own Piper output writer
+		// and close it's own Piper input reader
 		task.Step.Function(task)
 		return
 	}
@@ -126,6 +129,10 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 		inChan := task.InputShards[0].OutgoingChans[0]
 		outChan := task.OutputShards[0].IncomingChan
 		wg.Add(1)
-		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, task.Step.IsPipe, true, os.Stderr)
+		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
+		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, prevIsPipe, task.Step.IsPipe, false, os.Stderr)
+		outChan.Writer.Close()
+	} else {
+		println("network type:", task.Step.NetworkType)
 	}
 }

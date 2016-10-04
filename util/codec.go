@@ -34,19 +34,20 @@ func PrintAsJSON(object interface{}, writer io.Writer, isPrettyPrint bool) error
 	return nil
 }
 
-func WriteRow(outChan chan []byte, anyObject ...interface{}) error {
+// encode and write
+func WriteRow(outChan io.Writer, anyObject ...interface{}) error {
 	encoded, err := EncodeRow(anyObject...)
 	if err != nil {
 		return fmt.Errorf("WriteRow encoding error: %v", err)
 	}
-	outChan <- encoded
-	return nil
+	return WriteMessage(outChan, encoded)
 }
 
-func ReadRow(ch chan []byte) (row []interface{}, err error) {
-	encodedBytes, ok := <-ch
-	if !ok {
-		return nil, io.EOF
+// read and decode
+func ReadRow(ch io.Reader) (row []interface{}, err error) {
+	encodedBytes, hasErr := ReadMessage(ch)
+	if hasErr != nil {
+		return nil, hasErr
 	}
 	if row, err = DecodeRow(encodedBytes); err != nil {
 		return nil, fmt.Errorf("ReadRow failed to decode byte: %v", err)

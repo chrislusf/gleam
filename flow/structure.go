@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/script"
+	"github.com/chrislusf/gleam/util"
 )
 
 type FunctionType int
@@ -56,8 +57,8 @@ type DatasetShard struct {
 	Id            int
 	Dataset       *Dataset
 	ReadingTasks  []*Task
-	IncomingChan  chan []byte
-	OutgoingChans []chan []byte
+	IncomingChan  *util.Piper
+	OutgoingChans []*util.Piper
 	Counter       int
 	ReadyTime     time.Time
 	CloseTime     time.Time

@@ -33,20 +33,19 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 		PipeAsArgs(inChan, code, outChan)
 
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return ret
 }
 
-func PipeAsArgs(inChan chan []byte, code string, outChan chan []byte) {
+func PipeAsArgs(inChan *util.Piper, code string, outChan *util.Piper) {
 	var wg sync.WaitGroup
 
-	for input := range inChan {
+	err := util.ProcessMessage(inChan.Reader, func(input []byte) error {
 		parts, err := util.DecodeRow(input)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "PipeArgs>Failed to read input data %v: %+v\n", err, input)
-			break
+			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
 		}
 		// feed parts as input to the code
 		actualCode := code
@@ -60,13 +59,20 @@ func PipeAsArgs(inChan chan []byte, code string, outChan chan []byte) {
 			actualCode = strings.Replace(actualCode, fmt.Sprintf("$%d", i), arg, -1)
 		}
 
+		// println("pipeAsArgs command:", actualCode)
+
 		cmd := &script.Command{
 			Path: "sh",
 			Args: []string{"-c", actualCode},
 		}
 		// write output to outChan
 		wg.Add(1)
-		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, outChan, true, false, os.Stderr)
-		wg.Wait()
+		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, outChan, false, true, false, os.Stderr)
+		//wg.Wait()
+		return nil
+	})
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PipeArgs> Error: %v\n", err)
 	}
 }

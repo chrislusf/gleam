@@ -2,6 +2,7 @@ package flow
 
 import (
 	"bufio"
+	"io"
 	"log"
 	"os"
 
@@ -12,7 +13,7 @@ import (
 // Function f writes to this channel.
 // The channel should contain MsgPack encoded []byte slices.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
-func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
+func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
@@ -21,16 +22,16 @@ func (fc *FlowContext) Source(f func(chan []byte)) (ret *Dataset) {
 		// println("running source task...")
 		for _, shard := range task.OutputShards {
 			// println("writing to source output channel for shard", shard.Name(), shard.IncomingChan)
-			f(shard.IncomingChan)
+			f(shard.IncomingChan.Writer)
 			// println("closing source output channel for shard", shard.Name(), shard.IncomingChan)
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return
 }
 
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
-	fn := func(out chan []byte) {
+	fn := func(out io.Writer) {
 		file, err := os.Open(fname)
 		if err != nil {
 			log.Panicf("Can not open file %s: %v", fname, err)
@@ -40,12 +41,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			encoded, err := util.EncodeRow(scanner.Bytes())
-			if err != nil {
-				log.Printf("Failed to encode bytes: %v", err)
-				continue
-			}
-			out <- encoded
+			util.WriteRow(out, scanner.Bytes())
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -62,15 +58,11 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step.Name = "Channel"
 	step.Function = func(task *Task) {
 		for data := range ch {
-			encoded, err := util.EncodeRow(data)
-			if err != nil {
-				log.Printf("Failed to encode bytes: %v", err)
-				continue
-			}
-			task.OutputShards[0].IncomingChan <- encoded
+			util.WriteRow(task.OutputShards[0].IncomingChan.Writer, data)
+			task.OutputShards[0].Counter++
 		}
 		for _, shard := range task.OutputShards {
-			close(shard.IncomingChan)
+			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return

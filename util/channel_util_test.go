@@ -2,13 +2,15 @@ package util
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"sync"
 	"testing"
 )
 
-func xTestCallingShellScript(t *testing.T) {
+func TestCallingShellScript(t *testing.T) {
 
 	data := [][]byte{
 		[]byte("asdf"),
@@ -19,33 +21,56 @@ func xTestCallingShellScript(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	ch1 := make(chan []byte)
-	ch2 := make(chan []byte)
+	ch1 := NewPiper(true)
+	ch2 := NewPiper(true)
 
 	wg.Add(1)
 	go func() {
 		fmt.Println("starting sending to ch1 ...")
 		for _, d := range data {
-			ch1 <- d
+			//WriteRow(ch1.Writer, d)
+			ch1.Writer.Write(d)
+			ch1.Writer.Write([]byte("\n"))
 		}
-		close(ch1)
+		//fmt.Println("stopped sending to ch1.")
+		ch1.Writer.Close()
 		wg.Done()
 	}()
 
 	wg.Add(1)
-	cmd := exec.Command("sh", "-c", "grep asdf")
-	Execute(&wg, "testing shell", cmd, ch1, ch2, true, os.Stderr)
+	cmd := exec.Command("sh", "-c", "cat")
+	go Execute(&wg, "testing shell", cmd, ch1, ch2, true, false, os.Stderr)
 
-	wg.Add(1)
-	go func() {
-		fmt.Println("start reading ch2...")
-		for d := range ch2 {
-			fmt.Println("ch2:", string(d))
+	if false {
+		var counter int
+		wg.Add(1)
+		go func() {
+			fmt.Println("start reading ch2...")
+			ProcessMessage(ch2.Reader, func(d []byte) error {
+				row, _ := DecodeRow(d)
+				counter++
+				fmt.Println("ch2:", string(row[0].([]byte)))
+				return nil
+			})
+			// fmt.Println("stopped reading ch2.")
+			wg.Done()
+		}()
+	} else {
+		if false {
+			io.Copy(ioutil.Discard, ch2.Reader)
+		} else {
+			io.Copy(os.Stdout, ch2.Reader)
 		}
-		wg.Done()
-	}()
+		ch2.Writer.Close()
+	}
 
 	wg.Wait()
+
+	/*
+		if counter != 2 {
+			t.Errorf("Failed to grep keywords.")
+		}
+	*/
 }
 
 func xTestCallingLuajitScript(t *testing.T) {
@@ -59,15 +84,18 @@ func xTestCallingLuajitScript(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	ch1 := make(chan []byte)
-	ch2 := make(chan []byte)
+	ch1 := NewPiper()
+	ch2 := NewPiper()
 
 	wg.Add(1)
 	go func() {
+		fmt.Println("starting sending to ch1 ...")
 		for _, d := range data {
-			ch1 <- d
+			//WriteRow(ch1.Writer, d)
+			ch1.Writer.Write(d)
+			ch1.Writer.Write([]byte("\n"))
 		}
-		close(ch1)
+		ch1.Writer.Close()
 		wg.Done()
 	}()
 
@@ -80,13 +108,16 @@ func xTestCallingLuajitScript(t *testing.T) {
 				mapper(line)
 		    end
 			`)
-	Execute(&wg, "testing luajit", cmd, ch1, ch2, true, os.Stderr)
+	go Execute(&wg, "testing luajit", cmd, ch1, ch2, true, false, os.Stderr)
 
 	wg.Add(1)
 	go func() {
-		for d := range ch2 {
-			fmt.Println("ch2:", string(d))
-		}
+		fmt.Println("start reading ch2...")
+		ProcessMessage(ch2.Reader, func(d []byte) error {
+			row, _ := DecodeRow(d)
+			fmt.Println("ch2:", string(row[0].([]byte)))
+			return nil
+		})
 		wg.Done()
 	}()
 

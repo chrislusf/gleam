@@ -5,6 +5,7 @@ func (d *Dataset) Reduce(code string) (ret *Dataset) {
 }
 
 func (d *Dataset) ReduceByKey(code string) (ret *Dataset) {
+	// TODO avoid local reduce twice if partition is one
 	return d.LocalSort().LocalReduceByKey(code).MergeSortedTo(1).LocalReduceByKey(code)
 }
 
