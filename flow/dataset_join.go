@@ -1,9 +1,9 @@
 package flow
 
 import (
-	// "fmt"
-	//"os"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/chrislusf/gleam/util"
 )
@@ -33,9 +33,15 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset,
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
+		leftReader := task.InputShards[0].OutgoingChans[0].Reader
+		rightReader := task.InputShards[1].OutgoingChans[0].Reader
+		if leftReader == rightReader {
+			// special case for self join
+			rightReader = task.InputShards[0].OutgoingChans[1].Reader
+		}
 		JoinPartitionedSorted(
-			task.InputShards[0].OutgoingChans[0].Reader,
-			task.InputShards[1].OutgoingChans[0].Reader,
+			leftReader,
+			rightReader,
 			isLeftOuterJoin,
 			isRightOuterJoin,
 			outChan.Writer,
@@ -145,7 +151,7 @@ func newChannelOfValuesWithSameKey(sortedChan io.Reader) chan keyValues {
 
 		row, err := util.ReadRow(sortedChan)
 		if err != nil {
-			// fmt.Fprintf(os.Stderr, "join read row error: %v", err)
+			fmt.Fprintf(os.Stderr, "join read row error: %v", err)
 			return
 		}
 		// fmt.Printf("join read len=%d, row: %s\n", len(row), row[0])
