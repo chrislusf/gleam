@@ -28,7 +28,7 @@ var (
 	masterAddress = master.Flag("address", "listening address host:port").Default(":45327").String()
 
 	executor               = app.Command("execute", "Execute an instruction set")
-	executorInstructionSet = app.Command("execute.instructions", "The instruction set")
+	executorInstructionSet = executor.Flag("steps", "The instruction set").String()
 
 	agent       = app.Command("agent", "Agent that can accept read, write requests, manage executors")
 	agentOption = &a.AgentServerOption{
@@ -77,22 +77,22 @@ func main() {
 
 	case writer.FullCommand():
 
-		inChan := make(chan []byte, 16)
+		inChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, inChan, 1)
+		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, inChan.Reader, 1)
 		wg.Add(1)
-		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan, true, os.Stderr)
+		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan.Writer, true, os.Stderr)
 		wg.Wait()
 
 	case reader.FullCommand():
 
-		outChan := make(chan []byte, 16)
+		outChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, outChan)
+		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, outChan.Writer)
 		wg.Add(1)
-		util.ChannelToLineWriter(&wg, "stdout", outChan, os.Stdout, os.Stderr)
+		util.ChannelToLineWriter(&wg, "stdout", outChan.Reader, os.Stdout, os.Stderr)
 		wg.Wait()
 
 	case agent.FullCommand():

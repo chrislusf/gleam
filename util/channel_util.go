@@ -94,29 +94,37 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 	if closeOutput {
 		defer writer.Close()
 	}
-	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
-	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
-	defer w.Flush()
+	/*
+		r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+		w := bufio.NewWriterSize(writer, BUFFER_SIZE)
+		defer w.Flush()
 
-	_, err := io.Copy(w, r)
+		_, err := io.Copy(w, r)
+	*/
+	n, err := io.Copy(writer, reader)
 	if err != nil {
 		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
-		fmt.Fprintf(errorOutput, "%s>Failed to read bytes length from input to channel: %v\n", name, err)
+		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
 	}
+	println("reader", name, "copied", n, "bytes.")
 }
 
 func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
 	defer wg.Done()
 	defer writer.Close()
 
-	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
-	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
-	defer w.Flush()
+	/*
+		r := bufio.NewReaderSize(reader, BUFFER_SIZE)
+		w := bufio.NewWriterSize(writer, BUFFER_SIZE)
+		defer w.Flush()
 
-	_, err := io.Copy(w, r)
+		n, err := io.Copy(w, r)
+	*/
+	n, err := io.Copy(writer, reader)
 	if err != nil {
-		fmt.Fprintf(errorOutput, "%s> Failed to move data: %v", name, err)
+		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
 	}
+	println("writer", name, "moved", n, "bytes.")
 }
 
 func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
@@ -162,7 +170,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writ
 
 	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
 
-	if err := fprintRowsFromChannel(r, w, "\t", "\n"); err != nil {
+	if err := FprintRowsFromChannel(r, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}

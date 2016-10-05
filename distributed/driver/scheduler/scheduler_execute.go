@@ -10,6 +10,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/util"
 )
 
 func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup, allocation resource.Allocation, wg *sync.WaitGroup) {
@@ -75,10 +76,10 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 
 	for _, shard := range task.OutputShards {
 		location, _ := s.GetShardLocation(shard)
-		shard.IncomingChan = make(chan []byte, 16)
+		shard.IncomingChan = util.NewPiper()
 		wg.Add(1)
 		go func() {
-			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.IncomingChan, len(shard.ReadingTasks)); err != nil {
+			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()
@@ -90,14 +91,14 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
 	for _, shard := range task.InputShards {
-		shard.OutgoingChans = make([]chan []byte, 0)
+		shard.OutgoingChans = make([]*util.Piper, 0)
 		location, _ := s.GetShardLocation(shard)
-		outChan := make(chan []byte, 16)
+		outChan := util.NewPiper()
 		shard.OutgoingChans = append(shard.OutgoingChans, outChan)
 		wg.Add(1)
 		go func() {
 			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", outChan)
-			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), outChan); err != nil {
+			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), outChan.Writer); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()

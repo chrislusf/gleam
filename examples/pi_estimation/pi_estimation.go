@@ -18,16 +18,25 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 10
+	times := 1024 * 1024 * 1
+	networkTrafficReductionFactor := 10
 
 	benchmark(times, "gleam single pipe", testUnixPipeThroughput)
-	//benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
-	//testUnixPipe(times)
-	//testLuajit(times)
-	//testPureGo(times)
-	//testLocalGleam(times)
-	//testLocalFlow(times)
-	//testDistributedGleam(times)
+	benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
+	testUnixPipe(times)
+	/*
+		benchmark(times, "gleam single pipe", testUnixPipeThroughput)
+		benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
+		testUnixPipe(times)
+	*/
+	testLocalGleam(times, networkTrafficReductionFactor)
+	/*
+		testLuajit(times)
+		testPureGo(times)
+		testLocalGleam(times, networkTrafficReductionFactor)
+		testLocalFlow(times, networkTrafficReductionFactor)
+		testDistributedGleam(times, networkTrafficReductionFactor)
+	*/
 }
 
 func benchmark(times int, name string, f func(int)) {
@@ -40,17 +49,6 @@ func benchmark(times int, name string, f func(int)) {
 }
 
 func testUnixPipeThroughput(times int) {
-	_ = `
-	the time stays constant for unix connected pipes
-	time bash -c "cat /Users/chris/Downloads/txt/en/ep-08-*.txt | cat | cat | wc"
-	136360 4422190 26959761
-
-	real	0m0.177s
-	user	0m0.161s
-	sys	0m0.078s
-	
-	Current implementation is slower for each additional pipe step
-	`
 	out := gleam.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1")
 	for i := 0; i < 10; i++ {
 		out = out.Pipe("cat")
@@ -66,14 +64,14 @@ func testUnixPipe(times int) {
 	// PipeAsArgs has 4ms cost to startup a process
 	startTime := time.Now()
 	gleam.New().Source(
-		util.Range(1, 100, 1),
+		util.Range(0, 100),
 	).PipeAsArgs("echo foo bar $1").Fprintf(ioutil.Discard, "%s\n")
 
 	fmt.Printf("gleam pipe time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testDistributedGleam(times int) {
+func testDistributedGleam(times int, factor int) {
 	var count int64
 
 	startTime := time.Now()
@@ -81,60 +79,70 @@ func testDistributedGleam(times int) {
       function count(x, y)
         return x + y
       end
-    `).Source(util.Range(1, times, 1)).Partition(1).Map(`
+    `).Source(util.Range(0, times/factor)).Map(fmt.Sprintf(`
       function(n)
-        local x, y = math.random(), math.random()
-        if x*x+y*y < 1 then
-          return 1
-        end
+	    local count = 0
+	    for i=1,%d,1 do
+          local x, y = math.random(), math.random()
+          if x*x+y*y < 1 then
+            count = count + 1
+          end
+		end
+		return count
       end
-    `).Reduce("count").SaveOneRowTo(&count)
+    `, factor)).Reduce("count").SaveOneRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam distributed time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testLocalGleam(times int) {
+func testLocalGleam(times int, factor int) {
 	var count int64
 	startTime := time.Now()
 	gleam.New().Script("lua", `
       function count(x, y)
         return x + y
       end
-    `).Source(util.Range(1, times, 1)).Partition(2).Map(`
+    `).Source(util.Range(0, times/factor)).Map(fmt.Sprintf(`
       function(n)
-        local x, y = math.random(), math.random()
-        if x*x+y*y < 1 then
-          return 1
-        end
+	    local count = 0
+	    for i=1,%d,1 do
+          local x, y = math.random(), math.random()
+          if x*x+y*y < 1 then
+            count = count + 1
+          end
+		end
+		return count
       end
-    `).Reduce("count").SaveOneRowTo(&count)
+    `, factor)).Reduce("count").SaveOneRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam local time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testLocalFlow(times int) {
+func testLocalFlow(times int, factor int) {
 	startTime := time.Now()
 	ch := make(chan int)
 	go func() {
-		for i := 0; i < times; i++ {
+		for i := 0; i < times/factor; i++ {
 			ch <- i
 		}
 		close(ch)
 	}()
 	flow.New().Channel(ch).Map(func(t int) int {
-		x, y := rand.Float32(), rand.Float32()
-		if x*x+y*y < 1 {
-			return 1
+		count := 0
+		for i := 0; i < factor; i++ {
+			x, y := rand.Float32(), rand.Float32()
+			if x*x+y*y < 1 {
+				count++
+			}
 		}
-		return 0
+		return count
 	}).LocalReduce(func(x, y int) int {
 		return x + y
 	}).Map(func(count int) {
-		println("=>", count)
 		fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	}).Run()
 
@@ -160,9 +168,8 @@ func testPureGo(times int) {
 func testLuajit(times int) {
 	startTime := time.Now()
 	var count int64
-
 	startTime = time.Now()
-	gleam.New().Source(util.Range(1, 1, 1)).Map(fmt.Sprintf(`
+	gleam.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
       function(n)
 	    local count = 0
 	    for i=1,%d,1 do
@@ -175,7 +182,7 @@ func testLuajit(times int) {
       end
     `, times)).SaveOneRowTo(&count)
 
-	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
+	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
 	fmt.Printf("luajit local time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }

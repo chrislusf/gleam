@@ -12,7 +12,6 @@ import (
 func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		count--
 		if count == 0 {
 			io.Copy(ioutil.Discard, reader)
 			return nil
@@ -25,6 +24,7 @@ func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 		if err = f(args); err != nil {
 			break
 		}
+		count--
 	}
 	if err != nil {
 		return fmt.Errorf("Failed to process tsv: %v\n", err)
@@ -37,7 +37,6 @@ func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 
 func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) {
 	for err == nil {
-		count--
 		if count == 0 {
 			io.Copy(ioutil.Discard, reader)
 			return nil
@@ -51,6 +50,7 @@ func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) 
 		} else {
 			return fmt.Errorf("Failed to read message: %v\n", readError)
 		}
+		count--
 	}
 
 	return
@@ -67,8 +67,7 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 		return
 	}
 	if err != nil {
-		fmt.Errorf("Failed to read message length: %v", err)
-		return
+		return nil, fmt.Errorf("Failed to read message length: %v", err)
 	}
 	if length == -1 {
 		return nil, io.EOF

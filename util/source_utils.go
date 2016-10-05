@@ -14,18 +14,15 @@ func ListFiles(dir string, pattern string) (fileNames []string) {
 	}
 
 	for _, file := range files {
-		fileNames = append(fileNames, "/etc/"+file.Name())
+		fileNames = append(fileNames, dir+"/"+file.Name())
 	}
 	return
 }
 
-func Range(from, to, step int) func(io.Writer) {
+func Range(from, to int) func(io.Writer) {
 	return func(outChan io.Writer) {
-		for i := from; ; i += step {
+		for i := from; i < to; i++ {
 			WriteRow(outChan, i)
-			if i == to {
-				break
-			}
 		}
 	}
 }

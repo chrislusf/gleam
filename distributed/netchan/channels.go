@@ -4,6 +4,7 @@ package netchan
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -13,7 +14,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, outChan chan []byte) error {
+func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, outChan io.WriteCloser) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -36,7 +37,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	return nil
 }
 
-func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, inChan chan []byte, readerCount int) error {
+func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, inChan io.Reader, readerCount int) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -56,6 +57,8 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 	util.WriteMessage(readWriter, data)
 
 	util.ChannelToWriter(wg, channelName, inChan, readWriter, os.Stderr)
+
+	// println("writing to data", channelName, "finished.")
 
 	return nil
 }

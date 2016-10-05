@@ -31,8 +31,11 @@ func (d *Dataset) Output(f func(io.Reader) error) {
 
 func (d *Dataset) PipeOut(writer io.Writer) {
 	fn := func(inChan io.Reader) error {
-		_, err := io.Copy(writer, inChan)
-		return err
+		if d.Step.IsPipe {
+			_, err := io.Copy(writer, inChan)
+			return err
+		}
+		return util.FprintRowsFromChannel(inChan, writer, "\t", "\n")
 	}
 	d.Output(fn)
 
@@ -68,6 +71,7 @@ func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
 				return nil
 			})
 		}
+
 		return util.TakeMessage(inChan, 1, func(encodedBytes []byte) error {
 			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)

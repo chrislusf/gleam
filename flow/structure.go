@@ -59,7 +59,7 @@ type DatasetShard struct {
 	ReadingTasks  []*Task
 	IncomingChan  *util.Piper
 	OutgoingChans []*util.Piper
-	Counter       int
+	Counter       int64
 	ReadyTime     time.Time
 	CloseTime     time.Time
 }

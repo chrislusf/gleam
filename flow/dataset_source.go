@@ -21,9 +21,7 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	step.Function = func(task *Task) {
 		// println("running source task...")
 		for _, shard := range task.OutputShards {
-			// println("writing to source output channel for shard", shard.Name(), shard.IncomingChan)
 			f(shard.IncomingChan.Writer)
-			// println("closing source output channel for shard", shard.Name(), shard.IncomingChan)
 			shard.IncomingChan.Writer.Close()
 		}
 	}

@@ -1,45 +1,49 @@
 package agent
 
 import (
+	"io"
 	"sync"
+
+	"github.com/chrislusf/gleam/util"
 )
 
 type trackedChannel struct {
-	writerChannel  chan []byte
-	readerChannels []chan []byte
-	index          int
+	incomingChannel  *util.Piper
+	outgoingChannels []*util.Piper
+	index            int
 }
 
 func newTrackedChannel(readerCount int) *trackedChannel {
 	t := &trackedChannel{
-		writerChannel:  make(chan []byte),
-		readerChannels: make([]chan []byte, readerCount),
-		index:          0,
+		incomingChannel:  util.NewPiper(),
+		outgoingChannels: make([]*util.Piper, readerCount),
+		index:            0,
 	}
 	if readerCount > 1 {
-		for i, _ := range t.readerChannels {
-			t.readerChannels[i] = make(chan []byte)
+		for i, _ := range t.outgoingChannels {
+			t.outgoingChannels[i] = util.NewPiper()
 		}
 		go func() {
-			for data := range t.writerChannel {
-				for _, ch := range t.readerChannels {
-					ch <- data
-				}
+			var writers []io.Writer
+			for _, outgoingChan := range t.outgoingChannels {
+				writers = append(writers, outgoingChan.Writer)
 			}
-			for _, ch := range t.readerChannels {
-				close(ch)
+			w := io.MultiWriter(writers...)
+			io.Copy(w, t.incomingChannel.Reader)
+			for _, outgoingChan := range t.outgoingChannels {
+				outgoingChan.Writer.Close()
 			}
 		}()
 	}
 	return t
 }
 
-func (tc *trackedChannel) borrowChannel() chan []byte {
-	if len(tc.readerChannels) > 1 {
+func (tc *trackedChannel) borrowChannel() *util.Piper {
+	if len(tc.outgoingChannels) > 1 {
 		tc.index++
-		return tc.readerChannels[tc.index-1]
+		return tc.outgoingChannels[tc.index-1]
 	}
-	return tc.writerChannel
+	return tc.incomingChannel
 }
 
 type LocalDatasetShardsManagerInMemory struct {
@@ -62,7 +66,7 @@ func (m *LocalDatasetShardsManagerInMemory) doDelete(name string) {
 
 }
 
-func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string, readerCount int) chan []byte {
+func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string, readerCount int) *util.Piper {
 
 	m.Lock()
 	defer m.Unlock()
@@ -77,10 +81,10 @@ func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string,
 	m.name2Channel[name] = tc
 	m.name2ChannelCond.Broadcast()
 
-	return tc.writerChannel
+	return tc.incomingChannel
 }
 
-func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string) chan []byte {
+func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string) *util.Piper {
 
 	m.Lock()
 	defer m.Unlock()

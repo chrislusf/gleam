@@ -47,12 +47,14 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 
+	// fmt.Println(name, "starting...")
+
 	if startError := cmd.Start(); startError != nil {
 		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, cmd)
 		return
 	}
 
-	// fmt.Printf("Command is waiting.\n")
+	// fmt.Printf("Command is waiting: %v\n", cmd)
 
 	wg.Wait()
 

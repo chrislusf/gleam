@@ -1,6 +1,9 @@
 package plan
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -49,4 +52,12 @@ func (t *TaskGroup) AddTask(task *flow.Task) *TaskGroup {
 func (t *TaskGroup) AddParent(parent *TaskGroup) *TaskGroup {
 	t.Parents = append(t.Parents, parent)
 	return t
+}
+
+func (t *TaskGroup) String() string {
+	var steps []string
+	for _, task := range t.Tasks {
+		steps = append(steps, fmt.Sprintf("%s.%d", task.Step.Name, task.Id))
+	}
+	return "taskGroup:" + strings.Join(steps, "-")
 }

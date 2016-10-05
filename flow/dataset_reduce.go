@@ -1,12 +1,19 @@
 package flow
 
 func (d *Dataset) Reduce(code string) (ret *Dataset) {
-	return d.LocalReduce(code).MergeSortedTo(1).LocalReduce(code)
+	ret = d.LocalReduce(code)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeSortedTo(1).LocalReduce(code)
+	}
+	return ret
 }
 
 func (d *Dataset) ReduceByKey(code string) (ret *Dataset) {
-	// TODO avoid local reduce twice if partition is one
-	return d.LocalSort().LocalReduceByKey(code).MergeSortedTo(1).LocalReduceByKey(code)
+	ret = d.LocalSort().LocalReduceByKey(code)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeSortedTo(1).LocalReduceByKey(code)
+	}
+	return ret
 }
 
 func (d *Dataset) LocalReduce(code string) *Dataset {

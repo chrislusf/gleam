@@ -31,7 +31,7 @@ func Fprintf(inChan io.Reader, writer io.Writer, format string) error {
 	})
 }
 
-func fprintRowsFromChannel(ch io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
+func FprintRowsFromChannel(ch io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
 	return ProcessMessage(ch, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error

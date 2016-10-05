@@ -80,10 +80,12 @@ func (r *LocalDriver) RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 		writers = append(writers, outgoingChan.Writer)
 	}
 	w := io.MultiWriter(writers...)
-	io.Copy(w, shard.IncomingChan.Reader)
+	n, _ := io.Copy(w, shard.IncomingChan.Reader)
 	for _, outgoingChan := range shard.OutgoingChans {
 		outgoingChan.Writer.Close()
 	}
+	// println("shard", shard.Name(), "moved", n, "bytes.")
+	shard.Counter = n
 	shard.CloseTime = time.Now()
 }
 
