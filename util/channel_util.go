@@ -156,7 +156,6 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, 
 		WriteMessage(w, buf.Bytes())
 	}
 	if err := scanner.Err(); err != nil {
-		// TODO: what's wrong here?
 		// seems the program could have ended when reading the output.
 		fmt.Fprintf(errorOutput, "Failed to read from input to channel: %v\n", err)
 	}
