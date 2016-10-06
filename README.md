@@ -1,5 +1,5 @@
 # gleam
-a Go based distributed execution system. The computation is written by Lua/Luajit, or by Unix pipe tool sets.
+a Go based distributed execution system. The computation can be written in Lua/Luajit or Unix Pipe tools.
 
 # Installation
 1. Install Luajit
