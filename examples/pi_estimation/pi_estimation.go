@@ -18,12 +18,11 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 1
-	networkTrafficReductionFactor := 10
+	times := 1024 * 1024 * 10000
+	networkTrafficReductionFactor := 100000
 
 	benchmark(times, "gleam single pipe", testUnixPipeThroughput)
 	benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
-	testUnixPipe(times)
 	/*
 		benchmark(times, "gleam single pipe", testUnixPipeThroughput)
 		benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
@@ -104,7 +103,7 @@ func testLocalGleam(times int, factor int) {
       function count(x, y)
         return x + y
       end
-    `).Source(util.Range(0, times/factor)).Map(fmt.Sprintf(`
+    `).Source(util.Range(0, times/factor)).Partition(7).Map(fmt.Sprintf(`
       function(n)
 	    local count = 0
 	    for i=1,%d,1 do
