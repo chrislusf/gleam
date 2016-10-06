@@ -106,7 +106,7 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
 		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
 	}
-	println("reader", name, "copied", n, "bytes.")
+	// println("reader", name, "copied", n, "bytes.")
 }
 
 func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
@@ -124,7 +124,7 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	if err != nil {
 		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
 	}
-	println("writer", name, "moved", n, "bytes.")
+	// println("writer", name, "moved", n, "bytes.")
 }
 
 func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {

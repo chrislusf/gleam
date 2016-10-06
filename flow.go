@@ -5,10 +5,23 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
-func New() (fc *flow.FlowContext) {
+type FlowType int
+
+const (
+	Local FlowType = iota
+	Distributed
+)
+
+func New(flowType ...FlowType) (fc *flow.FlowContext) {
+	if len(flowType) > 0 {
+		switch flowType[0] {
+		case Distributed:
+			return flow.New().SetRunner(driver.Distributed)
+		}
+	}
 	return flow.New()
 }
 
 func NewDistributed() (fc *flow.FlowContext) {
-	return flow.New().SetRunner(driver.Distributed)
+	return New(Distributed)
 }

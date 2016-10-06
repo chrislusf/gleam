@@ -18,7 +18,7 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 10000
+	times := 1024 * 1024 * 1024
 	networkTrafficReductionFactor := 100000
 
 	benchmark(times, "gleam single pipe", testUnixPipeThroughput)
@@ -29,12 +29,12 @@ func main() {
 		testUnixPipe(times)
 	*/
 	testLocalGleam(times, networkTrafficReductionFactor)
+	testDistributedGleam(times, networkTrafficReductionFactor)
 	/*
 		testLuajit(times)
 		testPureGo(times)
 		testLocalGleam(times, networkTrafficReductionFactor)
 		testLocalFlow(times, networkTrafficReductionFactor)
-		testDistributedGleam(times, networkTrafficReductionFactor)
 	*/
 }
 
@@ -78,7 +78,7 @@ func testDistributedGleam(times int, factor int) {
       function count(x, y)
         return x + y
       end
-    `).Source(util.Range(0, times/factor)).Map(fmt.Sprintf(`
+    `).Source(util.Range(0, times/factor)).Partition(7).Map(fmt.Sprintf(`
       function(n)
 	    local count = 0
 	    for i=1,%d,1 do
@@ -89,7 +89,7 @@ func testDistributedGleam(times int, factor int) {
 		end
 		return count
       end
-    `, factor)).Reduce("count").SaveOneRowTo(&count)
+    `, factor)).Reduce("count").SaveFirstRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam distributed time diff: %s\n", time.Now().Sub(startTime))
@@ -114,7 +114,7 @@ func testLocalGleam(times int, factor int) {
 		end
 		return count
       end
-    `, factor)).Reduce("count").SaveOneRowTo(&count)
+    `, factor)).Reduce("count").SaveFirstRowTo(&count)
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam local time diff: %s\n", time.Now().Sub(startTime))
@@ -179,7 +179,7 @@ func testLuajit(times int) {
 		end
 		return count
       end
-    `, times)).SaveOneRowTo(&count)
+    `, times)).SaveFirstRowTo(&count)
 
 	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
 	fmt.Printf("luajit local time diff: %s\n", time.Now().Sub(startTime))

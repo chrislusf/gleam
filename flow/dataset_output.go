@@ -9,6 +9,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
+// Output concurrently collects outputs from previous step to the driver.
 func (d *Dataset) Output(f func(io.Reader) error) {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
@@ -29,6 +30,9 @@ func (d *Dataset) Output(f func(io.Reader) error) {
 	}
 }
 
+// PipeOut writes to writer.
+// If previous step is a Pipe() or PipeAsArgs(), the output is written as is.
+// Otherwise, each row of output is written in tab-separated lines.
 func (d *Dataset) PipeOut(writer io.Writer) {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
@@ -42,6 +46,7 @@ func (d *Dataset) PipeOut(writer io.Writer) {
 	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
 }
 
+// Fprintf formats using the format for each row and writes to writer.
 func (d *Dataset) Fprintf(writer io.Writer, format string) {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
@@ -54,7 +59,8 @@ func (d *Dataset) Fprintf(writer io.Writer, format string) {
 	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
 }
 
-func (d *Dataset) SaveOneRowTo(decodedObjects ...interface{}) {
+// SaveFirstRowTo saves the first row's values into the operands.
+func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
 			return util.TakeTsv(inChan, 1, func(args []string) error {

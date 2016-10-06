@@ -9,9 +9,9 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-// Source read data out of the channel.
-// Function f writes to this channel.
-// The channel should contain MsgPack encoded []byte slices.
+// Source produces data feeding into the flow.
+// Function f writes to this writer.
+// The written bytes should be MsgPack encoded []byte.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
 func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
@@ -28,6 +28,7 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	return
 }
 
+// TextFile reads the file content as lines and feed into the flow.
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	fn := func(out io.Writer) {
 		file, err := os.Open(fname)
@@ -49,6 +50,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	return fc.Source(fn)
 }
 
+// Channel accepts a channel to feed into the flow.
 func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
@@ -66,6 +68,7 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	return
 }
 
+// Bytes begins a flow with an [][]byte
 func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
@@ -79,6 +82,7 @@ func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
 	return fc.Channel(inputChannel)
 }
 
+// Strings begins a flow with an []string
 func (fc *FlowContext) Strings(lines []string) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
@@ -92,6 +96,7 @@ func (fc *FlowContext) Strings(lines []string) (ret *Dataset) {
 	return fc.Channel(inputChannel)
 }
 
+// Ints begins a flow with an []int
 func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
