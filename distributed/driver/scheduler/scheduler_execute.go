@@ -24,6 +24,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	}
 	instructions := plan.TranslateToInstructionSet(taskGroup)
 	firstInstruction := instructions.GetInstructions()[0]
+	lastInstruction := instructions.GetInstructions()[len(instructions.GetInstructions())-1]
 	firstTask := taskGroup.Tasks[0]
 	var inputLocations []resource.Location
 	for _, shard := range firstTask.InputShards {
@@ -35,6 +36,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		inputLocations = append(inputLocations, loc)
 	}
 	firstInstruction.SetInputLocations(inputLocations...)
+	lastInstruction.SetOutputLocations(allocation.Location)
 
 	instructions.FlowHashCode = &flowContext.HashCode
 	request := NewStartRequest(

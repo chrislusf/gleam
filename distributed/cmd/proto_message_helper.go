@@ -46,6 +46,28 @@ func (i *Instruction) SetInputLocations(locations ...resource.Location) {
 	}
 }
 
+func (i *Instruction) SetOutputLocations(locations ...resource.Location) {
+	if i.GetScript() != nil {
+		i.GetScript().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetLocalSort() != nil {
+		i.GetLocalSort().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetPipeAsArgs() != nil {
+		i.GetPipeAsArgs().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetMergeSortedTo() != nil {
+		i.GetMergeSortedTo().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetScatterPartitions() != nil {
+		for index, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
+			outputLocation.setLocation(locations[index])
+		}
+	} else if i.GetCollectPartitions() != nil {
+		i.GetCollectPartitions().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetJoinPartitionedSorted() != nil {
+		i.GetJoinPartitionedSorted().OutputShardLocation.setLocation(locations[0])
+	} else if i.GetCoGroupPartitionedSorted() != nil {
+		i.GetCoGroupPartitionedSorted().OutputShardLocation.setLocation(locations[0])
+	}
+}
+
 func (l *DatasetShardLocation) setLocation(loc resource.Location) {
 	l.Host = proto.String(loc.Server)
 	l.Port = proto.Int32(int32(loc.Port))
