@@ -68,35 +68,4 @@ func main() {
       end
     `).Fprintf(os.Stdout, "%s\t%d\n")
 
-	/*
-	   	flow.New().Strings(fileNames).Partition(1).ForEach(`
-	         function(fname)
-	           -- Open a file for read
-	           local fh,err = io.open(fname)
-	           if err then return end
-	           -- io.stderr:write("reading "..fname.."\n")
-	           -- line by line
-	           while true do
-	             local line = fh:read()
-	             if not line then break end
-	             writeRow(line)
-	           end
-	           -- Following are good form
-	           fh:close()
-	         end
-	       `).FlatMap(`
-	         function(line)
-	           return line:gmatch("%w+")
-	         end
-	       `).Pipe("tr 'A-Z' 'a-z'").Map(`
-	         function(word)
-	           return word, 1
-	         end
-	       `).ReduceByKey(`
-	         function(x, y)
-	           return x + y
-	         end
-	       `).Fprintf(os.Stdout, "%s\t%d\n")
-
-	*/
 }
