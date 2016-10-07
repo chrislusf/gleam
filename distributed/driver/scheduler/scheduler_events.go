@@ -57,18 +57,6 @@ func (s *Scheduler) EventLoop() {
 					supply := <-pickedServerChan
 					allocation := supply.Object.(resource.Allocation)
 					defer s.Market.ReturnSupply(supply)
-					/*
-						allocation := resource.Allocation{
-							Location: resource.Location{
-								Server: "localhost",
-								Port:   45326,
-							},
-							Allocated: resource.ComputeResource{
-								CPUCount: 1,
-								MemoryMB: 64,
-							},
-						}
-					*/
 
 					if needsInputFromDriver(tasks[0]) {
 						// tell the driver to write to me

@@ -148,6 +148,6 @@ func flowDatasetShardsToCmdDatasetShardLocation(shard *flow.DatasetShard) *cmd.D
 	return &cmd.DatasetShardLocation{
 		Shard: flowDatasetShardToCmdDatasetShard(shard),
 		Host:  proto.String("localhost"),
-		Port:  proto.Int32(45326),
+		Port:  proto.Int32(45327),
 	}
 }

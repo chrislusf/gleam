@@ -15,7 +15,7 @@ func TestEncodingDecoding(t *testing.T) {
 			DatasetShardId: proto.Int(0),
 		},
 		Host: proto.String("localhost"),
-		Port: proto.Int32(45326),
+		Port: proto.Int32(45327),
 	}
 	instructions := &InstructionSet{
 		FlowHashCode: proto.Uint32(1234567),

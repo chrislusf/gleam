@@ -25,7 +25,7 @@ var (
 	app = kingpin.New("gleamd", "distributed gleam, acts as master, agent, or executor")
 
 	master        = app.Command("master", "Start a master process")
-	masterAddress = master.Flag("address", "listening address host:port").Default(":45327").String()
+	masterAddress = master.Flag("address", "listening address host:port").Default(":45326").String()
 
 	executor               = app.Command("execute", "Execute an instruction set")
 	executorInstructionSet = executor.Flag("steps", "The instruction set").String()
@@ -34,8 +34,8 @@ var (
 	agentOption = &a.AgentServerOption{
 		Dir:          agent.Flag("dir", "agent folder to store computed data").Default(os.TempDir()).String(),
 		Host:         agent.Flag("host", "agent listening host address. Required in 2-way SSL mode.").Default("").String(),
-		Port:         agent.Flag("port", "agent listening port").Default("45326").Int(),
-		Master:       agent.Flag("master", "master address").Default("localhost:45327").String(),
+		Port:         agent.Flag("port", "agent listening port").Default("45327").Int(),
+		Master:       agent.Flag("master", "master address").Default("localhost:45326").String(),
 		DataCenter:   agent.Flag("dataCenter", "data center name").Default("defaultDataCenter").String(),
 		Rack:         agent.Flag("rack", "rack name").Default("defaultRack").String(),
 		MaxExecutor:  agent.Flag("executor.max", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
@@ -48,11 +48,11 @@ var (
 
 	writer             = app.Command("write", "Write data to a topic")
 	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
-	writerAgentAddress = writer.Flag("agent", "agent host:port").Default("localhost:45326").String()
+	writerAgentAddress = writer.Flag("agent", "agent host:port").Default("localhost:45327").String()
 
 	reader             = app.Command("read", "Read data from a topic")
 	readTopic          = reader.Flag("topic", "Name of a source topic").Required().String()
-	readerAgentAddress = reader.Flag("agent", "agent host:port").Default("localhost:45326").String()
+	readerAgentAddress = reader.Flag("agent", "agent host:port").Default("localhost:45327").String()
 )
 
 func main() {

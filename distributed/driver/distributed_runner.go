@@ -15,7 +15,7 @@ var (
 func init() {
 	Distributed = &DistributedDriver{
 		DriverOption: DriverOption{
-			Master:       "localhost:45327",
+			Master:       "localhost:45326",
 			TaskMemoryMB: 64,
 			FlowBid:      100.0,
 			Host:         "localhost",
