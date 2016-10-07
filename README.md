@@ -113,13 +113,8 @@ Start a gleam master and serveral gleam agents
 ```
 > go get github.com/chrislusf/gleam/distributed/gleam
 > gleam master --address=":45326"
-> gleam agent --dir=2 --port 45327 --host=127.0.0.2
-> gleam agent --dir=3 --port 45328 --host=127.0.0.3
-```
-On Mac, you would need to enable the loopback address
-```
-> sudo ifconfig lo0 alias 127.0.0.2 up
-> sudo ifconfig lo0 alias 127.0.0.3 up
+> gleam agent --dir=2 --port 45327 --host=127.0.0.1
+> gleam agent --dir=3 --port 45328 --host=127.0.0.1
 ```
 
 ## Change Source code
