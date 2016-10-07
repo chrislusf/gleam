@@ -9,6 +9,10 @@ a Go based distributed execution system. The computation can be written in Lua/L
   sudo cp MessagePack.lua /usr/local/share/luajit-2.0.4/
 ```
 
+# Documentation
+* [Gleam Wiki] (https://github.com/chrislusf/gleam/wiki)
+* [Gleam Flow API GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow)
+
 # Standalone Example
 
 The full source code, not snippet, for word count:
