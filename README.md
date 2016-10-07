@@ -9,7 +9,7 @@ a Go based distributed execution system. The computation can be written in Lua/L
   sudo cp MessagePack.lua /usr/local/share/luajit-2.0.4/
 ```
 
-# Example
+# Standalone Example
 
 The full source code, not snippet, for word count:
 ```
@@ -62,7 +62,7 @@ func main() {
 ```
 
 
-# Parallel Execution
+## Parallel Execution
 One limitation for unix pipes is that they are easy for one single pipe, but not easy to parallel.
 
 With Gleam this becomes very easy. (And this can be in distributed mode too!)
@@ -121,7 +121,7 @@ Start a gleam master and serveral gleam agents
 > gleam agent --dir=3 --port 45328 --host=127.0.0.1
 ```
 
-## Change Source code
+## Change Execution Mode.
 From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distributed)
 ```
   // local mode
@@ -132,4 +132,4 @@ From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distribut
   gleam.NewDistributed()
   gleam.New(gleam.Distributed)
 ```
-gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided for you to dynamically change the execution without changing the source code.
+gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided to dynamically change the execution mode.
