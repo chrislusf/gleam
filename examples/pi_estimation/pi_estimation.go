@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"runtime/pprof"
@@ -18,56 +17,19 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 1024
+	times := 1024 * 1024 * 100
 	networkTrafficReductionFactor := 100000
 
-	benchmark(times, "gleam single pipe", testUnixPipeThroughput)
-	benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
-	/*
-		benchmark(times, "gleam single pipe", testUnixPipeThroughput)
-		benchmark(times, "gleam connected pipe", testGleamUnixPipeThroughput)
-		testUnixPipe(times)
-	*/
 	testLocalGleam(times, networkTrafficReductionFactor)
-	testDistributedGleam(times, networkTrafficReductionFactor)
 	/*
-		testLuajit(times)
-		testPureGo(times)
-		testLocalGleam(times, networkTrafficReductionFactor)
-		testLocalFlow(times, networkTrafficReductionFactor)
+		// uncomment this if you setup the gleam master and agents
+		testDistributedGleam(times, networkTrafficReductionFactor)
 	*/
-}
+	testPureGo(times)
+	testLuajit(times)
 
-func benchmark(times int, name string, f func(int)) {
-	startTime := time.Now()
-
-	f(times)
-
-	fmt.Printf("%s: %s\n", name, time.Now().Sub(startTime))
-	fmt.Println()
-}
-
-func testUnixPipeThroughput(times int) {
-	out := gleam.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1")
-	for i := 0; i < 10; i++ {
-		out = out.Pipe("cat")
-	}
-	out.Fprintf(ioutil.Discard, "%s\n")
-}
-
-func testGleamUnixPipeThroughput(times int) {
-	gleam.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1").Pipe("wc").Fprintf(ioutil.Discard, "%s\n")
-}
-
-func testUnixPipe(times int) {
-	// PipeAsArgs has 4ms cost to startup a process
-	startTime := time.Now()
-	gleam.New().Source(
-		util.Range(0, 100),
-	).PipeAsArgs("echo foo bar $1").Fprintf(ioutil.Discard, "%s\n")
-
-	fmt.Printf("gleam pipe time diff: %s\n", time.Now().Sub(startTime))
-	fmt.Println()
+	// this is not fair since many optimization is not applied
+	testLocalFlow(times, networkTrafficReductionFactor)
 }
 
 func testDistributedGleam(times int, factor int) {
@@ -121,34 +83,6 @@ func testLocalGleam(times int, factor int) {
 	fmt.Println()
 }
 
-func testLocalFlow(times int, factor int) {
-	startTime := time.Now()
-	ch := make(chan int)
-	go func() {
-		for i := 0; i < times/factor; i++ {
-			ch <- i
-		}
-		close(ch)
-	}()
-	flow.New().Channel(ch).Map(func(t int) int {
-		count := 0
-		for i := 0; i < factor; i++ {
-			x, y := rand.Float32(), rand.Float32()
-			if x*x+y*y < 1 {
-				count++
-			}
-		}
-		return count
-	}).LocalReduce(func(x, y int) int {
-		return x + y
-	}).Map(func(count int) {
-		fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	}).Run()
-
-	fmt.Printf("flow time diff: %s\n", time.Now().Sub(startTime))
-	fmt.Println()
-}
-
 func testPureGo(times int) {
 	startTime := time.Now()
 
@@ -183,5 +117,33 @@ func testLuajit(times int) {
 
 	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
 	fmt.Printf("luajit local time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Println()
+}
+
+func testLocalFlow(times int, factor int) {
+	startTime := time.Now()
+	ch := make(chan int)
+	go func() {
+		for i := 0; i < times/factor; i++ {
+			ch <- i
+		}
+		close(ch)
+	}()
+	flow.New().Channel(ch).Map(func(t int) int {
+		count := 0
+		for i := 0; i < factor; i++ {
+			x, y := rand.Float32(), rand.Float32()
+			if x*x+y*y < 1 {
+				count++
+			}
+		}
+		return count
+	}).LocalReduce(func(x, y int) int {
+		return x + y
+	}).Map(func(count int) {
+		fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
+	}).Run()
+
+	fmt.Printf("flow time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }

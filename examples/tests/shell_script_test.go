@@ -17,7 +17,7 @@ func TestCallingShellScripts(t *testing.T) {
 		"asdfadfasaf",
 	}
 
-	flow.New().Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "%s\n")
+	flow.New().Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "calling shell> %s\n")
 
 }
 
