@@ -72,12 +72,12 @@ func (exe *Executor) ExecuteInstructionSet() {
 func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan *util.Piper, inLocation, outLocation *cmd.DatasetShardLocation, isFirst, isLast bool, readerCount int) {
 	if isFirst && inChan != nil {
 		wg.Add(1)
-		// println("connecting to", inLocation.Address(), "to read", inLocation.GetShard().Name())
+		println("connecting to", inLocation.Address(), "to read", inLocation.GetShard().Name())
 		go netchan.DialReadChannel(wg, executorName, inLocation.Address(), inLocation.GetShard().Name(), inChan.Writer)
 	}
 	if isLast && outChan != nil {
 		wg.Add(1)
-		// println("connecting to", outLocation.Address(), "to write", outLocation.GetShard().Name())
+		println("connecting to", outLocation.Address(), "to write", outLocation.GetShard().Name())
 		go netchan.DialWriteChannel(wg, executorName, outLocation.Address(), outLocation.GetShard().Name(), outChan.Reader, readerCount)
 	}
 }

@@ -223,7 +223,7 @@ while true do
   local row = decodeRow(encodedBytes)
   if not row then break end
 
-  if _filter(row[1]) then
+  if _filter(unpack(row)) then
     writeBytes(encodedBytes)
   end
 end
