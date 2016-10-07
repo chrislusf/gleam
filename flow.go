@@ -25,3 +25,9 @@ func New(flowType ...FlowType) (fc *flow.FlowContext) {
 func NewDistributed() (fc *flow.FlowContext) {
 	return New(Distributed)
 }
+
+func SetMaster(fc *flow.FlowContext, master string) {
+	if distributedRunner, ok := fc.Runner.(*driver.DistributedDriver); ok {
+		distributedRunner.Master = master
+	}
+}
