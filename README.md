@@ -107,3 +107,30 @@ func main() {
 
 ```
 
+# Distributed Computing
+## Setup Gleam Cluster
+Start a gleam master and serveral gleam agents
+```
+> go get github.com/chrislusf/gleam/distributed/gleam
+> gleam master --address=":45326"
+> gleam agent --dir=2 --port 45327 --host=127.0.0.2
+> gleam agent --dir=3 --port 45328 --host=127.0.0.3
+```
+On Mac, you would need to enable the loopback address
+```
+> sudo ifconfig lo0 alias 127.0.0.2 up
+> sudo ifconfig lo0 alias 127.0.0.3 up
+```
+
+## Change Source code
+From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distributed)
+```
+  // local mode
+  gleam.New()
+  gleam.New(gleam.Local)
+  
+  // distributed mode
+  gleam.NewDistributed()
+  gleam.New(gleam.Distributed)
+```
+gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided for you to dynamically change the execution without changing the source code.
