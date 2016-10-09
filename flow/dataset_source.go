@@ -4,10 +4,38 @@ import (
 	"bufio"
 	"io"
 	"log"
+	"net"
 	"os"
 
 	"github.com/chrislusf/gleam/util"
 )
+
+// TextFile reads the file content as lines and feed into the flow.
+func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
+	fn := func(out io.Writer) {
+		listener, err := net.Listen(network, address)
+		if err != nil {
+			log.Panicf("Fail to listen on %s %s: %v", network, address, err)
+		}
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Panicf("Fail to accept on %s %s: %v", network, address, err)
+		}
+		defer conn.Close()
+		defer util.WriteEOFMessage(out)
+
+		util.TakeTsv(conn, -1, func(message []string) error {
+			var row []interface{}
+			for _, m := range message {
+				row = append(row, m)
+			}
+			util.WriteRow(out, row...)
+			return nil
+		})
+
+	}
+	return fc.Source(fn)
+}
 
 // Source produces data feeding into the flow.
 // Function f writes to this writer.
