@@ -11,8 +11,7 @@ import (
 
 func main() {
 
-	luaFlow := flow.New()
-	luaFlow.TextFile("/etc/passwd").FlatMap(`
+	flow.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end
@@ -36,8 +35,6 @@ func main() {
 			return nil
 		})
 		return nil
-	})
-
-	luaFlow.Runner.RunFlowContext(luaFlow)
+	}).Run()
 
 }

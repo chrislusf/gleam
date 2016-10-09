@@ -33,6 +33,6 @@ func main() {
       function(k, v)
         return k .. " " .. v
       end
-    `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n")
+    `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n").Run()
 
 }

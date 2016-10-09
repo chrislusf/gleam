@@ -30,6 +30,10 @@ func (fc *FlowContext) SetRunner(runner FlowRunner) *FlowContext {
 	return fc
 }
 
+func (fc *FlowContext) Run() {
+	fc.Runner.RunFlowContext(fc)
+}
+
 func (fc *FlowContext) Script(scriptType string, scriptParts ...string) *FlowContext {
 	if _, ok := fc.Scripts[scriptType]; !ok {
 		log.Fatalf("script type %s is not registered.", scriptType)

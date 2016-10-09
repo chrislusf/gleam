@@ -51,7 +51,7 @@ func testDistributedGleam(times int, factor int) {
 		end
 		return count
       end
-    `, factor)).Reduce("count").SaveFirstRowTo(&count)
+    `, factor)).Reduce("count").SaveFirstRowTo(&count).Run()
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam distributed time diff: %s\n", time.Now().Sub(startTime))
@@ -76,7 +76,7 @@ func testLocalGleam(times int, factor int) {
 		end
 		return count
       end
-    `, factor)).Reduce("count").SaveFirstRowTo(&count)
+    `, factor)).Reduce("count").SaveFirstRowTo(&count).Run()
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam local time diff: %s\n", time.Now().Sub(startTime))
@@ -113,7 +113,7 @@ func testLuajit(times int) {
 		end
 		return count
       end
-    `, times)).SaveFirstRowTo(&count)
+    `, times)).SaveFirstRowTo(&count).Run()
 
 	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
 	fmt.Printf("luajit local time diff: %s\n", time.Now().Sub(startTime))

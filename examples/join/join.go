@@ -32,6 +32,6 @@ func main() {
       function (word, leftCount1, leftCount2, rightCount)
 	    return word, leftCount1, leftCount2, rightCount, leftCount1 + leftCount2 + rightCount
       end
-	`).Fprintf(os.Stdout, "%s\t%d + %d + %d = %d\n")
+	`).Fprintf(os.Stdout, "%s\t%d + %d + %d = %d\n").Run()
 
 }

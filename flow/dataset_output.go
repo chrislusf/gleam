@@ -10,7 +10,7 @@ import (
 )
 
 // Output concurrently collects outputs from previous step to the driver.
-func (d *Dataset) Output(f func(io.Reader) error) {
+func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
@@ -28,12 +28,13 @@ func (d *Dataset) Output(f func(io.Reader) error) {
 		}
 		wg.Wait()
 	}
+	return d
 }
 
 // PipeOut writes to writer.
 // If previous step is a Pipe() or PipeAsArgs(), the output is written as is.
 // Otherwise, each row of output is written in tab-separated lines.
-func (d *Dataset) PipeOut(writer io.Writer) {
+func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
 			_, err := io.Copy(writer, inChan)
@@ -41,26 +42,22 @@ func (d *Dataset) PipeOut(writer io.Writer) {
 		}
 		return util.FprintRowsFromChannel(inChan, writer, "\t", "\n")
 	}
-	d.Output(fn)
-
-	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
+	return d.Output(fn)
 }
 
 // Fprintf formats using the format for each row and writes to writer.
-func (d *Dataset) Fprintf(writer io.Writer, format string) {
+func (d *Dataset) Fprintf(writer io.Writer, format string) *Dataset {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
 			return util.TsvPrintf(inChan, writer, format)
 		}
 		return util.Fprintf(inChan, writer, format)
 	}
-	d.Output(fn)
-
-	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
+	return d.Output(fn)
 }
 
 // SaveFirstRowTo saves the first row's values into the operands.
-func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) {
+func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 	fn := func(inChan io.Reader) error {
 		if d.Step.IsPipe {
 			return util.TakeTsv(inChan, 1, func(args []string) error {
@@ -86,7 +83,5 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) {
 			return nil
 		})
 	}
-	d.Output(fn)
-
-	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
+	return d.Output(fn)
 }
