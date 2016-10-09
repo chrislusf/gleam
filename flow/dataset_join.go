@@ -8,7 +8,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-// assume nothing about these two dataset
+// Join joins two datasets by the key.
 func (d *Dataset) Join(other *Dataset) *Dataset {
 	sorted_d := d.Partition(len(d.Shards)).LocalSort()
 	var sorted_other *Dataset
@@ -22,9 +22,8 @@ func (d *Dataset) Join(other *Dataset) *Dataset {
 
 // Join multiple datasets that are sharded by the same key, and locally sorted within the shard
 func (this *Dataset) JoinPartitionedSorted(that *Dataset,
-	isLeftOuterJoin, isRightOuterJoin bool,
-) (ret *Dataset) {
-	ret = this.FlowContext.newNextDataset(len(this.Shards))
+	isLeftOuterJoin, isRightOuterJoin bool) *Dataset {
+	ret := this.FlowContext.newNextDataset(len(this.Shards))
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
@@ -144,7 +143,7 @@ type keyValues struct {
 // create a channel to aggregate values of the same key
 // automatically close original sorted channel
 func newChannelOfValuesWithSameKey(sortedChan io.Reader) chan keyValues {
-	outChan := make(chan keyValues)
+	outChan := make(chan keyValues, 1024)
 	go func() {
 
 		defer close(outChan)

@@ -6,6 +6,9 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
+// CoGroup joins two datasets by the key,
+// Each result row becomes this format:
+//   (key, []left_rows, []right_rows)
 func (d *Dataset) CoGroup(other *Dataset) *Dataset {
 	sorted_d := d.Partition(len(d.Shards)).LocalSort()
 	if d == other {

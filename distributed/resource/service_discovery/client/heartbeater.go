@@ -34,7 +34,7 @@ func (h *HeartBeater) StartChannelHeartBeat(killChan chan bool, chanName string)
 			return "/channel/" + chanName
 		})
 		if ret == true && connected == false {
-			fmt.Printf("connted with master %s\n", h.Leaders)
+			fmt.Printf("connected with master %s\n", h.Leaders)
 		}
 		connected = ret
 		select {
@@ -55,7 +55,7 @@ func (h *HeartBeater) StartAgentHeartBeat(killChan chan bool, fn func(url.Values
 			return "/agent/update"
 		})
 		if ret == true && connected == false {
-			fmt.Printf("connted with master %s\n", h.Leaders)
+			fmt.Printf("connected with master %s\n", h.Leaders)
 		}
 		connected = ret
 		select {
