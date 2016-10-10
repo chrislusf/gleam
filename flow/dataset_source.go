@@ -10,7 +10,8 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-// TextFile reads the file content as lines and feed into the flow.
+// Listen receives textual inputs via a socket.
+// Multiple parameters are separated via tab.
 func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 	fn := func(out io.Writer) {
 		listener, err := net.Listen(network, address)
