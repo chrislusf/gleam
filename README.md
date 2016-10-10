@@ -137,3 +137,32 @@ From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distribut
   gleam.New(gleam.Distributed)
 ```
 gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided to dynamically change the execution mode.
+
+# Status
+Gleam is just beginning. Here are a few:
+* Add better streaming support
+* Add fault tolerant support
+* Add better integration with Torch
+* Add better HDFS support
+* Add better SQL database support
+* Add Luarock pacakging
+* Add Python support
+* Add Javascript support
+
+Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
+
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EEECLJ8QGTTPC) 
+
+## License
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
