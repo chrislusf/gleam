@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime/pprof"
 
-	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
@@ -39,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	flow.New().Strings(fileNames).Partition(1).ForEach(`
+	gleam.New().Strings(fileNames).Partition(1).ForEach(`
       function(fname)
         -- Open a file for read
         local fh,err = io.open(fname)
