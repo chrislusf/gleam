@@ -4,12 +4,12 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam"
 )
 
 func main() {
 
-	flow.New().TextFile("/etc/passwd").FlatMap(`
+	gleam.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end
