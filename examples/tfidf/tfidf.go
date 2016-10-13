@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,6 @@ func main() {
         end
     `)
 
-	// termFreq := word2doc.GroupBy(1, 2)
 	termFreq := word2doc.ReduceBy(`
         function(x, y)
             return x + y
@@ -52,11 +52,11 @@ func main() {
         end
     `)
 
-	docFreq.Join(termFreq).Map(`
+	docFreq.Join(termFreq).Map(fmt.Sprintf(`
         function(word, df, docId, tf)
-            return word, docId, tf, df, tf/df
+            return word, docId, tf, df, tf*%d/df
         end
-    `).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
+    `, len(fileNames))).Sort(5).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
 
 	f.Run()
 
