@@ -21,42 +21,42 @@ func main() {
 
 	f := gleam.New()
 	word2doc := f.Strings(fileNames).Map(`
-		function(fileName)
-		    local f = io.open(fileName, "rb")
-		    local content = f:read("*all")
-		    f:close()
-		    return content, fileName
-		end
-	`).Partition(7).Map(`
+        function(fileName)
+            local f = io.open(fileName, "rb")
+            local content = f:read("*all")
+            f:close()
+            return content, fileName
+        end
+    `).Partition(7).Map(`
         function(content, docId)
-			for word in string.gmatch(content, "%w+") do
-				writeRow(word, docId, 1)
-		    end
+            for word in string.gmatch(content, "%w+") do
+                writeRow(word, docId, 1)
+            end
         end
     `)
 
 	// termFreq := word2doc.GroupBy(1, 2)
 	termFreq := word2doc.ReduceBy(`
         function(x, y)
-		    return x + y
+            return x + y
         end
-	`, 1, 2)
+    `, 1, 2)
 
 	docFreq := termFreq.Map(`
         function(word, docId, count)
-		    return word, 1
+            return word, 1
         end
-	`).ReduceBy(`
+    `).ReduceBy(`
         function(x, y)
-		    return x + y
+            return x + y
         end
-	`)
+    `)
 
 	docFreq.Join(termFreq).Map(`
-		function(word, df, docId, tf)
-			return word, docId, tf, df, tf/df
-		end
-	`).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
+        function(word, df, docId, tf)
+            return word, docId, tf, df, tf/df
+        end
+    `).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
 
 	f.Run()
 
