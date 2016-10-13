@@ -16,15 +16,13 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step.Name = "Output"
 	step.Function = func(task *Task) {
 		var wg sync.WaitGroup
-		for _, shard := range task.InputShards {
-			for _, outChan := range shard.OutgoingChans {
-				wg.Add(1)
-				go func(outChan *util.Piper) {
-					defer wg.Done()
-					f(outChan.Reader)
-					outChan.Reader.Close()
-				}(outChan)
-			}
+		for _, inChan := range task.InputChans {
+			wg.Add(1)
+			go func(inChan *util.Piper) {
+				defer wg.Done()
+				f(inChan.Reader)
+				inChan.Reader.Close()
+			}(inChan)
 		}
 		wg.Wait()
 	}

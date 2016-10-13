@@ -11,8 +11,11 @@ func TsvPrintf(inChan io.Reader, writer io.Writer, format string) error {
 		for _, arg := range args {
 			objects = append(objects, arg)
 		}
-		_, err := fmt.Fprintf(writer, format, objects...)
-		return err
+		if len(objects) > 0 {
+			_, err := fmt.Fprintf(writer, format, objects...)
+			return err
+		}
+		return nil
 	})
 }
 
@@ -26,7 +29,10 @@ func Fprintf(inChan io.Reader, writer io.Writer, format string) error {
 			return fmt.Errorf("Failed to decode byte: %v\n", err)
 		}
 
-		fmt.Fprintf(writer, format, decodedObjects...)
+		if len(decodedObjects) > 0 {
+			fmt.Fprintf(writer, format, decodedObjects...)
+		}
+
 		return nil
 	})
 }

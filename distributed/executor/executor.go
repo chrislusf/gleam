@@ -72,12 +72,12 @@ func (exe *Executor) ExecuteInstructionSet() {
 func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan *util.Piper, inLocation, outLocation *cmd.DatasetShardLocation, isFirst, isLast bool, readerCount int) {
 	if isFirst && inChan != nil {
 		wg.Add(1)
-		println("connecting to", inLocation.Address(), "to read", inLocation.GetShard().Name())
+		// println(executorName, "connecting to", inLocation.Address(), "to read", inLocation.GetShard().Name())
 		go netchan.DialReadChannel(wg, executorName, inLocation.Address(), inLocation.GetShard().Name(), inChan.Writer)
 	}
 	if isLast && outChan != nil {
 		wg.Add(1)
-		println("connecting to", outLocation.Address(), "to write", outLocation.GetShard().Name())
+		// println(executorName, "connecting to", outLocation.Address(), "to write", outLocation.GetShard().Name())
 		go netchan.DialWriteChannel(wg, executorName, outLocation.Address(), outLocation.GetShard().Name(), outChan.Reader, readerCount)
 	}
 }
@@ -104,7 +104,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetLocalSort().GetInputShardLocation(), i.GetLocalSort().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
-		flow.LocalSort(inChan.Reader, outChan.Writer)
+		flow.LocalSort(inChan.Reader, outChan.Writer, toInts(i.GetLocalSort().GetIndexes()))
 
 	} else if i.GetPipeAsArgs() != nil {
 
@@ -122,7 +122,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 			inChans = append(inChans, inChan.Reader)
 		}
 		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetMergeSortedTo().GetOutputShardLocation(), isFirst, isLast, readerCount)
-		flow.MergeSortedTo(inChans, outChan.Writer)
+		flow.MergeSortedTo(inChans, outChan.Writer, toInts(i.GetMergeSortedTo().GetIndexes()))
 
 	} else if i.GetScatterPartitions() != nil {
 
@@ -138,7 +138,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		for _, outChan := range outChans {
 			writers = append(writers, outChan.Writer)
 		}
-		flow.ScatterPartitions(inChan.Reader, writers)
+		flow.ScatterPartitions(inChan.Reader, writers, toInts(i.GetScatterPartitions().GetIndexes()))
 		for _, outChan := range outChans {
 			outChan.Writer.Close()
 		}
@@ -167,7 +167,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetShard().Name(), rightChan.Writer)
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetJoinPartitionedSorted().GetOutputShardLocation(), isFirst, isLast, readerCount)
-		flow.JoinPartitionedSorted(leftChan.Reader, rightChan.Reader, *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan.Writer)
+		flow.JoinPartitionedSorted(leftChan.Reader, rightChan.Reader, toInts(i.GetJoinPartitionedSorted().GetIndexes()), *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan.Writer)
 
 	} else if i.GetCoGroupPartitionedSorted() != nil {
 
@@ -181,9 +181,17 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetShard().Name(), rightChan.Writer)
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetCoGroupPartitionedSorted().GetOutputShardLocation(), isFirst, isLast, readerCount)
-		flow.CoGroupPartitionedSorted(leftChan.Reader, rightChan.Reader, outChan.Writer)
+		flow.CoGroupPartitionedSorted(leftChan.Reader, rightChan.Reader, toInts(i.GetCoGroupPartitionedSorted().GetIndexes()), outChan.Writer)
 
 	} else {
 		panic("what is this? " + i.String())
 	}
+}
+
+func toInts(indexes []int32) []int {
+	var ret []int
+	for _, x := range indexes {
+		ret = append(ret, int(x))
+	}
+	return ret
 }

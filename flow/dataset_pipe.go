@@ -28,7 +28,7 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		inChan := task.InputShards[0].OutgoingChans[0]
+		inChan := task.InputChans[0]
 
 		PipeAsArgs(inChan, code, outChan)
 

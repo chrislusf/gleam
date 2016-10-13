@@ -5,7 +5,15 @@ import (
 	"strings"
 )
 
-func HashByKey(data interface{}, shardCount int) int {
+func HashByKeys(data []interface{}) int {
+	var x int
+	for _, d := range data {
+		x = x*31 + hashByKey(d)
+	}
+	return x
+}
+
+func hashByKey(data interface{}) int {
 	var x int
 	if key, ok := data.(string); ok {
 		x = int(Hash([]byte(key)))
@@ -26,7 +34,11 @@ func HashByKey(data interface{}, shardCount int) int {
 	} else if key, ok := data.(int32); ok {
 		x = int(key)
 	}
-	return x % shardCount
+	return x
+}
+
+func PartitionByKeys(shardCount int, data []interface{}) int {
+	return HashByKeys(data) % shardCount
 }
 
 func LessThan(a interface{}, b interface{}) bool {
@@ -34,7 +46,15 @@ func LessThan(a interface{}, b interface{}) bool {
 }
 
 func Compare(a interface{}, b interface{}) (ret int) {
-	if x, ok := a.(string); ok {
+	if x, ok := a.([]interface{}); ok {
+		y := b.([]interface{})
+		for i := 0; i < len(x); i++ {
+			ret = Compare(x[i], y[i])
+			if ret != 0 {
+				return ret
+			}
+		}
+	} else if x, ok := a.(string); ok {
 		ret = strings.Compare(x, b.(string))
 	} else if x, ok := a.([]byte); ok {
 		ret = bytes.Compare(x, b.([]byte))

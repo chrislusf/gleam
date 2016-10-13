@@ -194,9 +194,11 @@ func FromDatasetToStep(input *Dataset, step *Step) {
 }
 
 func FromDatasetShardToTask(shard *DatasetShard, task *Task) {
+	piper := util.NewPiper()
 	shard.ReadingTasks = append(shard.ReadingTasks, task)
-	shard.OutgoingChans = append(shard.OutgoingChans, util.NewPiper())
+	shard.OutgoingChans = append(shard.OutgoingChans, piper)
 	task.InputShards = append(task.InputShards, shard)
+	task.InputChans = append(task.InputChans, piper)
 }
 
 func FromTaskToDatasetShard(task *Task, shard *DatasetShard) {

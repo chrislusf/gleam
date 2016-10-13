@@ -3,6 +3,7 @@ package script
 
 import (
 	"fmt"
+	"strings"
 )
 
 type LuaScript struct {
@@ -91,7 +92,47 @@ function writeRow(...)
       encoded = encoded .. mp.pack(v)
     end
   end
-  writeBytes(encoded)
+  if #arg > 0 then
+    writeBytes(encoded)
+  end
+end
+
+function writeUnpackedRow(keys, values, unpackValues, extra)
+  if unpackValues then
+    local unpacked = {}
+    for i, v in ipairs(values) do
+      table.insert(unpacked, v[1])
+    end
+    writeRow(unpack(keys), unpacked, extra)
+  else
+    writeRow(unpack(keys), values, extra)
+  end
+end
+
+function listEquals(x, y)
+  for i,v in ipairs(x) do
+    if v ~= y[i] then
+      return false
+    end
+  end
+  return true
+end
+
+function tableLength(T)
+  local count = 0
+  for _ in pairs(T) do count = count + 1 end
+  return count
+end
+
+function set(list)
+  local s = {}
+  for _, l in ipairs(list) do s[l] = true end
+  return s
+end
+
+function addToTable(x, y)
+  if not y then return end
+  for _, l in ipairs(y) do table.insert(x,l) end
 end
 
 ` + code
@@ -122,6 +163,26 @@ while true do
 
   local t = {_map(unpack(row))}
   writeRow(unpack(t))
+end
+`, code),
+	})
+}
+
+func (c *LuaScript) Filter(code string) {
+	c.operations = append(c.operations, &Operation{
+		Type: "Filter",
+		Code: fmt.Sprintf(`
+local _filter = %s
+while true do
+  local encodedBytes = readEncodedBytes()
+  if not encodedBytes then break end
+
+  local row = decodeRow(encodedBytes)
+  if not row then break end
+
+  if _filter(unpack(row)) then
+    writeBytes(encodedBytes)
+  end
 end
 `, code),
 	})
@@ -168,7 +229,6 @@ func (c *LuaScript) Reduce(code string) {
 		Type: "Reduce",
 		Code: fmt.Sprintf(`
 local _reduce = %s
-
 local row = readRow()
 if row then
   local lastValue = row[1]
@@ -181,76 +241,145 @@ if row then
   end
   writeRow(lastValue)
 end
-
 `, code),
 	})
 }
 
-func (c *LuaScript) ReduceByKey(code string) {
+func (c *LuaScript) ReduceBy(code string, indexes []int) {
 	c.operations = append(c.operations, &Operation{
-		Type: "ReduceByKey",
+		Type: "ReduceBy",
 		Code: fmt.Sprintf(`
+local keyIndexes = {%s}
+local keyIndexesSet = set(keyIndexes)
+local keyWidth = #keyIndexes
+
+local function _getKeysAndValues(row, rowWidth)
+  local keys, values = {}, {}
+  for i=1, rowWidth, 1 do
+    if keyIndexesSet[i] then
+      table.insert(keys, row[i])
+    else
+      table.insert(values, row[i])
+    end
+  end
+  if rowWidth-1 == keyWidth then
+    return keys, values[1]
+  end
+  return keys, values
+end
+
+local function _writeKeyValues(keys, values, rowWidth)
+  row = {}
+  addToTable(row, keys)
+  if rowWidth-1 == keyWidth then
+    table.insert(row, values)
+  else
+    addToTable(row, values)
+  end
+  writeRow(unpack(row))
+end
+
 local _reduce = %s
 
 local row = readRow()
 if row then
-    local lastKey, lastValue = row[1], row[2]
-    while true do
-      local row = readRow()
-      if not row then break end
-      if row[1] ~= lastKey then
-        writeRow(lastKey, lastValue)
-        lastKey, lastValue = row[1], row[2]
+  local rowWidth = tableLength(row)
+  local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+  while true do
+    local row = readRow()
+    if not row then break end
+    
+    local keys, values = _getKeysAndValues(row, rowWidth)
+    if not listEquals(keys, lastKeys) then
+      _writeKeyValues(lastKeys, lastValues, rowWidth)
+      lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+    else
+      local params = {}
+      if rowWidth-1 == keyWidth then
+        table.insert(params, lastValues)
+        table.insert(params, values)
+        lastValues = _reduce(unpack(params))
       else
-        lastValue = _reduce(lastValue, row[2])
+        addToTable(params, lastValues)
+        addToTable(params, values)
+        lastValues = {_reduce(unpack(params))}
       end
     end
-    writeRow(lastKey, lastValue)
-end
-`, code),
-	})
-}
-
-func (c *LuaScript) Filter(code string) {
-	c.operations = append(c.operations, &Operation{
-		Type: "Filter",
-		Code: fmt.Sprintf(`
-local _filter = %s
-while true do
-  local encodedBytes = readEncodedBytes()
-  if not encodedBytes then break end
-
-  local row = decodeRow(encodedBytes)
-  if not row then break end
-
-  if _filter(unpack(row)) then
-    writeBytes(encodedBytes)
   end
+  _writeKeyValues(lastKeys, lastValues, rowWidth)
 end
-`, code),
+`, genKeyIndexes(indexes), code),
 	})
 }
 
-func (c *LuaScript) GroupByKey() {
+func (c *LuaScript) GroupBy(indexes []int) {
 	c.operations = append(c.operations, &Operation{
-		Type: "GroupByKey",
+		Type: "GroupBy",
 		Code: fmt.Sprintf(`
+local keyIndexes = {%s}
+local keyIndexesSet = set(keyIndexes)
+local keyWidth = #keyIndexes
+
+local function _getKeysAndValues(row, rowWidth)
+  local keys, values = {}, {}
+  for i=1, rowWidth, 1 do
+    if keyIndexesSet[i] then
+      table.insert(keys, row[i])
+    else
+      table.insert(values, row[i])
+    end
+  end
+  return keys, values
+end
+
+local function _writeKeyValues(keys, valuesList, count, rowWidth)
+  row = {}
+  addToTable(row, keys)
+  if rowWidth-1 == keyWidth then
+    local unpacked = {}
+    for _, values in ipairs(valuesList) do
+      table.insert(unpacked, values[1])
+    end
+    addToTable(row, {unpacked})
+  elseif rowWidth ~= keyWidth then
+    addToTable(row, valuesList)
+  end
+  table.insert(row, count)
+  writeRow(unpack(row))
+end
+
 local row = readRow()
 if row then
-  local lastKey, lastValue = row[1], {row[2]}
+  local rowWidth = tableLength(row)
+
+  local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+  local count = 1
+  local lastValuesList = {lastValues}
   while true do
     local row = readRow()
     if not row then break end
 
-    if row[1] ~= lastKey then
-      writeRow(lastKey, lastValues)
-      lastKey, lastValues = row[1], {row[2]}
+    local keys, values = _getKeysAndValues(row, rowWidth)
+    if not listEquals(keys, lastKeys) then
+      _writeKeyValues(lastKeys, lastValuesList, count, rowWidth)
+      lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+      count = 1
+      lastValuesList = {lastValues}
     else
-      table.insert(lastValues, row[2])
+      table.insert(lastValuesList, values)
+      count = count + 1
     end
   end
-  writeRow(lastKey, lastValues)
+  _writeKeyValues(lastKeys, lastValuesList, count, rowWidth)
 end
-`),
+`, genKeyIndexes(indexes)),
 	})
+}
+
+func genKeyIndexes(indexes []int) (keyIndexesString string) {
+	var keyFields []string
+	for _, x := range indexes {
+		keyFields = append(keyFields, fmt.Sprintf("%d", x))
+	}
+	return strings.Join(keyFields, ",")
 }

@@ -1,13 +1,20 @@
 package flow
 
-func (d *Dataset) GroupByKey() *Dataset {
-	return d.LocalSort().LocalGroupByKey()
+func (d *Dataset) GroupBy(indexes ...int) *Dataset {
+	if len(indexes) == 0 {
+		indexes = []int{1}
+	}
+	ret := d.LocalSort(indexes).LocalGroupBy(indexes)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeSortedTo(1, indexes).LocalGroupBy(indexes)
+	}
+	return ret
 }
 
-func (d *Dataset) LocalGroupByKey() *Dataset {
+func (d *Dataset) LocalGroupBy(indexes []int) *Dataset {
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "LocalGroupByKey"
+	step.Name = "LocalGroupBy"
 	step.Script = d.FlowContext.CreateScript()
-	step.Script.GroupByKey()
+	step.Script.GroupBy(indexes)
 	return ret
 }

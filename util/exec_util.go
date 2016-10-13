@@ -1,7 +1,6 @@
 package util
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"os/exec"
@@ -44,8 +43,7 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 
 	cmd.Stdout = outChan.Writer
 
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	cmd.Stderr = errWriter
 
 	// fmt.Println(name, "starting...")
 
@@ -60,7 +58,6 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 
 	if waitError := cmd.Wait(); waitError != nil {
 		fmt.Fprintf(errWriter, "Wait error %+v. command:%+v\n", waitError, cmd)
-		fmt.Fprintf(errWriter, "Error:"+stderr.String()+"\n")
 	}
 
 	// fmt.Printf("Command is finished.\n %+v\n", cmd)

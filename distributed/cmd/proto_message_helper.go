@@ -46,25 +46,25 @@ func (i *Instruction) SetInputLocations(locations ...resource.Location) {
 	}
 }
 
-func (i *Instruction) SetOutputLocations(locations ...resource.Location) {
+func (i *Instruction) SetOutputLocations(location resource.Location) {
 	if i.GetScript() != nil {
-		i.GetScript().OutputShardLocation.setLocation(locations[0])
+		i.GetScript().OutputShardLocation.setLocation(location)
 	} else if i.GetLocalSort() != nil {
-		i.GetLocalSort().OutputShardLocation.setLocation(locations[0])
+		i.GetLocalSort().OutputShardLocation.setLocation(location)
 	} else if i.GetPipeAsArgs() != nil {
-		i.GetPipeAsArgs().OutputShardLocation.setLocation(locations[0])
+		i.GetPipeAsArgs().OutputShardLocation.setLocation(location)
 	} else if i.GetMergeSortedTo() != nil {
-		i.GetMergeSortedTo().OutputShardLocation.setLocation(locations[0])
+		i.GetMergeSortedTo().OutputShardLocation.setLocation(location)
 	} else if i.GetScatterPartitions() != nil {
-		for index, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
-			outputLocation.setLocation(locations[index])
+		for _, outputLocation := range i.GetScatterPartitions().GetOutputShardLocations() {
+			outputLocation.setLocation(location)
 		}
 	} else if i.GetCollectPartitions() != nil {
-		i.GetCollectPartitions().OutputShardLocation.setLocation(locations[0])
+		i.GetCollectPartitions().OutputShardLocation.setLocation(location)
 	} else if i.GetJoinPartitionedSorted() != nil {
-		i.GetJoinPartitionedSorted().OutputShardLocation.setLocation(locations[0])
+		i.GetJoinPartitionedSorted().OutputShardLocation.setLocation(location)
 	} else if i.GetCoGroupPartitionedSorted() != nil {
-		i.GetCoGroupPartitionedSorted().OutputShardLocation.setLocation(locations[0])
+		i.GetCoGroupPartitionedSorted().OutputShardLocation.setLocation(location)
 	}
 }
 

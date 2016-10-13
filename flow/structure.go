@@ -43,13 +43,13 @@ type FlowContext struct {
 }
 
 type Dataset struct {
-	FlowContext      *FlowContext
-	Id               int
-	Shards           []*DatasetShard
-	Step             *Step
-	ReadingSteps     []*Step
-	IsKeyPartitioned bool
-	IsLocalSorted    bool
+	FlowContext     *FlowContext
+	Id              int
+	Shards          []*DatasetShard
+	Step            *Step
+	ReadingSteps    []*Step
+	IsPartitionedBy []int
+	IsLocalSorted   []int
 	RunLocked
 }
 
@@ -86,6 +86,7 @@ type Task struct {
 	Id           int
 	Step         *Step
 	InputShards  []*DatasetShard
+	InputChans   []*util.Piper // task specific input chans. InputShard may have multiple reading tasks
 	OutputShards []*DatasetShard
 }
 

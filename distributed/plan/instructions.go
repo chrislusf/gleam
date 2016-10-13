@@ -37,6 +37,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			LocalSort: &cmd.LocalSort{
 				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				Indexes:             getIndexes(task),
 			},
 		}
 	}
@@ -58,6 +59,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			MergeSortedTo: &cmd.MergeSortedTo{
 				InputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.InputShards),
 				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				Indexes:             getIndexes(task),
 			},
 		}
 	}
@@ -71,6 +73,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 				OutputShardLocation:     flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
 				IsLeftOuterJoin:         proto.Bool(false),
 				IsRightOuterJoin:        proto.Bool(false),
+				Indexes:                 getIndexes(task),
 			},
 		}
 	}
@@ -82,6 +85,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 				LeftInputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				RightInputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[1]),
 				OutputShardLocation:     flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				Indexes:                 getIndexes(task),
 			},
 		}
 	}
@@ -103,6 +107,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
 				ShardCount:           proto.Int32(int32(task.Step.Params["shardCount"].(int))),
+				Indexes:              getIndexes(task),
 			},
 		}
 	}
@@ -150,4 +155,13 @@ func flowDatasetShardsToCmdDatasetShardLocation(shard *flow.DatasetShard) *cmd.D
 		Host:  proto.String("localhost"),
 		Port:  proto.Int32(45327),
 	}
+}
+
+func getIndexes(task *flow.Task) (indexes []int32) {
+	storedValues := task.Step.Params["indexes"].([]int)
+	for _, x := range storedValues {
+		indexes = append(indexes, int32(x))
+	}
+	return
+
 }

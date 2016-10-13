@@ -17,14 +17,13 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 100
-	networkTrafficReductionFactor := 100000
+	times := 1024 * 1024 * 16
+	networkTrafficReductionFactor := 1024 * 1024
 
-	testLocalGleam(times, networkTrafficReductionFactor)
-	/*
-		// uncomment this if you setup the gleam master and agents
-		testDistributedGleam(times, networkTrafficReductionFactor)
-	*/
+	// uncomment this line if you setup the gleam master and agents
+	// testGleam("distributed", gleam.Distributed, times, networkTrafficReductionFactor)
+	testGleam("local mode", gleam.Local, times, networkTrafficReductionFactor)
+
 	testPureGo(times)
 	testLuajit(times)
 
@@ -32,12 +31,11 @@ func main() {
 	testLocalFlow(times, networkTrafficReductionFactor)
 }
 
-func testDistributedGleam(times int, factor int) {
+func testGleam(name string, mode gleam.FlowType, times int, factor int) {
 	var count int64
-
 	startTime := time.Now()
-	gleam.NewDistributed().Script("lua", `
-      function count(x, y)
+	gleam.New(mode).Script("lua", `
+      function sum(x, y)
         return x + y
       end
     `).Source(util.Range(0, times/factor)).Partition(7).Map(fmt.Sprintf(`
@@ -49,37 +47,13 @@ func testDistributedGleam(times int, factor int) {
             count = count + 1
           end
 		end
+		-- log("count = "..count)
 		return count
       end
-    `, factor)).Reduce("count").SaveFirstRowTo(&count).Run()
+    `, factor)).Reduce("sum").SaveFirstRowTo(&count).Run()
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	fmt.Printf("gleam distributed time diff: %s\n", time.Now().Sub(startTime))
-	fmt.Println()
-}
-
-func testLocalGleam(times int, factor int) {
-	var count int64
-	startTime := time.Now()
-	gleam.New().Script("lua", `
-      function count(x, y)
-        return x + y
-      end
-    `).Source(util.Range(0, times/factor)).Partition(7).Map(fmt.Sprintf(`
-      function(n)
-	    local count = 0
-	    for i=1,%d,1 do
-          local x, y = math.random(), math.random()
-          if x*x+y*y < 1 then
-            count = count + 1
-          end
-		end
-		return count
-      end
-    `, factor)).Reduce("count").SaveFirstRowTo(&count).Run()
-
-	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	fmt.Printf("gleam local time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Printf("gleam %s time diff: %s\n", name, time.Now().Sub(startTime))
 	fmt.Println()
 }
 

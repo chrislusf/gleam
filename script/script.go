@@ -20,9 +20,9 @@ type Script interface {
 	ForEach(code string)
 	FlatMap(code string)
 	Reduce(code string)
-	ReduceByKey(code string)
+	ReduceBy(code string, indexes []int)
 	Filter(code string)
-	GroupByKey()
+	GroupBy(indexes []int)
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {

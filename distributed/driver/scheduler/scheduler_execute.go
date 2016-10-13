@@ -92,15 +92,13 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
-	for _, shard := range task.InputShards {
-		shard.OutgoingChans = make([]*util.Piper, 0)
+	for i, shard := range task.InputShards {
 		location, _ := s.GetShardLocation(shard)
-		outChan := util.NewPiper()
-		shard.OutgoingChans = append(shard.OutgoingChans, outChan)
+		inChan := task.InputChans[i]
 		wg.Add(1)
 		go func() {
-			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", outChan)
-			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), outChan.Writer); err != nil {
+			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", inChan)
+			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), inChan.Writer); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}()

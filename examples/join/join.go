@@ -8,6 +8,42 @@ import (
 
 func main() {
 
+	join2()
+
+	join1()
+}
+
+func join1() {
+
+	f := gleam.New().Script("lua", `
+	function splitter(line)
+        return line:gmatch("%w+")
+    end
+	`)
+
+	words := f.TextFile(
+		"../../flow/dataset_map.go",
+	).FlatMap("splitter")
+
+	x := words.Map(`
+		function(word)
+			return word, 1
+		end
+	`).ReduceBy(`function(x,y) return x+y end`)
+	y := words.Map(`
+		function(word)
+			return word, 2
+		end
+	`).ReduceBy(`function(x,y) return x+y end`)
+
+	x.Join(y).Fprintf(os.Stdout, "joined:%s %d + %d\n")
+
+	f.Run()
+
+}
+
+func join2() {
+
 	f := gleam.New().Script("lua", `
 	function splitter(line)
         return line:gmatch("%w+")

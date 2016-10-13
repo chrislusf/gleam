@@ -29,6 +29,6 @@ func TestCallingLuaScripts(t *testing.T) {
 		function (line)
 			return not string.starts(line, 'asd')
 		end
-	`).LocalSort().Fprintf(os.Stdout, "lua > %s\n")
+	`).Sort().Fprintf(os.Stdout, "lua > %s\n")
 
 }

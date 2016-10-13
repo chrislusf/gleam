@@ -32,16 +32,6 @@ func (r *LocalDriver) RunFlowContextAsync(wg *sync.WaitGroup, fc *FlowContext) {
 
 	on_interrupt.OnInterrupt(fc.OnInterrupt, nil)
 
-	/*
-		for _, ds := range fc.Datasets {
-			if ds.IsFinal() {
-				wg.Add(1)
-				go func(ds *Dataset) {
-					RunDataset(wg, ds)
-				}(ds)
-			}
-		}
-	*/
 	for _, step := range fc.Steps {
 		if step.OutputDataset == nil {
 			wg.Add(1)
@@ -128,7 +118,7 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 
 	if task.Step.NetworkType == OneShardToOneShard {
 		// fmt.Printf("cmd: %+v\n", cmd)
-		inChan := task.InputShards[0].OutgoingChans[0]
+		inChan := task.InputChans[0]
 		outChan := task.OutputShards[0].IncomingChan
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe

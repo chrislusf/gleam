@@ -14,27 +14,35 @@ var (
 )
 
 type pair struct {
-	key  interface{}
+	keys []interface{}
 	data []byte
 }
 
-func (d *Dataset) Sort() *Dataset {
-	return d.LocalSort().MergeSortedTo(1)
+func (d *Dataset) Sort(indexes ...int) *Dataset {
+	if len(indexes) == 0 {
+		indexes = []int{1}
+	}
+	ret := d.LocalSort(indexes)
+	if len(d.Shards) > 0 {
+		ret = ret.MergeSortedTo(1, indexes)
+	}
+	return ret
 }
 
-func (d *Dataset) LocalSort() *Dataset {
-	if d.IsLocalSorted {
+func (d *Dataset) LocalSort(indexes []int) *Dataset {
+	if intArrayEquals(d.IsLocalSorted, indexes) {
 		return d
 	}
 
 	ret, step := add1ShardTo1Step(d)
-	ret.IsLocalSorted = true
+	ret.IsLocalSorted = indexes
 	step.Name = "LocalSort"
+	step.Params["indexes"] = indexes
 	step.FunctionType = TypeLocalSort
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
-		LocalSort(task.InputShards[0].OutgoingChans[0].Reader, outChan.Writer)
+		LocalSort(task.InputChans[0].Reader, outChan.Writer, indexes)
 
 		for _, shard := range task.OutputShards {
 			shard.IncomingChan.Writer.Close()
@@ -43,7 +51,7 @@ func (d *Dataset) LocalSort() *Dataset {
 	return ret
 }
 
-func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
+func (d *Dataset) MergeSortedTo(partitionCount int, indexes []int) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
@@ -54,16 +62,17 @@ func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
 	}
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
 	step.Name = fmt.Sprintf("MergeSortedTo %d", partitionCount)
+	step.Params["indexes"] = indexes
 	step.FunctionType = TypeMergeSortedTo
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan
 
 		var inChans []io.Reader
-		for _, shard := range task.InputShards {
-			inChans = append(inChans, shard.OutgoingChans[0].Reader)
+		for _, pipe := range task.InputChans {
+			inChans = append(inChans, pipe.Reader)
 		}
 
-		MergeSortedTo(inChans, outChan.Writer)
+		MergeSortedTo(inChans, outChan.Writer, indexes)
 
 		for _, shard := range task.OutputShards {
 			shard.IncomingChan.Writer.Close()
@@ -73,13 +82,13 @@ func (d *Dataset) MergeSortedTo(partitionCount int) (ret *Dataset) {
 	return ret
 }
 
-func LocalSort(inChan io.Reader, outChan io.Writer) {
+func LocalSort(inChan io.Reader, outChan io.Writer, indexes []int) {
 	var kvs []interface{}
 	err := util.ProcessMessage(inChan, func(input []byte) error {
-		if key, err := util.DecodeRowKey(input); err != nil {
+		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
-			kvs = append(kvs, pair{key: key, data: input})
+			kvs = append(kvs, pair{keys: keys, data: input})
 		}
 		return nil
 	})
@@ -91,21 +100,21 @@ func LocalSort(inChan io.Reader, outChan io.Writer) {
 	}
 	timsort.Sort(kvs, func(a, b interface{}) bool {
 		x, y := a.(pair), b.(pair)
-		return util.LessThan(x.key, y.key)
+		return util.LessThan(x.keys, y.keys)
 	})
 
 	for _, kv := range kvs {
-		// println("sorted key", string(kv.(pair).key.([]byte)))
+		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
 		util.WriteMessage(outChan, kv.(pair).data)
 	}
 }
 
-func MergeSortedTo(inChans []io.Reader, outChan io.Writer) {
+func MergeSortedTo(inChans []io.Reader, outChan io.Writer, indexes []int) {
 	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
 		x, y := a.([]byte), b.([]byte)
-		xKey, _ := util.DecodeRowKey(x)
-		yKey, _ := util.DecodeRowKey(y)
-		return util.LessThan(xKey, yKey)
+		xKeys, _ := util.DecodeRowKeys(x, indexes)
+		yKeys, _ := util.DecodeRowKeys(y, indexes)
+		return util.LessThan(xKeys, yKeys)
 	})
 	// enqueue one item to the pq from each channel
 	for shardId, shardChan := range inChans {
