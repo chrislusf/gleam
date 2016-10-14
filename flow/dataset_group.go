@@ -4,9 +4,10 @@ func (d *Dataset) GroupBy(indexes ...int) *Dataset {
 	if len(indexes) == 0 {
 		indexes = []int{1}
 	}
-	ret := d.LocalSort(indexes).LocalGroupBy(indexes)
+	orderBys := getOrderBysFromIndexes(indexes)
+	ret := d.LocalSort(orderBys).LocalGroupBy(indexes)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, indexes).LocalGroupBy(indexes)
+		ret = ret.MergeSortedTo(1, orderBys).LocalGroupBy(indexes)
 	}
 	return ret
 }

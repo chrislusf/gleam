@@ -77,13 +77,18 @@ message CollectPartitions {
 message LocalSort {
 	required DatasetShardLocation inputShardLocation = 1;
 	required DatasetShardLocation outputShardLocation = 2;
-	repeated int32 indexes = 3;
+	repeated OrderBy orderBys = 3;
 }
 
 message MergeSortedTo {
 	repeated DatasetShardLocation inputShardLocations = 1;
 	required DatasetShardLocation outputShardLocation = 2;
-	repeated int32 indexes = 3;
+	repeated OrderBy orderBys = 3;
+}
+
+message OrderBy{
+	required int32 index = 1;
+	required int32 order = 2;
 }
 
 message JoinPartitionedSorted {

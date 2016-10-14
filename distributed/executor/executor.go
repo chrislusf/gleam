@@ -104,7 +104,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetLocalSort().GetInputShardLocation(), i.GetLocalSort().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
-		flow.LocalSort(inChan.Reader, outChan.Writer, toInts(i.GetLocalSort().GetIndexes()))
+		flow.LocalSort(inChan.Reader, outChan.Writer, toOrderBys(i.GetLocalSort().GetOrderBys()))
 
 	} else if i.GetPipeAsArgs() != nil {
 
@@ -122,7 +122,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 			inChans = append(inChans, inChan.Reader)
 		}
 		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetMergeSortedTo().GetOutputShardLocation(), isFirst, isLast, readerCount)
-		flow.MergeSortedTo(inChans, outChan.Writer, toInts(i.GetMergeSortedTo().GetIndexes()))
+		flow.MergeSortedTo(inChans, outChan.Writer, toOrderBys(i.GetMergeSortedTo().GetOrderBys()))
 
 	} else if i.GetScatterPartitions() != nil {
 
@@ -192,6 +192,16 @@ func toInts(indexes []int32) []int {
 	var ret []int
 	for _, x := range indexes {
 		ret = append(ret, int(x))
+	}
+	return ret
+}
+
+func toOrderBys(orderBys []*cmd.OrderBy) (ret []flow.OrderBy) {
+	for _, o := range orderBys {
+		ret = append(ret, flow.OrderBy{
+			Index: int(o.GetIndex()),
+			Order: flow.Order(int(o.GetOrder())),
+		})
 	}
 	return ret
 }

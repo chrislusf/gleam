@@ -3,7 +3,7 @@ package flow
 func (d *Dataset) Reduce(code string) (ret *Dataset) {
 	ret = d.LocalReduce(code)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, []int{1}).LocalReduce(code)
+		ret = ret.MergeSortedTo(1, []OrderBy{OrderBy{1, Ascending}}).LocalReduce(code)
 	}
 	return ret
 }
@@ -20,9 +20,10 @@ func (d *Dataset) ReduceBy(code string, indexes ...int) (ret *Dataset) {
 	if len(indexes) == 0 {
 		indexes = []int{1}
 	}
-	ret = d.LocalSort(indexes).LocalReduceBy(code, indexes)
+	orderBys := getOrderBysFromIndexes(indexes)
+	ret = d.LocalSort(orderBys).LocalReduceBy(code, indexes)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, indexes).LocalReduceBy(code, indexes)
+		ret = ret.MergeSortedTo(1, orderBys).LocalReduceBy(code, indexes)
 	}
 	return ret
 }

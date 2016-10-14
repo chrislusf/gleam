@@ -37,7 +37,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			LocalSort: &cmd.LocalSort{
 				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
-				Indexes:             getIndexes(task),
+				OrderBys:            getOrderBys(task),
 			},
 		}
 	}
@@ -59,7 +59,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			MergeSortedTo: &cmd.MergeSortedTo{
 				InputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.InputShards),
 				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
-				Indexes:             getIndexes(task),
+				OrderBys:            getOrderBys(task),
 			},
 		}
 	}
@@ -163,5 +163,15 @@ func getIndexes(task *flow.Task) (indexes []int32) {
 		indexes = append(indexes, int32(x))
 	}
 	return
+}
 
+func getOrderBys(task *flow.Task) (orderBys []*cmd.OrderBy) {
+	storedValues := task.Step.Params["orderBys"].([]flow.OrderBy)
+	for _, o := range storedValues {
+		orderBys = append(orderBys, &cmd.OrderBy{
+			Index: proto.Int32(int32(o.Index)),
+			Order: proto.Int32(int32(o.Order)),
+		})
+	}
+	return
 }

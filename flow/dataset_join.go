@@ -11,12 +11,13 @@ func (d *Dataset) Join(other *Dataset, indexes ...int) *Dataset {
 	if len(indexes) == 0 {
 		indexes = []int{1}
 	}
-	sorted_d := d.Partition(len(d.Shards), indexes...).LocalSort(indexes)
+	orderBys := getOrderBysFromIndexes(indexes)
+	sorted_d := d.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
 	var sorted_other *Dataset
 	if d == other {
 		sorted_other = sorted_d
 	} else {
-		sorted_other = other.Partition(len(d.Shards), indexes...).LocalSort(indexes)
+		sorted_other = other.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
 	}
 	return sorted_d.JoinPartitionedSorted(sorted_other, indexes, false, false)
 }

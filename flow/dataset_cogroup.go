@@ -13,12 +13,13 @@ func (d *Dataset) CoGroup(other *Dataset, indexes ...int) *Dataset {
 	if len(indexes) == 0 {
 		indexes = []int{1}
 	}
-	sorted_d := d.Partition(len(d.Shards), indexes...).LocalSort(indexes)
+	orderBys := getOrderBysFromIndexes(indexes)
+	sorted_d := d.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
 	if d == other {
 		// this should not happen, but just in case
 		return sorted_d.LocalGroupBy(indexes)
 	}
-	sorted_other := other.Partition(len(d.Shards), indexes...).LocalSort(indexes)
+	sorted_other := other.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
 	return sorted_d.CoGroupPartitionedSorted(sorted_other, indexes)
 }
 
