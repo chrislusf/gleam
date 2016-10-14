@@ -37,3 +37,11 @@ func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 	step = d.FlowContext.AddOneToOneStep(d, ret)
 	return
 }
+
+func (d *Dataset) Select(indexes ...int) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.Name = "Map"
+	step.Script = d.FlowContext.CreateScript()
+	step.Script.Select(indexes)
+	return ret
+}

@@ -23,6 +23,7 @@ type Script interface {
 	ReduceBy(code string, indexes []int)
 	Filter(code string)
 	GroupBy(indexes []int)
+	Select(indexes []int)
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {
