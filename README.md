@@ -149,6 +149,9 @@ Gleam is just beginning. Here are a few:
 * Add Python support
 * Add Javascript support
 
+Especially Need Help Now:
+* Lua or Go implementation to read Parquet files
+
 Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
 
 [![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EEECLJ8QGTTPC) 
