@@ -38,6 +38,24 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 	return fc.Source(fn)
 }
 
+// Read read tab-separated lines from the reader
+func (fc *FlowContext) Read(reader io.Reader) (ret *Dataset) {
+	fn := func(out io.Writer) {
+		defer util.WriteEOFMessage(out)
+
+		util.TakeTsv(reader, -1, func(message []string) error {
+			var row []interface{}
+			for _, m := range message {
+				row = append(row, m)
+			}
+			util.WriteRow(out, row...)
+			return nil
+		})
+
+	}
+	return fc.Source(fn)
+}
+
 // Source produces data feeding into the flow.
 // Function f writes to this writer.
 // The written bytes should be MsgPack encoded []byte.
