@@ -15,7 +15,10 @@ func Read(f *flow.FlowContext, fileNames []string, parallel int, separator strin
 
 	readFile := fmt.Sprintf(`
         for line in csvFile:lines('*l') do
-          local l = line:split('%s')
+          local l = {}
+          for t in split(line, '%s') do
+            table.insert(l,t)
+          end
           writeRow(unpack(l))
         end
     `, separator)
@@ -24,27 +27,36 @@ func Read(f *flow.FlowContext, fileNames []string, parallel int, separator strin
 		if len(fieldNames) == 0 {
 			readFile = fmt.Sprintf(`
                 local header = csvFile:read()
-    
-                for line in csvFile:lines('*l') do
-                  local l = line:split('%s')
+
+                for line in csvFile:lines() do
+                  local l = {}
+                  for t in split(line, '%s') do
+                    table.insert(l,t)
+                  end
                   writeRow(unpack(l))
                 end
-            `, separator, separator)
+            `, separator)
 		} else {
 			readFile = fmt.Sprintf(`
-                local header = csvFile:read():split('%s')
-                local fields = {%s}
+                local header = csvFile:read()
                 local header2position = {}
-                for i, h in pairs(header) do
-                  header2position[h] = i
+                local x = 1
+                for h in split(header, '%s') do
+                  header2position[h] = x
+                  x = x + 1
                 end
+                
+                local fields = {%s}
                 local indexes = {}
                 for _, f in pairs(fields) do
                   table.insert(indexes, header2position[f])
                 end
     
-                for line in csvFile:lines('*l') do
-                  local l = line:split('%s')
+                for line in csvFile:lines() do
+                  local l = {}
+                  for t in split(line, '%s') do
+                    table.insert(l,t)
+                  end
                   local row = {}
                   for _, x in ipairs(indexes) do
                     table.insert(row, l[x])
@@ -54,16 +66,19 @@ func Read(f *flow.FlowContext, fileNames []string, parallel int, separator strin
             `, separator, toFieldNameList(fieldNames), separator)
 		}
 	}
-	return f.Strings(fileNames).Partition(parallel).ForEach(fmt.Sprintf(`
+
+	actualCode := fmt.Sprintf(`
         function(fileName)
             local csvFile = io.open(fileName, 'r')
             %s
             csvFile:close()  
         end
-    `, readFile))
+    `, readFile)
+
+	return f.Strings(fileNames).Partition(parallel).ForEach(actualCode)
 }
 
-func toFieldNameList(fieldNames) string {
+func toFieldNameList(fieldNames []string) string {
 	var ret []string
 	for _, f := range fieldNames {
 		ret = append(ret, "\""+f+"\"")

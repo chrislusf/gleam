@@ -130,6 +130,9 @@ function addToTable(x, y)
   for _, l in ipairs(y) do table.insert(x,l) end
 end
 
+function split(text, sep)
+  return string.gmatch(text, "([^"..sep.."]+)")
+end
 ` + code
 }
 
