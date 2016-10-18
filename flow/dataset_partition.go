@@ -86,7 +86,7 @@ func ScatterPartitions(inChan io.Reader, outChans []io.Writer, indexes []int) {
 }
 
 func CollectPartitions(inChans []io.Reader, outChan io.Writer) {
-	println("starting to collect data from partitions...", len(inChans))
+	// println("starting to collect data from partitions...", len(inChans))
 
 	if len(inChans) == 1 {
 		io.Copy(outChan, inChans[0])

@@ -62,7 +62,6 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) {
 		go func(i int, reader io.Reader) {
 			defer wg.Done()
 			ProcessMessage(reader, func(data []byte) error {
-				println(i, "-> ", string(data))
 				writerChan <- data
 				return nil
 			})
@@ -72,9 +71,8 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) {
 		wg.Wait()
 		close(writerChan)
 	}()
-	println("ready to read data...")
+
 	for data := range writerChan {
-		println("==> ", string(data))
 		WriteMessage(writer, data)
 	}
 }
