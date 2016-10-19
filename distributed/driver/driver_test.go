@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -26,7 +25,7 @@ func TestInstructionSet(t *testing.T) {
       function(word)
         return word, 1
       end
-    `).ReduceByKey(`
+    `).ReduceBy(`
       function(x, y)
         return x + y
       end
@@ -40,7 +39,7 @@ func TestInstructionSet(t *testing.T) {
 
 func TestPlanning(t *testing.T) {
 
-	f := flow.New().SetRunner(Distributed).Script("lua", `
+	f := flow.New().SetRunner(Distributed).Script("luajit", `
 	function splitter(line)
         return line:gmatch("%w+")
     end

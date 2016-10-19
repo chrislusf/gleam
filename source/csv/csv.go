@@ -5,7 +5,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/chrislusf/gleam/source"
 	"github.com/chrislusf/gleam/util"
@@ -97,12 +96,12 @@ func (cs *CsvInputSplitter) Split() (splits []source.InputSplit) {
 }
 
 type CsvSplitInputReader struct {
-	fileReader *os.File
+	fileReader source.VirtualFile
 	reader     *Reader
 }
 
 func NewCsvSplitInputReader(split *CsvInputSplit) (*CsvSplitInputReader, error) {
-	fr, err := os.Open(split.FileName)
+	fr, err := source.Open(split.FileName)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open file %s: %v", split.FileName, err)
 	}

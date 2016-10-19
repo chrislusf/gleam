@@ -5,8 +5,8 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
 
+	"github.com/chrislusf/gleam/source"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -76,9 +76,10 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 }
 
 // TextFile reads the file content as lines and feed into the flow.
+// The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	fn := func(out io.Writer) {
-		file, err := os.Open(fname)
+		file, err := source.Open(fname)
 		if err != nil {
 			log.Panicf("Can not open file %s: %v", fname, err)
 			return

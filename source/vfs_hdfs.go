@@ -1,7 +1,8 @@
-package hdfs
+package source
+
+// this file defines the virtual file system to provide consistent file access APIs
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"strings"
@@ -9,11 +10,33 @@ import (
 	"github.com/colinmarc/hdfs"
 )
 
+type HdfsFileSystem struct {
+}
+
+func (fs *HdfsFileSystem) Accept(fl *FileLocation) bool {
+	return strings.HasPrefix(fl.Location, "hdfs://")
+}
+
+func (fs *HdfsFileSystem) Open(fl *FileLocation) (VirtualFile, error) {
+	namenode, path, err := splitLocationToParts(fl.Location)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := hdfs.New(namenode)
+	if err != nil {
+		log.Fatalf("failed to create client to %s:%v\n", namenode, err)
+	}
+
+	file, err := client.Open(path)
+
+	return file, err
+}
+
 // List generates a full list of file locations under the given
 // location, which should have a prefix of hdfs://
-func List(hdfsLocation string) (locations []string, err error) {
-
-	namenode, path, err := splitLocationToParts(hdfsLocation)
+func (fs *HdfsFileSystem) List(fl *FileLocation) (fileLocations []*FileLocation, err error) {
+	namenode, path, err := splitLocationToParts(fl.Location)
 	if err != nil {
 		return
 	}
@@ -29,11 +52,10 @@ func List(hdfsLocation string) (locations []string, err error) {
 	}
 
 	for _, fi := range fileInfos {
-		locations = append(locations, hdfsLocation+"/"+fi.Name())
+		fileLocations = append(fileLocations, &FileLocation{fl.Location + "/" + fi.Name()})
 	}
 
 	return
-
 }
 
 func splitLocationToParts(location string) (namenode, path string, err error) {
@@ -44,32 +66,4 @@ func splitLocationToParts(location string) (namenode, path string, err error) {
 
 	parts := strings.SplitN(location[len(hdfsPrefix):], "/", 2)
 	return parts[0], "/" + parts[1], nil
-}
-
-func TextFile(location string, lines chan string) {
-	namenode, path, err := splitLocationToParts(location)
-	if err != nil {
-		return
-	}
-
-	client, err := hdfs.New(namenode)
-	if err != nil {
-		log.Fatalf("failed to create client to %s:%v\n", namenode, err)
-	}
-
-	file, err := client.Open(path)
-
-	if err != nil {
-		log.Fatalf("Can not open file %s: %v", location, err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		lines <- scanner.Text()
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Printf("Scan file %s: %v", location, err)
-	}
 }

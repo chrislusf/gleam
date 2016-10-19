@@ -2,13 +2,22 @@
 package script
 
 type LuaScript struct {
+	luaCommand string
 	initCode   string
 	env        []string
 	operations []*Operation
 }
 
 func NewLuaScript() Script {
-	return &LuaScript{}
+	return &LuaScript{
+		luaCommand: "lua",
+	}
+}
+
+func NewLuajitScript() Script {
+	return &LuaScript{
+		luaCommand: "luajit",
+	}
 }
 
 func (c *LuaScript) Init(code string) {
@@ -142,7 +151,7 @@ func (c *LuaScript) Name() string {
 
 func (c *LuaScript) GetCommand() *Command {
 	return &Command{
-		Path: "luajit",
+		Path: c.luaCommand,
 		Args: []string{"-e", c.initCode + "\n" + c.operations[0].Code + `
 io.flush()
 `},

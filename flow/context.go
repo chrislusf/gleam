@@ -15,9 +15,10 @@ func New() (fc *FlowContext) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	fc = &FlowContext{
-		PrevScriptType: "lua",
+		PrevScriptType: "luajit",
 		Scripts: map[string]func() script.Script{
-			"lua": script.NewLuaScript,
+			"luajit": script.NewLuajitScript,
+			"lua":    script.NewLuaScript,
 		},
 		HashCode: r.Uint32(),
 		Runner:   &Local,
