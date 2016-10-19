@@ -60,6 +60,8 @@ message Instruction {
 	optional PipeAsArgs pipeAsArgs = 7;
 	optional ScatterPartitions scatterPartitions = 8;
 	optional CollectPartitions collectPartitions = 9;
+	optional InputSplitReader inputSplitReader = 10;
+	optional RoundRobin roundRobin = 11;
 }
 
 message ScatterPartitions {
@@ -67,6 +69,12 @@ message ScatterPartitions {
 	repeated DatasetShardLocation OutputShardLocations = 2;
 	required int32 shardCount = 3;
 	repeated int32 indexes = 4;
+}
+
+message RoundRobin {
+	required DatasetShardLocation inputShardLocation = 1;
+	repeated DatasetShardLocation OutputShardLocations = 2;
+	required int32 shardCount = 3;
 }
 
 message CollectPartitions {
@@ -120,6 +128,12 @@ message Script {
 	required string path = 4;
 	repeated string args = 5;
 	repeated string env = 6;
+}
+
+message InputSplitReader {
+	required DatasetShardLocation inputShardLocation = 1;
+	required DatasetShardLocation outputShardLocation = 2;
+	required string inputType = 3;
 }
 
 message DatasetShard {

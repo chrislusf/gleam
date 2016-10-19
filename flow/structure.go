@@ -18,7 +18,9 @@ const (
 	TypeCoGroupPartitionedSorted
 	TypeCollectPartitions
 	TypeScatterPartitions
+	TypeRoundRobin
 	TypePipeAsArgs
+	TypeInputSplitReader
 )
 
 type NetworkType int

@@ -112,6 +112,28 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
+	if task.Step.FunctionType == flow.TypeRoundRobin {
+		return &cmd.Instruction{
+			Name: proto.String(task.Step.Name),
+			RoundRobin: &cmd.RoundRobin{
+				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
+				ShardCount:           proto.Int32(int32(task.Step.Params["shardCount"].(int))),
+			},
+		}
+	}
+
+	if task.Step.FunctionType == flow.TypeInputSplitReader {
+		return &cmd.Instruction{
+			Name: proto.String(task.Step.Name),
+			InputSplitReader: &cmd.InputSplitReader{
+				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				InputType:           proto.String(task.Step.Params["inputType"].(string)),
+			},
+		}
+	}
+
 	// Command can come from Pipe() directly
 	// get an exec.Command
 	// println("processing step:", task.Step.Name)

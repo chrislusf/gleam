@@ -1,30 +1,31 @@
 package csv
 
 import (
-	"os"
 	"testing"
-
-	"github.com/chrislusf/gleam"
 )
 
-func TestReadWithHeader(t *testing.T) {
-	f := gleam.New()
+func TestEncodingDecoding(t *testing.T) {
+	f := &CsvInputFormat{}
+	cis := &CsvInputSplit{
+		FileName:  "x",
+		HasHeader: true,
+	}
+	data, err := f.EncodeInputSplit(cis)
+	if err != nil {
+		t.Errorf("failed to encode:%v", err)
+	}
 
-	data := Read(f, []string{"sample1.csv"}, 1, true)
-	data.Select(2, 3, 1).Fprintf(os.Stderr, "%s,%s,%s\n").Run()
-}
+	decoded, err := f.DecodeInputSplit(data)
+	if err != nil {
+		t.Errorf("failed to decode:%v", err)
+	}
 
-func TestReadWithoutHeader(t *testing.T) {
-	f := gleam.New()
+	if newCis, ok := decoded.(*CsvInputSplit); ok {
+		if newCis.FileName != cis.FileName {
+			t.Errorf("failed to decode.")
+		}
+	} else {
+		t.Errorf("failed to assert.")
+	}
 
-	data := Read(f, []string{"sample0.csv"}, 1, false)
-	data.Select(2, 3, 1, 1).Fprintf(os.Stderr, "%s,%s,%s,%s\n").Run()
-}
-
-func TestReadHeaderByFieldNames(t *testing.T) {
-	f := gleam.New()
-
-	data := Read(f, []string{"sample2.csv"}, 1, true,
-		"statecode", "line", "construction", "policyID")
-	data.Fprintf(os.Stderr, "%s,%s,%s,%s\n").Run()
 }

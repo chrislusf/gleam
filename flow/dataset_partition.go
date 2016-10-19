@@ -6,6 +6,31 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
+func (d *Dataset) RoundRobin(shard int) *Dataset {
+	if len(d.Shards) == shard {
+		return d
+	}
+	ret := d.FlowContext.newNextDataset(shard)
+	step := d.FlowContext.AddOneToAllStep(d, ret)
+	step.Name = "RoundRobin"
+	step.FunctionType = TypeRoundRobin
+	step.Params["shardCount"] = len(ret.Shards)
+	step.Function = func(task *Task) {
+		inChan := task.InputChans[0]
+		var outChans []io.Writer
+		for _, shard := range task.OutputShards {
+			outChans = append(outChans, shard.IncomingChan.Writer)
+		}
+
+		RoundRobin(inChan.Reader, outChans)
+
+		for _, shard := range task.OutputShards {
+			shard.IncomingChan.Writer.Close()
+		}
+	}
+	return ret
+}
+
 // hash data or by data key, return a new dataset
 // This is devided into 2 steps:
 // 1. Each record is sharded to a local shard
@@ -81,6 +106,20 @@ func ScatterPartitions(inChan io.Reader, outChans []io.Writer, indexes []int) {
 		keyObjects, _ := util.DecodeRowKeys(data, indexes)
 		x := util.PartitionByKeys(shardCount, keyObjects)
 		util.WriteMessage(outChans[x], data)
+		return nil
+	})
+}
+
+func RoundRobin(inChan io.Reader, outChans []io.Writer) {
+	count, shardCount := 0, len(outChans)
+	util.ProcessMessage(inChan, func(data []byte) error {
+		if count >= shardCount {
+			count = 0
+		}
+		println("sending to channel", count, "data:", string(data))
+		util.WriteMessage(outChans[count], data)
+		println("sent    to channel", count, "data:", string(data))
+		count++
 		return nil
 	})
 }

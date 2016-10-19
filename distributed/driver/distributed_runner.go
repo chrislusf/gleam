@@ -8,8 +8,13 @@ type DistributedDriver struct {
 	DriverOption
 }
 
+type DistributedPlanner struct {
+	DriverOption
+}
+
 var (
 	Distributed *DistributedDriver
+	Planner     *DistributedPlanner
 )
 
 func init() {
@@ -22,9 +27,15 @@ func init() {
 			Port:         0,
 		},
 	}
+	Planner = &DistributedPlanner{}
 }
 
 func (r *DistributedDriver) RunFlowContext(fc *flow.FlowContext) {
 	d := NewFlowContextDriver(&r.DriverOption)
+	d.Run(fc)
+}
+
+func (r *DistributedPlanner) RunFlowContext(fc *flow.FlowContext) {
+	d := NewFlowContextPlanner()
 	d.Run(fc)
 }

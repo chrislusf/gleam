@@ -43,10 +43,16 @@ func (i *Instruction) SetInputLocations(locations ...resource.Location) {
 	} else if i.GetCoGroupPartitionedSorted() != nil {
 		i.GetCoGroupPartitionedSorted().LeftInputShardLocation.setLocation(locations[0])
 		i.GetCoGroupPartitionedSorted().RightInputShardLocation.setLocation(locations[1])
+	} else if i.GetInputSplitReader() != nil {
+		i.GetInputSplitReader().InputShardLocation.setLocation(locations[0])
+	} else if i.GetRoundRobin() != nil {
+		i.GetRoundRobin().InputShardLocation.setLocation(locations[0])
+	} else {
+		panic("need to set input locations for new instruction.")
 	}
 }
 
-func (i *Instruction) SetOutputLocations(location resource.Location) {
+func (i *Instruction) SetOutputLocation(location resource.Location) {
 	if i.GetScript() != nil {
 		i.GetScript().OutputShardLocation.setLocation(location)
 	} else if i.GetLocalSort() != nil {
@@ -65,6 +71,14 @@ func (i *Instruction) SetOutputLocations(location resource.Location) {
 		i.GetJoinPartitionedSorted().OutputShardLocation.setLocation(location)
 	} else if i.GetCoGroupPartitionedSorted() != nil {
 		i.GetCoGroupPartitionedSorted().OutputShardLocation.setLocation(location)
+	} else if i.GetInputSplitReader() != nil {
+		i.GetInputSplitReader().OutputShardLocation.setLocation(location)
+	} else if i.GetRoundRobin() != nil {
+		for _, outputLocation := range i.GetRoundRobin().GetOutputShardLocations() {
+			outputLocation.setLocation(location)
+		}
+	} else {
+		panic("need to set output locations for new instruction.")
 	}
 }
 

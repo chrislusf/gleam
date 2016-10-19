@@ -10,6 +10,7 @@ type FlowType int
 const (
 	Local FlowType = iota
 	Distributed
+	DistributedPlanner
 )
 
 func New(flowType ...FlowType) (fc *flow.FlowContext) {
@@ -17,6 +18,8 @@ func New(flowType ...FlowType) (fc *flow.FlowContext) {
 		switch flowType[0] {
 		case Distributed:
 			return flow.New().SetRunner(driver.Distributed)
+		case DistributedPlanner:
+			return flow.New().SetRunner(driver.Planner)
 		}
 	}
 	return flow.New()

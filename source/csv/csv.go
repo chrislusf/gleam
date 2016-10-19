@@ -1,131 +1,138 @@
 package csv
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
-	"strings"
+	"io"
+	"os"
 
-	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/source"
+	"github.com/chrislusf/gleam/util"
 )
 
-func Read(f *flow.FlowContext, fileNames []string, parallel int,
-	hasHeader bool, fieldNames ...string) *flow.Dataset {
-
-	declareCode := `
--- http://lua-users.org/wiki/CsvUtils
--- Used to escape "'s by toCSV
-function escapeCSV (s)
-  if string.find(s, '[,"]') then
-    s = '"' .. string.gsub(s, '"', '""') .. '"'
-  end
-  return s
-end
-
--- Convert from CSV string to table (converts a single line of a CSV file)
-function fromCSV(s)
-  s = s .. ','        -- ending comma
-  local t = {}        -- table to collect fields
-  local fieldstart = 1
-  repeat
-    -- next field is quoted? (start with '"'?)
-    if string.find(s, '^"', fieldstart) then
-      local a, c
-      local i  = fieldstart
-      repeat
-        -- find closing quote
-        a, i, c = string.find(s, '"("?)', i+1)
-      until c ~= '"'    -- quote not followed by quote?
-      if not i then error('unmatched "') end
-      local f = string.sub(s, fieldstart+1, i-1)
-      table.insert(t, (string.gsub(f, '""', '"')))
-      fieldstart = string.find(s, ',', i) + 1
-    elseif string.find(s, "^'", fieldstart) then
-      local a, c
-      local i  = fieldstart
-      repeat
-        -- find closing quote
-        a, i, c = string.find(s, "'('?)", i+1)
-      until c ~= "'"    -- quote not followed by quote?
-      if not i then error("unmatched '") end
-      local f = string.sub(s, fieldstart+1, i-1)
-      table.insert(t, (string.gsub(f, "''", "'")))
-      fieldstart = string.find(s, ',', i) + 1
-    else                -- unquoted; find next comma
-      local nexti = string.find(s, ',', fieldstart)
-      table.insert(t, string.sub(s, fieldstart, nexti-1))
-      fieldstart = nexti + 1
-    end
-  until fieldstart > string.len(s)
-  return t
-end
-
--- Convert from table to CSV string
-function toCSV (tt)
-  local s = ""
-  for _,p in ipairs(tt) do  
-    s = s .. "," .. escapeCSV(p)
-  end
-  return string.sub(s, 2)      -- remove first comma
-end
-`
-
-	readFile := `
-        for line in csvFile:lines('*l') do
-          local l = fromCSV(line)
-          writeRow(unpack(l))
-        end
-    `
-
-	if hasHeader {
-		if len(fieldNames) == 0 {
-			readFile = `
-                local header = csvFile:read()
-
-                for line in csvFile:lines() do
-                  local l = fromCSV(line)
-                  writeRow(unpack(l))
-                end
-            `
-		} else {
-			readFile = fmt.Sprintf(`
-                local header = fromCSV(csvFile:read())
-                local header2position = {}
-                for x, h in ipairs(header) do
-                  header2position[h] = x
-                end
-                
-                local fields = {%s}
-                local indexes = {}
-                for _, f in pairs(fields) do
-                  table.insert(indexes, header2position[f])
-                end
-    
-                for line in csvFile:lines() do
-                  local l = fromCSV(line)
-                  local row = {}
-                  for _, x in ipairs(indexes) do
-                    table.insert(row, l[x])
-                  end
-                  writeRow(unpack(row))
-                end
-            `, toFieldNameList(fieldNames))
-		}
-	}
-
-	actualCode := fmt.Sprintf(`
-        function(fileName)
-            local csvFile = io.open(fileName, 'r')
-            %s
-            csvFile:close()  
-        end
-    `, readFile)
-
-	return f.Strings(fileNames).Partition(parallel).Script("lua", declareCode).ForEach(actualCode)
+func init() {
+	source.Registry.Register("csv", &CsvInputFormat{})
 }
 
-func toFieldNameList(fieldNames []string) string {
-	var ret []string
-	for _, f := range fieldNames {
-		ret = append(ret, "\""+f+"\"")
+type CsvInputFormat struct {
+}
+
+func (cs *CsvInputFormat) GetInputSplitter(input source.Input) source.InputSplitter {
+	return &CsvInputSplitter{input.(*CsvInput)}
+}
+
+func (cs *CsvInputFormat) GetInputSplitReader(inputSplit source.InputSplit) (source.InputSplitReader, error) {
+	return NewCsvSplitInputReader(inputSplit.(*CsvInputSplit))
+}
+
+func (cs *CsvInputFormat) EncodeInputSplit(inputSplit source.InputSplit) ([]byte, error) {
+	var buf bytes.Buffer
+
+	// Create an encoder and send a value.
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(inputSplit)
+	if err != nil {
+		return nil, fmt.Errorf("Encode %+v error: %v", inputSplit, err)
 	}
-	return strings.Join(ret, ",")
+
+	return buf.Bytes(), nil
+}
+
+func (cs *CsvInputFormat) DecodeInputSplit(serializedInputSplit []byte) (source.InputSplit, error) {
+	buf := bytes.NewBuffer(serializedInputSplit)
+
+	dec := gob.NewDecoder(buf)
+	v := CsvInputSplit{}
+	err := dec.Decode(&v)
+
+	return &v, err
+}
+
+type CsvInput struct {
+	FileNames []string
+	HasHeader bool
+}
+
+func NewCsvInput(fileNames []string, hasHeader bool) *CsvInput {
+	return &CsvInput{
+		FileNames: fileNames,
+		HasHeader: hasHeader,
+	}
+}
+
+func (ci *CsvInput) GetType() string {
+	return "csv"
+}
+
+type CsvInputSplit struct {
+	SplitNumber         int
+	TotalNumberOfSplits int
+	FileName            string
+	HasHeader           bool
+}
+
+func (cis *CsvInputSplit) GetSplitNumber() int {
+	return cis.SplitNumber
+}
+
+func (cis *CsvInputSplit) GetTotalNumberOfSplits() int {
+	return cis.TotalNumberOfSplits
+}
+
+type CsvInputSplitter struct {
+	input *CsvInput
+}
+
+func (cs *CsvInputSplitter) Split() (splits []source.InputSplit) {
+	for index, fileName := range cs.input.FileNames {
+		splits = append(splits, &CsvInputSplit{
+			SplitNumber:         index,
+			TotalNumberOfSplits: len(cs.input.FileNames),
+			FileName:            fileName,
+			HasHeader:           cs.input.HasHeader,
+		})
+	}
+	return splits
+}
+
+type CsvSplitInputReader struct {
+	fileReader *os.File
+	reader     *Reader
+}
+
+func NewCsvSplitInputReader(split *CsvInputSplit) (*CsvSplitInputReader, error) {
+	fr, err := os.Open(split.FileName)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open file %s: %v", split.FileName, err)
+	}
+	csir := &CsvSplitInputReader{
+		fileReader: fr,
+		reader:     NewReader(fr),
+	}
+	if split.HasHeader {
+		csir.readRow()
+	}
+	return csir, nil
+}
+
+func (ir *CsvSplitInputReader) readRow() ([]string, error) {
+	return ir.reader.Read()
+}
+
+func (ir *CsvSplitInputReader) WriteRow(writer io.Writer) bool {
+	row, err := ir.reader.Read()
+	if err == nil {
+		var oneRow []interface{}
+		for _, field := range row {
+			oneRow = append(oneRow, field)
+		}
+		util.WriteRow(writer, oneRow...)
+		return true
+	}
+	return false
+}
+
+func (ir *CsvSplitInputReader) Close() {
+	ir.fileReader.Close()
 }

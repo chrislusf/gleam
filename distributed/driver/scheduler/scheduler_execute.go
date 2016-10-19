@@ -36,7 +36,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		inputLocations = append(inputLocations, loc)
 	}
 	firstInstruction.SetInputLocations(inputLocations...)
-	lastInstruction.SetOutputLocations(allocation.Location)
+	lastInstruction.SetOutputLocation(allocation.Location)
 
 	instructions.FlowHashCode = &flowContext.HashCode
 	request := NewStartRequest(
@@ -81,6 +81,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 		shard.IncomingChan = util.NewPiper()
 		wg.Add(1)
 		go func() {
+			// println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
 			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
