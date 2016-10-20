@@ -19,7 +19,22 @@ a Go based distributed execution system. The computation can be written in Lua/L
   // option 3: or install it locally
   luarocks install --server=http://luarocks.org/dev gleam-lua --local
 ```
-
+3. Test Installation
+```
+  luajit -e "require 'MessagePack'"
+```
+If it is complaining something like this, just copy the MessagePack.lua to one of the pathes.
+```
+luajit: (command line):1: module 'MessagePack' not found:
+	no field package.preload['MessagePack']
+	no file './MessagePack.lua'
+	no file '/usr/local/share/luajit-2.0.4/MessagePack.lua'
+	no file '/usr/local/share/lua/5.1/MessagePack.lua'
+	no file '/usr/local/share/lua/5.1/MessagePack/init.lua'
+	no file './MessagePack.so'
+	no file '/usr/local/lib/lua/5.1/MessagePack.so'
+	no file '/usr/local/lib/lua/5.1/loadall.so'
+```
 # Documentation
 * [Gleam Wiki] (https://github.com/chrislusf/gleam/wiki)
 * [Gleam Flow API GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow)
@@ -46,11 +61,11 @@ func main() {
 		function(word)
 			return word, 1
 		end
-	`).Reduce(`
+	`).ReduceBy(`
 		function(x, y)
 			return x + y
 		end
-	`).SaveTextTo(os.Stdout, "%s,%d")
+	`).Fprintf(os.Stdout, "%s,%d\n").Run()
 }
 
 ```
@@ -71,7 +86,7 @@ func main() {
 		function(line)
 			return line:gmatch("%w+")
 		end
-	`).Pipe("sort").Pipe("uniq -c").SaveTextTo(os.Stdout, "%s")
+	`).Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n").Run()
 }
 
 ```
@@ -112,11 +127,11 @@ func main() {
       function(word)
         return word, 1
       end
-    `).Reduce(`
+    `).ReduceBy(`
       function(x, y)
         return x + y
       end
-    `).SaveTextTo(os.Stdout, "%s\t%d")
+    `).Fprintf(os.Stdout, "%s\t%d").Run()
 
 }
 
