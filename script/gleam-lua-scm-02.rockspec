@@ -1,5 +1,5 @@
 package = "gleam-lua"
-version = "scm-1"
+version = "scm-02"
 
 source = {
     url = "git://github.com/chrislusf/gleam.git",

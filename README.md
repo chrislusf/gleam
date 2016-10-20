@@ -3,10 +3,21 @@ a Go based distributed execution system. The computation can be written in Lua/L
 
 # Installation
 1. Install Luajit
+```
+  wget http://luajit.org/download/LuaJIT-2.0.4.tar.gz
+  tar zxf LuaJIT-2.0.4.tar.gz
+  cd LuaJIT-2.0.4
+  sudo make install
+```
 2. Put this customized MessagePack.lua under a folder where luajit can find it.
 ```
-  https://github.com/chrislusf/gleam/blob/master/examples/tests/MessagePack.lua
+  // option 1: copy a file to lua lib path
+  download this file: https://github.com/chrislusf/gleam/blob/master/script/MessagePack.lua
   sudo cp MessagePack.lua /usr/local/share/luajit-2.0.4/
+  // option 2: install for the machine
+  sudo luarocks install --server=http://luarocks.org/dev gleam-lua
+  // option 3: or install it locally
+  luarocks install --server=http://luarocks.org/dev gleam-lua --local
 ```
 
 # Documentation
