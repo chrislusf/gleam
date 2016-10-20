@@ -21,7 +21,7 @@ func TestCallingLuaScripts(t *testing.T) {
 		function (line)
 			return line
 		end
-	`).Script("lua",
+	`).Define(
 		`function string.starts(String,Start)
 		   return string.sub(String,1,string.len(Start))==Start
 		end`,

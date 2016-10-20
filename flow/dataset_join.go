@@ -8,6 +8,18 @@ import (
 
 // Join joins two datasets by the key.
 func (d *Dataset) Join(other *Dataset, indexes ...int) *Dataset {
+	return d.DoJoin(other, false, false, indexes)
+}
+
+func (d *Dataset) LeftOuterJoin(other *Dataset, indexes ...int) *Dataset {
+	return d.DoJoin(other, true, false, indexes)
+}
+
+func (d *Dataset) RightOuterJoin(other *Dataset, indexes ...int) *Dataset {
+	return d.DoJoin(other, false, true, indexes)
+}
+
+func (d *Dataset) DoJoin(other *Dataset, leftOuter, rightOuter bool, indexes []int) *Dataset {
 	if len(indexes) == 0 {
 		indexes = []int{1}
 	}
@@ -19,7 +31,7 @@ func (d *Dataset) Join(other *Dataset, indexes ...int) *Dataset {
 	} else {
 		sorted_other = other.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
 	}
-	return sorted_d.JoinPartitionedSorted(sorted_other, indexes, false, false)
+	return sorted_d.JoinPartitionedSorted(sorted_other, indexes, leftOuter, rightOuter)
 }
 
 // Join multiple datasets that are sharded by the same key, and locally sorted within the shard
@@ -37,12 +49,6 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 
 		leftReader := task.InputChans[0].Reader
 		rightReader := task.InputChans[1].Reader
-		/*
-			if leftReader == rightReader {
-				// special case for self join
-				rightReader = task.InputShards[0].OutgoingChans[1].Reader
-			}
-		*/
 		JoinPartitionedSorted(
 			leftReader,
 			rightReader,
@@ -59,6 +65,13 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	return ret
 }
 
+func addNils(target []interface{}, nilCount int) []interface{} {
+	for i := 0; i < nilCount; i++ {
+		target = append(target, nil)
+	}
+	return target
+}
+
 func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 	isLeftOuterJoin, isRightOuterJoin bool, outChan io.Writer) {
 	leftChan := newChannelOfValuesWithSameKey(leftRawChan, indexes)
@@ -67,6 +80,9 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 	// get first value from both channels
 	leftValuesWithSameKey, leftHasValue := <-leftChan
 	rightValuesWithSameKey, rightHasValue := <-rightChan
+
+	leftValueLength := len(leftValuesWithSameKey.Values[0].([]interface{}))
+	rightValueLength := len(rightValuesWithSameKey.Values[0].([]interface{}))
 
 	for leftHasValue && rightHasValue {
 		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
@@ -88,6 +104,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 				for _, leftValue := range leftValuesWithSameKey.Values {
 					t := leftValuesWithSameKey.Keys
 					t = append(t, leftValue.([]interface{})...)
+					t = addNils(t, rightValueLength)
 					util.WriteRow(outChan, t...)
 				}
 			}
@@ -96,6 +113,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 			if isRightOuterJoin {
 				for _, rightValue := range rightValuesWithSameKey.Values {
 					t := rightValuesWithSameKey.Keys
+					t = addNils(t, leftValueLength)
 					t = append(t, rightValue.([]interface{})...)
 					util.WriteRow(outChan, t...)
 				}
@@ -108,6 +126,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 			for _, leftValue := range leftValuesWithSameKey.Values {
 				t := leftValuesWithSameKey.Keys
 				t = append(t, leftValue.([]interface{})...)
+				t = addNils(t, rightValueLength)
 				util.WriteRow(outChan, t...)
 			}
 		}
@@ -117,6 +136,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 			for _, leftValue := range leftValuesWithSameKey.Values {
 				t := leftValuesWithSameKey.Keys
 				t = append(t, leftValue.([]interface{})...)
+				t = addNils(t, rightValueLength)
 				util.WriteRow(outChan, t...)
 			}
 		}
@@ -125,6 +145,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 		if isRightOuterJoin {
 			for _, rightValue := range rightValuesWithSameKey.Values {
 				t := rightValuesWithSameKey.Keys
+				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
 				util.WriteRow(outChan, t...)
 			}
@@ -134,6 +155,7 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 		if isRightOuterJoin {
 			for _, rightValue := range rightValuesWithSameKey.Values {
 				t := rightValuesWithSameKey.Keys
+				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
 				util.WriteRow(outChan, t...)
 			}

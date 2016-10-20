@@ -48,22 +48,6 @@ func (cs *CsvInputFormat) DecodeInputSplit(serializedInputSplit []byte) (source.
 	return &v, err
 }
 
-type CsvInput struct {
-	FileNames []string
-	HasHeader bool
-}
-
-func NewCsvInput(fileNames []string, hasHeader bool) *CsvInput {
-	return &CsvInput{
-		FileNames: fileNames,
-		HasHeader: hasHeader,
-	}
-}
-
-func (ci *CsvInput) GetType() string {
-	return "csv"
-}
-
 type CsvInputSplit struct {
 	SplitNumber         int
 	TotalNumberOfSplits int

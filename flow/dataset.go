@@ -20,8 +20,13 @@ func (d *Dataset) GetShards() []*DatasetShard {
 	return d.Shards
 }
 
-func (d *Dataset) Script(scriptType string, scriptParts ...string) *Dataset {
-	d.FlowContext.Script(scriptType, scriptParts...)
+func (d *Dataset) Script(scriptType string) *Dataset {
+	d.FlowContext.Script(scriptType)
+	return d
+}
+
+func (d *Dataset) Define(scriptPart string) *Dataset {
+	d.FlowContext.Define(scriptPart)
 	return d
 }
 

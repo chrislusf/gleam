@@ -116,9 +116,7 @@ func RoundRobin(inChan io.Reader, outChans []io.Writer) {
 		if count >= shardCount {
 			count = 0
 		}
-		println("sending to channel", count, "data:", string(data))
 		util.WriteMessage(outChans[count], data)
-		println("sent    to channel", count, "data:", string(data))
 		count++
 		return nil
 	})

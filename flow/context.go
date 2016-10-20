@@ -3,7 +3,6 @@
 package flow
 
 import (
-	"log"
 	"math/rand"
 	"time"
 
@@ -33,23 +32,6 @@ func (fc *FlowContext) SetRunner(runner FlowRunner) *FlowContext {
 
 func (fc *FlowContext) Run() {
 	fc.Runner.RunFlowContext(fc)
-}
-
-func (fc *FlowContext) Script(scriptType string, scriptParts ...string) *FlowContext {
-	if _, ok := fc.Scripts[scriptType]; !ok {
-		log.Fatalf("script type %s is not registered.", scriptType)
-	}
-	fc.PrevScriptType = scriptType
-	if len(scriptParts) > 0 {
-		fc.PrevScriptPart = scriptParts[0]
-	}
-	return fc
-}
-
-func (fc *FlowContext) CreateScript() script.Script {
-	s := fc.Scripts[fc.PrevScriptType]()
-	s.Init(fc.PrevScriptPart)
-	return s
 }
 
 func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {
