@@ -8,6 +8,7 @@ import (
 
 	"github.com/chrislusf/gleam/source"
 	_ "github.com/chrislusf/gleam/source/csv"
+	_ "github.com/chrislusf/gleam/source/ints"
 	"github.com/chrislusf/gleam/util"
 )
 
