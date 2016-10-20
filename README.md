@@ -12,7 +12,7 @@ a Go based distributed execution system. The computation can be written in Lua/L
 2. Put this customized MessagePack.lua under a folder where luajit can find it.
 ```
   // option 1: copy a file to lua lib path
-  download this file: https://github.com/chrislusf/gleam/blob/master/script/MessagePack.lua
+  wget https://raw.githubusercontent.com/chrislusf/gleam/master/script/MessagePack.lua
   sudo cp MessagePack.lua /usr/local/share/luajit-2.0.4/
   // option 2: install for the machine
   sudo luarocks install --server=http://luarocks.org/dev gleam-lua
