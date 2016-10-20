@@ -23,6 +23,6 @@ dependencies = {
 build = {
     type = "builtin",
     modules = {
-        msgpack = "script/MessagePack.lua",
+        MessagePack = "MessagePack.lua",
     },
 }
