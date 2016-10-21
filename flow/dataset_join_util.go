@@ -48,7 +48,7 @@ func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan key
 		row, err := util.ReadRow(sortedChan)
 		if err != nil {
 			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "join read first row error: %v", err)
+				fmt.Fprintf(os.Stderr, "join read first row error: %v\n", err)
 			}
 			return
 		}
