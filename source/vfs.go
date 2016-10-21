@@ -7,12 +7,18 @@ import (
 	"io"
 )
 
+type OptionName string
+
+var (
+	Option = make(map[OptionName]string)
+)
+
 type FileLocation struct {
 	Location string
 }
 
 type VirtualFile interface {
-	io.ReaderAt
+	// io.ReaderAt
 	io.ReadCloser
 }
 
@@ -27,8 +33,13 @@ var (
 	fileSystems = []VirtualFileSystem{
 		&LocalFileSystem{},
 		&HdfsFileSystem{},
+		&S3FileSystem{},
 	}
 )
+
+func Set(name OptionName, value string) {
+	Option[name] = value
+}
 
 func Open(filepath string) (VirtualFile, error) {
 	fileLocation := &FileLocation{filepath}
