@@ -132,11 +132,10 @@ From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distribut
 gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided to dynamically change the execution mode.
 
 # Status
-Gleam is just beginning. Here are a few:
+Gleam is just beginning. Here are a few todo that needs help:
 * Add better streaming support
 * Add fault tolerant support
 * Add better integration with Torch
-* Add better HDFS support
 * Add better SQL database support
 * Add Luarock pacakging
 * Add Python support
