@@ -50,7 +50,7 @@ Shell scripts via Pipe should see clear data, so the
 */
 
 const (
-	BUFFER_SIZE = 1024 * 32
+	BUFFER_SIZE = 1024 * 512
 )
 
 // setup asynchronously to merge multiple channels into one channel
@@ -92,14 +92,9 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 	if closeOutput {
 		defer writer.Close()
 	}
-	/*
-		r := bufio.NewReaderSize(reader, BUFFER_SIZE)
-		w := bufio.NewWriterSize(writer, BUFFER_SIZE)
-		defer w.Flush()
 
-		_, err := io.Copy(w, r)
-	*/
-	n, err := io.Copy(writer, reader)
+	buf := make([]byte, BUFFER_SIZE)
+	n, err := io.CopyBuffer(writer, reader, buf)
 	if err != nil {
 		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
 		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
@@ -111,14 +106,8 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	defer wg.Done()
 	defer writer.Close()
 
-	/*
-		r := bufio.NewReaderSize(reader, BUFFER_SIZE)
-		w := bufio.NewWriterSize(writer, BUFFER_SIZE)
-		defer w.Flush()
-
-		n, err := io.Copy(w, r)
-	*/
-	n, err := io.Copy(writer, reader)
+	buf := make([]byte, BUFFER_SIZE)
+	n, err := io.CopyBuffer(writer, reader, buf)
 	if err != nil {
 		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
 	}
