@@ -24,6 +24,7 @@ func (c *LuaScript) Init(code string) {
 	c.initCode = `
 local mp = require "MessagePack"
 mp.set_string 'binary'
+local unpack = table.unpack or unpack
 
 function log(message)
   io.stderr:write(message)
@@ -143,10 +144,6 @@ function split(text, sep)
   return string.gmatch(text, "([^"..sep.."]+)")
 end
 ` + code
-}
-
-func (c *LuaScript) Name() string {
-	return "lua"
 }
 
 func (c *LuaScript) GetCommand() *Command {
