@@ -12,10 +12,7 @@ import (
 )
 
 func TestLuaCommander(t *testing.T) {
-	var commander Script
-
-	commander = NewLuaScript()
-	t.Log(commander.Name())
+	NewLuaScript()
 }
 
 func TestLuaMap(t *testing.T) {
