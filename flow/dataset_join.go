@@ -34,7 +34,7 @@ func (d *Dataset) DoJoin(other *Dataset, leftOuter, rightOuter bool, indexes []i
 	return sorted_d.JoinPartitionedSorted(sorted_other, indexes, leftOuter, rightOuter)
 }
 
-// Join multiple datasets that are sharded by the same key, and locally sorted within the shard
+// JoinPartitionedSorted Join multiple datasets that are sharded by the same key, and locally sorted within the shard
 func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	isLeftOuterJoin, isRightOuterJoin bool) *Dataset {
 	ret := this.FlowContext.newNextDataset(len(this.Shards))
@@ -81,8 +81,13 @@ func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 	leftValuesWithSameKey, leftHasValue := <-leftChan
 	rightValuesWithSameKey, rightHasValue := <-rightChan
 
-	leftValueLength := len(leftValuesWithSameKey.Values[0].([]interface{}))
-	rightValueLength := len(rightValuesWithSameKey.Values[0].([]interface{}))
+	var leftValueLength, rightValueLength int
+	if leftHasValue {
+		leftValueLength = len(leftValuesWithSameKey.Values[0].([]interface{}))
+	}
+	if rightHasValue {
+		rightValueLength = len(rightValuesWithSameKey.Values[0].([]interface{}))
+	}
 
 	for leftHasValue && rightHasValue {
 		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
