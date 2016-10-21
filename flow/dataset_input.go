@@ -82,7 +82,7 @@ func ReadInputSplits(typeName string, reader io.Reader, writer io.Writer) {
 		}
 		csvReader, err := format.GetInputSplitReader(split)
 		if err != nil {
-			log.Fatalf("Failed to decode InputSplit %+v: %v", split, err)
+			log.Fatalf("Failed to read from InputSplit %+v: %v", split, err)
 		}
 
 		for csvReader.WriteRow(writer) {
