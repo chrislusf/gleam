@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/source"
 	"github.com/chrislusf/gleam/util"
@@ -68,14 +69,41 @@ type CsvInputSplitter struct {
 }
 
 func (cs *CsvInputSplitter) Split() (splits []source.InputSplit) {
-	for index, fileName := range cs.input.FileNames {
-		splits = append(splits, &CsvInputSplit{
-			SplitNumber:         index,
-			TotalNumberOfSplits: len(cs.input.FileNames),
-			FileName:            fileName,
-			HasHeader:           cs.input.HasHeader,
-		})
+	index := 0
+	for _, fileName := range cs.input.FileNames {
+		if !source.IsDir(fileName) {
+			splits = append(splits, &CsvInputSplit{
+				SplitNumber:         index,
+				TotalNumberOfSplits: 0,
+				FileName:            fileName,
+				HasHeader:           cs.input.HasHeader,
+			})
+			index++
+		} else {
+			virtualFiles, err := source.List(fileName)
+			if err != nil {
+				log.Printf("Failed to list folder %s: %v", fileName, err)
+				continue
+			}
+			for _, vf := range virtualFiles {
+				if cs.input.Match(vf.Location) {
+					splits = append(splits, &CsvInputSplit{
+						SplitNumber:         index,
+						TotalNumberOfSplits: 0,
+						FileName:            vf.Location,
+						HasHeader:           cs.input.HasHeader,
+					})
+					index++
+				}
+			}
+		}
 	}
+
+	for _, split := range splits {
+		s := split.(*CsvInputSplit)
+		s.TotalNumberOfSplits = index
+	}
+
 	return splits
 }
 

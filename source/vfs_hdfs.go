@@ -1,7 +1,5 @@
 package source
 
-// this file defines the virtual file system to provide consistent file access APIs
-
 import (
 	"fmt"
 	"log"
@@ -56,6 +54,30 @@ func (fs *HdfsFileSystem) List(fl *FileLocation) (fileLocations []*FileLocation,
 	}
 
 	return
+}
+
+func (fs *HdfsFileSystem) IsDir(fl *FileLocation) bool {
+	namenode, path, err := splitLocationToParts(fl.Location)
+	if err != nil {
+		log.Fatalf("failed to create client to %s:%v\n", namenode, err)
+		return false
+	}
+
+	client, err := hdfs.New(namenode)
+	if err != nil {
+		log.Fatalf("failed to create client to %s:%v\n", namenode, err)
+	}
+
+	file, err := client.Open(path)
+	if err != nil {
+		log.Fatalf("failed to open file %s:%v\n", fl.Location, err)
+	}
+
+	defer file.Close()
+
+	fi := file.Stat()
+
+	return fi.IsDir()
 }
 
 func splitLocationToParts(location string) (namenode, path string, err error) {

@@ -1,9 +1,8 @@
 package source
 
-// this file defines the virtual file system to provide consistent file access APIs
-
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 )
@@ -30,4 +29,25 @@ func (fs *LocalFileSystem) List(fl *FileLocation) (fileLocations []*FileLocation
 		fileLocations = append(fileLocations, &FileLocation{fl.Location + "/" + file.Name()})
 	}
 	return
+}
+
+func (fs *LocalFileSystem) IsDir(fl *FileLocation) bool {
+	f, err := os.Open(fl.Location)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	defer f.Close()
+	fi, err := f.Stat()
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	switch mode := fi.Mode(); {
+	case mode.IsDir():
+		return true
+	case mode.IsRegular():
+		return false
+	}
+	return false
 }

@@ -20,6 +20,7 @@ type VirtualFileSystem interface {
 	Accept(*FileLocation) bool
 	Open(*FileLocation) (VirtualFile, error)
 	List(*FileLocation) ([]*FileLocation, error)
+	IsDir(*FileLocation) bool
 }
 
 var (
@@ -47,4 +48,14 @@ func List(filepath string) ([]*FileLocation, error) {
 		}
 	}
 	return nil, fmt.Errorf("Unknown file %s", filepath)
+}
+
+func IsDir(filepath string) bool {
+	fileLocation := &FileLocation{filepath}
+	for _, fs := range fileSystems {
+		if fs.Accept(fileLocation) {
+			return fs.IsDir(fileLocation)
+		}
+	}
+	return false
 }
