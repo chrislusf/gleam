@@ -12,7 +12,6 @@ type Command struct {
 }
 
 type Script interface {
-	Name() string
 	Init(code string)
 	GetCommand() *Command
 
