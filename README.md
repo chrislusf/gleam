@@ -76,8 +76,8 @@ import (
 func main() {
 
 	f := gleam.New()
-	a := f.Input(csv.New("a.csv").SetHasHeader(false)).Select(1,4) // a1, a4
-	b := f.Input(csv.New("b.csv").SetHasHeader(false)).Select(2,3) // b2, b3
+	a := f.Input(csv.New("a.csv")).Select(1,4) // a1, a4
+	b := f.Input(csv.New("b.csv")).Select(2,3) // b2, b3
 	
 	a.Join(b).Fprintf(os.Stdout, "%s,%s,%s\n").Run()  // a1, a4, b3
 
