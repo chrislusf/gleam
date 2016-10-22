@@ -96,3 +96,22 @@ func (c *LuaScript) Select(indexes []int) {
 		strings.Join(params, ","),
 		strings.Join(returns, ",")))
 }
+
+func (c *LuaScript) Take(n int) {
+	c.operations = append(c.operations, &Operation{
+		Type: "TakeN",
+		Code: fmt.Sprintf(`
+
+local count = %d
+
+while true do
+  local row = readRow()
+  if not row then break end
+  if count > 0 then
+    count = count - 1
+    writeRow(unpack(row))
+  end
+end
+`, n),
+	})
+}

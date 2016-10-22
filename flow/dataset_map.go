@@ -45,3 +45,11 @@ func (d *Dataset) Select(indexes ...int) *Dataset {
 	step.Script.Select(indexes)
 	return ret
 }
+
+func (d *Dataset) LocalTake(n int) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.Name = "Map"
+	step.Script = d.FlowContext.CreateScript()
+	step.Script.Take(n)
+	return ret
+}

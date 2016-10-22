@@ -128,6 +128,28 @@ func TestLuaSelect(t *testing.T) {
 	)
 }
 
+func TestLuaTakeN(t *testing.T) {
+
+	testScript(
+		"test filter",
+		func(script Script) {
+			script.Take(1)
+		},
+		func(inputWriter io.Writer) {
+			util.WriteRow(inputWriter, 1, "x1", 8)
+			util.WriteRow(inputWriter, 2, "x2", 7)
+		},
+		func(outputReader io.Reader) {
+			row, _ := util.ReadRow(outputReader)
+			row, _ = util.ReadRow(outputReader)
+			if row != nil {
+				t.Errorf("failed to take 1 row: %+v", row)
+			}
+
+		},
+	)
+}
+
 func testScript(testName string, invokeLuaScriptFunc func(script Script),
 	inputFunc func(inputWriter io.Writer),
 	outputFunc func(outputReader io.Reader)) {

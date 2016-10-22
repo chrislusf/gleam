@@ -183,6 +183,12 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetCoGroupPartitionedSorted().GetOutputShardLocation(), isFirst, isLast, readerCount)
 		flow.CoGroupPartitionedSorted(leftChan.Reader, rightChan.Reader, toInts(i.GetCoGroupPartitionedSorted().GetIndexes()), outChan.Writer)
 
+	} else if i.GetLocalTop() != nil {
+
+		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetLocalTop().GetInputShardLocation(), i.GetLocalTop().GetOutputShardLocation(), isFirst, isLast, readerCount)
+
+		flow.LocalTop(inChan.Reader, outChan.Writer, int(i.GetLocalTop().GetN()), toOrderBys(i.GetLocalTop().GetOrderBys()))
+
 	} else {
 		panic("what is this? " + i.String())
 	}

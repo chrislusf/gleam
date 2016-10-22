@@ -21,6 +21,7 @@ const (
 	TypeRoundRobin
 	TypePipeAsArgs
 	TypeInputSplitReader
+	TypeLocalTop
 )
 
 type NetworkType int

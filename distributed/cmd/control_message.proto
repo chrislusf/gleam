@@ -62,6 +62,7 @@ message Instruction {
 	optional CollectPartitions collectPartitions = 9;
 	optional InputSplitReader inputSplitReader = 10;
 	optional RoundRobin roundRobin = 11;
+	optional LocalTop localTop = 12;
 }
 
 message ScatterPartitions {
@@ -86,6 +87,13 @@ message LocalSort {
 	required DatasetShardLocation inputShardLocation = 1;
 	required DatasetShardLocation outputShardLocation = 2;
 	repeated OrderBy orderBys = 3;
+}
+
+message LocalTop {
+	required DatasetShardLocation inputShardLocation = 1;
+	required DatasetShardLocation outputShardLocation = 2;
+	required int32 n = 3;
+	repeated OrderBy orderBys = 4;
 }
 
 message MergeSortedTo {

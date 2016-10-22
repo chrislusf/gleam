@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"container/heap"
 	"fmt"
 	"io"
 
@@ -24,7 +25,7 @@ func (d *Dataset) Sort(indexes ...int) *Dataset {
 	}
 	orderBys := getOrderBysFromIndexes(indexes)
 	ret := d.LocalSort(orderBys)
-	if len(d.Shards) > 0 {
+	if len(d.Shards) > 1 {
 		ret = ret.MergeSortedTo(1, orderBys)
 	}
 	return ret
@@ -35,8 +36,19 @@ func (d *Dataset) SortBy(orderBys ...OrderBy) *Dataset {
 		orderBys = []OrderBy{OrderBy{1, Ascending}}
 	}
 	ret := d.LocalSort(orderBys)
-	if len(d.Shards) > 0 {
+	if len(d.Shards) > 1 {
 		ret = ret.MergeSortedTo(1, orderBys)
+	}
+	return ret
+}
+
+func (d *Dataset) Top(n int, orderBys ...OrderBy) *Dataset {
+	if len(orderBys) == 0 {
+		orderBys = []OrderBy{OrderBy{1, Ascending}}
+	}
+	ret := d.LocalTop(n, orderBys)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeSortedTo(1, orderBys).LocalTake(n)
 	}
 	return ret
 }
@@ -55,6 +67,29 @@ func (d *Dataset) LocalSort(orderBys []OrderBy) *Dataset {
 		outChan := task.OutputShards[0].IncomingChan
 
 		LocalSort(task.InputChans[0].Reader, outChan.Writer, orderBys)
+
+		for _, shard := range task.OutputShards {
+			shard.IncomingChan.Writer.Close()
+		}
+	}
+	return ret
+}
+
+func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
+	if isOrderByExactReverse(d.IsLocalSorted, orderBys) {
+		return d.LocalTake(n)
+	}
+
+	ret, step := add1ShardTo1Step(d)
+	ret.IsLocalSorted = orderBys
+	step.Name = "LocalTop"
+	step.Params["n"] = n
+	step.Params["orderBys"] = orderBys
+	step.FunctionType = TypeLocalTop
+	step.Function = func(task *Task) {
+		outChan := task.OutputShards[0].IncomingChan
+
+		LocalTop(task.InputChans[0].Reader, outChan.Writer, n, orderBys)
 
 		for _, shard := range task.OutputShards {
 			shard.IncomingChan.Writer.Close()
@@ -135,6 +170,8 @@ func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
 
 func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
+
+	// TODO We can avoid decoding for each compare
 	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
 		x, y := a.([]byte), b.([]byte)
 		xKeys, _ := util.DecodeRowKeys(x, indexes)
@@ -167,12 +204,70 @@ func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	}
 }
 
+// Top streamingly compare and get the top n items
+func LocalTop(inChan io.Reader, outChan io.Writer, n int, orderBys []OrderBy) {
+	indexes := getIndexesFromOrderBys(orderBys)
+	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
+		x, y := a.(pair), b.(pair)
+		for i, order := range orderBys {
+			if order.Order > 0 {
+				if util.LessThan(x.keys[i], y.keys[i]) {
+					return true
+				}
+			} else {
+				if !util.LessThan(x.keys[i], y.keys[i]) {
+					return true
+				}
+			}
+		}
+		return false
+	})
+
+	err := util.ProcessMessage(inChan, func(input []byte) error {
+		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
+			return fmt.Errorf("%v: %+v", err, input)
+		} else {
+			if pq.Len() >= n {
+				heap.Pop(pq)
+			}
+			pq.Enqueue(pair{keys: keys, data: input}, 0)
+		}
+		return nil
+	})
+	if err != nil {
+		fmt.Printf("Top>Failed to process input data:%v\n", err)
+	}
+
+	// read data out of the priority queue
+	length := pq.Len()
+	itemsToReverse := make([][]byte, length)
+	for i := 0; i < length; i++ {
+		kv, _ := pq.Dequeue()
+		itemsToReverse[i] = kv.(pair).data
+	}
+	for i := length - 1; i >= 0; i-- {
+		util.WriteMessage(outChan, itemsToReverse[i])
+	}
+}
+
 func isOrderByEquals(a []OrderBy, b []OrderBy) bool {
 	if len(a) != len(b) {
 		return false
 	}
 	for i, v := range a {
 		if v.Index != b[i].Index || v.Order != b[i].Order {
+			return false
+		}
+	}
+	return true
+}
+
+func isOrderByExactReverse(a []OrderBy, b []OrderBy) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v.Index != b[i].Index || v.Order == b[i].Order {
 			return false
 		}
 	}

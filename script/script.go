@@ -23,6 +23,7 @@ type Script interface {
 	Filter(code string)
 	GroupBy(indexes []int)
 	Select(indexes []int)
+	Take(n int)
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {

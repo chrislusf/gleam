@@ -134,6 +134,18 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
+	if task.Step.FunctionType == flow.TypeLocalTop {
+		return &cmd.Instruction{
+			Name: proto.String(task.Step.Name),
+			LocalTop: &cmd.LocalTop{
+				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				N:                   proto.Int32(int32(task.Step.Params["n"].(int))),
+				OrderBys:            getOrderBys(task),
+			},
+		}
+	}
+
 	// Command can come from Pipe() directly
 	// get an exec.Command
 	// println("processing step:", task.Step.Name)

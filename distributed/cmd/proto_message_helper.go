@@ -47,6 +47,8 @@ func (i *Instruction) SetInputLocations(locations ...resource.Location) {
 		i.GetInputSplitReader().InputShardLocation.setLocation(locations[0])
 	} else if i.GetRoundRobin() != nil {
 		i.GetRoundRobin().InputShardLocation.setLocation(locations[0])
+	} else if i.GetLocalTop() != nil {
+		i.GetLocalTop().InputShardLocation.setLocation(locations[0])
 	} else {
 		panic("need to set input locations for new instruction.")
 	}
@@ -77,6 +79,8 @@ func (i *Instruction) SetOutputLocation(location resource.Location) {
 		for _, outputLocation := range i.GetRoundRobin().GetOutputShardLocations() {
 			outputLocation.setLocation(location)
 		}
+	} else if i.GetLocalTop() != nil {
+		i.GetLocalTop().OutputShardLocation.setLocation(location)
 	} else {
 		panic("need to set output locations for new instruction.")
 	}

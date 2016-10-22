@@ -2,44 +2,47 @@ Taking adding InputSplitReader as example:
 
 1. Add these to control_message.proto
 
-	message InputSplitReader {
-		required DatasetShardLocation inputShardLocation = 1;
-		required DatasetShardLocation outputShardLocation = 2;
-		required string inputType = 3;
-	}
+    message InputSplitReader {
+        required DatasetShardLocation inputShardLocation = 1;
+        required DatasetShardLocation outputShardLocation = 2;
+        required string inputType = 3;
+    }
 
 2. Add this to control_message.proto
 
-	message Instruction {
-		...
-		optional InputSplitReader inputSplitReader = 10;
-	}
+    message Instruction {
+        ...
+        optional InputSplitReader inputSplitReader = 10;
+    }
 
 3. generate protobuf files
 
-	protoc --go_out=. *.proto
+    protoc --go_out=. *.proto
+
+3.9 in github.com/chrislusf/gleam/flow/structure.go, add const
+    TypeInputSplitReader
 
 4. in github.com/chrislusf/gleam/distributed/plan/instructions.go, function translateToInstruction()
-	serialize the Instruction
+    serialize the Instruction
 
 
-	if task.Step.FunctionType == flow.TypeInputSplitReader {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			InputSplitReader: &cmd.InputSplitReader{
-				InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
-				OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
-				InputType:           proto.String(task.Step.Params["inputType"].(string)),
-			},
-		}
-	}
+    if task.Step.FunctionType == flow.TypeInputSplitReader {
+        return &cmd.Instruction{
+            Name: proto.String(task.Step.Name),
+            InputSplitReader: &cmd.InputSplitReader{
+                InputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+                OutputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+                InputType:           proto.String(task.Step.Params["inputType"].(string)),
+            },
+        }
+    }
 
 5. in proto_message_helper.go add input output
 
 6. in github.com/chrislusf/gleam/distributed/executor/executor.go, function ExecuteInstruction()
 
-	} else if i.GetInputSplitReader() != nil {
+    } else if i.GetInputSplitReader() != nil {
 
-		connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetInputSplitReader().GetInputShardLocation(), i.GetInputSplitReader().GetOutputShardLocation(), isFirst, isLast, readerCount)
+        connectInputOutput(wg, i.GetName(), inChan, outChan, i.GetInputSplitReader().GetInputShardLocation(), i.GetInputSplitReader().GetOutputShardLocation(), isFirst, isLast, readerCount)
 
-		flow.ReadInputSplits(i.GetInputSplitReader().GetInputType(), inChan.Reader, outChan.Writer)
+        flow.ReadInputSplits(i.GetInputSplitReader().GetInputType(), inChan.Reader, outChan.Writer)
