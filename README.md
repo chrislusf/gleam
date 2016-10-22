@@ -58,6 +58,31 @@ func main() {
 
 ```
 
+Join two CSV files. 
+
+Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" has fields "b1, b2, b3". We want to join the rows where a1 = b2. And the output format should be "a1, a4, b3".
+
+```
+package main
+
+import (
+	"os"
+
+	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/source/csv"
+)
+
+func main() {
+
+	f := gleam.New()
+	a := f.Input(csv.New("a.csv").SetHasHeader(false)).Select(1,4) // a1, a4
+	b := f.Input(csv.New("b.csv").SetHasHeader(false)).Select(2,3) // b2, b3
+	
+	a.Join(b).Fprintf(os.Stdout, "%s,%s,%s\n").Run()  // a1, a4, b3
+
+}
+
+```
 
 ## Parallel Execution
 One limitation for unix pipes is that they are easy for one single pipe, but not easy to parallel.
