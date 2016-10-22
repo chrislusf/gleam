@@ -8,6 +8,7 @@ a Go based distributed execution system. The computation can be written in Lua/L
 
 # Standalone Example
 
+## Word Count
 The full source code, not snippet, for word count:
 ```
 package main
@@ -58,7 +59,7 @@ func main() {
 
 ```
 
-Join two CSV files. 
+## Join two CSV files. 
 
 Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" has fields "b1, b2, b3". We want to join the rows where a1 = b2. And the output format should be "a1, a4, b3".
 
