@@ -10,18 +10,21 @@ type CsvInput struct {
 	FileNamePattern string
 }
 
-func New(fileNames ...string) *CsvInput {
+func New(fileNameOrFolder ...string) *CsvInput {
 	return &CsvInput{
-		FileNames: fileNames,
-		HasHeader: true,
+		FileNames: fileNameOrFolder,
+		HasHeader: false,
 	}
 }
 
+// SetHasHeader sets whether header row exists or not. Default to false.
 func (ci *CsvInput) SetHasHeader(hasHeader bool) *CsvInput {
 	ci.HasHeader = hasHeader
 	return ci
 }
 
+// SetFileNamePattern sets file name pattern, e.g., "*.csv".
+// This is used when one of the fileNames is a folder.
 func (ci *CsvInput) SetFileNamePattern(pattern string) *CsvInput {
 	ci.FileNamePattern = pattern
 	return ci
