@@ -149,19 +149,7 @@ func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
 		return
 	}
 	timsort.Sort(kvs, func(a, b interface{}) bool {
-		x, y := a.(pair), b.(pair)
-		for i, order := range orderBys {
-			if order.Order > 0 {
-				if util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			} else {
-				if !util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			}
-		}
-		return false
+		return pairsLessThan(orderBys, a, b)
 	})
 
 	for _, kv := range kvs {
@@ -173,21 +161,8 @@ func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
 func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 
-	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
-		x, y := a.(pair), b.(pair)
-		for i, order := range orderBys {
-			if order.Order >= 0 {
-				if util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			} else {
-				if !util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			}
-		}
-		return false
-	})
+	pq := newMinQueueOfPairs(orderBys)
+
 	// enqueue one item to the pq from each channel
 	for shardId, shardChan := range inChans {
 		if x, err := util.ReadMessage(shardChan); err == nil {
@@ -214,21 +189,7 @@ func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 // Top streamingly compare and get the top n items
 func LocalTop(inChan io.Reader, outChan io.Writer, n int, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
-	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
-		x, y := a.(pair), b.(pair)
-		for i, order := range orderBys {
-			if order.Order >= 0 {
-				if util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			} else {
-				if !util.LessThan(x.keys[i], y.keys[i]) {
-					return true
-				}
-			}
-		}
-		return false
-	})
+	pq := newMinQueueOfPairs(orderBys)
 
 	err := util.ProcessMessage(inChan, func(input []byte) error {
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
@@ -293,4 +254,26 @@ func getOrderBysFromIndexes(indexes []int) (orderBys []OrderBy) {
 		orderBys = append(orderBys, OrderBy{i, Ascending})
 	}
 	return
+}
+
+func newMinQueueOfPairs(orderBys []OrderBy) *util.PriorityQueue {
+	return util.NewPriorityQueue(func(a, b interface{}) bool {
+		return pairsLessThan(orderBys, a, b)
+	})
+}
+
+func pairsLessThan(orderBys []OrderBy, a, b interface{}) bool {
+	x, y := a.(pair), b.(pair)
+	for i, order := range orderBys {
+		if order.Order >= 0 {
+			if util.LessThan(x.keys[i], y.keys[i]) {
+				return true
+			}
+		} else {
+			if !util.LessThan(x.keys[i], y.keys[i]) {
+				return true
+			}
+		}
+	}
+	return false
 }
