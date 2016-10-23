@@ -106,6 +106,6 @@ const (
 )
 
 type OrderBy struct {
-	Index int
-	Order Order
+	Index int   // column index, starting from 1
+	Order Order // Ascending or Descending
 }
