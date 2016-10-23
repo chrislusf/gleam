@@ -97,9 +97,9 @@ func (c *LuaScript) Select(indexes []int) {
 		strings.Join(returns, ",")))
 }
 
-func (c *LuaScript) Take(n int) {
+func (c *LuaScript) Limit(n int) {
 	c.operations = append(c.operations, &Operation{
-		Type: "TakeN",
+		Type: "Limit",
 		Code: fmt.Sprintf(`
 
 local count = %d

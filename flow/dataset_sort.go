@@ -48,7 +48,7 @@ func (d *Dataset) Top(n int, orderBys ...OrderBy) *Dataset {
 	}
 	ret := d.LocalTop(n, orderBys)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, orderBys).LocalTake(n)
+		ret = ret.MergeSortedTo(1, orderBys).LocalLimit(n)
 	}
 	return ret
 }
@@ -77,7 +77,7 @@ func (d *Dataset) LocalSort(orderBys []OrderBy) *Dataset {
 
 func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
 	if isOrderByExactReverse(d.IsLocalSorted, orderBys) {
-		return d.LocalTake(n)
+		return d.LocalLimit(n)
 	}
 
 	ret, step := add1ShardTo1Step(d)

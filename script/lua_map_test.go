@@ -128,12 +128,12 @@ func TestLuaSelect(t *testing.T) {
 	)
 }
 
-func TestLuaTakeN(t *testing.T) {
+func TestLuaLimit(t *testing.T) {
 
 	testScript(
-		"test filter",
+		"test Limit",
 		func(script Script) {
-			script.Take(1)
+			script.Limit(1)
 		},
 		func(inputWriter io.Writer) {
 			util.WriteRow(inputWriter, 1, "x1", 8)
