@@ -4,6 +4,7 @@ import (
 	"container/heap"
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/util"
 	"github.com/psilva261/timsort"
@@ -172,18 +173,15 @@ func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
 func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 
-	// TODO We can avoid decoding for each compare
 	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
-		x, y := a.([]byte), b.([]byte)
-		xKeys, _ := util.DecodeRowKeys(x, indexes)
-		yKeys, _ := util.DecodeRowKeys(y, indexes)
+		x, y := a.(pair), b.(pair)
 		for i, order := range orderBys {
-			if order.Order > 0 {
-				if util.LessThan(xKeys[i], yKeys[i]) {
+			if order.Order >= 0 {
+				if util.LessThan(x.keys[i], y.keys[i]) {
 					return true
 				}
 			} else {
-				if !util.LessThan(xKeys[i], yKeys[i]) {
+				if !util.LessThan(x.keys[i], y.keys[i]) {
 					return true
 				}
 			}
@@ -193,14 +191,22 @@ func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	// enqueue one item to the pq from each channel
 	for shardId, shardChan := range inChans {
 		if x, err := util.ReadMessage(shardChan); err == nil {
-			pq.Enqueue(x, shardId)
+			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
+				log.Printf("%v: %+v", err, x)
+			} else {
+				pq.Enqueue(pair{keys: keys, data: x}, shardId)
+			}
 		}
 	}
 	for pq.Len() > 0 {
 		t, shardId := pq.Dequeue()
-		util.WriteMessage(outChan, t.([]byte))
+		util.WriteMessage(outChan, t.(pair).data)
 		if x, err := util.ReadMessage(inChans[shardId]); err == nil {
-			pq.Enqueue(x, shardId)
+			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
+				log.Printf("%v: %+v", err, x)
+			} else {
+				pq.Enqueue(pair{keys: keys, data: x}, shardId)
+			}
 		}
 	}
 }
@@ -211,7 +217,7 @@ func LocalTop(inChan io.Reader, outChan io.Writer, n int, orderBys []OrderBy) {
 	pq := util.NewPriorityQueue(func(a, b interface{}) bool {
 		x, y := a.(pair), b.(pair)
 		for i, order := range orderBys {
-			if order.Order > 0 {
+			if order.Order >= 0 {
 				if util.LessThan(x.keys[i], y.keys[i]) {
 					return true
 				}
