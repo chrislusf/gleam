@@ -43,7 +43,7 @@ func (d *Dataset) SortBy(orderBys ...OrderBy) *Dataset {
 	return ret
 }
 
-// Top picks reverse ordered k items from total n items by O(n*k) complexity.
+// Top streams through total n items, picking reverse ordered k items with O(n*log(k)) complexity.
 func (d *Dataset) Top(k int, orderBys ...OrderBy) *Dataset {
 	if len(orderBys) == 0 {
 		orderBys = []OrderBy{OrderBy{1, Ascending}}
