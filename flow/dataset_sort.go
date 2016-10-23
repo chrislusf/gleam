@@ -42,13 +42,14 @@ func (d *Dataset) SortBy(orderBys ...OrderBy) *Dataset {
 	return ret
 }
 
-func (d *Dataset) Top(n int, orderBys ...OrderBy) *Dataset {
+// Top picks reverse ordered k items from total n items by O(n*k) complexity.
+func (d *Dataset) Top(k int, orderBys ...OrderBy) *Dataset {
 	if len(orderBys) == 0 {
 		orderBys = []OrderBy{OrderBy{1, Ascending}}
 	}
-	ret := d.LocalTop(n, orderBys)
+	ret := d.LocalTop(k, orderBys)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, orderBys).LocalLimit(n)
+		ret = ret.MergeSortedTo(1, orderBys).LocalLimit(k)
 	}
 	return ret
 }
