@@ -208,6 +208,39 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		flow.LocalTop(inChan.Reader, outChan.Writer, int(i.GetLocalTop().GetN()), toOrderBys(i.GetLocalTop().GetOrderBys()))
 
+	} else if i.GetBroadcast() != nil {
+
+		var outChans []*util.Piper
+		for _, outputLocation := range i.GetBroadcast().GetOutputShardLocations() {
+			wg.Add(1)
+			outChan := util.NewPiper()
+			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetShard().Name(), outChan.Reader, 1)
+			outChans = append(outChans, outChan)
+		}
+		connectInputOutput(wg, i.GetName(), inChan, nil, i.GetBroadcast().GetInputShardLocation(), nil, isFirst, isLast, readerCount)
+		var writers []io.Writer
+		for _, outChan := range outChans {
+			writers = append(writers, outChan.Writer)
+		}
+		flow.Broadcast(inChan.Reader, writers)
+		for _, outChan := range outChans {
+			outChan.Writer.Close()
+		}
+
+	} else if i.GetLocalHashAndJoinWith() != nil {
+
+		leftChan, rightChan := util.NewPiper(), util.NewPiper()
+		jps := i.GetLocalHashAndJoinWith()
+		leftLocation := jps.GetLeftInputShardLocation()
+		rightLocation := jps.GetRightInputShardLocation()
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetShard().Name(), leftChan.Writer)
+		wg.Add(1)
+		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetShard().Name(), rightChan.Writer)
+
+		connectInputOutput(wg, i.GetName(), nil, outChan, nil, i.GetLocalHashAndJoinWith().GetOutputShardLocation(), isFirst, isLast, readerCount)
+		flow.LocalHashAndJoinWith(leftChan.Reader, rightChan.Reader, toInts(i.GetLocalHashAndJoinWith().GetIndexes()), outChan.Writer)
+
 	} else {
 		panic("what is this? " + i.String())
 	}

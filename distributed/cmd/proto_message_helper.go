@@ -49,6 +49,11 @@ func (i *Instruction) SetInputLocations(locations ...resource.Location) {
 		i.GetRoundRobin().InputShardLocation.setLocation(locations[0])
 	} else if i.GetLocalTop() != nil {
 		i.GetLocalTop().InputShardLocation.setLocation(locations[0])
+	} else if i.GetBroadcast() != nil {
+		i.GetBroadcast().InputShardLocation.setLocation(locations[0])
+	} else if i.GetLocalHashAndJoinWith() != nil {
+		i.GetLocalHashAndJoinWith().LeftInputShardLocation.setLocation(locations[0])
+		i.GetLocalHashAndJoinWith().RightInputShardLocation.setLocation(locations[1])
 	} else {
 		panic("need to set input locations for new instruction.")
 	}
@@ -81,6 +86,12 @@ func (i *Instruction) SetOutputLocation(location resource.Location) {
 		}
 	} else if i.GetLocalTop() != nil {
 		i.GetLocalTop().OutputShardLocation.setLocation(location)
+	} else if i.GetBroadcast() != nil {
+		for _, outputLocation := range i.GetBroadcast().GetOutputShardLocations() {
+			outputLocation.setLocation(location)
+		}
+	} else if i.GetLocalHashAndJoinWith() != nil {
+		i.GetLocalHashAndJoinWith().OutputShardLocation.setLocation(location)
 	} else {
 		panic("need to set output locations for new instruction.")
 	}

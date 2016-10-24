@@ -63,6 +63,8 @@ message Instruction {
 	optional InputSplitReader inputSplitReader = 10;
 	optional RoundRobin roundRobin = 11;
 	optional LocalTop localTop = 12;
+	optional Broadcast broadcast = 13;
+	optional LocalHashAndJoinWith localHashAndJoinWith = 14;
 }
 
 message ScatterPartitions {
@@ -141,6 +143,18 @@ message InputSplitReader {
 	required DatasetShardLocation inputShardLocation = 1;
 	required DatasetShardLocation outputShardLocation = 2;
 	required string inputType = 3;
+}
+
+message Broadcast {
+	required DatasetShardLocation inputShardLocation = 1;
+	repeated DatasetShardLocation OutputShardLocations = 2;
+}
+
+message LocalHashAndJoinWith {
+	required DatasetShardLocation leftInputShardLocation = 1;
+	required DatasetShardLocation rightInputShardLocation = 2;
+	required DatasetShardLocation outputShardLocation = 3;
+	repeated int32 indexes = 4;
 }
 
 message DatasetShard {

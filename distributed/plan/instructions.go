@@ -145,6 +145,28 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
+	if task.Step.FunctionType == flow.TypeBroadcast {
+		return &cmd.Instruction{
+			Name: proto.String(task.Step.Name),
+			Broadcast: &cmd.Broadcast{
+				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
+			},
+		}
+	}
+
+	if task.Step.FunctionType == flow.TypeLocalHashAndJoinWith {
+		return &cmd.Instruction{
+			Name: proto.String(task.Step.Name),
+			LocalHashAndJoinWith: &cmd.LocalHashAndJoinWith{
+				LeftInputShardLocation:  flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
+				RightInputShardLocation: flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[1]),
+				OutputShardLocation:     flowDatasetShardsToCmdDatasetShardLocation(task.OutputShards[0]),
+				Indexes:                 getIndexes(task),
+			},
+		}
+	}
+
 	// Command can come from Pipe() directly
 	// get an exec.Command
 	// println("processing step:", task.Step.Name)
