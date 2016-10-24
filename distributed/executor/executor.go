@@ -143,6 +143,25 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 			outChan.Writer.Close()
 		}
 
+	} else if i.GetRoundRobin() != nil {
+
+		var outChans []*util.Piper
+		for _, outputLocation := range i.GetRoundRobin().GetOutputShardLocations() {
+			wg.Add(1)
+			outChan := util.NewPiper()
+			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetShard().Name(), outChan.Reader, 1)
+			outChans = append(outChans, outChan)
+		}
+		connectInputOutput(wg, i.GetName(), inChan, nil, i.GetRoundRobin().GetInputShardLocation(), nil, isFirst, isLast, readerCount)
+		var writers []io.Writer
+		for _, outChan := range outChans {
+			writers = append(writers, outChan.Writer)
+		}
+		flow.RoundRobin(inChan.Reader, writers)
+		for _, outChan := range outChans {
+			outChan.Writer.Close()
+		}
+
 	} else if i.GetCollectPartitions() != nil {
 
 		var inChans []io.Reader

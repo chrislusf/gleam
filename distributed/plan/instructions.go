@@ -118,7 +118,6 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			RoundRobin: &cmd.RoundRobin{
 				InputShardLocation:   flowDatasetShardsToCmdDatasetShardLocation(task.InputShards[0]),
 				OutputShardLocations: flowDatasetShardsToCmdDatasetShardLocations(task.OutputShards),
-				ShardCount:           proto.Int32(int32(task.Step.Params["shardCount"].(int))),
 			},
 		}
 	}

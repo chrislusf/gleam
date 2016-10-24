@@ -75,7 +75,6 @@ message ScatterPartitions {
 message RoundRobin {
 	required DatasetShardLocation inputShardLocation = 1;
 	repeated DatasetShardLocation OutputShardLocations = 2;
-	required int32 shardCount = 3;
 }
 
 message CollectPartitions {
