@@ -45,7 +45,6 @@ func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 }
 
 func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
-	// to be compatible with lua encoding, need to use string
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 	for {
 		var v interface{}
@@ -58,9 +57,24 @@ func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	return objects, err
 }
 
+func DecodeRowKeysValues(encodedBytes []byte, indexes []int) (keys, values []interface{}, err error) {
+	objects, err := DecodeRow(encodedBytes)
+	used := make([]bool, len(objects))
+	for _, x := range indexes {
+		keys = append(keys, objects[x-1])
+		used[x-1] = true
+	}
+	for i, obj := range objects {
+		if !used[i] {
+			values = append(values, obj)
+		}
+	}
+	return keys, values, err
+
+}
+
 // DecodeRowKeys decode fields by index, starting from 1
 func DecodeRowKeys(encodedBytes []byte, indexes []int) (keys []interface{}, err error) {
-	// to be compatible with lua encoding, need to use string
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 
 	if len(indexes) == 0 {

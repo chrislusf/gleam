@@ -22,6 +22,8 @@ const (
 	TypePipeAsArgs
 	TypeInputSplitReader
 	TypeLocalTop
+	TypeBroadcast
+	TypeLocalHashAndJoinWith
 )
 
 type NetworkType int
