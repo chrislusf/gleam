@@ -10,7 +10,7 @@ import (
 
 func TestPlanning(t *testing.T) {
 
-	f := flow.New().Define(`
+	f := flow.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end

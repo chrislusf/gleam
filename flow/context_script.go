@@ -8,7 +8,7 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
-func (fc *FlowContext) Define(scriptPart string) *FlowContext {
+func (fc *FlowContext) Init(scriptPart string) *FlowContext {
 	fc.PrevScriptPart = scriptPart
 	return fc
 }

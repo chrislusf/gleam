@@ -39,7 +39,7 @@ func TestInstructionSet(t *testing.T) {
 
 func TestPlanning(t *testing.T) {
 
-	f := flow.New().SetRunner(Distributed).Define(`
+	f := flow.New().SetRunner(Distributed).Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end

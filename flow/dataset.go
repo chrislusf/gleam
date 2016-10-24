@@ -26,7 +26,7 @@ func (d *Dataset) Script(scriptType string) *Dataset {
 }
 
 func (d *Dataset) Define(scriptPart string) *Dataset {
-	d.FlowContext.Define(scriptPart)
+	d.FlowContext.Init(scriptPart)
 	return d
 }
 
