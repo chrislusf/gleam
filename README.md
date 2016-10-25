@@ -1,5 +1,34 @@
 # gleam
-a Go based distributed execution system. The computation can be written in Lua/Luajit or Unix Pipe tools.
+Gleam is a high performance and efficient distributed execution system, and also 
+simple, generic, flexible and easy to customize.
+
+Gleam is built in Go, and the user defined computation can be written in Lua, 
+Unix pipe tools, or any streaming programs.
+
+### High Performance
+
+* Go itself has high performance and concurrency.
+* LuaJit also has high performance comparable to C, Java, Go.
+
+### Efficient
+
+* Gleam does not have the common GC problem that plagued other languages. Each executor is run in a separated OS process.
+* Gleam master and agent servers does not run actual computation.
+* Gleam master and agent servers are memory efficient, consuming less than 10 MB memory.
+* LuaJit runs in parallel OS processes. The memory is managed by the OS.
+* One machine can host much more executors.
+
+### Flexible
+* The Gleam flow can run standalone or distributed.
+* Data flows in Gleam either through memory/network, or optionally to disk for later re-tries.
+
+### Easy to Customize
+* The Go code is much simpler to read than Scala, Java, C++.
+* LuaJit can easily invoke any C functions.
+* (plan) Write SQL with UDF written in Lua.
+
+# Architecture
+
 
 # Documentation
 * [Gleam Wiki] (https://github.com/chrislusf/gleam/wiki)
