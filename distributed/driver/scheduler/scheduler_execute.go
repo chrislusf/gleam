@@ -26,17 +26,28 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	firstInstruction := instructions.GetInstructions()[0]
 	lastInstruction := instructions.GetInstructions()[len(instructions.GetInstructions())-1]
 	firstTask := taskGroup.Tasks[0]
-	var inputLocations []resource.Location
+	lastTask := taskGroup.Tasks[len(taskGroup.Tasks)-1]
+	var inputLocations, outputLocations []resource.DataLocation
 	for _, shard := range firstTask.InputShards {
 		loc, hasLocation := s.GetShardLocation(shard)
 		if !hasLocation {
 			log.Printf("The shard is missing?: %s", shard.Name())
 			continue
 		}
-		inputLocations = append(inputLocations, loc)
+		inputLocations = append(inputLocations, resource.DataLocation{
+			Name:     shard.Name(),
+			Location: loc,
+		})
 	}
-	firstInstruction.SetInputLocations(inputLocations...)
-	lastInstruction.SetOutputLocation(allocation.Location)
+	for _, shard := range lastTask.OutputShards {
+		outputLocations = append(outputLocations, resource.DataLocation{
+			Name:     shard.Name(),
+			Location: allocation.Location,
+		})
+	}
+
+	firstInstruction.SetInputLocations(inputLocations)
+	lastInstruction.SetOutputLocations(outputLocations)
 
 	instructions.FlowHashCode = &flowContext.HashCode
 	request := NewStartRequest(

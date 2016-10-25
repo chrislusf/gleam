@@ -34,7 +34,7 @@ func main() {
 func testGleam(name string, mode gleam.FlowType, times int, factor int) {
 	var count int64
 	startTime := time.Now()
-	gleam.New(mode).Define(`
+	gleam.New(mode).Init(`
       function sum(x, y)
         return x + y
       end

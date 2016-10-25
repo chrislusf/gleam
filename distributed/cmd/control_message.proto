@@ -52,8 +52,8 @@ message InstructionSet {
 
 message Instruction {
 	required string name = 1;
-	optional Script script = 2;
-	optional LocalSort localSort = 3;
+	repeated DatasetShardLocation inputShardLocations = 2;
+	repeated DatasetShardLocation OutputShardLocations = 3;
 	optional MergeSortedTo mergeSortedTo = 4;
 	optional JoinPartitionedSorted joinPartitionedSorted = 5;
 	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
@@ -65,42 +65,32 @@ message Instruction {
 	optional LocalTop localTop = 12;
 	optional Broadcast broadcast = 13;
 	optional LocalHashAndJoinWith localHashAndJoinWith = 14;
+	optional Script script = 15;
+	optional LocalSort localSort = 16;
 }
 
 message ScatterPartitions {
-	required DatasetShardLocation inputShardLocation = 1;
-	repeated DatasetShardLocation OutputShardLocations = 2;
-	required int32 shardCount = 3;
-	repeated int32 indexes = 4;
+	required int32 shardCount = 1;
+	repeated int32 indexes = 2;
 }
 
 message RoundRobin {
-	required DatasetShardLocation inputShardLocation = 1;
-	repeated DatasetShardLocation OutputShardLocations = 2;
 }
 
 message CollectPartitions {
-	repeated DatasetShardLocation inputShardLocations = 1;
-	required DatasetShardLocation outputShardLocation = 2;
 }
 
 message LocalSort {
-	required DatasetShardLocation inputShardLocation = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	repeated OrderBy orderBys = 3;
+	repeated OrderBy orderBys = 1;
 }
 
 message LocalTop {
-	required DatasetShardLocation inputShardLocation = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	required int32 n = 3;
-	repeated OrderBy orderBys = 4;
+	required int32 n = 1;
+	repeated OrderBy orderBys = 2;
 }
 
 message MergeSortedTo {
-	repeated DatasetShardLocation inputShardLocations = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	repeated OrderBy orderBys = 3;
+	repeated OrderBy orderBys = 1;
 }
 
 message OrderBy{
@@ -109,52 +99,35 @@ message OrderBy{
 }
 
 message JoinPartitionedSorted {
-	required DatasetShardLocation leftInputShardLocation = 1;
-	required DatasetShardLocation rightInputShardLocation = 2;
-	repeated int32 indexes = 3;
-	required bool isLeftOuterJoin = 4;
-	required bool isRightOuterJoin = 5;
-	required DatasetShardLocation outputShardLocation = 6;
+	repeated int32 indexes = 1;
+	required bool isLeftOuterJoin = 2;
+	required bool isRightOuterJoin = 3;
 }
 
 message CoGroupPartitionedSorted {
-	required DatasetShardLocation leftInputShardLocation = 1;
-	required DatasetShardLocation rightInputShardLocation = 2;
-	required DatasetShardLocation outputShardLocation = 3;
-	repeated int32 indexes = 4;
+	repeated int32 indexes = 1;
 }
 
 message PipeAsArgs {
-	required DatasetShardLocation inputShardLocation = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	required string code = 3;
+	required string code = 1;
 }
 
 message Script {
-	required DatasetShardLocation inputShardLocation = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	required bool isPipe = 3;
-	required string path = 4;
-	repeated string args = 5;
-	repeated string env = 6;
+	required bool isPipe = 1;
+	required string path = 2;
+	repeated string args = 3;
+	repeated string env = 4;
 }
 
 message InputSplitReader {
-	required DatasetShardLocation inputShardLocation = 1;
-	required DatasetShardLocation outputShardLocation = 2;
-	required string inputType = 3;
+	required string inputType = 1;
 }
 
 message Broadcast {
-	required DatasetShardLocation inputShardLocation = 1;
-	repeated DatasetShardLocation OutputShardLocations = 2;
 }
 
 message LocalHashAndJoinWith {
-	required DatasetShardLocation leftInputShardLocation = 1;
-	required DatasetShardLocation rightInputShardLocation = 2;
-	required DatasetShardLocation outputShardLocation = 3;
-	repeated int32 indexes = 4;
+	repeated int32 indexes = 1;
 }
 
 message DatasetShard {
@@ -165,7 +138,7 @@ message DatasetShard {
 }
 
 message DatasetShardLocation {
-	required DatasetShard shard = 1;
+	required string Name = 1;
 	required string Host = 2;
 	required int32 Port = 3;
 }

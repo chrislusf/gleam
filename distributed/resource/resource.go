@@ -68,6 +68,11 @@ type Location struct {
 	Port       int    `json:"port,omitempty"`
 }
 
+type DataLocation struct {
+	Name     string   `json:"name,omitempty"`
+	Location Location `json:"location,omitempty"`
+}
+
 type Allocation struct {
 	Location  Location        `json:"location,omitempty"`
 	Allocated ComputeResource `json:"allocated,omitempty"`

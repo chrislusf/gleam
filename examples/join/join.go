@@ -15,7 +15,7 @@ func main() {
 
 func join1() {
 
-	f := gleam.New().Define(`
+	f := gleam.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end
@@ -44,7 +44,7 @@ func join1() {
 
 func join2() {
 
-	f := gleam.New().Define(`
+	f := gleam.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end
