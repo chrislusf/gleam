@@ -85,10 +85,7 @@ func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan
 // TODO: refactor this
 func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *util.Piper, prevIsPipe bool, i *cmd.Instruction, isFirst, isLast bool, readerCount int) {
 	defer wg.Done()
-	if outChan != nil {
-		defer outChan.Writer.Close()
-		// defer println("closing", *i.Name, "outChan", outChan)
-	}
+	defer outChan.Writer.Close()
 
 	// println("starting", *i.Name, "inChan", inChan, "outChan", outChan)
 	if i.GetScript() != nil {
