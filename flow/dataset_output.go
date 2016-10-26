@@ -32,32 +32,32 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 // If previous step is a Pipe() or PipeAsArgs(), the output is written as is.
 // Otherwise, each row of output is written in tab-separated lines.
 func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
-	fn := func(inChan io.Reader) error {
+	fn := func(reader io.Reader) error {
 		if d.Step.IsPipe {
-			_, err := io.Copy(writer, inChan)
+			_, err := io.Copy(writer, reader)
 			return err
 		}
-		return util.FprintRowsFromChannel(inChan, writer, "\t", "\n")
+		return util.FprintRowsFromChannel(reader, writer, "\t", "\n")
 	}
 	return d.Output(fn)
 }
 
 // Fprintf formats using the format for each row and writes to writer.
 func (d *Dataset) Fprintf(writer io.Writer, format string) *Dataset {
-	fn := func(inChan io.Reader) error {
+	fn := func(reader io.Reader) error {
 		if d.Step.IsPipe {
-			return util.TsvPrintf(inChan, writer, format)
+			return util.TsvPrintf(reader, writer, format)
 		}
-		return util.Fprintf(inChan, writer, format)
+		return util.Fprintf(reader, writer, format)
 	}
 	return d.Output(fn)
 }
 
 // SaveFirstRowTo saves the first row's values into the operands.
 func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
-	fn := func(inChan io.Reader) error {
+	fn := func(reader io.Reader) error {
 		if d.Step.IsPipe {
-			return util.TakeTsv(inChan, 1, func(args []string) error {
+			return util.TakeTsv(reader, 1, func(args []string) error {
 				for i, o := range decodedObjects {
 					if i >= len(args) {
 						break
@@ -72,7 +72,7 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 			})
 		}
 
-		return util.TakeMessage(inChan, 1, func(encodedBytes []byte) error {
+		return util.TakeMessage(reader, 1, func(encodedBytes []byte) error {
 			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				return err

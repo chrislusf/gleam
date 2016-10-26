@@ -44,7 +44,7 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 	return ret
 }
 
-func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int, outChan io.Writer) {
+func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int, writer io.Writer) {
 	leftChan := newChannelOfValuesWithSameKey(leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey(rightRawChan, indexes)
 
@@ -56,23 +56,23 @@ func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int
 		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
 		switch {
 		case x == 0:
-			util.WriteRow(outChan, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
+			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 		case x < 0:
-			util.WriteRow(outChan, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 		case x > 0:
-			util.WriteRow(outChan, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+			util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 		}
 	}
 	for leftHasValue {
-		util.WriteRow(outChan, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+		util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
 		leftValuesWithSameKey, leftHasValue = <-leftChan
 	}
 	for rightHasValue {
-		util.WriteRow(outChan, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+		util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
 		rightValuesWithSameKey, rightHasValue = <-rightChan
 	}
 

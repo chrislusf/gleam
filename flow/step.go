@@ -23,8 +23,8 @@ func (step *Step) RunFunction(task *Task) {
 	var readers []io.Reader
 	var writers []io.Writer
 
-	for _, inChan := range task.InputChans {
-		readers = append(readers, inChan.Reader)
+	for _, reader := range task.InputChans {
+		readers = append(readers, reader.Reader)
 	}
 
 	for _, shard := range task.OutputShards {

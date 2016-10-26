@@ -39,7 +39,7 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, indexes []int) *Dataset
 	return ret
 }
 
-func LocalHashAndJoinWith(leftReader, rightReader io.Reader, indexes []int, outChan io.Writer) {
+func LocalHashAndJoinWith(leftReader, rightReader io.Reader, indexes []int, writer io.Writer) {
 	hashmap := make(map[string][]interface{})
 	err := util.ProcessMessage(leftReader, func(input []byte) error {
 		if keys, vals, err := genKeyBytesAndValues(input, indexes); err != nil {
@@ -68,7 +68,7 @@ func LocalHashAndJoinWith(leftReader, rightReader io.Reader, indexes []int, outC
 			if mappedValues, ok := hashmap[string(keyBytes)]; ok {
 				row := append(keys, vals...)
 				row = append(row, mappedValues...)
-				util.WriteRow(outChan, row...)
+				util.WriteRow(writer, row...)
 			}
 		}
 		return nil
@@ -102,10 +102,10 @@ func (d *Dataset) Broadcast(shardCount int) *Dataset {
 	return ret
 }
 
-func Broadcast(inChan io.Reader, outChans []io.Writer) {
-	util.ProcessMessage(inChan, func(data []byte) error {
-		for _, outChan := range outChans {
-			util.WriteMessage(outChan, data)
+func Broadcast(reader io.Reader, writers []io.Writer) {
+	util.ProcessMessage(reader, func(data []byte) error {
+		for _, writer := range writers {
+			util.WriteMessage(writer, data)
 		}
 		return nil
 	})

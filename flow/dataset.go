@@ -25,7 +25,7 @@ func (d *Dataset) Script(scriptType string) *Dataset {
 	return d
 }
 
-func (d *Dataset) Define(scriptPart string) *Dataset {
+func (d *Dataset) Init(scriptPart string) *Dataset {
 	d.FlowContext.Init(scriptPart)
 	return d
 }

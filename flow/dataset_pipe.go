@@ -58,7 +58,7 @@ func PipeAsArgs(reader io.Reader, code string, writer io.Writer) {
 			Path: "sh",
 			Args: []string{"-c", actualCode},
 		}
-		// write output to outChan
+		// write output to writer
 		wg.Add(1)
 		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
 		//wg.Wait()

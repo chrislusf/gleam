@@ -13,7 +13,7 @@ import (
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
 func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
-	fn := func(out io.Writer) {
+	fn := func(writer io.Writer) {
 		listener, err := net.Listen(network, address)
 		if err != nil {
 			log.Panicf("Fail to listen on %s %s: %v", network, address, err)
@@ -23,14 +23,14 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 			log.Panicf("Fail to accept on %s %s: %v", network, address, err)
 		}
 		defer conn.Close()
-		defer util.WriteEOFMessage(out)
+		defer util.WriteEOFMessage(writer)
 
 		util.TakeTsv(conn, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(out, row...)
+			util.WriteRow(writer, row...)
 			return nil
 		})
 
@@ -40,15 +40,15 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 
 // Read read tab-separated lines from the reader
 func (fc *FlowContext) Read(reader io.Reader) (ret *Dataset) {
-	fn := func(out io.Writer) {
-		defer util.WriteEOFMessage(out)
+	fn := func(writer io.Writer) {
+		defer util.WriteEOFMessage(writer)
 
 		util.TakeTsv(reader, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(out, row...)
+			util.WriteRow(writer, row...)
 			return nil
 		})
 
@@ -77,7 +77,7 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 // TextFile reads the file content as lines and feed into the flow.
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
-	fn := func(out io.Writer) {
+	fn := func(writer io.Writer) {
 		file, err := source.Open(fname)
 		if err != nil {
 			log.Panicf("Can not open file %s: %v", fname, err)
@@ -87,7 +87,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
-			util.WriteRow(out, scanner.Bytes())
+			util.WriteRow(writer, scanner.Bytes())
 		}
 
 		if err := scanner.Err(); err != nil {

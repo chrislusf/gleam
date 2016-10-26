@@ -67,38 +67,38 @@ func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset
 	return
 }
 
-func ScatterPartitions(inChan io.Reader, outChans []io.Writer, indexes []int) {
-	shardCount := len(outChans)
+func ScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
+	shardCount := len(writers)
 
-	util.ProcessMessage(inChan, func(data []byte) error {
+	util.ProcessMessage(reader, func(data []byte) error {
 		keyObjects, _ := util.DecodeRowKeys(data, indexes)
 		x := util.PartitionByKeys(shardCount, keyObjects)
-		util.WriteMessage(outChans[x], data)
+		util.WriteMessage(writers[x], data)
 		return nil
 	})
 }
 
-func RoundRobin(inChan io.Reader, outChans []io.Writer) {
-	count, shardCount := 0, len(outChans)
-	util.ProcessMessage(inChan, func(data []byte) error {
+func RoundRobin(reader io.Reader, writers []io.Writer) {
+	count, shardCount := 0, len(writers)
+	util.ProcessMessage(reader, func(data []byte) error {
 		if count >= shardCount {
 			count = 0
 		}
-		util.WriteMessage(outChans[count], data)
+		util.WriteMessage(writers[count], data)
 		count++
 		return nil
 	})
 }
 
-func CollectPartitions(inChans []io.Reader, outChan io.Writer) {
-	// println("starting to collect data from partitions...", len(inChans))
+func CollectPartitions(readers []io.Reader, writer io.Writer) {
+	// println("starting to collect data from partitions...", len(readers))
 
-	if len(inChans) == 1 {
-		io.Copy(outChan, inChans[0])
+	if len(readers) == 1 {
+		io.Copy(writer, readers[0])
 		return
 	}
 
-	util.CopyMultipleReaders(inChans, outChan)
+	util.CopyMultipleReaders(readers, writer)
 }
 
 func intArrayEquals(a []int, b []int) bool {

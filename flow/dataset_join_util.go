@@ -40,10 +40,10 @@ func genKeyFieldsMask(n int, indexes []int) []bool {
 // create a channel to aggregate values of the same key
 // automatically close original sorted channel
 func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan keyValues {
-	outChan := make(chan keyValues, 1024)
+	writer := make(chan keyValues, 1024)
 	go func() {
 
-		defer close(outChan)
+		defer close(writer)
 
 		row, err := util.ReadRow(sortedChan)
 		if err != nil {
@@ -77,13 +77,13 @@ func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan key
 			if x == 0 {
 				keyValues.Values = append(keyValues.Values, newRow.Values)
 			} else {
-				outChan <- keyValues
+				writer <- keyValues
 				keyValues.Keys = newRow.Keys
 				keyValues.Values = []interface{}{newRow.Values}
 			}
 		}
-		outChan <- keyValues
+		writer <- keyValues
 	}()
 
-	return outChan
+	return writer
 }

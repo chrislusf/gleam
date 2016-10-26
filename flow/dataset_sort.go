@@ -107,10 +107,10 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []OrderBy) (ret *Da
 	return ret
 }
 
-func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
+func LocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)
-	err := util.ProcessMessage(inChan, func(input []byte) error {
+	err := util.ProcessMessage(reader, func(input []byte) error {
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
@@ -130,18 +130,18 @@ func LocalSort(inChan io.Reader, outChan io.Writer, orderBys []OrderBy) {
 
 	for _, kv := range kvs {
 		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
-		util.WriteMessage(outChan, kv.(pair).data)
+		util.WriteMessage(writer, kv.(pair).data)
 	}
 }
 
-func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
+func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 
 	pq := newMinQueueOfPairs(orderBys)
 
 	// enqueue one item to the pq from each channel
-	for shardId, shardChan := range inChans {
-		if x, err := util.ReadMessage(shardChan); err == nil {
+	for shardId, reader := range readers {
+		if x, err := util.ReadMessage(reader); err == nil {
 			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
 				log.Printf("%v: %+v", err, x)
 			} else {
@@ -151,8 +151,8 @@ func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 	}
 	for pq.Len() > 0 {
 		t, shardId := pq.Dequeue()
-		util.WriteMessage(outChan, t.(pair).data)
-		if x, err := util.ReadMessage(inChans[shardId]); err == nil {
+		util.WriteMessage(writer, t.(pair).data)
+		if x, err := util.ReadMessage(readers[shardId]); err == nil {
 			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
 				log.Printf("%v: %+v", err, x)
 			} else {
@@ -163,11 +163,11 @@ func MergeSortedTo(inChans []io.Reader, outChan io.Writer, orderBys []OrderBy) {
 }
 
 // Top streamingly compare and get the top n items
-func LocalTop(inChan io.Reader, outChan io.Writer, n int, orderBys []OrderBy) {
+func LocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 
-	err := util.ProcessMessage(inChan, func(input []byte) error {
+	err := util.ProcessMessage(reader, func(input []byte) error {
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
@@ -190,7 +190,7 @@ func LocalTop(inChan io.Reader, outChan io.Writer, n int, orderBys []OrderBy) {
 		itemsToReverse[i] = kv.(pair).data
 	}
 	for i := length - 1; i >= 0; i-- {
-		util.WriteMessage(outChan, itemsToReverse[i])
+		util.WriteMessage(writer, itemsToReverse[i])
 	}
 }
 

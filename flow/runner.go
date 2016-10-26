@@ -118,11 +118,11 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 
 	if task.Step.NetworkType == OneShardToOneShard {
 		// fmt.Printf("cmd: %+v\n", cmd)
-		inChan := task.InputChans[0].Reader
-		outChan := task.OutputShards[0].IncomingChan.Writer
+		reader := task.InputChans[0].Reader
+		writer := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
-		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
+		util.Execute(wg, task.Step.Name, cmd, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
 	}
