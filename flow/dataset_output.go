@@ -14,15 +14,14 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
-	step.Function = func(task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		var wg sync.WaitGroup
-		for _, inChan := range task.InputChans {
+		for _, reader := range readers {
 			wg.Add(1)
-			go func(inChan *util.Piper) {
+			go func(reader io.Reader) {
 				defer wg.Done()
-				f(inChan.Reader)
-				inChan.Reader.Close()
-			}(inChan)
+				f(reader)
+			}(reader)
 		}
 		wg.Wait()
 	}

@@ -2,6 +2,7 @@ package flow
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -25,24 +26,16 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	step.IsPipe = true
 	step.FunctionType = TypePipeAsArgs
 	step.Params["code"] = code
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		inChan := task.InputChans[0]
-
-		PipeAsArgs(inChan, code, outChan)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		PipeAsArgs(readers[0], code, writers[0])
 	}
 	return ret
 }
 
-func PipeAsArgs(inChan *util.Piper, code string, outChan *util.Piper) {
+func PipeAsArgs(reader io.Reader, code string, writer io.Writer) {
 	var wg sync.WaitGroup
 
-	err := util.ProcessMessage(inChan.Reader, func(input []byte) error {
+	err := util.ProcessMessage(reader, func(input []byte) error {
 		parts, err := util.DecodeRow(input)
 		if err != nil {
 			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
@@ -67,7 +60,7 @@ func PipeAsArgs(inChan *util.Piper, code string, outChan *util.Piper) {
 		}
 		// write output to outChan
 		wg.Add(1)
-		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, outChan, false, true, false, os.Stderr)
+		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
 		//wg.Wait()
 		return nil
 	})

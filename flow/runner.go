@@ -106,7 +106,7 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 	if task.Step.Function != nil {
 		// each function should close its own Piper output writer
 		// and close it's own Piper input reader
-		task.Step.Function(task)
+		task.Step.RunFunction(task)
 		return
 	}
 
@@ -118,12 +118,11 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 
 	if task.Step.NetworkType == OneShardToOneShard {
 		// fmt.Printf("cmd: %+v\n", cmd)
-		inChan := task.InputChans[0]
-		outChan := task.OutputShards[0].IncomingChan
+		inChan := task.InputChans[0].Reader
+		outChan := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
-		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, prevIsPipe, task.Step.IsPipe, false, os.Stderr)
-		outChan.Writer.Close()
+		util.Execute(wg, task.Step.Name, cmd, inChan, outChan, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
 	}

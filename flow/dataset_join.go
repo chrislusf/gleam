@@ -46,23 +46,15 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	step.Params["isLeftOuterJoin"] = isLeftOuterJoin
 	step.Params["isRightOuterJoin"] = isRightOuterJoin
 	step.FunctionType = TypeJoinPartitionedSorted
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		leftReader := task.InputChans[0].Reader
-		rightReader := task.InputChans[1].Reader
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		JoinPartitionedSorted(
-			leftReader,
-			rightReader,
+			readers[0],
+			readers[1],
 			indexes,
 			isLeftOuterJoin,
 			isRightOuterJoin,
-			outChan.Writer,
+			writers[0],
 		)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
 	}
 	return ret
 }

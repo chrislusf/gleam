@@ -65,11 +65,10 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Source"
-	step.Function = func(task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		// println("running source task...")
-		for _, shard := range task.OutputShards {
-			f(shard.IncomingChan.Writer)
-			shard.IncomingChan.Writer.Close()
+		for _, writer := range writers {
+			f(writer)
 		}
 	}
 	return
@@ -104,13 +103,10 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Channel"
-	step.Function = func(task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		for data := range ch {
-			util.WriteRow(task.OutputShards[0].IncomingChan.Writer, data)
+			util.WriteRow(writers[0], data)
 			task.OutputShards[0].Counter++
-		}
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
 		}
 	}
 	return

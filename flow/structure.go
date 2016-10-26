@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"io"
 	"sync"
 	"time"
 
@@ -74,7 +75,7 @@ type Step struct {
 	FlowContext    *FlowContext
 	InputDatasets  []*Dataset
 	OutputDataset  *Dataset
-	Function       func(*Task)
+	Function       func([]io.Reader, []io.Writer, *Task)
 	Tasks          []*Task
 	Name           string
 	FunctionType   FunctionType

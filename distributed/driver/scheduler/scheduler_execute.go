@@ -98,7 +98,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 			}
 		}()
 	}
-	task.Step.Function(task)
+	task.Step.RunFunction(task)
 }
 
 func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
@@ -115,5 +115,5 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 			}
 		}()
 	}
-	task.Step.Function(task)
+	task.Step.RunFunction(task)
 }

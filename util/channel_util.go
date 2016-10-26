@@ -114,9 +114,8 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	// println("writer", name, "moved", n, "bytes.")
 }
 
-func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
+func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
-	defer reader.Close()
 	if closeOutput {
 		defer ch.Close()
 	}

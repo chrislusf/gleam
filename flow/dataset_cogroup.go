@@ -33,19 +33,13 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 	step.Name = "CoGroupPartitionedSorted"
 	step.Params["indexes"] = indexes
 	step.FunctionType = TypeCoGroupPartitionedSorted
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		CoGroupPartitionedSorted(
-			task.InputChans[0].Reader,
-			task.InputChans[1].Reader,
+			readers[0],
+			readers[1],
 			indexes,
-			outChan.Writer,
+			writers[0],
 		)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
 	}
 	return ret
 }

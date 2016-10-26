@@ -11,19 +11,19 @@ import (
 // The input and output should all be this msgpack format.
 // Only the stdin and stdout of Pipe() is line based text.
 func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
-	inChan *Piper, outChan *Piper, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) {
+	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) {
 
 	defer executeWaitGroup.Done()
 
 	var wg sync.WaitGroup
 
-	if inChan != nil {
+	if reader != nil {
 		if prevIsPipe && isPipe {
 			// println("step", name, "input is lines->lines")
-			cmd.Stdin = inChan.Reader
+			cmd.Stdin = reader
 		} else if !prevIsPipe && !isPipe {
 			// println("step", name, "input is msgpack->msgpack")
-			cmd.Stdin = inChan.Reader
+			cmd.Stdin = reader
 		} else {
 			inputWriter, stdinErr := cmd.StdinPipe()
 			if stdinErr != nil {
@@ -32,16 +32,16 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 				wg.Add(1)
 				if !prevIsPipe && isPipe {
 					// println("step", name, "input is msgpack->lines")
-					go ChannelToLineWriter(&wg, name, inChan.Reader, inputWriter, errWriter)
+					go ChannelToLineWriter(&wg, name, reader, inputWriter, errWriter)
 				} else {
 					// println("step", name, "input is lines->msgpack")
-					go LineReaderToChannel(&wg, name, inChan.Reader, inputWriter, true, errWriter)
+					go LineReaderToChannel(&wg, name, reader, inputWriter, true, errWriter)
 				}
 			}
 		}
 	}
 
-	cmd.Stdout = outChan.Writer
+	cmd.Stdout = writer
 
 	cmd.Stderr = errWriter
 
@@ -62,13 +62,10 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 
 	// fmt.Printf("Command is finished.\n %+v\n", cmd)
 
-	if inChan != nil {
-		// inChan.Writer.Close()
-		inChan.Reader.Close()
-	}
-
 	// fmt.Println(name, "stopping output writer.")
 	if closeOutput {
-		outChan.Writer.Close()
+		if c, ok := writer.(io.Closer); ok {
+			c.Close()
+		}
 	}
 }

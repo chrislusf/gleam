@@ -125,7 +125,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 		)
 		wg.Add(1)
-		util.Execute(wg, i.GetName(), command, inChan, outChan, prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
+		util.Execute(wg, i.GetName(), command, inChan.Reader, outChan.Writer, prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
 
 	} else if i.GetLocalSort() != nil {
 
@@ -137,7 +137,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
 
-		flow.PipeAsArgs(inChan, i.GetPipeAsArgs().GetCode(), outChan)
+		flow.PipeAsArgs(inChan.Reader, i.GetPipeAsArgs().GetCode(), outChan.Writer)
 
 	} else if i.GetMergeSortedTo() != nil {
 

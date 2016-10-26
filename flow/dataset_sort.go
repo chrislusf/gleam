@@ -65,14 +65,8 @@ func (d *Dataset) LocalSort(orderBys []OrderBy) *Dataset {
 	step.Name = "LocalSort"
 	step.Params["orderBys"] = orderBys
 	step.FunctionType = TypeLocalSort
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		LocalSort(task.InputChans[0].Reader, outChan.Writer, orderBys)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		LocalSort(readers[0], writers[0], orderBys)
 	}
 	return ret
 }
@@ -88,14 +82,8 @@ func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
 	step.Params["n"] = n
 	step.Params["orderBys"] = orderBys
 	step.FunctionType = TypeLocalTop
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		LocalTop(task.InputChans[0].Reader, outChan.Writer, n, orderBys)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		LocalTop(readers[0], writers[0], n, orderBys)
 	}
 	return ret
 }
@@ -113,20 +101,8 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []OrderBy) (ret *Da
 	step.Name = fmt.Sprintf("MergeSortedTo %d", partitionCount)
 	step.Params["orderBys"] = orderBys
 	step.FunctionType = TypeMergeSortedTo
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		var inChans []io.Reader
-		for _, pipe := range task.InputChans {
-			inChans = append(inChans, pipe.Reader)
-		}
-
-		MergeSortedTo(inChans, outChan.Writer, orderBys)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
-
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		MergeSortedTo(readers, writers[0], orderBys)
 	}
 	return ret
 }

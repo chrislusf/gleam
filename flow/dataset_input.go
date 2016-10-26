@@ -45,15 +45,8 @@ func (fc *FlowContext) InputInParallel(in source.Input, parallelLimit int) (ret 
 	step.Name = "InputSplitReader"
 	step.Params["inputType"] = in.GetType()
 	step.FunctionType = TypeInputSplitReader
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-		inChan := task.InputChans[0]
-
-		ReadInputSplits(inChan.Reader, in.GetType(), outChan.Writer)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		ReadInputSplits(readers[0], in.GetType(), writers[0])
 	}
 	return
 

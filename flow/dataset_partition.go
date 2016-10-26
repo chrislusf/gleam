@@ -15,18 +15,8 @@ func (d *Dataset) RoundRobin(shard int) *Dataset {
 	step.Name = "RoundRobin"
 	step.FunctionType = TypeRoundRobin
 	step.Params["shardCount"] = len(ret.Shards)
-	step.Function = func(task *Task) {
-		inChan := task.InputChans[0]
-		var outChans []io.Writer
-		for _, shard := range task.OutputShards {
-			outChans = append(outChans, shard.IncomingChan.Writer)
-		}
-
-		RoundRobin(inChan.Reader, outChans)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		RoundRobin(readers[0], writers)
 	}
 	return ret
 }
@@ -60,19 +50,8 @@ func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset
 	step.Params["shardCount"] = shardCount
 	step.Params["indexes"] = indexes
 	step.FunctionType = TypeScatterPartitions
-	step.Function = func(task *Task) {
-		inChan := task.InputChans[0]
-		var outChans []io.Writer
-		for _, shard := range task.OutputShards {
-			outChans = append(outChans, shard.IncomingChan.Writer)
-			// println("writing to shard", shard, "channel", shard.IncomingChan, "=>", shard.OutgoingChans[0])
-		}
-
-		ScatterPartitions(inChan.Reader, outChans, indexes)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		ScatterPartitions(readers[0], writers, indexes)
 	}
 	return
 }
@@ -82,19 +61,8 @@ func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.Name = "Partition_collect"
 	step.FunctionType = TypeCollectPartitions
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-		var inChans []io.Reader
-		for _, out := range task.InputChans {
-			// println("collect from shard", shard, "channel", out)
-			inChans = append(inChans, out.Reader)
-		}
-
-		CollectPartitions(inChans, outChan.Writer)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		CollectPartitions(readers, writers[0])
 	}
 	return
 }

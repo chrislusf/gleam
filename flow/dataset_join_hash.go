@@ -28,21 +28,13 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, indexes []int) *Dataset
 	step.Name = "LocalHashAndJoinWith"
 	step.Params["indexes"] = indexes
 	step.FunctionType = TypeLocalHashAndJoinWith
-	step.Function = func(task *Task) {
-		outChan := task.OutputShards[0].IncomingChan
-
-		leftReader := task.InputChans[0].Reader
-		rightReader := task.InputChans[1].Reader
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
 		LocalHashAndJoinWith(
-			leftReader,
-			rightReader,
+			readers[0],
+			readers[1],
 			indexes,
-			outChan.Writer,
+			writers[0],
 		)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
 	}
 	return ret
 }
@@ -104,18 +96,8 @@ func (d *Dataset) Broadcast(shardCount int) *Dataset {
 	step := d.FlowContext.AddOneToAllStep(d, ret)
 	step.Name = "Broadcast"
 	step.FunctionType = TypeBroadcast
-	step.Function = func(task *Task) {
-		inChan := task.InputChans[0]
-		var outChans []io.Writer
-		for _, shard := range task.OutputShards {
-			outChans = append(outChans, shard.IncomingChan.Writer)
-		}
-
-		Broadcast(inChan.Reader, outChans)
-
-		for _, shard := range task.OutputShards {
-			shard.IncomingChan.Writer.Close()
-		}
+	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+		Broadcast(readers[0], writers)
 	}
 	return ret
 }
