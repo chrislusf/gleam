@@ -43,6 +43,8 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.Name = "JoinPartitionedSorted"
 	step.Params["indexes"] = indexes
+	step.Params["isLeftOuterJoin"] = isLeftOuterJoin
+	step.Params["isRightOuterJoin"] = isRightOuterJoin
 	step.FunctionType = TypeJoinPartitionedSorted
 	step.Function = func(task *Task) {
 		outChan := task.OutputShards[0].IncomingChan

@@ -62,8 +62,8 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			JoinPartitionedSorted: &cmd.JoinPartitionedSorted{
-				IsLeftOuterJoin:  proto.Bool(false),
-				IsRightOuterJoin: proto.Bool(false),
+				IsLeftOuterJoin:  proto.Bool(task.Step.Params["isLeftOuterJoin"].(bool)),
+				IsRightOuterJoin: proto.Bool(task.Step.Params["isRightOuterJoin"].(bool)),
 				Indexes:          getIndexes(task),
 			},
 		}
