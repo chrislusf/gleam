@@ -49,7 +49,7 @@ func (fc *FlowContext) InputInParallel(in source.Input, parallelLimit int) (ret 
 		outChan := task.OutputShards[0].IncomingChan
 		inChan := task.InputChans[0]
 
-		ReadInputSplits(in.GetType(), inChan.Reader, outChan.Writer)
+		ReadInputSplits(inChan.Reader, in.GetType(), outChan.Writer)
 
 		for _, shard := range task.OutputShards {
 			shard.IncomingChan.Writer.Close()
@@ -60,7 +60,7 @@ func (fc *FlowContext) InputInParallel(in source.Input, parallelLimit int) (ret 
 }
 
 // ReadInputSplits runs on executors to read input splits
-func ReadInputSplits(typeName string, reader io.Reader, writer io.Writer) {
+func ReadInputSplits(reader io.Reader, typeName string, writer io.Writer) {
 	format, err := source.Registry.GetInputFormat(typeName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load input format %s: %v", typeName, err)

@@ -84,6 +84,34 @@ func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan
 	}
 }
 
+func linkInReaders(wg *sync.WaitGroup, i *cmd.Instruction) (inChans []io.Reader) {
+	for _, inputLocation := range i.GetInputShardLocations() {
+		wg.Add(1)
+		inChan := util.NewPiper()
+		go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inChan.Writer)
+		inChans = append(inChans, inChan.Reader)
+	}
+	return
+}
+
+func processWriters(wg *sync.WaitGroup, i *cmd.Instruction, fn func([]io.Writer)) {
+	var outChans []*util.Piper
+	for _, outputLocation := range i.GetOutputShardLocations() {
+		wg.Add(1)
+		outChan := util.NewPiper()
+		go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outChan.Reader, 1)
+		outChans = append(outChans, outChan)
+	}
+	var writers []io.Writer
+	for _, outChan := range outChans {
+		writers = append(writers, outChan.Writer)
+	}
+	fn(writers)
+	for _, outChan := range outChans {
+		outChan.Writer.Close()
+	}
+}
+
 // TODO: refactor this
 func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *util.Piper, prevIsPipe bool, i *cmd.Instruction, isFirst, isLast bool, readerCount int) {
 	defer wg.Done()
@@ -113,98 +141,48 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 	} else if i.GetMergeSortedTo() != nil {
 
-		var inChans []io.Reader
-		for _, inputLocation := range i.GetInputShardLocations() {
-			wg.Add(1)
-			inChan := util.NewPiper()
-			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inChan.Writer)
-			inChans = append(inChans, inChan.Reader)
-		}
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.MergeSortedTo(inChans, outChan.Writer, toOrderBys(i.GetMergeSortedTo().GetOrderBys()))
+		flow.MergeSortedTo(linkInReaders(wg, i), outChan.Writer, toOrderBys(i.GetMergeSortedTo().GetOrderBys()))
 
 	} else if i.GetScatterPartitions() != nil {
 
-		var outChans []*util.Piper
-		for _, outputLocation := range i.GetOutputShardLocations() {
-			wg.Add(1)
-			outChan := util.NewPiper()
-			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outChan.Reader, 1)
-			outChans = append(outChans, outChan)
-		}
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
-		var writers []io.Writer
-		for _, outChan := range outChans {
-			writers = append(writers, outChan.Writer)
-		}
-		flow.ScatterPartitions(inChan.Reader, writers, toInts(i.GetScatterPartitions().GetIndexes()))
-		for _, outChan := range outChans {
-			outChan.Writer.Close()
-		}
+		processWriters(wg, i, func(writers []io.Writer) {
+			flow.ScatterPartitions(inChan.Reader, writers, toInts(i.GetScatterPartitions().GetIndexes()))
+		})
 
 	} else if i.GetRoundRobin() != nil {
 
-		var outChans []*util.Piper
-		for _, outputLocation := range i.GetOutputShardLocations() {
-			wg.Add(1)
-			outChan := util.NewPiper()
-			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outChan.Reader, 1)
-			outChans = append(outChans, outChan)
-		}
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
-		var writers []io.Writer
-		for _, outChan := range outChans {
-			writers = append(writers, outChan.Writer)
-		}
-		flow.RoundRobin(inChan.Reader, writers)
-		for _, outChan := range outChans {
-			outChan.Writer.Close()
-		}
+		processWriters(wg, i, func(writers []io.Writer) {
+			flow.RoundRobin(inChan.Reader, writers)
+		})
 
 	} else if i.GetCollectPartitions() != nil {
 
-		var inChans []io.Reader
-		for _, inputLocation := range i.GetInputShardLocations() {
-			wg.Add(1)
-			inChan := util.NewPiper()
-			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inChan.Writer)
-			inChans = append(inChans, inChan.Reader)
-		}
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.CollectPartitions(inChans, outChan.Writer)
+		flow.CollectPartitions(linkInReaders(wg, i), outChan.Writer)
 
 	} else if i.GetInputSplitReader() != nil {
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
 
-		flow.ReadInputSplits(i.GetInputSplitReader().GetInputType(), inChan.Reader, outChan.Writer)
+		flow.ReadInputSplits(inChan.Reader, i.GetInputSplitReader().GetInputType(), outChan.Writer)
 
 	} else if i.GetJoinPartitionedSorted() != nil {
 
-		leftChan, rightChan := util.NewPiper(), util.NewPiper()
+		readers := linkInReaders(wg, i)
 		jps := i.GetJoinPartitionedSorted()
-		leftLocation := i.InputShardLocations[0]
-		rightLocation := i.InputShardLocations[1]
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetName(), leftChan.Writer)
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetName(), rightChan.Writer)
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.JoinPartitionedSorted(leftChan.Reader, rightChan.Reader, toInts(i.GetJoinPartitionedSorted().GetIndexes()), *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan.Writer)
+		flow.JoinPartitionedSorted(readers[0], readers[1], toInts(i.GetJoinPartitionedSorted().GetIndexes()), *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan.Writer)
 
 	} else if i.GetCoGroupPartitionedSorted() != nil {
 
-		leftChan, rightChan := util.NewPiper(), util.NewPiper()
-		leftLocation := i.InputShardLocations[0]
-		rightLocation := i.InputShardLocations[1]
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetName(), leftChan.Writer)
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetName(), rightChan.Writer)
+		readers := linkInReaders(wg, i)
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.CoGroupPartitionedSorted(leftChan.Reader, rightChan.Reader, toInts(i.GetCoGroupPartitionedSorted().GetIndexes()), outChan.Writer)
+		flow.CoGroupPartitionedSorted(readers[0], readers[1], toInts(i.GetCoGroupPartitionedSorted().GetIndexes()), outChan.Writer)
 
 	} else if i.GetLocalTop() != nil {
 
@@ -214,35 +192,16 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 	} else if i.GetBroadcast() != nil {
 
-		var outChans []*util.Piper
-		for _, outputLocation := range i.GetOutputShardLocations() {
-			wg.Add(1)
-			outChan := util.NewPiper()
-			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outChan.Reader, 1)
-			outChans = append(outChans, outChan)
-		}
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
-		var writers []io.Writer
-		for _, outChan := range outChans {
-			writers = append(writers, outChan.Writer)
-		}
-		flow.Broadcast(inChan.Reader, writers)
-		for _, outChan := range outChans {
-			outChan.Writer.Close()
-		}
+		processWriters(wg, i, func(writers []io.Writer) {
+			flow.Broadcast(inChan.Reader, writers)
+		})
 
 	} else if i.GetLocalHashAndJoinWith() != nil {
 
-		leftChan, rightChan := util.NewPiper(), util.NewPiper()
-		leftLocation := i.InputShardLocations[0]
-		rightLocation := i.InputShardLocations[1]
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), leftLocation.Address(), leftLocation.GetName(), leftChan.Writer)
-		wg.Add(1)
-		go netchan.DialReadChannel(wg, i.GetName(), rightLocation.Address(), rightLocation.GetName(), rightChan.Writer)
-
+		readers := linkInReaders(wg, i)
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.LocalHashAndJoinWith(leftChan.Reader, rightChan.Reader, toInts(i.GetLocalHashAndJoinWith().GetIndexes()), outChan.Writer)
+		flow.LocalHashAndJoinWith(readers[0], readers[1], toInts(i.GetLocalHashAndJoinWith().GetIndexes()), outChan.Writer)
 
 	} else {
 		panic("what is this? " + i.String())

@@ -20,11 +20,11 @@ Unix pipe tools, or any streaming programs.
 
 ### Flexible
 * The Gleam flow can run standalone or distributed.
-* Data flows in Gleam either through memory/network, or optionally to disk for later re-tries.
+* Data flows in Gleam either through memory and network, or optionally to disk for later re-tries.
 
 ### Easy to Customize
 * The Go code is much simpler to read than Scala, Java, C++.
-* LuaJit can easily invoke any C functions.
+* LuaJIT FFI library can easily invoke any C functions, for even more performance or use any existing C libraries.
 * (plan) Write SQL with UDF written in Lua.
 
 # Architecture
