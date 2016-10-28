@@ -17,6 +17,7 @@ import (
 
 func NewStartRequest(dir string, instructions *cmd.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *cmd.ControlMessage {
 	request := &cmd.ControlMessage{
+		IsMemoryIO: proto.Bool(true),
 		StartRequest: &cmd.StartRequest{
 			Instructions: instructions,
 			Dir:          proto.String(dir),

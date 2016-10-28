@@ -42,7 +42,6 @@ var (
 		CPULevel:     agent.Flag("executor.cpu.level", "relative computing power of single cpu core").Default("1").Int(),
 		MemoryMB:     agent.Flag("executor.memory", "memory size in MB").Default("1024").Int64(),
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
-		InMemory:     agent.Flag("memory.only", "data do not spill to disk but back pressured").Bool(),
 	}
 	cpuProfile = agent.Flag("cpuprofile", "cpu profile output file").Default("").String()
 
@@ -111,9 +110,6 @@ func main() {
 			})
 		}
 
-		if *agentOption.InMemory {
-			println("running in memory only mode")
-		}
 		agentServer := a.NewAgentServer(agentOption)
 		agentServer.Run()
 	}

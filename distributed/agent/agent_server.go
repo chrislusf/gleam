@@ -32,7 +32,6 @@ type AgentServerOption struct {
 	MemoryMB     *int64
 	CPULevel     *int
 	CleanRestart *bool
-	InMemory     *bool
 }
 
 type AgentServer struct {
@@ -163,7 +162,7 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	command *cmd.ControlMessage) *cmd.ControlMessage {
 	reply := &cmd.ControlMessage{}
 	if command.GetReadRequest() != nil {
-		if *as.Option.InMemory {
+		if command.GetIsMemoryIO() {
 			as.handleInMemoryReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
 		} else {
 			as.handleReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
@@ -171,7 +170,7 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 		return nil
 	}
 	if command.GetWriteRequest() != nil {
-		if *as.Option.InMemory {
+		if command.GetIsMemoryIO() {
 			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		} else {
 			as.handleLocalWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))

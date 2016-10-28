@@ -8,7 +8,7 @@ package cmd;
 //   go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 
 message ControlMessage {
-	optional WriteRequest writeRequest = 1;
+	optional bool isMemoryIO = 1;
 	optional StartRequest startRequest = 2;
 	optional StartResponse startResponse = 3;
 	optional StopRequest stopRequest = 4;
@@ -20,6 +20,7 @@ message ControlMessage {
 	optional LocalStatusReportRequest localStatusReportRequest = 10;
 	optional LocalStatusReportResponse localStatusReportResponse = 11;
 	optional ReadRequest readRequest = 12;
+	optional WriteRequest writeRequest = 13;
 }
 
 message NetChan {

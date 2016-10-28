@@ -24,6 +24,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&cmd.ControlMessage{
+		IsMemoryIO: proto.Bool(true),
 		ReadRequest: &cmd.ReadRequest{
 			ChannelName: proto.String(channelName),
 			ReaderName:  proto.String(readerName),
@@ -47,6 +48,7 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&cmd.ControlMessage{
+		IsMemoryIO: proto.Bool(true),
 		WriteRequest: &cmd.WriteRequest{
 			ChannelName: proto.String(channelName),
 			ReaderCount: proto.Int32(int32(readerCount)),
