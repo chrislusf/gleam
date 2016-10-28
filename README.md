@@ -228,12 +228,16 @@ gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided to dynamica
 # Status
 Gleam is just beginning. Here are a few todo that needs help:
 * Add better streaming support
-* Add fault tolerant support
 * Add better integration with Torch
 * Add better SQL database support
 * Add Luarock pacakging
+* Caching of often re-calculated data.
+* Fault tolerant on unstable network/cluster.
+
+Maybe:
 * Add Python support
 * Add Javascript support
+
 
 Especially Need Help Now:
 * Lua or Go implementation to read Parquet files
