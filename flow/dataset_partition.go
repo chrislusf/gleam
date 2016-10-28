@@ -3,6 +3,7 @@ package flow
 import (
 	"io"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -13,9 +14,8 @@ func (d *Dataset) RoundRobin(shard int) *Dataset {
 	ret := d.FlowContext.newNextDataset(shard)
 	step := d.FlowContext.AddOneToAllStep(d, ret)
 	step.Name = "RoundRobin"
-	step.FunctionType = TypeRoundRobin
-	step.Params["shardCount"] = len(ret.Shards)
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeRoundRobin
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		RoundRobin(readers[0], writers)
 	}
 	return ret
@@ -49,8 +49,8 @@ func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset
 	step.Name = "Partition_scatter"
 	step.Params["shardCount"] = shardCount
 	step.Params["indexes"] = indexes
-	step.FunctionType = TypeScatterPartitions
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeScatterPartitions
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		ScatterPartitions(readers[0], writers, indexes)
 	}
 	return
@@ -60,8 +60,8 @@ func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset
 	ret = d.FlowContext.newNextDataset(shardCount)
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.Name = "Partition_collect"
-	step.FunctionType = TypeCollectPartitions
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeCollectPartitions
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		CollectPartitions(readers, writers[0])
 	}
 	return

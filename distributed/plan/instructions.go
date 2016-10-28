@@ -3,6 +3,7 @@ package plan
 import (
 	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/flow"
+	ins "github.com/chrislusf/gleam/instruction"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -31,7 +32,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	// if failed, try to run shell scripts
 	// if failed, try to run lua scripts
 
-	if task.Step.FunctionType == flow.TypeLocalSort {
+	if task.Step.FunctionType == ins.TypeLocalSort {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			LocalSort: &cmd.LocalSort{
@@ -40,7 +41,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypePipeAsArgs {
+	if task.Step.FunctionType == ins.TypePipeAsArgs {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			PipeAsArgs: &cmd.PipeAsArgs{
@@ -49,7 +50,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeMergeSortedTo {
+	if task.Step.FunctionType == ins.TypeMergeSortedTo {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			MergeSortedTo: &cmd.MergeSortedTo{
@@ -58,7 +59,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeJoinPartitionedSorted {
+	if task.Step.FunctionType == ins.TypeJoinPartitionedSorted {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			JoinPartitionedSorted: &cmd.JoinPartitionedSorted{
@@ -69,7 +70,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeCoGroupPartitionedSorted {
+	if task.Step.FunctionType == ins.TypeCoGroupPartitionedSorted {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			CoGroupPartitionedSorted: &cmd.CoGroupPartitionedSorted{
@@ -78,14 +79,14 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeCollectPartitions {
+	if task.Step.FunctionType == ins.TypeCollectPartitions {
 		return &cmd.Instruction{
 			Name:              proto.String(task.Step.Name),
 			CollectPartitions: &cmd.CollectPartitions{},
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeScatterPartitions {
+	if task.Step.FunctionType == ins.TypeScatterPartitions {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			ScatterPartitions: &cmd.ScatterPartitions{
@@ -95,14 +96,14 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeRoundRobin {
+	if task.Step.FunctionType == ins.TypeRoundRobin {
 		return &cmd.Instruction{
 			Name:       proto.String(task.Step.Name),
 			RoundRobin: &cmd.RoundRobin{},
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeInputSplitReader {
+	if task.Step.FunctionType == ins.TypeInputSplitReader {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			InputSplitReader: &cmd.InputSplitReader{
@@ -111,7 +112,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeLocalTop {
+	if task.Step.FunctionType == ins.TypeLocalTop {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			LocalTop: &cmd.LocalTop{
@@ -121,14 +122,11 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		}
 	}
 
-	if task.Step.FunctionType == flow.TypeBroadcast {
-		return &cmd.Instruction{
-			Name:      proto.String(task.Step.Name),
-			Broadcast: &cmd.Broadcast{},
-		}
+	if task.Step.FunctionType == ins.TypeBroadcast {
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
-	if task.Step.FunctionType == flow.TypeLocalHashAndJoinWith {
+	if task.Step.FunctionType == ins.TypeLocalHashAndJoinWith {
 		return &cmd.Instruction{
 			Name: proto.String(task.Step.Name),
 			LocalHashAndJoinWith: &cmd.LocalHashAndJoinWith{

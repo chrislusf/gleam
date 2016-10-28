@@ -5,26 +5,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
-)
-
-type FunctionType int
-
-const (
-	TypeScript FunctionType = iota
-	TypeLocalSort
-	TypeMergeSortedTo
-	TypeJoinPartitionedSorted
-	TypeCoGroupPartitionedSorted
-	TypeCollectPartitions
-	TypeScatterPartitions
-	TypeRoundRobin
-	TypePipeAsArgs
-	TypeInputSplitReader
-	TypeLocalTop
-	TypeBroadcast
-	TypeLocalHashAndJoinWith
 )
 
 type NetworkType int
@@ -75,10 +58,11 @@ type Step struct {
 	FlowContext    *FlowContext
 	InputDatasets  []*Dataset
 	OutputDataset  *Dataset
-	Function       func([]io.Reader, []io.Writer, *Task)
+	Function       func([]io.Reader, []io.Writer, *instruction.Stats)
+	Instruction    instruction.Instruction
 	Tasks          []*Task
 	Name           string
-	FunctionType   FunctionType
+	FunctionType   instruction.FunctionType
 	NetworkType    NetworkType
 	IsOnDriverSide bool
 	IsPipe         bool
@@ -94,6 +78,7 @@ type Task struct {
 	InputShards  []*DatasetShard
 	InputChans   []*util.Piper // task specific input chans. InputShard may have multiple reading tasks
 	OutputShards []*DatasetShard
+	Stats        *instruction.Stats
 }
 
 type RunLocked struct {

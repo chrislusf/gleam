@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 )
@@ -24,9 +25,9 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "PipeArgs"
 	step.IsPipe = true
-	step.FunctionType = TypePipeAsArgs
+	step.FunctionType = instruction.TypePipeAsArgs
 	step.Params["code"] = code
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		PipeAsArgs(readers[0], code, writers[0])
 	}
 	return ret

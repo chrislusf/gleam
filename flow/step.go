@@ -2,6 +2,8 @@ package flow
 
 import (
 	"io"
+
+	"github.com/chrislusf/gleam/instruction"
 )
 
 func (fc *FlowContext) NewStep() (step *Step) {
@@ -19,6 +21,13 @@ func (step *Step) NewTask() (task *Task) {
 	return
 }
 
+func (step *Step) SetInstruction(ins instruction.Instruction) {
+	step.Name = ins.Name()
+	step.FunctionType = ins.FunctionType()
+	step.Function = ins.Function()
+	step.Instruction = ins
+}
+
 func (step *Step) RunFunction(task *Task) {
 	var readers []io.Reader
 	var writers []io.Writer
@@ -31,12 +40,12 @@ func (step *Step) RunFunction(task *Task) {
 		writers = append(writers, shard.IncomingChan.Writer)
 	}
 
-	task.Step.Function(readers, writers, task)
+	task.Stats = &instruction.Stats{}
+	task.Step.Function(readers, writers, task.Stats)
 
 	for _, writer := range writers {
 		if c, ok := writer.(io.Closer); ok {
 			c.Close()
 		}
 	}
-
 }

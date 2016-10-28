@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -27,8 +28,8 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, indexes []int) *Dataset
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.Name = "LocalHashAndJoinWith"
 	step.Params["indexes"] = indexes
-	step.FunctionType = TypeLocalHashAndJoinWith
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeLocalHashAndJoinWith
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		LocalHashAndJoinWith(
 			readers[0],
 			readers[1],
@@ -94,19 +95,6 @@ func (d *Dataset) Broadcast(shardCount int) *Dataset {
 	}
 	ret := d.FlowContext.newNextDataset(shardCount)
 	step := d.FlowContext.AddOneToAllStep(d, ret)
-	step.Name = "Broadcast"
-	step.FunctionType = TypeBroadcast
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
-		Broadcast(readers[0], writers)
-	}
+	step.SetInstruction(instruction.NewBroadcast())
 	return ret
-}
-
-func Broadcast(reader io.Reader, writers []io.Writer) {
-	util.ProcessMessage(reader, func(data []byte) error {
-		for _, writer := range writers {
-			util.WriteMessage(writer, data)
-		}
-		return nil
-	})
 }

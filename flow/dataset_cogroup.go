@@ -3,6 +3,7 @@ package flow
 import (
 	"io"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -32,8 +33,8 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.Name = "CoGroupPartitionedSorted"
 	step.Params["indexes"] = indexes
-	step.FunctionType = TypeCoGroupPartitionedSorted
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeCoGroupPartitionedSorted
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		CoGroupPartitionedSorted(
 			readers[0],
 			readers[1],

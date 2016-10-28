@@ -3,6 +3,7 @@ package flow
 import (
 	"io"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -45,8 +46,8 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	step.Params["indexes"] = indexes
 	step.Params["isLeftOuterJoin"] = isLeftOuterJoin
 	step.Params["isRightOuterJoin"] = isRightOuterJoin
-	step.FunctionType = TypeJoinPartitionedSorted
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeJoinPartitionedSorted
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		JoinPartitionedSorted(
 			readers[0],
 			readers[1],

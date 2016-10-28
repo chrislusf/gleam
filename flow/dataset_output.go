@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -14,7 +15,7 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		var wg sync.WaitGroup
 		for _, reader := range readers {
 			wg.Add(1)

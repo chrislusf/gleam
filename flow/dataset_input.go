@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/source"
 	_ "github.com/chrislusf/gleam/source/csv"
 	_ "github.com/chrislusf/gleam/source/ints"
@@ -44,8 +45,8 @@ func (fc *FlowContext) InputInParallel(in source.Input, parallelLimit int) (ret 
 	step := fc.AddOneToOneStep(data, ret)
 	step.Name = "InputSplitReader"
 	step.Params["inputType"] = in.GetType()
-	step.FunctionType = TypeInputSplitReader
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeInputSplitReader
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		ReadInputSplits(readers[0], in.GetType(), writers[0])
 	}
 	return

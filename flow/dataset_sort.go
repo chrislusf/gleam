@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 	"github.com/psilva261/timsort"
 	"github.com/ugorji/go/codec"
@@ -64,8 +65,8 @@ func (d *Dataset) LocalSort(orderBys []OrderBy) *Dataset {
 	ret.IsLocalSorted = orderBys
 	step.Name = "LocalSort"
 	step.Params["orderBys"] = orderBys
-	step.FunctionType = TypeLocalSort
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeLocalSort
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		LocalSort(readers[0], writers[0], orderBys)
 	}
 	return ret
@@ -81,8 +82,8 @@ func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
 	step.Name = "LocalTop"
 	step.Params["n"] = n
 	step.Params["orderBys"] = orderBys
-	step.FunctionType = TypeLocalTop
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeLocalTop
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		LocalTop(readers[0], writers[0], n, orderBys)
 	}
 	return ret
@@ -100,8 +101,8 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []OrderBy) (ret *Da
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
 	step.Name = fmt.Sprintf("MergeSortedTo %d", partitionCount)
 	step.Params["orderBys"] = orderBys
-	step.FunctionType = TypeMergeSortedTo
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.FunctionType = instruction.TypeMergeSortedTo
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		MergeSortedTo(readers, writers[0], orderBys)
 	}
 	return ret

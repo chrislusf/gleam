@@ -9,6 +9,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -194,7 +195,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
 		processWriters(wg, i, func(writers []io.Writer) {
-			flow.Broadcast(inChan.Reader, writers)
+			instruction.DoBroadcast(inChan.Reader, writers)
 		})
 
 	} else if i.GetLocalHashAndJoinWith() != nil {

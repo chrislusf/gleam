@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/source"
 	"github.com/chrislusf/gleam/util"
 )
@@ -65,7 +66,7 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Source"
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		// println("running source task...")
 		for _, writer := range writers {
 			f(writer)
@@ -103,10 +104,10 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Channel"
-	step.Function = func(readers []io.Reader, writers []io.Writer, task *Task) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		for data := range ch {
 			util.WriteRow(writers[0], data)
-			task.OutputShards[0].Counter++
+			stats.Count++
 		}
 	}
 	return
