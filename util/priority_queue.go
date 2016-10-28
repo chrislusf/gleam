@@ -37,6 +37,10 @@ func (pq *PriorityQueue) Dequeue() (interface{}, int) {
 	return item.value, item.sourceId
 }
 
+func (pq *PriorityQueue) Top() interface{} {
+	return pq.items[0].value
+}
+
 func (pq *PriorityQueue) Len() int {
 	pq.lock.RLock()
 	defer pq.lock.RUnlock()

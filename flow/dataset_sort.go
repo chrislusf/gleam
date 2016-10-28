@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"container/heap"
 	"fmt"
 	"io"
 	"log"
@@ -73,13 +72,7 @@ func (d *Dataset) LocalTop(n int, orderBys []instruction.OrderBy) *Dataset {
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = orderBys
-	step.Name = "LocalTop"
-	step.Params["n"] = n
-	step.Params["orderBys"] = orderBys
-	step.FunctionType = instruction.TypeLocalTop
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		LocalTop(readers[0], writers[0], n, orderBys)
-	}
+	step.SetInstruction(instruction.NewLocalTop(n, orderBys))
 	return ret
 }
 
@@ -127,38 +120,6 @@ func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []instruction
 				pq.Enqueue(pair{keys: keys, data: x}, shardId)
 			}
 		}
-	}
-}
-
-// Top streamingly compare and get the top n items
-func LocalTop(reader io.Reader, writer io.Writer, n int, orderBys []instruction.OrderBy) {
-	indexes := getIndexesFromOrderBys(orderBys)
-	pq := newMinQueueOfPairs(orderBys)
-
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
-			return fmt.Errorf("%v: %+v", err, input)
-		} else {
-			if pq.Len() >= n {
-				heap.Pop(pq)
-			}
-			pq.Enqueue(pair{keys: keys, data: input}, 0)
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Printf("Top>Failed to process input data:%v\n", err)
-	}
-
-	// read data out of the priority queue
-	length := pq.Len()
-	itemsToReverse := make([][]byte, length)
-	for i := 0; i < length; i++ {
-		kv, _ := pq.Dequeue()
-		itemsToReverse[i] = kv.(pair).data
-	}
-	for i := length - 1; i >= 0; i-- {
-		util.WriteMessage(writer, itemsToReverse[i])
 	}
 }
 
