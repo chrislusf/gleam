@@ -38,7 +38,7 @@ type Dataset struct {
 	Step            *Step
 	ReadingSteps    []*Step
 	IsPartitionedBy []int
-	IsLocalSorted   []OrderBy
+	IsLocalSorted   []instruction.OrderBy
 	RunLocked
 }
 
@@ -84,16 +84,4 @@ type Task struct {
 type RunLocked struct {
 	sync.Mutex
 	StartTime time.Time
-}
-
-type Order int
-
-const (
-	Ascending  = Order(1)
-	Descending = Order(-1)
-)
-
-type OrderBy struct {
-	Index int   // column index, starting from 1
-	Order Order // Ascending or Descending
 }

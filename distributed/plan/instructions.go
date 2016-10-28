@@ -33,12 +33,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	// if failed, try to run lua scripts
 
 	if task.Step.FunctionType == ins.TypeLocalSort {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			LocalSort: &cmd.LocalSort{
-				OrderBys: getOrderBys(task),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypePipeAsArgs {
@@ -163,7 +158,7 @@ func getIndexes(task *flow.Task) (indexes []int32) {
 }
 
 func getOrderBys(task *flow.Task) (orderBys []*cmd.OrderBy) {
-	storedValues := task.Step.Params["orderBys"].([]flow.OrderBy)
+	storedValues := task.Step.Params["orderBys"].([]ins.OrderBy)
 	for _, o := range storedValues {
 		orderBys = append(orderBys, &cmd.OrderBy{
 			Index: proto.Int32(int32(o.Index)),

@@ -8,7 +8,6 @@ import (
 
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
-	"github.com/psilva261/timsort"
 	"github.com/ugorji/go/codec"
 )
 
@@ -33,9 +32,9 @@ func (d *Dataset) Sort(indexes ...int) *Dataset {
 	return ret
 }
 
-func (d *Dataset) SortBy(orderBys ...OrderBy) *Dataset {
+func (d *Dataset) SortBy(orderBys ...instruction.OrderBy) *Dataset {
 	if len(orderBys) == 0 {
-		orderBys = []OrderBy{OrderBy{1, Ascending}}
+		orderBys = []instruction.OrderBy{instruction.OrderBy{1, instruction.Ascending}}
 	}
 	ret := d.LocalSort(orderBys)
 	if len(d.Shards) > 1 {
@@ -45,9 +44,9 @@ func (d *Dataset) SortBy(orderBys ...OrderBy) *Dataset {
 }
 
 // Top streams through total n items, picking reverse ordered k items with O(n*log(k)) complexity.
-func (d *Dataset) Top(k int, orderBys ...OrderBy) *Dataset {
+func (d *Dataset) Top(k int, orderBys ...instruction.OrderBy) *Dataset {
 	if len(orderBys) == 0 {
-		orderBys = []OrderBy{OrderBy{1, Ascending}}
+		orderBys = []instruction.OrderBy{instruction.OrderBy{1, instruction.Ascending}}
 	}
 	ret := d.LocalTop(k, orderBys)
 	if len(d.Shards) > 1 {
@@ -56,23 +55,18 @@ func (d *Dataset) Top(k int, orderBys ...OrderBy) *Dataset {
 	return ret
 }
 
-func (d *Dataset) LocalSort(orderBys []OrderBy) *Dataset {
+func (d *Dataset) LocalSort(orderBys []instruction.OrderBy) *Dataset {
 	if isOrderByEquals(d.IsLocalSorted, orderBys) {
 		return d
 	}
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = orderBys
-	step.Name = "LocalSort"
-	step.Params["orderBys"] = orderBys
-	step.FunctionType = instruction.TypeLocalSort
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		LocalSort(readers[0], writers[0], orderBys)
-	}
+	step.SetInstruction(instruction.NewLocalSort(orderBys))
 	return ret
 }
 
-func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
+func (d *Dataset) LocalTop(n int, orderBys []instruction.OrderBy) *Dataset {
 	if isOrderByExactReverse(d.IsLocalSorted, orderBys) {
 		return d.LocalLimit(n)
 	}
@@ -89,7 +83,7 @@ func (d *Dataset) LocalTop(n int, orderBys []OrderBy) *Dataset {
 	return ret
 }
 
-func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []OrderBy) (ret *Dataset) {
+func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []instruction.OrderBy) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
@@ -108,34 +102,7 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []OrderBy) (ret *Da
 	return ret
 }
 
-func LocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
-	var kvs []interface{}
-	indexes := getIndexesFromOrderBys(orderBys)
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
-			return fmt.Errorf("%v: %+v", err, input)
-		} else {
-			kvs = append(kvs, pair{keys: keys, data: input})
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Printf("Sort>Failed to read input data:%v\n", err)
-	}
-	if len(kvs) == 0 {
-		return
-	}
-	timsort.Sort(kvs, func(a, b interface{}) bool {
-		return pairsLessThan(orderBys, a, b)
-	})
-
-	for _, kv := range kvs {
-		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
-		util.WriteMessage(writer, kv.(pair).data)
-	}
-}
-
-func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) {
+func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []instruction.OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 
 	pq := newMinQueueOfPairs(orderBys)
@@ -164,7 +131,7 @@ func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) {
 }
 
 // Top streamingly compare and get the top n items
-func LocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
+func LocalTop(reader io.Reader, writer io.Writer, n int, orderBys []instruction.OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 
@@ -195,7 +162,7 @@ func LocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
 	}
 }
 
-func isOrderByEquals(a []OrderBy, b []OrderBy) bool {
+func isOrderByEquals(a []instruction.OrderBy, b []instruction.OrderBy) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -207,7 +174,7 @@ func isOrderByEquals(a []OrderBy, b []OrderBy) bool {
 	return true
 }
 
-func isOrderByExactReverse(a []OrderBy, b []OrderBy) bool {
+func isOrderByExactReverse(a []instruction.OrderBy, b []instruction.OrderBy) bool {
 	if len(a) != len(b) {
 		return false
 	}
@@ -219,27 +186,27 @@ func isOrderByExactReverse(a []OrderBy, b []OrderBy) bool {
 	return true
 }
 
-func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
+func getIndexesFromOrderBys(orderBys []instruction.OrderBy) (indexes []int) {
 	for _, o := range orderBys {
 		indexes = append(indexes, o.Index)
 	}
 	return
 }
 
-func getOrderBysFromIndexes(indexes []int) (orderBys []OrderBy) {
+func getOrderBysFromIndexes(indexes []int) (orderBys []instruction.OrderBy) {
 	for _, i := range indexes {
-		orderBys = append(orderBys, OrderBy{i, Ascending})
+		orderBys = append(orderBys, instruction.OrderBy{i, instruction.Ascending})
 	}
 	return
 }
 
-func newMinQueueOfPairs(orderBys []OrderBy) *util.PriorityQueue {
+func newMinQueueOfPairs(orderBys []instruction.OrderBy) *util.PriorityQueue {
 	return util.NewPriorityQueue(func(a, b interface{}) bool {
 		return pairsLessThan(orderBys, a, b)
 	})
 }
 
-func pairsLessThan(orderBys []OrderBy, a, b interface{}) bool {
+func pairsLessThan(orderBys []instruction.OrderBy, a, b interface{}) bool {
 	x, y := a.(pair), b.(pair)
 	for i, order := range orderBys {
 		if order.Order >= 0 {

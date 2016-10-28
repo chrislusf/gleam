@@ -132,7 +132,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
 
-		flow.LocalSort(inChan.Reader, outChan.Writer, toOrderBys(i.GetLocalSort().GetOrderBys()))
+		instruction.DoLocalSort(inChan.Reader, outChan.Writer, toOrderBys(i.GetLocalSort().GetOrderBys()))
 
 	} else if i.GetPipeAsArgs() != nil {
 
@@ -217,11 +217,11 @@ func toInts(indexes []int32) []int {
 	return ret
 }
 
-func toOrderBys(orderBys []*cmd.OrderBy) (ret []flow.OrderBy) {
+func toOrderBys(orderBys []*cmd.OrderBy) (ret []instruction.OrderBy) {
 	for _, o := range orderBys {
-		ret = append(ret, flow.OrderBy{
+		ret = append(ret, instruction.OrderBy{
 			Index: int(o.GetIndex()),
-			Order: flow.Order(int(o.GetOrder())),
+			Order: instruction.Order(int(o.GetOrder())),
 		})
 	}
 	return ret

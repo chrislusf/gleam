@@ -24,6 +24,18 @@ const (
 	TypeLocalHashAndJoinWith
 )
 
+type Order int
+
+const (
+	Ascending  = Order(1)
+	Descending = Order(-1)
+)
+
+type OrderBy struct {
+	Index int   // column index, starting from 1
+	Order Order // Ascending or Descending
+}
+
 type Stats struct {
 	Count int
 }

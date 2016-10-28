@@ -1,9 +1,13 @@
 package flow
 
+import (
+	"github.com/chrislusf/gleam/instruction"
+)
+
 func (d *Dataset) Reduce(code string) (ret *Dataset) {
 	ret = d.LocalReduce(code)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, []OrderBy{OrderBy{1, Ascending}}).LocalReduce(code)
+		ret = ret.MergeSortedTo(1, []instruction.OrderBy{instruction.OrderBy{1, instruction.Ascending}}).LocalReduce(code)
 	}
 	return ret
 }
