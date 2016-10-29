@@ -9,6 +9,17 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetScatterPartitions() != nil {
+			return NewScatterPartitions(
+				toInts(m.GetScatterPartitions().GetIndexes()),
+			)
+		}
+		return nil
+	})
+}
+
 type ScatterPartitions struct {
 	indexes []int
 }

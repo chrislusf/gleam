@@ -14,6 +14,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetInputSplitReader() != nil {
+			return NewInputSplitReader(m.GetInputSplitReader().GetInputType())
+		}
+		return nil
+	})
+}
+
 type InputSplitReader struct {
 	typeName string
 }

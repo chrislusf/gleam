@@ -10,6 +10,17 @@ import (
 	"github.com/psilva261/timsort"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetLocalSort() != nil {
+			return NewLocalSort(
+				toOrderBys(m.GetLocalSort().GetOrderBys()),
+			)
+		}
+		return nil
+	})
+}
+
 type pair struct {
 	keys []interface{}
 	data []byte

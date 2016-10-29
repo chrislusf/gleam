@@ -8,6 +8,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetCollectPartitions() != nil {
+			return NewCollectPartitions()
+		}
+		return nil
+	})
+}
+
 type CollectPartitions struct {
 }
 

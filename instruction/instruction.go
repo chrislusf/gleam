@@ -6,6 +6,10 @@ import (
 	"github.com/chrislusf/gleam/msg"
 )
 
+var (
+	InstructionRunner = &instructionRunner{}
+)
+
 type Order int
 
 const (
@@ -26,4 +30,21 @@ type Instruction interface {
 	Name() string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats)
 	SerializeToCommand() *msg.Instruction
+}
+
+type instructionRunner struct {
+	functions []func(*msg.Instruction) Instruction
+}
+
+func (r *instructionRunner) Register(f func(*msg.Instruction) Instruction) {
+	r.functions = append(r.functions, f)
+}
+
+func (r *instructionRunner) GetInstructionFunction(i *msg.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) {
+	for _, f := range r.functions {
+		if inst := f(i); inst != nil {
+			return inst.Function()
+		}
+	}
+	return nil
 }

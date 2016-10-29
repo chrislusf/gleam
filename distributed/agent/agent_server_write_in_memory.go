@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"bufio"
 	"io"
 
 	"github.com/chrislusf/gleam/util"
@@ -10,16 +9,16 @@ import (
 func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerName, channelName string, readerCount int) {
 
 	ch := as.inMemoryChannels.CreateNamedDatasetShard(channelName, readerCount)
-	defer as.inMemoryChannels.Cleanup(channelName)
-	defer ch.Writer.Close()
+	defer func() {
+		ch.incomingChannel.Writer.Close()
+		ch.wg.Wait()
+		as.inMemoryChannels.Cleanup(channelName)
+	}()
 
 	// println(writerName, "start in memory writing to", channelName, "expected reader:", readerCount)
 
-	reader := bufio.NewReaderSize(r, util.BUFFER_SIZE)
-	writer := bufio.NewWriterSize(ch.Writer, util.BUFFER_SIZE)
+	buf := make([]byte, util.BUFFER_SIZE)
+	io.CopyBuffer(ch.incomingChannel.Writer, r, buf)
 
-	io.Copy(writer, reader)
-	writer.Flush()
-
-	// println(writerName, "finish writing to", channelName, count, "bytes")
+	// println(writerName, "finish writing to", channelName)
 }

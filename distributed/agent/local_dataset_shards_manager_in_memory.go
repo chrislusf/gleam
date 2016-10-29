@@ -11,19 +11,24 @@ type trackedChannel struct {
 	incomingChannel  *util.Piper
 	outgoingChannels []*util.Piper
 	index            int
+	wg               *sync.WaitGroup
 }
 
 func newTrackedChannel(readerCount int) *trackedChannel {
+	var wg sync.WaitGroup
 	t := &trackedChannel{
 		incomingChannel:  util.NewPiper(),
 		outgoingChannels: make([]*util.Piper, readerCount),
 		index:            0,
+		wg:               &wg,
 	}
 	if readerCount > 1 {
 		for i, _ := range t.outgoingChannels {
 			t.outgoingChannels[i] = util.NewPiper()
 		}
+		t.wg.Add(1)
 		go func() {
+			defer t.wg.Done()
 			var writers []io.Writer
 			for _, outgoingChan := range t.outgoingChannels {
 				writers = append(writers, outgoingChan.Writer)
@@ -62,11 +67,12 @@ func NewLocalDatasetShardsManagerInMemory() *LocalDatasetShardsManagerInMemory {
 
 func (m *LocalDatasetShardsManagerInMemory) doDelete(name string) {
 
+	// println("deleting", name, "from", m, m.name2Channel[name])
 	delete(m.name2Channel, name)
 
 }
 
-func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string, readerCount int) *util.Piper {
+func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string, readerCount int) *trackedChannel {
 
 	m.Lock()
 	defer m.Unlock()
@@ -80,8 +86,9 @@ func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string,
 
 	m.name2Channel[name] = tc
 	m.name2ChannelCond.Broadcast()
+	// println("setting", name, "to", m, m.name2Channel[name])
 
-	return tc.incomingChannel
+	return tc
 }
 
 func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string) *util.Piper {
@@ -93,7 +100,9 @@ func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string
 		if tc, ok := m.name2Channel[name]; ok {
 			return tc.borrowChannel()
 		}
+		// println("waiting for", name, m, m.name2Channel[name])
 		m.name2ChannelCond.Wait()
+		// println("woke up for", name, m, m.name2Channel[name])
 	}
 
 	return nil

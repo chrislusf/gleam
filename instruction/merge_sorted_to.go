@@ -9,6 +9,17 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetMergeSortedTo() != nil {
+			return NewMergeSortedTo(
+				toOrderBys(m.GetMergeSortedTo().GetOrderBys()),
+			)
+		}
+		return nil
+	})
+}
+
 type MergeSortedTo struct {
 	orderBys []OrderBy
 }

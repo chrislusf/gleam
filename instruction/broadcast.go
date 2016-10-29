@@ -8,6 +8,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetBroadcast() != nil {
+			return NewBroadcast()
+		}
+		return nil
+	})
+}
+
 type Broadcast struct {
 }
 

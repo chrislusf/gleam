@@ -5,8 +5,27 @@ import (
 	"io"
 	"os"
 
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 )
+
+func toInts(indexes []int32) []int {
+	var ret []int
+	for _, x := range indexes {
+		ret = append(ret, int(x))
+	}
+	return ret
+}
+
+func toOrderBys(orderBys []*msg.OrderBy) (ret []OrderBy) {
+	for _, o := range orderBys {
+		ret = append(ret, OrderBy{
+			Index: int(o.GetIndex()),
+			Order: Order(int(o.GetOrder())),
+		})
+	}
+	return ret
+}
 
 type keyValues struct {
 	Keys   []interface{}

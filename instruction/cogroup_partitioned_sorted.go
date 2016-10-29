@@ -8,6 +8,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetCoGroupPartitionedSorted() != nil {
+			return NewCoGroupPartitionedSorted(toInts(m.GetCoGroupPartitionedSorted().GetIndexes()))
+		}
+		return nil
+	})
+}
+
 type CoGroupPartitionedSorted struct {
 	indexes []int
 }

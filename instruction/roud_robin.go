@@ -8,6 +8,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetRoundRobin() != nil {
+			return NewRoundRobin()
+		}
+		return nil
+	})
+}
+
 type RoundRobin struct {
 }
 

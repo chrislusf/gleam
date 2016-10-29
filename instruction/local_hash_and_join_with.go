@@ -10,6 +10,17 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetLocalHashAndJoinWith() != nil {
+			return NewLocalHashAndJoinWith(
+				toInts(m.GetLocalHashAndJoinWith().GetIndexes()),
+			)
+		}
+		return nil
+	})
+}
+
 type LocalHashAndJoinWith struct {
 	indexes []int
 }

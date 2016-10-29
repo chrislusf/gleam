@@ -8,6 +8,19 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetJoinPartitionedSorted() != nil {
+			return NewJoinPartitionedSorted(
+				m.GetJoinPartitionedSorted().GetIsLeftOuterJoin(),
+				m.GetJoinPartitionedSorted().GetIsRightOuterJoin(),
+				toInts(m.GetJoinPartitionedSorted().GetIndexes()),
+			)
+		}
+		return nil
+	})
+}
+
 type JoinPartitionedSorted struct {
 	isLeftOuterJoin  bool
 	isRightOuterJoin bool

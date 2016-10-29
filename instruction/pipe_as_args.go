@@ -13,6 +13,15 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetPipeAsArgs() != nil {
+			return NewPipeAsArgs(m.GetPipeAsArgs().GetCode())
+		}
+		return nil
+	})
+}
+
 type PipeAsArgs struct {
 	code string
 }

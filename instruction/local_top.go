@@ -9,6 +9,18 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
+func init() {
+	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+		if m.GetLocalTop() != nil {
+			return NewLocalTop(
+				int(m.GetLocalTop().GetN()),
+				toOrderBys(m.GetLocalTop().GetOrderBys()),
+			)
+		}
+		return nil
+	})
+}
+
 type LocalTop struct {
 	n        int
 	orderBys []OrderBy

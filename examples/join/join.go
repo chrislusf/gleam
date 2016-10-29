@@ -8,9 +8,9 @@ import (
 
 func main() {
 
+	join1()
 	join2()
 
-	join1()
 }
 
 func join1() {
@@ -27,11 +27,13 @@ func join1() {
 
 	x := words.Map(`
 		function(word)
+            --log("word x:"..word)
 			return word, 1
 		end
 	`).ReduceBy(`function(x,y) return x+y end`)
 	y := words.Map(`
 		function(word)
+            --log("word y:"..word)
 			return word, 2
 		end
 	`).ReduceBy(`function(x,y) return x+y end`)
