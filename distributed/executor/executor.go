@@ -143,7 +143,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 	} else if i.GetMergeSortedTo() != nil {
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.MergeSortedTo(linkInReaders(wg, i), outChan.Writer, toOrderBys(i.GetMergeSortedTo().GetOrderBys()))
+		instruction.DoMergeSortedTo(linkInReaders(wg, i), outChan.Writer, toOrderBys(i.GetMergeSortedTo().GetOrderBys()))
 
 	} else if i.GetScatterPartitions() != nil {
 

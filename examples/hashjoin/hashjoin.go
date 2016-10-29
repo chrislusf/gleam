@@ -13,7 +13,7 @@ func main() {
 
 func join1() {
 
-	f := gleam.New().Init(`
+	f := gleam.New(gleam.Distributed).Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end

@@ -46,12 +46,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeMergeSortedTo {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			MergeSortedTo: &cmd.MergeSortedTo{
-				OrderBys: getOrderBys(task),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeJoinPartitionedSorted {
@@ -108,13 +103,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeLocalTop {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			LocalTop: &cmd.LocalTop{
-				N:        proto.Int32(int32(task.Step.Params["n"].(int))),
-				OrderBys: getOrderBys(task),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeBroadcast {

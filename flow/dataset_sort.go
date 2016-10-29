@@ -1,10 +1,6 @@
 package flow
 
 import (
-	"fmt"
-	"io"
-	"log"
-
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 	"github.com/ugorji/go/codec"
@@ -86,41 +82,8 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []instruction.Order
 		everyN++
 	}
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
-	step.Name = fmt.Sprintf("MergeSortedTo %d", partitionCount)
-	step.Params["orderBys"] = orderBys
-	step.FunctionType = instruction.TypeMergeSortedTo
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		MergeSortedTo(readers, writers[0], orderBys)
-	}
+	step.SetInstruction(instruction.NewMergeSortedTo(orderBys))
 	return ret
-}
-
-func MergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []instruction.OrderBy) {
-	indexes := getIndexesFromOrderBys(orderBys)
-
-	pq := newMinQueueOfPairs(orderBys)
-
-	// enqueue one item to the pq from each channel
-	for shardId, reader := range readers {
-		if x, err := util.ReadMessage(reader); err == nil {
-			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
-				log.Printf("%v: %+v", err, x)
-			} else {
-				pq.Enqueue(pair{keys: keys, data: x}, shardId)
-			}
-		}
-	}
-	for pq.Len() > 0 {
-		t, shardId := pq.Dequeue()
-		util.WriteMessage(writer, t.(pair).data)
-		if x, err := util.ReadMessage(readers[shardId]); err == nil {
-			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
-				log.Printf("%v: %+v", err, x)
-			} else {
-				pq.Enqueue(pair{keys: keys, data: x}, shardId)
-			}
-		}
-	}
 }
 
 func isOrderByEquals(a []instruction.OrderBy, b []instruction.OrderBy) bool {
@@ -147,38 +110,9 @@ func isOrderByExactReverse(a []instruction.OrderBy, b []instruction.OrderBy) boo
 	return true
 }
 
-func getIndexesFromOrderBys(orderBys []instruction.OrderBy) (indexes []int) {
-	for _, o := range orderBys {
-		indexes = append(indexes, o.Index)
-	}
-	return
-}
-
 func getOrderBysFromIndexes(indexes []int) (orderBys []instruction.OrderBy) {
 	for _, i := range indexes {
 		orderBys = append(orderBys, instruction.OrderBy{i, instruction.Ascending})
 	}
 	return
-}
-
-func newMinQueueOfPairs(orderBys []instruction.OrderBy) *util.PriorityQueue {
-	return util.NewPriorityQueue(func(a, b interface{}) bool {
-		return pairsLessThan(orderBys, a, b)
-	})
-}
-
-func pairsLessThan(orderBys []instruction.OrderBy, a, b interface{}) bool {
-	x, y := a.(pair), b.(pair)
-	for i, order := range orderBys {
-		if order.Order >= 0 {
-			if util.LessThan(x.keys[i], y.keys[i]) {
-				return true
-			}
-		} else {
-			if !util.LessThan(x.keys[i], y.keys[i]) {
-				return true
-			}
-		}
-	}
-	return false
 }
