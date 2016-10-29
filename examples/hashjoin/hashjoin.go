@@ -8,11 +8,6 @@ import (
 
 func main() {
 
-	join1()
-}
-
-func join1() {
-
 	f := gleam.New(gleam.Distributed).Init(`
 	function splitter(line)
         return line:gmatch("%w+")

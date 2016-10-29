@@ -42,7 +42,7 @@ func (fcd *FlowContextPlanner) Run(fc *flow.FlowContext) {
 
 	fmt.Println("=== step groups ===")
 	for i, stepGroup := range stepGroups {
-		fmt.Printf("  step: %d\n", i)
+		fmt.Printf("  step group: %d\n", i)
 		for _, step := range stepGroup.Steps {
 			fmt.Printf("    step: %s\n", step.Name)
 		}
