@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -26,10 +26,10 @@ func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers 
 	}
 }
 
-func (b *CoGroupPartitionedSorted) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *CoGroupPartitionedSorted) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		CoGroupPartitionedSorted: &cmd.CoGroupPartitionedSorted{
+		CoGroupPartitionedSorted: &msg.CoGroupPartitionedSorted{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

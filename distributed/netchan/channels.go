@@ -9,7 +9,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -23,9 +23,9 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	}
 	defer readWriter.Close()
 
-	data, err := proto.Marshal(&cmd.ControlMessage{
+	data, err := proto.Marshal(&msg.ControlMessage{
 		IsMemoryIO: proto.Bool(true),
-		ReadRequest: &cmd.ReadRequest{
+		ReadRequest: &msg.ReadRequest{
 			ChannelName: proto.String(channelName),
 			ReaderName:  proto.String(readerName),
 		},
@@ -47,9 +47,9 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 	}
 	defer readWriter.Close()
 
-	data, err := proto.Marshal(&cmd.ControlMessage{
+	data, err := proto.Marshal(&msg.ControlMessage{
 		IsMemoryIO: proto.Bool(true),
-		WriteRequest: &cmd.WriteRequest{
+		WriteRequest: &msg.WriteRequest{
 			ChannelName: proto.String(channelName),
 			ReaderCount: proto.Int32(int32(readerCount)),
 			WriterName:  proto.String(writerName),

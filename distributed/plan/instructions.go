@@ -1,13 +1,13 @@
 package plan
 
 import (
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/golang/protobuf/proto"
 )
 
-func TranslateToInstructionSet(taskGroups *TaskGroup) (ret *cmd.InstructionSet) {
-	ret = &cmd.InstructionSet{}
+func TranslateToInstructionSet(taskGroups *TaskGroup) (ret *msg.InstructionSet) {
+	ret = &msg.InstructionSet{}
 	lastShards := taskGroups.Tasks[len(taskGroups.Tasks)-1].OutputShards
 	if len(lastShards) > 0 {
 		ret.ReaderCount = proto.Int32(int32(len(lastShards[0].ReadingTasks)))
@@ -21,7 +21,7 @@ func TranslateToInstructionSet(taskGroups *TaskGroup) (ret *cmd.InstructionSet) 
 	return
 }
 
-func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
+func translateToInstruction(task *flow.Task) (ret *msg.Instruction) {
 
 	if task.Step.IsOnDriverSide {
 		return nil
@@ -43,9 +43,9 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 	command := task.Step.Command
 
-	return &cmd.Instruction{
+	return &msg.Instruction{
 		Name: proto.String(task.Step.Name),
-		Script: &cmd.Script{
+		Script: &msg.Script{
 			IsPipe: proto.Bool(task.Step.IsPipe),
 			Path:   proto.String(command.Path),
 			Args:   command.Args,

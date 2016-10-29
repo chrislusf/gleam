@@ -4,7 +4,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -27,10 +27,10 @@ func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Wr
 	}
 }
 
-func (b *ScatterPartitions) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		ScatterPartitions: &cmd.ScatterPartitions{
+		ScatterPartitions: &msg.ScatterPartitions{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

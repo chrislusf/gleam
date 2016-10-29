@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/instruction"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -29,10 +29,10 @@ type ExecutorOption struct {
 type Executor struct {
 	Option       *ExecutorOption
 	Master       string
-	instructions *cmd.InstructionSet
+	instructions *msg.InstructionSet
 }
 
-func NewExecutor(option *ExecutorOption, instructions *cmd.InstructionSet) *Executor {
+func NewExecutor(option *ExecutorOption, instructions *msg.InstructionSet) *Executor {
 
 	return &Executor{
 		Option:       option,
@@ -49,7 +49,7 @@ func (exe *Executor) ExecuteInstructionSet() {
 		inputChan := prevOutputChan
 		outputChan := util.NewPiper()
 		wg.Add(1)
-		go func(index int, instruction *cmd.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
+		go func(index int, instruction *msg.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
 			exe.ExecuteInstruction(&wg, inChan, outChan,
 				prevIsPipe,
 				instruction,
@@ -69,7 +69,7 @@ func (exe *Executor) ExecuteInstructionSet() {
 	wg.Wait()
 }
 
-func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan *util.Piper, i *cmd.Instruction, isFirst, isLast bool, readerCount int) {
+func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan *util.Piper, i *msg.Instruction, isFirst, isLast bool, readerCount int) {
 	if isFirst && inChan != nil {
 		wg.Add(1)
 		inLocation := i.InputShardLocations[0]
@@ -84,7 +84,7 @@ func connectInputOutput(wg *sync.WaitGroup, executorName string, inChan, outChan
 	}
 }
 
-func linkInReaders(wg *sync.WaitGroup, i *cmd.Instruction) (inChans []io.Reader) {
+func linkInReaders(wg *sync.WaitGroup, i *msg.Instruction) (inChans []io.Reader) {
 	for _, inputLocation := range i.GetInputShardLocations() {
 		wg.Add(1)
 		inChan := util.NewPiper()
@@ -95,7 +95,7 @@ func linkInReaders(wg *sync.WaitGroup, i *cmd.Instruction) (inChans []io.Reader)
 	return
 }
 
-func processWriters(wg *sync.WaitGroup, i *cmd.Instruction, fn func([]io.Writer)) {
+func processWriters(wg *sync.WaitGroup, i *msg.Instruction, fn func([]io.Writer)) {
 	var outChans []*util.Piper
 	for _, outputLocation := range i.GetOutputShardLocations() {
 		wg.Add(1)
@@ -114,7 +114,7 @@ func processWriters(wg *sync.WaitGroup, i *cmd.Instruction, fn func([]io.Writer)
 }
 
 // TODO: refactor this
-func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *util.Piper, prevIsPipe bool, i *cmd.Instruction, isFirst, isLast bool, readerCount int) {
+func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *util.Piper, prevIsPipe bool, i *msg.Instruction, isFirst, isLast bool, readerCount int) {
 	defer wg.Done()
 	defer outChan.Writer.Close()
 
@@ -217,7 +217,7 @@ func toInts(indexes []int32) []int {
 	return ret
 }
 
-func toOrderBys(orderBys []*cmd.OrderBy) (ret []instruction.OrderBy) {
+func toOrderBys(orderBys []*msg.OrderBy) (ret []instruction.OrderBy) {
 	for _, o := range orderBys {
 		ret = append(ret, instruction.OrderBy{
 			Index: int(o.GetIndex()),

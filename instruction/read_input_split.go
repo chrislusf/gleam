@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/source"
 	_ "github.com/chrislusf/gleam/source/csv"
 	_ "github.com/chrislusf/gleam/source/ints"
@@ -32,10 +32,10 @@ func (b *InputSplitReader) Function() func(readers []io.Reader, writers []io.Wri
 	}
 }
 
-func (b *InputSplitReader) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *InputSplitReader) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		InputSplitReader: &cmd.InputSplitReader{
+		InputSplitReader: &msg.InputSplitReader{
 			InputType: proto.String(b.typeName),
 		},
 	}

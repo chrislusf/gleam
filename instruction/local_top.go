@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -28,10 +28,10 @@ func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, sta
 	}
 }
 
-func (b *LocalTop) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *LocalTop) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		LocalTop: &cmd.LocalTop{
+		LocalTop: &msg.LocalTop{
 			N:        proto.Int32(int32(b.n)),
 			OrderBys: getOrderBys(b.orderBys),
 		},

@@ -3,7 +3,7 @@
 // DO NOT EDIT!
 
 /*
-Package cmd is a generated protocol buffer package.
+Package msg is a generated protocol buffer package.
 
 It is generated from these files:
 	control_message.proto
@@ -44,7 +44,7 @@ It has these top-level messages:
 	WriteRequest
 	ReadRequest
 */
-package cmd
+package msg
 
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
@@ -1176,40 +1176,40 @@ func (m *ReadRequest) GetReaderName() string {
 }
 
 func init() {
-	proto.RegisterType((*ControlMessage)(nil), "cmd.ControlMessage")
-	proto.RegisterType((*NetChan)(nil), "cmd.NetChan")
-	proto.RegisterType((*ComputeResource)(nil), "cmd.ComputeResource")
-	proto.RegisterType((*StartRequest)(nil), "cmd.StartRequest")
-	proto.RegisterType((*InstructionSet)(nil), "cmd.InstructionSet")
-	proto.RegisterType((*Instruction)(nil), "cmd.Instruction")
-	proto.RegisterType((*ScatterPartitions)(nil), "cmd.ScatterPartitions")
-	proto.RegisterType((*RoundRobin)(nil), "cmd.RoundRobin")
-	proto.RegisterType((*CollectPartitions)(nil), "cmd.CollectPartitions")
-	proto.RegisterType((*LocalSort)(nil), "cmd.LocalSort")
-	proto.RegisterType((*LocalTop)(nil), "cmd.LocalTop")
-	proto.RegisterType((*MergeSortedTo)(nil), "cmd.MergeSortedTo")
-	proto.RegisterType((*OrderBy)(nil), "cmd.OrderBy")
-	proto.RegisterType((*JoinPartitionedSorted)(nil), "cmd.JoinPartitionedSorted")
-	proto.RegisterType((*CoGroupPartitionedSorted)(nil), "cmd.CoGroupPartitionedSorted")
-	proto.RegisterType((*PipeAsArgs)(nil), "cmd.PipeAsArgs")
-	proto.RegisterType((*Script)(nil), "cmd.Script")
-	proto.RegisterType((*InputSplitReader)(nil), "cmd.InputSplitReader")
-	proto.RegisterType((*Broadcast)(nil), "cmd.Broadcast")
-	proto.RegisterType((*LocalHashAndJoinWith)(nil), "cmd.LocalHashAndJoinWith")
-	proto.RegisterType((*DatasetShard)(nil), "cmd.DatasetShard")
-	proto.RegisterType((*DatasetShardLocation)(nil), "cmd.DatasetShardLocation")
-	proto.RegisterType((*StartResponse)(nil), "cmd.StartResponse")
-	proto.RegisterType((*StopRequest)(nil), "cmd.StopRequest")
-	proto.RegisterType((*StopResponse)(nil), "cmd.StopResponse")
-	proto.RegisterType((*GetStatusRequest)(nil), "cmd.GetStatusRequest")
-	proto.RegisterType((*ChannelStatus)(nil), "cmd.ChannelStatus")
-	proto.RegisterType((*GetStatusResponse)(nil), "cmd.GetStatusResponse")
-	proto.RegisterType((*DeleteDatasetShardRequest)(nil), "cmd.DeleteDatasetShardRequest")
-	proto.RegisterType((*DeleteDatasetShardResponse)(nil), "cmd.DeleteDatasetShardResponse")
-	proto.RegisterType((*LocalStatusReportRequest)(nil), "cmd.LocalStatusReportRequest")
-	proto.RegisterType((*LocalStatusReportResponse)(nil), "cmd.LocalStatusReportResponse")
-	proto.RegisterType((*WriteRequest)(nil), "cmd.WriteRequest")
-	proto.RegisterType((*ReadRequest)(nil), "cmd.ReadRequest")
+	proto.RegisterType((*ControlMessage)(nil), "msg.ControlMessage")
+	proto.RegisterType((*NetChan)(nil), "msg.NetChan")
+	proto.RegisterType((*ComputeResource)(nil), "msg.ComputeResource")
+	proto.RegisterType((*StartRequest)(nil), "msg.StartRequest")
+	proto.RegisterType((*InstructionSet)(nil), "msg.InstructionSet")
+	proto.RegisterType((*Instruction)(nil), "msg.Instruction")
+	proto.RegisterType((*ScatterPartitions)(nil), "msg.ScatterPartitions")
+	proto.RegisterType((*RoundRobin)(nil), "msg.RoundRobin")
+	proto.RegisterType((*CollectPartitions)(nil), "msg.CollectPartitions")
+	proto.RegisterType((*LocalSort)(nil), "msg.LocalSort")
+	proto.RegisterType((*LocalTop)(nil), "msg.LocalTop")
+	proto.RegisterType((*MergeSortedTo)(nil), "msg.MergeSortedTo")
+	proto.RegisterType((*OrderBy)(nil), "msg.OrderBy")
+	proto.RegisterType((*JoinPartitionedSorted)(nil), "msg.JoinPartitionedSorted")
+	proto.RegisterType((*CoGroupPartitionedSorted)(nil), "msg.CoGroupPartitionedSorted")
+	proto.RegisterType((*PipeAsArgs)(nil), "msg.PipeAsArgs")
+	proto.RegisterType((*Script)(nil), "msg.Script")
+	proto.RegisterType((*InputSplitReader)(nil), "msg.InputSplitReader")
+	proto.RegisterType((*Broadcast)(nil), "msg.Broadcast")
+	proto.RegisterType((*LocalHashAndJoinWith)(nil), "msg.LocalHashAndJoinWith")
+	proto.RegisterType((*DatasetShard)(nil), "msg.DatasetShard")
+	proto.RegisterType((*DatasetShardLocation)(nil), "msg.DatasetShardLocation")
+	proto.RegisterType((*StartResponse)(nil), "msg.StartResponse")
+	proto.RegisterType((*StopRequest)(nil), "msg.StopRequest")
+	proto.RegisterType((*StopResponse)(nil), "msg.StopResponse")
+	proto.RegisterType((*GetStatusRequest)(nil), "msg.GetStatusRequest")
+	proto.RegisterType((*ChannelStatus)(nil), "msg.ChannelStatus")
+	proto.RegisterType((*GetStatusResponse)(nil), "msg.GetStatusResponse")
+	proto.RegisterType((*DeleteDatasetShardRequest)(nil), "msg.DeleteDatasetShardRequest")
+	proto.RegisterType((*DeleteDatasetShardResponse)(nil), "msg.DeleteDatasetShardResponse")
+	proto.RegisterType((*LocalStatusReportRequest)(nil), "msg.LocalStatusReportRequest")
+	proto.RegisterType((*LocalStatusReportResponse)(nil), "msg.LocalStatusReportResponse")
+	proto.RegisterType((*WriteRequest)(nil), "msg.WriteRequest")
+	proto.RegisterType((*ReadRequest)(nil), "msg.ReadRequest")
 }
 
 func init() { proto.RegisterFile("control_message.proto", fileDescriptor0) }

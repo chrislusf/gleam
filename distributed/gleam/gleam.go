@@ -12,7 +12,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	a "github.com/chrislusf/gleam/distributed/agent"
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	exe "github.com/chrislusf/gleam/distributed/executor"
 	"github.com/chrislusf/gleam/distributed/netchan"
 	m "github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
@@ -68,7 +68,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to read stdin: %v", err)
 		}
-		instructions := cmd.InstructionSet{}
+		instructions := msg.InstructionSet{}
 		if err := proto.Unmarshal(rawData, &instructions); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
 		}

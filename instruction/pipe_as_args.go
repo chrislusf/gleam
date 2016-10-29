@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
@@ -31,10 +31,10 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 	}
 }
 
-func (b *PipeAsArgs) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		PipeAsArgs: &cmd.PipeAsArgs{
+		PipeAsArgs: &msg.PipeAsArgs{
 			Code: proto.String(b.code),
 		},
 	}
@@ -63,13 +63,13 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) {
 
 		// println("pipeAsArgs command:", actualCode)
 
-		cmd := &script.Command{
+		command := &script.Command{
 			Path: "sh",
 			Args: []string{"-c", actualCode},
 		}
 		// write output to writer
 		wg.Add(1)
-		util.Execute(&wg, "PipeArgs", cmd.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
+		util.Execute(&wg, "PipeArgs", command.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
 		//wg.Wait()
 		return nil
 	})

@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 )
 
 type Order int
@@ -25,5 +25,5 @@ type Stats struct {
 type Instruction interface {
 	Name() string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats)
-	SerializeToCommand() *cmd.Instruction
+	SerializeToCommand() *msg.Instruction
 }

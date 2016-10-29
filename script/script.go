@@ -27,9 +27,9 @@ type Script interface {
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {
-	cmd := exec.Command(
+	command := exec.Command(
 		c.Path, c.Args...,
 	)
-	cmd.Env = c.Env
-	return cmd
+	command.Env = c.Env
+	return command
 }

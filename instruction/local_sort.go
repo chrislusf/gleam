@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 	"github.com/psilva261/timsort"
@@ -33,10 +33,10 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 	}
 }
 
-func (b *LocalSort) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *LocalSort) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		LocalSort: &cmd.LocalSort{
+		LocalSort: &msg.LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}
@@ -99,9 +99,9 @@ func getIndexes(storedValues []int) (indexes []int32) {
 	return
 }
 
-func getOrderBys(storedValues []OrderBy) (orderBys []*cmd.OrderBy) {
+func getOrderBys(storedValues []OrderBy) (orderBys []*msg.OrderBy) {
 	for _, o := range storedValues {
-		orderBys = append(orderBys, &cmd.OrderBy{
+		orderBys = append(orderBys, &msg.OrderBy{
 			Index: proto.Int32(int32(o.Index)),
 			Order: proto.Int32(int32(o.Order)),
 		})

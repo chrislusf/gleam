@@ -8,20 +8,20 @@ import (
 	"net"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
 
-func NewStartRequest(dir string, instructions *cmd.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *cmd.ControlMessage {
-	request := &cmd.ControlMessage{
+func NewStartRequest(dir string, instructions *msg.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *msg.ControlMessage {
+	request := &msg.ControlMessage{
 		IsMemoryIO: proto.Bool(true),
-		StartRequest: &cmd.StartRequest{
+		StartRequest: &msg.StartRequest{
 			Instructions: instructions,
 			Dir:          proto.String(dir),
-			Resource: &cmd.ComputeResource{
+			Resource: &msg.ComputeResource{
 				CpuCount: proto.Int32(int32(allocated.CPUCount)),
 				CpuLevel: proto.Int32(int32(allocated.CPULevel)),
 				Memory:   proto.Int32(int32(allocated.MemoryMB)),
@@ -36,31 +36,31 @@ func NewStartRequest(dir string, instructions *cmd.InstructionSet, allocated res
 	return request
 }
 
-func NewGetStatusRequest(requestId uint32) *cmd.ControlMessage {
-	return &cmd.ControlMessage{
-		GetStatusRequest: &cmd.GetStatusRequest{
+func NewGetStatusRequest(requestId uint32) *msg.ControlMessage {
+	return &msg.ControlMessage{
+		GetStatusRequest: &msg.GetStatusRequest{
 			StartRequestHash: proto.Uint32(requestId),
 		},
 	}
 }
 
-func NewStopRequest(requestId uint32) *cmd.ControlMessage {
-	return &cmd.ControlMessage{
-		StopRequest: &cmd.StopRequest{
+func NewStopRequest(requestId uint32) *msg.ControlMessage {
+	return &msg.ControlMessage{
+		StopRequest: &msg.StopRequest{
 			StartRequestHash: proto.Uint32(requestId),
 		},
 	}
 }
 
-func NewDeleteDatasetShardRequest(name string) *cmd.ControlMessage {
-	return &cmd.ControlMessage{
-		DeleteDatasetShardRequest: &cmd.DeleteDatasetShardRequest{
+func NewDeleteDatasetShardRequest(name string) *msg.ControlMessage {
+	return &msg.ControlMessage{
+		DeleteDatasetShardRequest: &msg.DeleteDatasetShardRequest{
 			Name: proto.String(name),
 		},
 	}
 }
 
-func RemoteDirectExecute(server string, command *cmd.ControlMessage) error {
+func RemoteDirectExecute(server string, command *msg.ControlMessage) error {
 	conn, err := getDirectCommandConnection(server)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func RemoteDirectExecute(server string, command *cmd.ControlMessage) error {
 }
 
 // doExecute() sends a request and expects the output from the connection
-func doExecute(server string, conn io.ReadWriteCloser, command *cmd.ControlMessage) error {
+func doExecute(server string, conn io.ReadWriteCloser, command *msg.ControlMessage) error {
 
 	// serialize the commend
 	data, err := proto.Marshal(command)
@@ -98,7 +98,7 @@ func doExecute(server string, conn io.ReadWriteCloser, command *cmd.ControlMessa
 	return err
 }
 
-func RemoteDirectCommand(server string, command *cmd.ControlMessage) (response *cmd.ControlMessage, err error) {
+func RemoteDirectCommand(server string, command *msg.ControlMessage) (response *msg.ControlMessage, err error) {
 	conn, err := getDirectCommandConnection(server)
 	if err != nil {
 		return nil, err
@@ -109,7 +109,7 @@ func RemoteDirectCommand(server string, command *cmd.ControlMessage) (response *
 }
 
 // doCommand() sends a request and expects a response object
-func doCommand(server string, conn io.ReadWriteCloser, command *cmd.ControlMessage) (response *cmd.ControlMessage, err error) {
+func doCommand(server string, conn io.ReadWriteCloser, command *msg.ControlMessage) (response *msg.ControlMessage, err error) {
 
 	// serialize the commend
 	data, err := proto.Marshal(command)
@@ -127,11 +127,11 @@ func doCommand(server string, conn io.ReadWriteCloser, command *cmd.ControlMessa
 	// read response
 	replyBytes, err := ioutil.ReadAll(conn)
 	if err != nil {
-		return nil, fmt.Errorf("cmd response: %v", err)
+		return nil, fmt.Errorf("msg response: %v", err)
 	}
 
 	// unmarshal the bytes
-	response = &cmd.ControlMessage{}
+	response = &msg.ControlMessage{}
 	err = proto.Unmarshal(replyBytes, response)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshaling error: %v", err)

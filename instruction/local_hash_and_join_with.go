@@ -5,7 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -28,10 +28,10 @@ func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io
 	}
 }
 
-func (b *LocalHashAndJoinWith) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		LocalHashAndJoinWith: &cmd.LocalHashAndJoinWith{
+		LocalHashAndJoinWith: &msg.LocalHashAndJoinWith{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

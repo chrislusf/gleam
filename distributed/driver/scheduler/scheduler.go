@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/resource"
 )
@@ -22,7 +22,7 @@ type Scheduler struct {
 }
 
 type RemoteExecutorStatus struct {
-	Request      *cmd.ControlMessage
+	Request      *msg.ControlMessage
 	Allocation   resource.Allocation
 	RequestTime  time.Time
 	InputLength  int

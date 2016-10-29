@@ -10,7 +10,7 @@ import (
 // all data passing through pipe are all (size, msgpack_encoded) tuples
 // The input and output should all be this msgpack format.
 // Only the stdin and stdout of Pipe() is line based text.
-func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
+func Execute(executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
 	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) {
 
 	defer executeWaitGroup.Done()
@@ -20,12 +20,12 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 	if reader != nil {
 		if prevIsPipe && isPipe {
 			// println("step", name, "input is lines->lines")
-			cmd.Stdin = reader
+			command.Stdin = reader
 		} else if !prevIsPipe && !isPipe {
 			// println("step", name, "input is msgpack->msgpack")
-			cmd.Stdin = reader
+			command.Stdin = reader
 		} else {
-			inputWriter, stdinErr := cmd.StdinPipe()
+			inputWriter, stdinErr := command.StdinPipe()
 			if stdinErr != nil {
 				fmt.Fprintf(errWriter, "Failed to open StdinPipe: %v", stdinErr)
 			} else {
@@ -41,26 +41,26 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, cmd *exec.Cmd,
 		}
 	}
 
-	cmd.Stdout = writer
+	command.Stdout = writer
 
-	cmd.Stderr = errWriter
+	command.Stderr = errWriter
 
 	// fmt.Println(name, "starting...")
 
-	if startError := cmd.Start(); startError != nil {
-		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, cmd)
+	if startError := command.Start(); startError != nil {
+		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, command)
 		return
 	}
 
-	// fmt.Printf("Command is waiting: %v\n", cmd)
+	// fmt.Printf("Command is waiting: %v\n", command)
 
 	wg.Wait()
 
-	if waitError := cmd.Wait(); waitError != nil {
-		fmt.Fprintf(errWriter, "Wait error %+v. command:%+v\n", waitError, cmd)
+	if waitError := command.Wait(); waitError != nil {
+		fmt.Fprintf(errWriter, "Wait error %+v. command:%+v\n", waitError, command)
 	}
 
-	// fmt.Printf("Command is finished.\n %+v\n", cmd)
+	// fmt.Printf("Command is finished.\n %+v\n", command)
 
 	// fmt.Println(name, "stopping output writer.")
 	if closeOutput {

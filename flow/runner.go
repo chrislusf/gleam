@@ -114,15 +114,15 @@ func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
 	if task.Step.Command == nil {
 		task.Step.Command = task.Step.Script.GetCommand()
 	}
-	cmd := task.Step.Command.ToOsExecCommand()
+	execCommand := task.Step.Command.ToOsExecCommand()
 
 	if task.Step.NetworkType == OneShardToOneShard {
-		// fmt.Printf("cmd: %+v\n", cmd)
+		// fmt.Printf("execCommand: %+v\n", execCommand)
 		reader := task.InputChans[0].Reader
 		writer := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
-		util.Execute(wg, task.Step.Name, cmd, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
+		util.Execute(wg, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
 	}

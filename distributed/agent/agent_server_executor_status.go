@@ -3,16 +3,16 @@ package agent
 import (
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/driver"
 	"github.com/golang/protobuf/proto"
 )
 
-func (as *AgentServer) handleGetStatusRequest(getStatusRequest *cmd.GetStatusRequest) *cmd.GetStatusResponse {
+func (as *AgentServer) handleGetStatusRequest(getStatusRequest *msg.GetStatusRequest) *msg.GetStatusResponse {
 	requestId := getStatusRequest.GetStartRequestHash()
 	stat := as.localExecutorManager.getExecutorStatus(requestId)
 
-	reply := &cmd.GetStatusResponse{
+	reply := &msg.GetStatusResponse{
 		StartRequestHash: proto.Uint32(requestId),
 		InputStatuses:    driver.ToProto(stat.InputChannelStatuses),
 		OutputStatuses:   driver.ToProto(stat.OutputChannelStatuses),
@@ -24,7 +24,7 @@ func (as *AgentServer) handleGetStatusRequest(getStatusRequest *cmd.GetStatusReq
 	return reply
 }
 
-func (as *AgentServer) handleLocalStatusReportRequest(localStatusRequest *cmd.LocalStatusReportRequest) *cmd.LocalStatusReportResponse {
+func (as *AgentServer) handleLocalStatusReportRequest(localStatusRequest *msg.LocalStatusReportRequest) *msg.LocalStatusReportResponse {
 	requestId := localStatusRequest.GetStartRequestHash()
 	stat := as.localExecutorManager.getExecutorStatus(requestId)
 
@@ -32,12 +32,12 @@ func (as *AgentServer) handleLocalStatusReportRequest(localStatusRequest *cmd.Lo
 	stat.OutputChannelStatuses = driver.FromProto(localStatusRequest.GetOutputStatuses())
 	stat.LastAccessTime = time.Now()
 
-	reply := &cmd.LocalStatusReportResponse{}
+	reply := &msg.LocalStatusReportResponse{}
 
 	return reply
 }
 
-func (as *AgentServer) handleStopRequest(stopRequest *cmd.StopRequest) *cmd.StopResponse {
+func (as *AgentServer) handleStopRequest(stopRequest *msg.StopRequest) *msg.StopResponse {
 	requestId := stopRequest.GetStartRequestHash()
 	stat := as.localExecutorManager.getExecutorStatus(requestId)
 
@@ -46,7 +46,7 @@ func (as *AgentServer) handleStopRequest(stopRequest *cmd.StopRequest) *cmd.Stop
 		stat.Process = nil
 	}
 
-	reply := &cmd.StopResponse{
+	reply := &msg.StopResponse{
 		StartRequestHash: proto.Uint32(requestId),
 	}
 

@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -28,10 +28,10 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 	}
 }
 
-func (b *JoinPartitionedSorted) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *JoinPartitionedSorted) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name: proto.String(b.Name()),
-		JoinPartitionedSorted: &cmd.JoinPartitionedSorted{
+		JoinPartitionedSorted: &msg.JoinPartitionedSorted{
 			IsLeftOuterJoin:  proto.Bool(b.isLeftOuterJoin),
 			IsRightOuterJoin: proto.Bool(b.isRightOuterJoin),
 			Indexes:          getIndexes(b.indexes),

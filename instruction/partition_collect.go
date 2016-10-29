@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -25,10 +25,10 @@ func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Wr
 	}
 }
 
-func (b *CollectPartitions) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name:              proto.String(b.Name()),
-		CollectPartitions: &cmd.CollectPartitions{},
+		CollectPartitions: &msg.CollectPartitions{},
 	}
 }
 

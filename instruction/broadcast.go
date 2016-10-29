@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -25,10 +25,10 @@ func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, st
 	}
 }
 
-func (b *Broadcast) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *Broadcast) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name:      proto.String(b.Name()),
-		Broadcast: &cmd.Broadcast{},
+		Broadcast: &msg.Broadcast{},
 	}
 }
 

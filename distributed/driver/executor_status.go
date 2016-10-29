@@ -3,7 +3,7 @@ package driver
 import (
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/util"
@@ -16,9 +16,9 @@ type RemoteExecutorStatus struct {
 	taskGroup  *plan.TaskGroup
 }
 
-func ToProto(channelStatuses []*util.ChannelStatus) (ret []*cmd.ChannelStatus) {
+func ToProto(channelStatuses []*util.ChannelStatus) (ret []*msg.ChannelStatus) {
 	for _, stat := range channelStatuses {
-		ret = append(ret, &cmd.ChannelStatus{
+		ret = append(ret, &msg.ChannelStatus{
 			Length:    proto.Int64(stat.Length),
 			StartTime: proto.Int64(stat.StartTime.Unix()),
 			StopTime:  proto.Int64(stat.StopTime.Unix()),
@@ -28,7 +28,7 @@ func ToProto(channelStatuses []*util.ChannelStatus) (ret []*cmd.ChannelStatus) {
 	return
 }
 
-func FromProto(channelStatuses []*cmd.ChannelStatus) (ret []*util.ChannelStatus) {
+func FromProto(channelStatuses []*msg.ChannelStatus) (ret []*util.ChannelStatus) {
 	for _, stat := range channelStatuses {
 		ret = append(ret, &util.ChannelStatus{
 			Length:    stat.GetLength(),

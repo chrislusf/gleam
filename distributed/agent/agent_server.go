@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
 	"github.com/chrislusf/gleam/util"
@@ -143,7 +143,7 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 		return
 	}
 
-	newCmd := &cmd.ControlMessage{}
+	newCmd := &msg.ControlMessage{}
 	if err := proto.Unmarshal(data, newCmd); err != nil {
 		log.Fatal("unmarshaling error: ", err)
 	}
@@ -159,8 +159,8 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 }
 
 func (as *AgentServer) handleCommandConnection(conn net.Conn,
-	command *cmd.ControlMessage) *cmd.ControlMessage {
-	reply := &cmd.ControlMessage{}
+	command *msg.ControlMessage) *msg.ControlMessage {
+	reply := &msg.ControlMessage{}
 	if command.GetReadRequest() != nil {
 		if command.GetIsMemoryIO() {
 			as.handleInMemoryReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)

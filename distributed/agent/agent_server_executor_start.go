@@ -11,18 +11,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"
 )
 
 func (as *AgentServer) handleStart(conn net.Conn,
-	startRequest *cmd.StartRequest) *cmd.StartResponse {
+	startRequest *msg.StartRequest) *msg.StartResponse {
 
 	// println("starting", startRequest.GetInstructions())
-	reply := &cmd.StartResponse{}
+	reply := &msg.StartResponse{}
 	stat := as.localExecutorManager.getExecutorStatus(*startRequest.GetInstructions().FlowHashCode)
 	stat.RequestTime = time.Now()
 
@@ -50,37 +50,37 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
-	cmd := exec.Command(
+	command := exec.Command(
 		executableFullFilename,
 		"execute",
 		"--steps",
 		strings.Join(steps, "-"),
 	)
-	stdin, err := cmd.StdinPipe()
+	stdin, err := command.StdinPipe()
 	if err != nil {
 		log.Fatal(err)
 	}
-	// cmd.Env = startRequest.Envs
-	cmd.Dir = dir
-	cmd.Stdout = conn
-	cmd.Stderr = conn
-	err = cmd.Start()
+	// msg.Env = startRequest.Envs
+	command.Dir = dir
+	command.Stdout = conn
+	command.Stderr = conn
+	err = command.Start()
 	if err != nil {
 		log.Printf("Failed to start command %s under %s: %v",
-			cmd.Path, cmd.Dir, err)
+			command.Path, command.Dir, err)
 		reply.Error = proto.String(err.Error())
 	} else {
-		reply.Pid = proto.Int32(int32(cmd.Process.Pid))
+		reply.Pid = proto.Int32(int32(command.Process.Pid))
 	}
-	stat.Process = cmd.Process
+	stat.Process = command.Process
 
 	// send instruction set to executor
-	cmdMessageBytes, err := proto.Marshal(startRequest.GetInstructions())
+	msgMessageBytes, err := proto.Marshal(startRequest.GetInstructions())
 	if err != nil {
 		log.Printf("Failed to marshal command %s: %v",
 			startRequest.GetInstructions().String(), err)
 	}
-	_, err = stdin.Write(cmdMessageBytes)
+	_, err = stdin.Write(msgMessageBytes)
 	if err != nil {
 		log.Printf("Failed to write command: %v", err)
 	}
@@ -90,11 +90,11 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	}
 
 	// wait for finish
-	cmd.Wait()
+	command.Wait()
 	// println("finished", startRequest.GetInstructions().String())
 	stat.StopTime = time.Now()
 
-	// log.Printf("Finish command %+v", cmd)
+	// log.Printf("Finish command %+v", msg)
 
 	return reply
 }

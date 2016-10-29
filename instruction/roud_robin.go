@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/distributed/cmd"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -25,10 +25,10 @@ func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, s
 	}
 }
 
-func (b *RoundRobin) SerializeToCommand() *cmd.Instruction {
-	return &cmd.Instruction{
+func (b *RoundRobin) SerializeToCommand() *msg.Instruction {
+	return &msg.Instruction{
 		Name:       proto.String(b.Name()),
-		RoundRobin: &cmd.RoundRobin{},
+		RoundRobin: &msg.RoundRobin{},
 	}
 }
 
