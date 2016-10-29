@@ -157,7 +157,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
 		processWriters(wg, i, func(writers []io.Writer) {
-			flow.RoundRobin(inChan.Reader, writers)
+			instruction.DoRoundRobin(inChan.Reader, writers)
 		})
 
 	} else if i.GetCollectPartitions() != nil {

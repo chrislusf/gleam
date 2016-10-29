@@ -18,6 +18,6 @@ func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "PipeArgs"
 	step.IsPipe = true
-	step.Instruction = instruction.NewPipeAsArgs(code)
+	step.SetInstruction(instruction.NewPipeAsArgs(code))
 	return ret
 }

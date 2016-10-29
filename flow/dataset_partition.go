@@ -14,11 +14,7 @@ func (d *Dataset) RoundRobin(shard int) *Dataset {
 	}
 	ret := d.FlowContext.newNextDataset(shard)
 	step := d.FlowContext.AddOneToAllStep(d, ret)
-	step.Name = "RoundRobin"
-	step.FunctionType = instruction.TypeRoundRobin
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		RoundRobin(readers[0], writers)
-	}
+	step.SetInstruction(instruction.NewRoundRobin())
 	return ret
 }
 
@@ -79,18 +75,6 @@ func ScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
 		}
 		x := util.PartitionByKeys(shardCount, keyObjects)
 		util.WriteMessage(writers[x], data)
-		return nil
-	})
-}
-
-func RoundRobin(reader io.Reader, writers []io.Writer) {
-	count, shardCount := 0, len(writers)
-	util.ProcessMessage(reader, func(data []byte) error {
-		if count >= shardCount {
-			count = 0
-		}
-		util.WriteMessage(writers[count], data)
-		count++
 		return nil
 	})
 }
