@@ -18,13 +18,16 @@ func (d *Dataset) CoGroup(other *Dataset, indexes ...int) *Dataset {
 		return sorted_d.LocalGroupBy(indexes)
 	}
 	sorted_other := other.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
-	return sorted_d.CoGroupPartitionedSorted(sorted_other, indexes)
+	t := sorted_d.CoGroupPartitionedSorted(sorted_other, indexes)
+	t.IsLocalSorted = orderBys
+	return t
 }
 
 // CoGroupPartitionedSorted joins 2 datasets that are sharded
 // by the same key and already locally sorted within each shard.
 func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret *Dataset) {
 	ret = this.FlowContext.newNextDataset(len(this.Shards))
+	ret.IsPartitionedBy = indexes
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)

@@ -56,6 +56,7 @@ func (d *Dataset) LocalSort(orderBys []instruction.OrderBy) *Dataset {
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = orderBys
+	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(instruction.NewLocalSort(orderBys))
 	return ret
 }
@@ -67,6 +68,7 @@ func (d *Dataset) LocalTop(n int, orderBys []instruction.OrderBy) *Dataset {
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = orderBys
+	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(instruction.NewLocalTop(n, orderBys))
 	return ret
 }
@@ -80,6 +82,8 @@ func (d *Dataset) MergeSortedTo(partitionCount int, orderBys []instruction.Order
 	if len(d.Shards)%partitionCount > 0 {
 		everyN++
 	}
+	ret.IsLocalSorted = orderBys
+	ret.IsPartitionedBy = d.IsPartitionedBy
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
 	step.SetInstruction(instruction.NewMergeSortedTo(orderBys))
 	return ret

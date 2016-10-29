@@ -36,6 +36,8 @@ func (d *Dataset) DoJoin(other *Dataset, leftOuter, rightOuter bool, indexes []i
 func (this *Dataset) JoinPartitionedSorted(that *Dataset, indexes []int,
 	isLeftOuterJoin, isRightOuterJoin bool) *Dataset {
 	ret := this.FlowContext.newNextDataset(len(this.Shards))
+	ret.IsPartitionedBy = that.IsPartitionedBy
+	ret.IsLocalSorted = that.IsLocalSorted
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)

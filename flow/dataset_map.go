@@ -26,6 +26,8 @@ func (d *Dataset) FlatMap(code string) *Dataset {
 
 func (d *Dataset) Filter(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
+	ret.IsLocalSorted = d.IsLocalSorted
+	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "Filter"
 	step.Script = d.FlowContext.CreateScript()
 	step.Script.Filter(code)
@@ -48,6 +50,8 @@ func (d *Dataset) Select(indexes ...int) *Dataset {
 
 func (d *Dataset) LocalLimit(n int) *Dataset {
 	ret, step := add1ShardTo1Step(d)
+	ret.IsLocalSorted = d.IsLocalSorted
+	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "Map"
 	step.Script = d.FlowContext.CreateScript()
 	step.Script.Limit(n)

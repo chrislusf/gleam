@@ -19,6 +19,8 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, indexes []int) *Dataset
 	}
 
 	ret := this.FlowContext.newNextDataset(len(that.Shards))
+	ret.IsPartitionedBy = that.IsPartitionedBy
+	ret.IsLocalSorted = that.IsLocalSorted
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.SetInstruction(instruction.NewLocalHashAndJoinWith(indexes))

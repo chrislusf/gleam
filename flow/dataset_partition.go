@@ -38,6 +38,7 @@ func (d *Dataset) Partition(shard int, indexes ...int) *Dataset {
 
 func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(len(d.Shards) * shardCount)
+	ret.IsPartitionedBy = indexes
 	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
 	step.SetInstruction(instruction.NewScatterPartitions(indexes))
 	return
@@ -45,6 +46,7 @@ func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset
 
 func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(shardCount)
+	ret.IsPartitionedBy = indexes
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.SetInstruction(instruction.NewCollectPartitions())
 	return
