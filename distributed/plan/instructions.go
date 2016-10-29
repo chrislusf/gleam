@@ -69,13 +69,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeScatterPartitions {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			ScatterPartitions: &cmd.ScatterPartitions{
-				ShardCount: proto.Int32(int32(task.Step.Params["shardCount"].(int))),
-				Indexes:    getIndexes(task),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeRoundRobin {

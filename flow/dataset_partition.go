@@ -43,13 +43,7 @@ func (d *Dataset) Partition(shard int, indexes ...int) *Dataset {
 func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(len(d.Shards) * shardCount)
 	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
-	step.Name = "Partition_scatter"
-	step.Params["shardCount"] = shardCount
-	step.Params["indexes"] = indexes
-	step.FunctionType = instruction.TypeScatterPartitions
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		ScatterPartitions(readers[0], writers, indexes)
-	}
+	step.SetInstruction(instruction.NewScatterPartitions(indexes))
 	return
 }
 

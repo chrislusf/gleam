@@ -71,8 +71,7 @@ message Instruction {
 }
 
 message ScatterPartitions {
-	required int32 shardCount = 1;
-	repeated int32 indexes = 2;
+	repeated int32 indexes = 1;
 }
 
 message RoundRobin {

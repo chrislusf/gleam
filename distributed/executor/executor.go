@@ -150,7 +150,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, nil, i, isFirst, isLast, readerCount)
 		processWriters(wg, i, func(writers []io.Writer) {
-			flow.ScatterPartitions(inChan.Reader, writers, toInts(i.GetScatterPartitions().GetIndexes()))
+			instruction.DoScatterPartitions(inChan.Reader, writers, toInts(i.GetScatterPartitions().GetIndexes()))
 		})
 
 	} else if i.GetRoundRobin() != nil {
