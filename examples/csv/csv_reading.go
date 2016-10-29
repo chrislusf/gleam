@@ -9,7 +9,7 @@ import (
 
 func main() {
 
-	f := gleam.New()
+	f := gleam.New(gleam.DistributedPlanner)
 	a := f.Input(csv.New(
 		"/Users/chris/dev/gopath/src/github.com/chrislusf/gleam/examples/csv/sample1.csv",
 		"/Users/chris/dev/gopath/src/github.com/chrislusf/gleam/examples/csv/sample2.csv",

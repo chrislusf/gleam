@@ -2,7 +2,6 @@ package flow
 
 import (
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/util"
 	"github.com/ugorji/go/codec"
 )
 

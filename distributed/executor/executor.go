@@ -138,7 +138,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
 
-		flow.PipeAsArgs(inChan.Reader, i.GetPipeAsArgs().GetCode(), outChan.Writer)
+		instruction.DoPipeAsArgs(inChan.Reader, outChan.Writer, i.GetPipeAsArgs().GetCode())
 
 	} else if i.GetMergeSortedTo() != nil {
 
