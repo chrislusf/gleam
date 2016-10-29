@@ -26,10 +26,6 @@ func (b *InputSplitReader) Name() string {
 	return "InputSplitReader"
 }
 
-func (b *InputSplitReader) FunctionType() FunctionType {
-	return TypeInputSplitReader
-}
-
 func (b *InputSplitReader) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoInputSplitReader(readers[0], writers[0], b.typeName)

@@ -1,11 +1,7 @@
 package flow
 
 import (
-	"io"
-	"log"
-
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/util"
 )
 
 func (d *Dataset) RoundRobin(shard int) *Dataset {
@@ -52,21 +48,6 @@ func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.SetInstruction(instruction.NewCollectPartitions())
 	return
-}
-
-func ScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
-	shardCount := len(writers)
-
-	util.ProcessMessage(reader, func(data []byte) error {
-		keyObjects, err := util.DecodeRowKeys(data, indexes)
-		if err != nil {
-			log.Printf("Failed to find keys on %v", indexes)
-			return err
-		}
-		x := util.PartitionByKeys(shardCount, keyObjects)
-		util.WriteMessage(writers[x], data)
-		return nil
-	})
 }
 
 func intArrayEquals(a []int, b []int) bool {

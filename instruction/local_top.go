@@ -22,10 +22,6 @@ func (b *LocalTop) Name() string {
 	return "LocalTop"
 }
 
-func (b *LocalTop) FunctionType() FunctionType {
-	return TypeLocalTop
-}
-
 func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoLocalTop(readers[0], writers[0], b.n, b.orderBys)

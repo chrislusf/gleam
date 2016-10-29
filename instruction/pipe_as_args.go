@@ -25,10 +25,6 @@ func (b *PipeAsArgs) Name() string {
 	return "PipeAsArgs"
 }
 
-func (b *PipeAsArgs) FunctionType() FunctionType {
-	return TypePipeAsArgs
-}
-
 func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoPipeAsArgs(readers[0], writers[0], b.code)

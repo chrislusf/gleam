@@ -8,7 +8,6 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/distributed/netchan"
-	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
 )
@@ -177,14 +176,14 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		jps := i.GetJoinPartitionedSorted()
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.JoinPartitionedSorted(readers[0], readers[1], toInts(i.GetJoinPartitionedSorted().GetIndexes()), *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin, outChan.Writer)
+		instruction.DoJoinPartitionedSorted(readers[0], readers[1], outChan.Writer, toInts(i.GetJoinPartitionedSorted().GetIndexes()), *jps.IsLeftOuterJoin, *jps.IsRightOuterJoin)
 
 	} else if i.GetCoGroupPartitionedSorted() != nil {
 
 		readers := linkInReaders(wg, i)
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.CoGroupPartitionedSorted(readers[0], readers[1], toInts(i.GetCoGroupPartitionedSorted().GetIndexes()), outChan.Writer)
+		instruction.DoCoGroupPartitionedSorted(readers[0], readers[1], outChan.Writer, toInts(i.GetCoGroupPartitionedSorted().GetIndexes()))
 
 	} else if i.GetLocalTop() != nil {
 

@@ -22,10 +22,6 @@ func (b *LocalHashAndJoinWith) Name() string {
 	return "LocalHashAndJoinWith"
 }
 
-func (b *LocalHashAndJoinWith) FunctionType() FunctionType {
-	return TypeLocalHashAndJoinWith
-}
-
 func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes)
@@ -79,13 +75,4 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 	if err != nil {
 		fmt.Printf("LocalHashAndJoinWith>Failed to process the bigger input data:%v\n", err)
 	}
-}
-
-func genKeyBytesAndValues(input []byte, indexes []int) (keyBytes []byte, values []interface{}, err error) {
-	keys, values, err := util.DecodeRowKeysValues(input, indexes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("DecodeRowKeysValues %v: %+v", err, input)
-	}
-	keyBytes, err = util.EncodeRow(keys...)
-	return keyBytes, values, err
 }

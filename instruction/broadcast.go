@@ -19,10 +19,6 @@ func (b *Broadcast) Name() string {
 	return "Broadcast"
 }
 
-func (b *Broadcast) FunctionType() FunctionType {
-	return TypeBroadcast
-}
-
 func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoBroadcast(readers[0], writers)

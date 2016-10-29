@@ -62,7 +62,6 @@ type Step struct {
 	Instruction    instruction.Instruction
 	Tasks          []*Task
 	Name           string
-	FunctionType   instruction.FunctionType
 	NetworkType    NetworkType
 	IsOnDriverSide bool
 	IsPipe         bool

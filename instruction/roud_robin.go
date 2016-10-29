@@ -19,10 +19,6 @@ func (b *RoundRobin) Name() string {
 	return "RoundRobin"
 }
 
-func (b *RoundRobin) FunctionType() FunctionType {
-	return TypeRoundRobin
-}
-
 func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoRoundRobin(readers[0], writers)

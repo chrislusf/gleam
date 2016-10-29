@@ -19,10 +19,6 @@ func (b *CollectPartitions) Name() string {
 	return "CollectPartitions"
 }
 
-func (b *CollectPartitions) FunctionType() FunctionType {
-	return TypeCollectPartitions
-}
-
 func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoCollectPartitions(readers, writers[0])

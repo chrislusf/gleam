@@ -23,7 +23,6 @@ func (step *Step) NewTask() (task *Task) {
 
 func (step *Step) SetInstruction(ins instruction.Instruction) {
 	step.Name = ins.Name()
-	step.FunctionType = ins.FunctionType()
 	step.Function = ins.Function()
 	step.Instruction = ins
 }

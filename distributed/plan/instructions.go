@@ -3,7 +3,6 @@ package plan
 import (
 	"github.com/chrislusf/gleam/distributed/cmd"
 	"github.com/chrislusf/gleam/flow"
-	ins "github.com/chrislusf/gleam/instruction"
 	"github.com/golang/protobuf/proto"
 )
 
@@ -28,67 +27,11 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 		return nil
 	}
 
-	// try to run Function first
+	// try to run Instruction first
 	// if failed, try to run shell scripts
 	// if failed, try to run lua scripts
 
-	if task.Step.FunctionType == ins.TypeLocalSort {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypePipeAsArgs {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeMergeSortedTo {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeJoinPartitionedSorted {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			JoinPartitionedSorted: &cmd.JoinPartitionedSorted{
-				IsLeftOuterJoin:  proto.Bool(task.Step.Params["isLeftOuterJoin"].(bool)),
-				IsRightOuterJoin: proto.Bool(task.Step.Params["isRightOuterJoin"].(bool)),
-				Indexes:          getIndexes(task),
-			},
-		}
-	}
-
-	if task.Step.FunctionType == ins.TypeCoGroupPartitionedSorted {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			CoGroupPartitionedSorted: &cmd.CoGroupPartitionedSorted{
-				Indexes: getIndexes(task),
-			},
-		}
-	}
-
-	if task.Step.FunctionType == ins.TypeCollectPartitions {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeScatterPartitions {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeRoundRobin {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeInputSplitReader {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeLocalTop {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeBroadcast {
-		return task.Step.Instruction.SerializeToCommand()
-	}
-
-	if task.Step.FunctionType == ins.TypeLocalHashAndJoinWith {
+	if task.Step.Instruction != nil {
 		return task.Step.Instruction.SerializeToCommand()
 	}
 
@@ -109,23 +52,4 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 			Env:    command.Env,
 		},
 	}
-}
-
-func getIndexes(task *flow.Task) (indexes []int32) {
-	storedValues := task.Step.Params["indexes"].([]int)
-	for _, x := range storedValues {
-		indexes = append(indexes, int32(x))
-	}
-	return
-}
-
-func getOrderBys(task *flow.Task) (orderBys []*cmd.OrderBy) {
-	storedValues := task.Step.Params["orderBys"].([]ins.OrderBy)
-	for _, o := range storedValues {
-		orderBys = append(orderBys, &cmd.OrderBy{
-			Index: proto.Int32(int32(o.Index)),
-			Order: proto.Int32(int32(o.Order)),
-		})
-	}
-	return
 }

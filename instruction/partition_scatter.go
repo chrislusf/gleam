@@ -21,10 +21,6 @@ func (b *ScatterPartitions) Name() string {
 	return "ScatterPartitions"
 }
 
-func (b *ScatterPartitions) FunctionType() FunctionType {
-	return TypeScatterPartitions
-}
-
 func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoScatterPartitions(readers[0], writers, b.indexes)

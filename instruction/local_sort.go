@@ -27,10 +27,6 @@ func (b *LocalSort) Name() string {
 	return "LocalSort"
 }
 
-func (b *LocalSort) FunctionType() FunctionType {
-	return TypeLocalSort
-}
-
 func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoLocalSort(readers[0], writers[0], b.orderBys)

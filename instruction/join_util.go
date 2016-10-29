@@ -1,4 +1,4 @@
-package flow
+package instruction
 
 import (
 	"fmt"
@@ -11,6 +11,15 @@ import (
 type keyValues struct {
 	Keys   []interface{}
 	Values []interface{}
+}
+
+func genKeyBytesAndValues(input []byte, indexes []int) (keyBytes []byte, values []interface{}, err error) {
+	keys, values, err := util.DecodeRowKeysValues(input, indexes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("DecodeRowKeysValues %v: %+v", err, input)
+	}
+	keyBytes, err = util.EncodeRow(keys...)
+	return keyBytes, values, err
 }
 
 func getKeyValues(row []interface{}, indexes []int, mask []bool) keyValues {

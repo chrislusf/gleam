@@ -1,10 +1,7 @@
 package flow
 
 import (
-	"io"
-
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/util"
 )
 
 // CoGroup joins two datasets by the key,
@@ -31,50 +28,6 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
-	step.Name = "CoGroupPartitionedSorted"
-	step.Params["indexes"] = indexes
-	step.FunctionType = instruction.TypeCoGroupPartitionedSorted
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		CoGroupPartitionedSorted(
-			readers[0],
-			readers[1],
-			indexes,
-			writers[0],
-		)
-	}
+	step.SetInstruction(instruction.NewCoGroupPartitionedSorted(indexes))
 	return ret
-}
-
-func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int, writer io.Writer) {
-	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
-	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
-
-	// get first value from both channels
-	leftValuesWithSameKey, leftHasValue := <-leftChan
-	rightValuesWithSameKey, rightHasValue := <-rightChan
-
-	for leftHasValue && rightHasValue {
-		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
-		switch {
-		case x == 0:
-			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
-			leftValuesWithSameKey, leftHasValue = <-leftChan
-			rightValuesWithSameKey, rightHasValue = <-rightChan
-		case x < 0:
-			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
-			leftValuesWithSameKey, leftHasValue = <-leftChan
-		case x > 0:
-			util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
-			rightValuesWithSameKey, rightHasValue = <-rightChan
-		}
-	}
-	for leftHasValue {
-		util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
-		leftValuesWithSameKey, leftHasValue = <-leftChan
-	}
-	for rightHasValue {
-		util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
-		rightValuesWithSameKey, rightHasValue = <-rightChan
-	}
-
 }

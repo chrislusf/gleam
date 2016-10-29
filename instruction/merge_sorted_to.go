@@ -21,10 +21,6 @@ func (b *MergeSortedTo) Name() string {
 	return "MergeSortedTo"
 }
 
-func (b *MergeSortedTo) FunctionType() FunctionType {
-	return TypeMergeSortedTo
-}
-
 func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
 		DoMergeSortedTo(readers, writers[0], b.orderBys)
