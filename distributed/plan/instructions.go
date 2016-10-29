@@ -37,12 +37,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypePipeAsArgs {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			PipeAsArgs: &cmd.PipeAsArgs{
-				Code: proto.String(task.Step.Params["code"].(string)),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeMergeSortedTo {
@@ -87,19 +82,11 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeRoundRobin {
-		return &cmd.Instruction{
-			Name:       proto.String(task.Step.Name),
-			RoundRobin: &cmd.RoundRobin{},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeInputSplitReader {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			InputSplitReader: &cmd.InputSplitReader{
-				InputType: proto.String(task.Step.Params["inputType"].(string)),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeLocalTop {

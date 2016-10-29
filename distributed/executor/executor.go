@@ -169,7 +169,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
 
-		flow.ReadInputSplits(inChan.Reader, i.GetInputSplitReader().GetInputType(), outChan.Writer)
+		instruction.DoInputSplitReader(inChan.Reader, outChan.Writer, i.GetInputSplitReader().GetInputType())
 
 	} else if i.GetJoinPartitionedSorted() != nil {
 

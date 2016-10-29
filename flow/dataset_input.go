@@ -1,16 +1,10 @@
 package flow
 
 import (
-	"fmt"
-	"io"
 	"log"
-	"os"
 
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/source"
-	_ "github.com/chrislusf/gleam/source/csv"
-	_ "github.com/chrislusf/gleam/source/ints"
-	"github.com/chrislusf/gleam/util"
 )
 
 // Input specifies the input
@@ -43,46 +37,7 @@ func (fc *FlowContext) InputInParallel(in source.Input, parallelLimit int) (ret 
 
 	ret = fc.newNextDataset(parallelCount)
 	step := fc.AddOneToOneStep(data, ret)
-	step.Name = "InputSplitReader"
-	step.Params["inputType"] = in.GetType()
-	step.FunctionType = instruction.TypeInputSplitReader
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		ReadInputSplits(readers[0], in.GetType(), writers[0])
-	}
+	step.SetInstruction(instruction.NewInputSplitReader(in.GetType()))
 	return
-
-}
-
-// ReadInputSplits runs on executors to read input splits
-func ReadInputSplits(reader io.Reader, typeName string, writer io.Writer) {
-	format, err := source.Registry.GetInputFormat(typeName)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load input format %s: %v", typeName, err)
-		return
-	}
-	for {
-		row, err := util.ReadRow(reader)
-		if err != nil {
-			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
-			}
-			break
-		}
-		encodedSplit := row[0].([]byte)
-		split, err := format.DecodeInputSplit(encodedSplit)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "decoding error: %v", err)
-			continue
-		}
-		csvReader, err := format.GetInputSplitReader(split)
-		if err != nil {
-			log.Fatalf("Failed to read from InputSplit %+v: %v", split, err)
-		}
-
-		for csvReader.WriteRow(writer) {
-		}
-
-		csvReader.Close()
-	}
 
 }
