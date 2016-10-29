@@ -163,7 +163,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 	} else if i.GetCollectPartitions() != nil {
 
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.CollectPartitions(linkInReaders(wg, i), outChan.Writer)
+		instruction.DoCollectPartitions(linkInReaders(wg, i), outChan.Writer)
 
 	} else if i.GetInputSplitReader() != nil {
 

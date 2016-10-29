@@ -56,11 +56,7 @@ func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset
 func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset) {
 	ret = d.FlowContext.newNextDataset(shardCount)
 	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
-	step.Name = "Partition_collect"
-	step.FunctionType = instruction.TypeCollectPartitions
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
-		CollectPartitions(readers, writers[0])
-	}
+	step.SetInstruction(instruction.NewCollectPartitions())
 	return
 }
 
@@ -77,17 +73,6 @@ func ScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
 		util.WriteMessage(writers[x], data)
 		return nil
 	})
-}
-
-func CollectPartitions(readers []io.Reader, writer io.Writer) {
-	// println("starting to collect data from partitions...", len(readers))
-
-	if len(readers) == 1 {
-		io.Copy(writer, readers[0])
-		return
-	}
-
-	util.CopyMultipleReaders(readers, writer)
 }
 
 func intArrayEquals(a []int, b []int) bool {

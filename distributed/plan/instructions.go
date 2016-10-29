@@ -65,10 +65,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeCollectPartitions {
-		return &cmd.Instruction{
-			Name:              proto.String(task.Step.Name),
-			CollectPartitions: &cmd.CollectPartitions{},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	if task.Step.FunctionType == ins.TypeScatterPartitions {
