@@ -203,7 +203,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 		readers := linkInReaders(wg, i)
 		connectInputOutput(wg, i.GetName(), nil, outChan, i, isFirst, isLast, readerCount)
-		flow.LocalHashAndJoinWith(readers[0], readers[1], toInts(i.GetLocalHashAndJoinWith().GetIndexes()), outChan.Writer)
+		instruction.DoLocalHashAndJoinWith(readers[0], readers[1], outChan.Writer, toInts(i.GetLocalHashAndJoinWith().GetIndexes()))
 
 	} else {
 		panic("what is this? " + i.String())

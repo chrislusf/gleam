@@ -89,12 +89,7 @@ func translateToInstruction(task *flow.Task) (ret *cmd.Instruction) {
 	}
 
 	if task.Step.FunctionType == ins.TypeLocalHashAndJoinWith {
-		return &cmd.Instruction{
-			Name: proto.String(task.Step.Name),
-			LocalHashAndJoinWith: &cmd.LocalHashAndJoinWith{
-				Indexes: getIndexes(task),
-			},
-		}
+		return task.Step.Instruction.SerializeToCommand()
 	}
 
 	// Command can come from Pipe() directly
