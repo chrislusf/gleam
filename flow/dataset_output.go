@@ -17,12 +17,12 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step.Name = "Output"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
 		var wg sync.WaitGroup
-		for _, reader := range readers {
+		for i, reader := range readers {
 			wg.Add(1)
-			go func(reader io.Reader) {
+			go func(i int, reader io.Reader) {
 				defer wg.Done()
 				f(reader)
-			}(reader)
+			}(i, reader)
 		}
 		wg.Wait()
 	}

@@ -69,8 +69,8 @@ func addNils(target []interface{}, nilCount int) []interface{} {
 
 func JoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int,
 	isLeftOuterJoin, isRightOuterJoin bool, writer io.Writer) {
-	leftChan := newChannelOfValuesWithSameKey(leftRawChan, indexes)
-	rightChan := newChannelOfValuesWithSameKey(rightRawChan, indexes)
+	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
+	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
 	// get first value from both channels
 	leftValuesWithSameKey, leftHasValue := <-leftChan

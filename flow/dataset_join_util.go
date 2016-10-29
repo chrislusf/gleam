@@ -39,7 +39,7 @@ func genKeyFieldsMask(n int, indexes []int) []bool {
 
 // create a channel to aggregate values of the same key
 // automatically close original sorted channel
-func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan keyValues {
+func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []int) chan keyValues {
 	writer := make(chan keyValues, 1024)
 	go func() {
 
@@ -48,11 +48,11 @@ func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan key
 		row, err := util.ReadRow(sortedChan)
 		if err != nil {
 			if err != io.EOF {
-				fmt.Fprintf(os.Stderr, "join read first row error: %v\n", err)
+				fmt.Fprintf(os.Stderr, "%s join read first row error: %v\n", name, err)
 			}
 			return
 		}
-		// fmt.Printf("join read len=%d, row: %s\n", len(row), row[0])
+		// fmt.Printf("%s join read len=%d, row: %s\n", name, len(row), row[0])
 
 		keyFieldsMask := genKeyFieldsMask(len(row), indexes)
 
@@ -71,7 +71,7 @@ func newChannelOfValuesWithSameKey(sortedChan io.Reader, indexes []int) chan key
 				}
 				break
 			}
-			// fmt.Printf("join read len=%d, row: %s\n", len(row), row[0])
+			// fmt.Printf("%s join read len=%d, row: %s\n", name, len(row), row[0])
 			newRow := getKeyValues(row, indexes, keyFieldsMask)
 			x := util.Compare(keyValues.Keys, newRow.Keys)
 			if x == 0 {

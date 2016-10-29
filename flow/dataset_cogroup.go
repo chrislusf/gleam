@@ -46,8 +46,8 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 }
 
 func CoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, indexes []int, writer io.Writer) {
-	leftChan := newChannelOfValuesWithSameKey(leftRawChan, indexes)
-	rightChan := newChannelOfValuesWithSameKey(rightRawChan, indexes)
+	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
+	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
 	// get first value from both channels
 	leftValuesWithSameKey, leftHasValue := <-leftChan

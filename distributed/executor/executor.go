@@ -89,6 +89,7 @@ func linkInReaders(wg *sync.WaitGroup, i *cmd.Instruction) (inChans []io.Reader)
 	for _, inputLocation := range i.GetInputShardLocations() {
 		wg.Add(1)
 		inChan := util.NewPiper()
+		// println(i.GetName(), "connecting to", inputLocation.Address(), "to read", inputLocation.GetName())
 		go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inChan.Writer)
 		inChans = append(inChans, inChan.Reader)
 	}
