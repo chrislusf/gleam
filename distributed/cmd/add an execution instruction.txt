@@ -17,22 +17,9 @@ Taking adding InputSplitReader as example:
 
     protoc --go_out=. *.proto
 
-3.9 in github.com/chrislusf/gleam/flow/structure.go, add const
-    TypeInputSplitReader
 
-4. in github.com/chrislusf/gleam/distributed/plan/instructions.go, function translateToInstruction()
-    serialize the Instruction
-
-
-    if task.Step.FunctionType == flow.TypeInputSplitReader {
-        return &cmd.Instruction{
-            Name: proto.String(task.Step.Name),
-            InputSplitReader: &cmd.InputSplitReader{
-                InputType:           proto.String(task.Step.Params["inputType"].(string)),
-            },
-        }
-    }
-
+4. in github.com/chrislusf/gleam/instruction
+	add an instruction following the Instruction interface.
 
 6. in github.com/chrislusf/gleam/distributed/executor/executor.go, function ExecuteInstruction()
 

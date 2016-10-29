@@ -8,15 +8,6 @@ import (
 
 func TestEncodingDecoding(t *testing.T) {
 
-	oneDatasetShardLocation := &DatasetShardLocation{
-		Shard: &DatasetShard{
-			FlowName:       proto.String("test"),
-			DatasetId:      proto.Int(1),
-			DatasetShardId: proto.Int(0),
-		},
-		Host: proto.String("localhost"),
-		Port: proto.Int32(45327),
-	}
 	instructions := &InstructionSet{
 		FlowHashCode: proto.Uint32(1234567),
 		ReaderCount:  proto.Int32(23),
@@ -24,29 +15,23 @@ func TestEncodingDecoding(t *testing.T) {
 			&Instruction{
 				Name: proto.String("map1"),
 				Script: &Script{
-					InputShardLocation:  oneDatasetShardLocation,
-					OutputShardLocation: oneDatasetShardLocation,
-					IsPipe:              proto.Bool(true),
-					Path:                proto.String("cat"),
-					Args:                []string{"/etc/passwd"},
+					IsPipe: proto.Bool(true),
+					Path:   proto.String("cat"),
+					Args:   []string{"/etc/passwd"},
 				},
 			},
 			&Instruction{
 				Name: proto.String("map2"),
 				Script: &Script{
-					InputShardLocation:  oneDatasetShardLocation,
-					OutputShardLocation: oneDatasetShardLocation,
-					IsPipe:              proto.Bool(true),
-					Path:                proto.String("sort"),
+					IsPipe: proto.Bool(true),
+					Path:   proto.String("sort"),
 				},
 			},
 			&Instruction{
 				Name: proto.String("map4"),
 				Script: &Script{
-					InputShardLocation:  oneDatasetShardLocation,
-					OutputShardLocation: oneDatasetShardLocation,
-					IsPipe:              proto.Bool(true),
-					Path:                proto.String("cat"),
+					IsPipe: proto.Bool(true),
+					Path:   proto.String("cat"),
 				},
 			},
 		},
