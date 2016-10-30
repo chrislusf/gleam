@@ -84,12 +84,12 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
 
-	gleam.New().TextFile("/etc/passwd").FlatMap(`
+	flow.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end
@@ -113,12 +113,12 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
 
-	gleam.New().TextFile("/etc/passwd").FlatMap(`
+	flow.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end
@@ -137,13 +137,13 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/source/csv"
 )
 
 func main() {
 
-	f := gleam.New()
+	f := flow.New()
 	a := f.Input(csv.New("a.csv")).Select(1,4) // a1, a4
 	b := f.Input(csv.New("b.csv")).Select(2,3) // b2, b3
 	
@@ -170,7 +170,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
@@ -180,7 +180,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gleam.New().Lines(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
+	flow.New().Lines(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
       function(line)
         return line:gmatch("%w+")
       end
@@ -213,17 +213,25 @@ Start a gleam master and serveral gleam agents
 ```
 
 ## Change Execution Mode.
-From gleam.New(), change to gleam.NewDistributed(), or gleam.New(gleam.Distributed)
+
+After the flow is defined, the Run() function can be executed in different ways.
+
 ```
+  f := flow.New()
+  ...
   // local mode
-  gleam.New()
-  gleam.New(gleam.Local)
-  
+  f.Run()
+
   // distributed mode
-  gleam.NewDistributed()
-  gleam.New(gleam.Distributed)
+  import "github.com/chrislusf/gleam/distributed"
+  f.Run(distributed.Option())
+  f.Run(distributed.Option().SetMaster("master_ip:45326"))
+
+  // distributed planner mode to print out logic plan
+  import "github.com/chrislusf/gleam/distributed"
+  f.Run(distributed.Planner())
+
 ```
-gleam.New(gleam.Local) and gleam.New(gleam.Distributed) are provided to dynamically change the execution mode.
 
 # Status
 Gleam is just beginning. Here are a few todo that needs help:
