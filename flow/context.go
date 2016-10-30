@@ -20,18 +20,18 @@ func New() (fc *FlowContext) {
 			"lua":    script.NewLuaScript,
 		},
 		HashCode: r.Uint32(),
-		Runner:   &Local,
 	}
 	return
 }
 
-func (fc *FlowContext) SetRunner(runner FlowRunner) *FlowContext {
-	fc.Runner = runner
-	return fc
-}
-
-func (fc *FlowContext) Run() {
-	fc.Runner.RunFlowContext(fc)
+func (fc *FlowContext) Run(options ...FlowOption) {
+	if len(options) == 0 {
+		Local.RunFlowContext(fc)
+	} else {
+		for _, option := range options {
+			option.GetFlowRunner().RunFlowContext(fc)
+		}
+	}
 }
 
 func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {

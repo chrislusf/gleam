@@ -3,13 +3,14 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/distributed"
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/source/csv"
 )
 
 func main() {
 
-	f := gleam.New()
+	f := flow.New()
 	a := f.Input(csv.New(
 		"/Users/chris/dev/gopath/src/github.com/chrislusf/gleam/examples/csv/sample1.csv",
 		"/Users/chris/dev/gopath/src/github.com/chrislusf/gleam/examples/csv/sample2.csv",

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 
 func join1() {
 
-	f := gleam.New().Init(`
+	f := flow.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end
@@ -46,7 +46,7 @@ func join1() {
 
 func join2() {
 
-	f := gleam.New().Init(`
+	f := flow.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end

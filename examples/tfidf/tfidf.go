@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 		return nil
 	})
 
-	f := gleam.New()
+	f := flow.New()
 	word2doc := f.Strings(fileNames).Partition(7).Map(`
         function(fileName)
             local f = io.open(fileName, "rb")

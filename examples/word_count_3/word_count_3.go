@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	gleam.New().Strings(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
+	flow.New().Strings(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
       function(line)
 	    -- log("input:"..line)
         return line:gmatch("%w+")

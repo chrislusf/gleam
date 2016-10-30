@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
 )
 
 func main() {
 
-	gleam.New().TextFile("/etc/passwd").FlatMap(`
+	flow.New().TextFile("/etc/passwd").FlatMap(`
 		function(line)
 			return line:gmatch("%w+")
 		end

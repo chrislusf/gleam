@@ -1,4 +1,4 @@
-package driver
+package distributed
 
 import (
 	"fmt"
@@ -7,15 +7,19 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
-type FlowContextPlanner struct {
+type DistributedPlanner struct {
 }
 
-func NewFlowContextPlanner() *FlowContextPlanner {
-	return &FlowContextPlanner{}
+func Planner() *DistributedPlanner {
+	return &DistributedPlanner{}
+}
+
+func (o *DistributedPlanner) GetFlowRunner() flow.FlowRunner {
+	return o
 }
 
 // driver runs on local, controlling all tasks
-func (fcd *FlowContextPlanner) Run(fc *flow.FlowContext) {
+func (fcd *DistributedPlanner) RunFlowContext(fc *flow.FlowContext) {
 
 	stepGroups, taskGroups := plan.GroupTasks(fc)
 
@@ -42,7 +46,12 @@ func (fcd *FlowContextPlanner) Run(fc *flow.FlowContext) {
 
 	fmt.Println("=== step groups ===")
 	for i, stepGroup := range stepGroups {
-		fmt.Printf("  step group: %d\n", i)
+		fmt.Printf("  step group: %d", i)
+		if len(stepGroup.Steps) > 0 && stepGroup.Steps[0].OutputDataset != nil {
+			fmt.Printf(" partition: %d\n", len(stepGroup.Steps[0].OutputDataset.Shards))
+		} else {
+			fmt.Println()
+		}
 		for _, step := range stepGroup.Steps {
 			fmt.Printf("    step: %s\n", step.Name)
 		}

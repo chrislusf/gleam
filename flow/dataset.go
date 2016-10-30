@@ -31,8 +31,12 @@ func (d *Dataset) Init(scriptPart string) *Dataset {
 }
 
 // Run starts the whole flow. This is a convenient method, same as *FlowContext.Run()
-func (d *Dataset) Run() {
-	d.FlowContext.Runner.RunFlowContext(d.FlowContext)
+func (d *Dataset) Run(option ...FlowOption) {
+	if len(option) == 0 {
+		Local.RunFlowContext(d.FlowContext)
+	} else {
+		option[0].GetFlowRunner().RunFlowContext(d.FlowContext)
+	}
 }
 
 func (d *Dataset) SetupShard(n int) {

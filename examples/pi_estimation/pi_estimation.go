@@ -7,9 +7,10 @@ import (
 	"runtime/pprof"
 	"time"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/distributed"
+	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
-	"github.com/chrislusf/glow/flow"
+	glow "github.com/chrislusf/glow/flow"
 )
 
 func main() {
@@ -21,8 +22,8 @@ func main() {
 	networkTrafficReductionFactor := 1024 * 1024
 
 	// uncomment this line if you setup the gleam master and agents
-	// testGleam("distributed", gleam.Distributed, times, networkTrafficReductionFactor)
-	testGleam("local mode", gleam.Local, times, networkTrafficReductionFactor)
+	testGleam("distributed parallel 7", false, times, networkTrafficReductionFactor)
+	testGleam("local mode parallel 7", true, times, networkTrafficReductionFactor)
 
 	testPureGo(times)
 	testLuajit(times)
@@ -31,10 +32,10 @@ func main() {
 	testLocalFlow(times, networkTrafficReductionFactor)
 }
 
-func testGleam(name string, mode gleam.FlowType, times int, factor int) {
+func testGleam(name string, isLocal bool, times int, factor int) {
 	var count int64
 	startTime := time.Now()
-	gleam.New(mode).Init(`
+	f := flow.New().Init(`
       function sum(x, y)
         return x + y
       end
@@ -50,7 +51,13 @@ func testGleam(name string, mode gleam.FlowType, times int, factor int) {
 		-- log("count = "..count)
 		return count
       end
-    `, factor)).Reduce("sum").SaveFirstRowTo(&count).Run()
+    `, factor)).Reduce("sum").SaveFirstRowTo(&count)
+
+	if isLocal {
+		f.Run()
+	} else {
+		f.Run(distributed.Option())
+	}
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("gleam %s time diff: %s\n", name, time.Now().Sub(startTime))
@@ -76,7 +83,7 @@ func testLuajit(times int) {
 	startTime := time.Now()
 	var count int64
 	startTime = time.Now()
-	gleam.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
+	flow.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
       function(n)
 	    local count = 0
 	    for i=1,%d,1 do
@@ -103,7 +110,7 @@ func testLocalFlow(times int, factor int) {
 		}
 		close(ch)
 	}()
-	flow.New().Channel(ch).Map(func(t int) int {
+	glow.New().Channel(ch).Partition(7).Map(func(t int) int {
 		count := 0
 		for i := 0; i < factor; i++ {
 			x, y := rand.Float32(), rand.Float32()
@@ -112,7 +119,7 @@ func testLocalFlow(times int, factor int) {
 			}
 		}
 		return count
-	}).LocalReduce(func(x, y int) int {
+	}).Reduce(func(x, y int) int {
 		return x + y
 	}).Map(func(count int) {
 		fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))

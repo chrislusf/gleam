@@ -14,30 +14,19 @@ import (
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
-type DriverOption struct {
-	Master       string
-	DataCenter   string
-	Rack         string
-	TaskMemoryMB int
-	FlowBid      float64
-	Module       string
-	Host         string
-	Port         int
-}
-
 type FlowContextDriver struct {
-	Option *DriverOption
+	Option *Option
 
 	stepGroups []*plan.StepGroup
 	taskGroups []*plan.TaskGroup
 }
 
-func NewFlowContextDriver(option *DriverOption) *FlowContextDriver {
+func NewFlowContextDriver(option *Option) *FlowContextDriver {
 	return &FlowContextDriver{Option: option}
 }
 
 // driver runs on local, controlling all tasks
-func (fcd *FlowContextDriver) Run(fc *flow.FlowContext) {
+func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 	// task fusion to minimize disk IO
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)

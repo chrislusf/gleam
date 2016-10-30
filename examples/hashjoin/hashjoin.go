@@ -3,12 +3,13 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam"
+	"github.com/chrislusf/gleam/distributed"
+	"github.com/chrislusf/gleam/flow"
 )
 
 func main() {
 
-	f := gleam.New(gleam.Distributed).Init(`
+	f := flow.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end
@@ -34,5 +35,9 @@ func main() {
     `).Fprintf(os.Stdout, "hash joined:%s %d\n")
 
 	f.Run()
+
+	//f.Run(driver.NewOption().SetMaster(":7777"))
+
+	f.Run(distributed.Planner())
 
 }

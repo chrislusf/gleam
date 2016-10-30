@@ -11,7 +11,11 @@ import (
 )
 
 type FlowRunner interface {
-	RunFlowContext(fc *FlowContext)
+	RunFlowContext(*FlowContext)
+}
+
+type FlowOption interface {
+	GetFlowRunner() FlowRunner
 }
 
 type LocalDriver struct{}
