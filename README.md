@@ -206,7 +206,7 @@ Start a gleam master and serveral gleam agents
 > go get github.com/chrislusf/gleam/distributed/gleam
 > gleam master --address=":45326"
 
-// start up "gleam agent" on some diffent servers or ports
+// start up "gleam agent" on some different servers or ports
 // if a different server, remember to install Luajit and copy the MessagePack.lua file also.
 > gleam agent --dir=2 --port 45327 --host=127.0.0.1
 > gleam agent --dir=3 --port 45328 --host=127.0.0.1
@@ -247,7 +247,8 @@ Maybe:
 
 
 Especially Need Help Now:
-* Go implementation to read Parquet files
+* Go implementation to read Parquet files.
+* Design a good plugin system for accessing external data.
 
 Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
 
