@@ -38,7 +38,7 @@ func join1() {
 		end
 	`).ReduceBy(`function(x,y) return x+y end`)
 
-	x.Join(y).Fprintf(os.Stdout, "joined:%s %d + %d\n")
+	x.Join(y).Fprintf(os.Stdout, "join1:%s %d + %d\n")
 
 	f.Run()
 
@@ -70,6 +70,6 @@ func join2() {
       function (word, leftCount1, leftCount2, rightCount)
 	    return word, leftCount1, leftCount2, rightCount, leftCount1 + leftCount2 + rightCount
       end
-	`).Fprintf(os.Stdout, "%s\t%d + %d + %d = %d\n").Run()
+	`).Fprintf(os.Stdout, "join2:%s\t%d + %d + %d = %d\n").Run()
 
 }

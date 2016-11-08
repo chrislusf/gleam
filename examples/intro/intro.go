@@ -20,5 +20,5 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Fprintf(os.Stdout, "%s,%d\n").Run()
+	`).Fprintf(os.Stdout, "%s\t%d\n").Run()
 }
