@@ -70,14 +70,14 @@ func DoInputSplitReader(reader io.Reader, writer io.Writer, typeName string) {
 			fmt.Fprintf(os.Stderr, "decoding error: %v", err)
 			continue
 		}
-		csvReader, err := format.GetInputSplitReader(split)
+		r, err := format.GetInputSplitReader(split)
 		if err != nil {
 			log.Fatalf("Failed to read from InputSplit %+v: %v", split, err)
 		}
 
-		for csvReader.WriteRow(writer) {
+		for r.WriteRow(writer) {
 		}
 
-		csvReader.Close()
+		r.Close()
 	}
 }
