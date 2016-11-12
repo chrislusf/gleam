@@ -120,6 +120,7 @@ func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
 	go func() {
 		for _, data := range slice {
 			inputChannel <- data
+			// println("sent []byte of size:", len(data), string(data))
 		}
 		close(inputChannel)
 	}()

@@ -20,11 +20,3 @@ Taking adding InputSplitReader as example:
 
 4. in github.com/chrislusf/gleam/instruction
 	add an instruction following the Instruction interface.
-
-6. in github.com/chrislusf/gleam/distributed/executor/executor.go, function ExecuteInstruction()
-
-    } else if i.GetInputSplitReader() != nil {
-
-        connectInputOutput(wg, i.GetName(), inChan, outChan, i, isFirst, isLast, readerCount)
-
-        flow.ReadInputSplits(i.GetInputSplitReader().GetInputType(), inChan.Reader, outChan.Writer)

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/chrislusf/gleam/distributed"
+	//"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/source/csv"
 )

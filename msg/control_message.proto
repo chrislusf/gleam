@@ -7,6 +7,10 @@ package msg;
 //   brew install protobuf
 //   go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
 
+///////////////////////////////////
+// Network setup
+///////////////////////////////////
+
 message ControlMessage {
 	optional bool isMemoryIO = 1;
 	optional StartRequest startRequest = 2;
@@ -45,6 +49,10 @@ message StartRequest {
 	required int32 port = 6;
 }
 
+///////////////////////////////////
+// Distributed Instructions
+///////////////////////////////////
+
 message InstructionSet {
 	repeated Instruction instructions = 1;
 	required int32 readerCount = 2;
@@ -68,6 +76,7 @@ message Instruction {
 	optional LocalHashAndJoinWith localHashAndJoinWith = 14;
 	optional Script script = 15;
 	optional LocalSort localSort = 16;
+	optional AdapterSplitReader adapterSplitReader = 17;
 }
 
 message ScatterPartitions {
@@ -123,12 +132,21 @@ message InputSplitReader {
 	required string inputType = 1;
 }
 
+message AdapterSplitReader {
+	required string adapterName = 1;
+	required string connectionId = 2;
+}
+
 message Broadcast {
 }
 
 message LocalHashAndJoinWith {
 	repeated int32 indexes = 1;
 }
+
+///////////////////////////////////
+// Distributed Computing
+///////////////////////////////////
 
 message DatasetShard {
 	required string FlowName = 1;
