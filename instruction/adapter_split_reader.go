@@ -10,7 +10,6 @@ import (
 
 	"github.com/chrislusf/gleam/adapter"
 	"github.com/chrislusf/gleam/msg"
-	_ "github.com/chrislusf/gleam/plugins/cassandra"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
