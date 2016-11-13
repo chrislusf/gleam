@@ -10,7 +10,7 @@ import (
 
 func (c *CsvAdapter) GetSplits(connectionId string, aq adapter.AdapterQuery) (splits []adapter.Split, err error) {
 
-	s, isCsvSource := aq.(Source)
+	s, isCsvSource := aq.(*Source)
 	if !isCsvSource {
 		return nil, fmt.Errorf("input for GetSplits() is not csv source? %v", aq)
 	}

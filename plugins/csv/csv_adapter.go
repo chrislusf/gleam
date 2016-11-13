@@ -15,8 +15,8 @@ func init() {
 	adapter.RegisterAdapter(NewCsvAdapter())
 }
 
-func New(fileOrPattern string) Source {
-	s := Source{}
+func New(fileOrPattern string) *Source {
+	s := &Source{}
 	if strings.ContainsAny(fileOrPattern, "/\\") {
 		s.folder = filepath.Dir(fileOrPattern)
 		s.fileBaseName = filepath.Base(fileOrPattern)
@@ -48,8 +48,18 @@ type CsvDataSplit struct {
 	HasHeader bool
 }
 
-func (q Source) GetParallelLimit() int {
+func (q *Source) GetParallelLimit() int {
 	return q.Parallel
+}
+
+func (q *Source) SetHasHeader(hasHeader bool) *Source {
+	q.HasHeader = hasHeader
+	return q
+}
+
+func (q *Source) SetParallelLimit(paraLimit int) *Source {
+	q.Parallel = paraLimit
+	return q
 }
 
 type CsvAdapter struct {

@@ -13,11 +13,8 @@ func main() {
 
 	adapter.RegisterConnection("csv", "csv")
 
-	aCsv := csv.New("a?.csv")
-	aCsv.HasHeader = true
-
 	f := flow.New()
-	a := f.Query("csv", aCsv).Select(1, 2, 3)
+	a := f.Query("csv", csv.New("a?.csv").SetHasHeader(true)).Select(1, 2, 3)
 
 	b := f.Query("csv", csv.New("b*.csv")).Select(1, 4, 5)
 
