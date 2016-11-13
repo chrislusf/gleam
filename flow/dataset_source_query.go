@@ -9,7 +9,7 @@ import (
 	"github.com/chrislusf/gleam/instruction"
 )
 
-// Query create or reuse the connection specified via connectionId
+// Query use the connection information specified via connectionId
 // and then run the query to fetch the data as input
 func (fc *FlowContext) Query(connectionId string, query adapter.AdapterQuery) (ret *Dataset) {
 	ci, hasConnection := adapter.ConnectionManager.GetConnectionInfo(connectionId)
