@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/chrislusf/gleam/adapter"
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util"
@@ -39,8 +40,8 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 	return fc.Source(fn)
 }
 
-// Read read tab-separated lines from the reader
-func (fc *FlowContext) Read(reader io.Reader) (ret *Dataset) {
+// ReadTsv read tab-separated lines from the reader
+func (fc *FlowContext) ReadTsv(reader io.Reader) (ret *Dataset) {
 	fn := func(writer io.Writer) {
 		defer util.WriteEOFMessage(writer)
 
@@ -154,4 +155,13 @@ func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
 	}()
 
 	return fc.Channel(inputChannel)
+}
+
+// ReadFile read files according to fileType
+// The file can be on local, hdfs, s3, etc.
+func (fc *FlowContext) ReadFile(query adapter.AdapterFileQuery) (ret *Dataset) {
+	adapterType := query.AdapterName()
+	// assuming the connection id is the same as the adapter type
+	adapterConnectionId := adapterType
+	return fc.Query(adapterConnectionId, query)
 }

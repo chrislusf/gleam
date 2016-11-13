@@ -9,7 +9,7 @@ import (
 
 func (c *CassandraAdapter) GetSplits(connectionId string, aq adapter.AdapterQuery) (splits []adapter.Split, err error) {
 
-	query, isCassandraQuery := aq.(Query)
+	query, isCassandraQuery := aq.(*Query)
 	if !isCassandraQuery {
 		return nil, fmt.Errorf("input for GetSplits() is not cassandra query? %v", aq)
 	}

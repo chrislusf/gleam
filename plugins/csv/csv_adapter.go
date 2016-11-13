@@ -13,6 +13,9 @@ func init() {
 	gob.Register(CsvDataSplit{})
 
 	adapter.RegisterAdapter(NewCsvAdapter())
+
+	// assuming the connection id is the same as the adapter type
+	adapter.RegisterConnection("csv", "csv")
 }
 
 func New(fileOrPattern string) *Source {
@@ -60,6 +63,10 @@ func (q *Source) SetHasHeader(hasHeader bool) *Source {
 func (q *Source) SetParallelLimit(paraLimit int) *Source {
 	q.Parallel = paraLimit
 	return q
+}
+
+func (q *Source) AdapterName() string {
+	return "csv"
 }
 
 type CsvAdapter struct {

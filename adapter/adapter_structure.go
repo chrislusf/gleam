@@ -9,6 +9,11 @@ type AdapterQuery interface {
 	GetParallelLimit() int
 }
 
+type AdapterFileQuery interface {
+	AdapterQuery
+	AdapterName() string
+}
+
 // ConnectorSplit should be serialized by gob
 type Split interface {
 	GetConfiguration() map[string]string

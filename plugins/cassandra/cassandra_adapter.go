@@ -30,7 +30,7 @@ type CassandraDataSplit struct {
 	PartitionKeys                  []string
 }
 
-func (q Query) GetParallelLimit() int {
+func (q *Query) GetParallelLimit() int {
 	return q.Parallel
 }
 
