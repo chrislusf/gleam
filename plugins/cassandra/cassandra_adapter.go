@@ -11,7 +11,9 @@ import (
 func init() {
 	gob.Register(CassandraDataSplit{})
 
-	adapter.RegisterAdapter(NewCassandraAdapter())
+	adapter.RegisterAdapter("cassandra", func() adapter.Adapter {
+		return NewCassandraAdapter()
+	})
 }
 
 type Query struct {

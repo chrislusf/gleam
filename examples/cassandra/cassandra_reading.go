@@ -14,7 +14,7 @@ func main() {
 		Set("keyspace", "system").Set("hosts", "localhost")
 
 	f := flow.New()
-	f.Query("c1", cassandra.Query{
+	f.Query("c1", &cassandra.Query{
 		Select:   "key, host_id, release_version, rpc_address, schema_version, tokens",
 		Keyspace: "system",
 		Table:    "local",

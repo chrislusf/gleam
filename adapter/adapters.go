@@ -6,7 +6,7 @@ import (
 
 var (
 	AdapterManager = &adatperManager{
-		adapters: make(map[string]Adapter),
+		adapters: make(map[string]func() Adapter),
 	}
 	ConnectionManager = &connectionManager{
 		connections: make(map[string]*ConnectionInfo),
@@ -19,17 +19,17 @@ type ConnectionInfo struct {
 	config  map[string]string
 }
 
-func RegisterAdapter(a Adapter) {
+func RegisterAdapter(name string, fn func() Adapter) {
 	AdapterManager.Lock()
 	defer AdapterManager.Unlock()
-	AdapterManager.adapters[a.AdapterName()] = a
+	AdapterManager.adapters[name] = fn
 }
 
 func (am *adatperManager) GetAdapter(name string) (Adapter, bool) {
 	am.RLock()
 	defer am.RUnlock()
 	a, ok := am.adapters[name]
-	return a, ok
+	return a(), ok
 }
 
 func RegisterConnection(id string, adapterName string) *ConnectionInfo {
@@ -39,7 +39,7 @@ func RegisterConnection(id string, adapterName string) *ConnectionInfo {
 	defer AdapterManager.RUnlock()
 
 	ci := &ConnectionInfo{
-		Adapter: AdapterManager.adapters[adapterName],
+		Adapter: AdapterManager.adapters[adapterName](),
 		config:  make(map[string]string),
 	}
 	ConnectionManager.connections[id] = ci
@@ -48,7 +48,7 @@ func RegisterConnection(id string, adapterName string) *ConnectionInfo {
 
 type adatperManager struct {
 	sync.RWMutex
-	adapters map[string]Adapter
+	adapters map[string]func() Adapter
 }
 
 type connectionManager struct {

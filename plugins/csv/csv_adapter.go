@@ -12,7 +12,9 @@ import (
 func init() {
 	gob.Register(CsvDataSplit{})
 
-	adapter.RegisterAdapter(NewCsvAdapter())
+	adapter.RegisterAdapter("csv", func() adapter.Adapter {
+		return NewCsvAdapter()
+	})
 
 	// assuming the connection id is the same as the adapter type
 	adapter.RegisterConnection("csv", "csv")
