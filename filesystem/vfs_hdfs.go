@@ -8,6 +8,11 @@ import (
 	"github.com/colinmarc/hdfs"
 )
 
+/*
+Get the namenode from the hdfs://namenode/... string
+Or based on env HADOOP_CONF_DIR or HADOOP_HOME
+to locate hdfs-site.xml and core-site.xml
+*/
 type HdfsFileSystem struct {
 }
 
