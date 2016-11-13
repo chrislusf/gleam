@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/source"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -79,7 +79,7 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	fn := func(writer io.Writer) {
-		file, err := source.Open(fname)
+		file, err := filesystem.Open(fname)
 		if err != nil {
 			log.Panicf("Can not open file %s: %v", fname, err)
 			return

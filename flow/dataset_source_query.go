@@ -32,8 +32,8 @@ func (fc *FlowContext) Query(connectionId string, query adapter.AdapterQuery) (r
 	}
 
 	parallelCount := len(encoded)
-	if query.GetParallelCount() > 0 && parallelCount > query.GetParallelCount() {
-		parallelCount = query.GetParallelCount()
+	if query.GetParallelLimit() > 0 && parallelCount > query.GetParallelLimit() {
+		parallelCount = query.GetParallelLimit()
 	}
 
 	data := fc.Bytes(encoded).RoundRobin(parallelCount)

@@ -9,18 +9,18 @@ import (
 
 func (c *CassandraAdapter) GetSplits(connectionId string, aq adapter.AdapterQuery) (splits []adapter.Split, err error) {
 
-	connectionInfo, ok := adapter.ConnectionManager.GetConnectionInfo(connectionId)
-	if !ok {
-		return nil, fmt.Errorf("Failed to find configuration for %s.", connectionId)
-	}
-
 	query, isCassandraQuery := aq.(Query)
 	if !isCassandraQuery {
 		return nil, fmt.Errorf("input for GetSplits() is not cassandra query? %v", aq)
 	}
 
-	// find out the partition keys
+	connectionInfo, ok := adapter.ConnectionManager.GetConnectionInfo(connectionId)
+	if !ok {
+		return nil, fmt.Errorf("Failed to find configuration for %s.", connectionId)
+	}
 	c.LoadConfiguration(connectionInfo.GetConfig())
+
+	// find out the partition keys
 	session, err := c.cluster.CreateSession()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create cassandra session when GetSplits: %v", err)

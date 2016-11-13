@@ -1,4 +1,4 @@
-package source
+package filesystem
 
 import (
 	"io/ioutil"

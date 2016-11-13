@@ -6,7 +6,7 @@ import (
 
 // AdapterQuery is any object that can be serialized by gob
 type AdapterQuery interface {
-	GetParallelCount() int
+	GetParallelLimit() int
 }
 
 // ConnectorSplit should be serialized by gob
