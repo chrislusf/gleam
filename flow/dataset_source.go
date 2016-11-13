@@ -159,9 +159,9 @@ func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
 
 // ReadFile read files according to fileType
 // The file can be on local, hdfs, s3, etc.
-func (fc *FlowContext) ReadFile(query adapter.AdapterFileQuery) (ret *Dataset) {
-	adapterType := query.AdapterName()
+func (fc *FlowContext) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
+	adapterType := source.AdapterName()
 	// assuming the connection id is the same as the adapter type
 	adapterConnectionId := adapterType
-	return fc.Query(adapterConnectionId, query)
+	return fc.Query(adapterConnectionId, source)
 }

@@ -9,7 +9,7 @@ type AdapterQuery interface {
 	GetParallelLimit() int
 }
 
-type AdapterFileQuery interface {
+type AdapterFileSource interface {
 	AdapterQuery
 	AdapterName() string
 }
