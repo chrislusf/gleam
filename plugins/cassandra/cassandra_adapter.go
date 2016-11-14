@@ -44,10 +44,6 @@ func NewCassandraAdapter() *CassandraAdapter {
 	return &CassandraAdapter{}
 }
 
-func (c *CassandraAdapter) AdapterName() string {
-	return "cassandra"
-}
-
 func (c *CassandraAdapter) LoadConfiguration(config map[string]string) {
 	hosts := strings.Split(config["hosts"], ",")
 	c.cluster = gocql.NewCluster(hosts...)

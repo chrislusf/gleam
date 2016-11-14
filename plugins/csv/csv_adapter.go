@@ -78,10 +78,6 @@ func NewCsvAdapter() *CsvAdapter {
 	return &CsvAdapter{}
 }
 
-func (c *CsvAdapter) AdapterName() string {
-	return "csv"
-}
-
 func (c *CsvAdapter) LoadConfiguration(config map[string]string) {
 }
 

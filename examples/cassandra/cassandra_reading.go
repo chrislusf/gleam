@@ -10,11 +10,11 @@ import (
 )
 
 func main() {
-	adapter.RegisterConnection("c1", "cassandra").
+	adapter.RegisterConnection("connection1", "cassandra").
 		Set("keyspace", "system").Set("hosts", "localhost")
 
 	f := flow.New()
-	f.Query("c1", &cassandra.Query{
+	f.Query("connection1", &cassandra.Query{
 		Select:   "key, host_id, release_version, rpc_address, schema_version, tokens",
 		Keyspace: "system",
 		Table:    "local",

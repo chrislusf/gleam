@@ -14,14 +14,16 @@ import (
 func (fc *FlowContext) Query(connectionId string, query adapter.AdapterQuery) (ret *Dataset) {
 	ci, hasConnection := adapter.ConnectionManager.GetConnectionInfo(connectionId)
 	if !hasConnection {
-		log.Printf("Failed to find connection by id: %v", connectionId)
-		return nil
+		log.Fatalf("Failed to find connection by id: %v", connectionId)
 	}
 
-	splits, err := ci.Adapter.GetSplits(connectionId, query)
+	a, found := ci.GetAdapter()
+	if !found {
+		log.Fatalf("Failed to find adapter %s for %v.", ci.AdapterName, connectionId)
+	}
+	splits, err := a.GetSplits(connectionId, query)
 	if err != nil {
-		log.Printf("Failed to split query for connection %v, %v: %v", connectionId, query, err)
-		return nil
+		log.Fatalf("Failed to split query for connection %v, %v: %v", connectionId, query, err)
 	}
 
 	var encoded [][]byte
@@ -41,7 +43,7 @@ func (fc *FlowContext) Query(connectionId string, query adapter.AdapterQuery) (r
 	ret = fc.newNextDataset(parallelCount)
 	step := fc.AddOneToOneStep(data, ret)
 	step.SetInstruction(instruction.NewAdapterSplitReader(
-		ci.Adapter.AdapterName(),
+		ci.AdapterName,
 		connectionId,
 	))
 

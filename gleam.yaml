@@ -1,0 +1,14 @@
+# This is an optional file.
+#
+# This file is loaded from these folders:
+# 1. /etc/gleam/
+# 2. $HOME/.gleam/
+# 3. The program's current folder.
+#
+#
+# Here are the list of connections
+connections:
+  connection1:
+    adapter: cassandra
+    hosts: localhost
+    keyspace: system

@@ -21,7 +21,6 @@ type Split interface {
 
 // Adater implenets input and output to external systems
 type Adapter interface {
-	AdapterName() string
 	LoadConfiguration(config map[string]string)
 	GetSplits(connectionId string, query AdapterQuery) ([]Split, error)
 	ReadSplit(Split, io.Writer) error
