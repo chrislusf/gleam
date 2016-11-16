@@ -78,7 +78,7 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 
 ## Word Count
 The full source code, not snippet, for word count:
-```
+```go
 package main
 
 import (
@@ -107,7 +107,7 @@ func main() {
 ```
 
 Another way to do the similar:
-```
+```go
 package main
 
 import (
@@ -131,7 +131,7 @@ func main() {
 
 Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" has fields "b1, b2, b3". We want to join the rows where a1 = b2. And the output format should be "a1, a4, b3".
 
-```
+```go
 package main
 
 import (
@@ -161,7 +161,7 @@ With Gleam, fan-in and fan-out parallel pipes become very easy. (And this can be
 This example get a list of file names, partitioned into 3 groups, and then process them in parallel.
 This flow can be changed to use Pipe() also, of course.
 
-```
+```go
 // word_count.go
 package main
 
@@ -201,7 +201,7 @@ func main() {
 # Distributed Computing
 ## Setup Gleam Cluster
 Start a gleam master and serveral gleam agents
-```
+```go
 // start "gleam master" on a server
 > go get github.com/chrislusf/gleam/distributed/gleam
 > gleam master --address=":45326"
@@ -216,7 +216,7 @@ Start a gleam master and serveral gleam agents
 
 After the flow is defined, the Run() function can be executed in different ways: local mode, distributed mode, or planner mode.
 
-```
+```go
   f := flow.New()
   ...
   // local mode
