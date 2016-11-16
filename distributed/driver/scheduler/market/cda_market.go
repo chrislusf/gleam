@@ -64,9 +64,12 @@ func (m *Market) AddDemand(r Requirement, bid float64, retChan chan Supply) {
 	defer m.Lock.Unlock()
 
 	if len(m.Supplies) > 0 {
-		retChan <- m.pickBestSupplyFor(r)
-		close(retChan)
-		return
+		supply, matched := m.pickBestSupplyFor(r)
+		if matched {
+			retChan <- supply
+			close(retChan)
+			return
+		}
 	}
 	m.Demands = append(m.Demands, Demand{
 		Requirement: r,
@@ -97,55 +100,59 @@ func (m *Market) AddSupply(supply Supply) {
 	defer m.Lock.Unlock()
 
 	if len(m.Demands) > 0 {
-		demand := m.pickBestDemandFor(supply)
-		demand.ReturnChan <- supply
-		close(demand.ReturnChan)
-		return
+		demand, matched := m.pickBestDemandFor(supply)
+		if matched {
+			demand.ReturnChan <- supply
+			close(demand.ReturnChan)
+			return
+		}
 	}
 
 	m.Supplies = append(m.Supplies, supply)
 }
 
-func (m *Market) pickBestSupplyFor(r Requirement) Supply {
+func (m *Market) pickBestSupplyFor(r Requirement) (ret Supply, matched bool) {
 
 	scores := make([]float64, len(m.Supplies))
 	for i, supply := range m.Supplies {
 		scores[i] = m.ScoreFn(r, 1, supply.Object)
 	}
-	maxScore, maxIndex := scores[0], 0
+	maxScore, maxIndex := 0.0, 0
 	for i, score := range scores {
-		if score >= maxScore {
+		if score > maxScore {
 			maxScore = score
 			maxIndex = i
+			matched = true
 		}
 	}
 
-	// delete the picked supply
-	ret := m.Supplies[maxIndex]
+	if matched {
+		ret = m.Supplies[maxIndex]
+		m.Supplies = append(m.Supplies[:maxIndex], m.Supplies[maxIndex+1:]...)
+	}
 
-	m.Supplies = append(m.Supplies[:maxIndex], m.Supplies[maxIndex+1:]...)
-
-	return ret
+	return ret, matched
 }
 
-func (m *Market) pickBestDemandFor(supply Supply) Demand {
+func (m *Market) pickBestDemandFor(supply Supply) (ret Demand, matched bool) {
 
 	scores := make([]float64, len(m.Demands))
 	for i, demand := range m.Demands {
 		scores[i] = m.ScoreFn(demand.Requirement, demand.Bid, supply.Object)
 	}
-	maxScore, maxIndex := scores[0], 0
+	maxScore, maxIndex := 0.0, 0
 	for i, score := range scores {
-		if score >= maxScore {
+		if score > maxScore {
 			maxScore = score
 			maxIndex = i
+			matched = true
 		}
 	}
 
-	// delete the picked supply
-	ret := m.Demands[maxIndex]
+	if matched {
+		ret = m.Demands[maxIndex]
+		m.Demands = append(m.Demands[:maxIndex], m.Demands[maxIndex+1:]...)
+	}
 
-	m.Demands = append(m.Demands[:maxIndex], m.Demands[maxIndex+1:]...)
-
-	return ret
+	return ret, matched
 }
