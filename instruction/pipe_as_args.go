@@ -49,6 +49,10 @@ func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *PipeAsArgs) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) {
 	var wg sync.WaitGroup

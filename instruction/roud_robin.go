@@ -41,6 +41,10 @@ func (b *RoundRobin) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *RoundRobin) GetMemoryCostInMB() int {
+	return 1
+}
+
 func DoRoundRobin(reader io.Reader, writers []io.Writer) {
 	count, shardCount := 0, len(writers)
 	util.ProcessMessage(reader, func(data []byte) error {

@@ -48,6 +48,10 @@ func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *LocalHashAndJoinWith) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int) {
 	hashmap := make(map[string][]interface{})

@@ -53,6 +53,10 @@ func (b *LocalSort) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *LocalSort) GetMemoryCostInMB() int {
+	return 1
+}
+
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)

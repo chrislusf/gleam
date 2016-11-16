@@ -47,6 +47,10 @@ func (b *MergeSortedTo) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *MergeSortedTo) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)

@@ -55,6 +55,10 @@ func (b *AdapterSplitReader) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *AdapterSplitReader) GetMemoryCostInMB() int {
+	return 3
+}
+
 func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, connectionId string) {
 	a, found := adapter.AdapterManager.GetAdapter(adapterName)
 	if !found {

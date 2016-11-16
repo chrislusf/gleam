@@ -41,6 +41,10 @@ func (b *Broadcast) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *Broadcast) GetMemoryCostInMB() int {
+	return 1
+}
+
 func DoBroadcast(reader io.Reader, writers []io.Writer) {
 	util.ProcessMessage(reader, func(data []byte) error {
 		for _, writer := range writers {

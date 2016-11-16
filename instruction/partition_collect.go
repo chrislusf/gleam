@@ -41,6 +41,10 @@ func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *CollectPartitions) GetMemoryCostInMB() int {
+	return 1
+}
+
 func DoCollectPartitions(readers []io.Reader, writer io.Writer) {
 	// println("starting to collect data from partitions...", len(readers))
 

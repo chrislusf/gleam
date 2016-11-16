@@ -44,6 +44,10 @@ func (b *CoGroupPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *CoGroupPartitionedSorted) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int) {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)

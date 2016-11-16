@@ -50,6 +50,10 @@ func (b *LocalTop) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *LocalTop) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
 	indexes := getIndexesFromOrderBys(orderBys)

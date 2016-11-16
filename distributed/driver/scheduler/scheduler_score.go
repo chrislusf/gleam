@@ -7,9 +7,16 @@ import (
 )
 
 func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) float64 {
-	tg, loc := r.(*plan.TaskGroup), obj.(resource.Allocation).Location
+	alloc := obj.(resource.Allocation)
+	tg, loc := r.(*plan.TaskGroup), alloc.Location
+
+	memCost := memoryCost(tg)
+	if memCost > alloc.Allocated.MemoryMB {
+		return -1
+	}
+
 	firstTask := tg.Tasks[0]
-	cost := float64(1)
+	cost := float64(alloc.Allocated.MemoryMB-memCost) * 10
 	for _, input := range firstTask.InputShards {
 		dataLocation, found := s.GetShardLocation(input)
 		if !found {
@@ -19,4 +26,11 @@ func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) 
 		cost += dataLocation.Distance(loc)
 	}
 	return float64(bid) / cost
+}
+
+func memoryCost(tg *plan.TaskGroup) (cost int64) {
+	for _, t := range tg.Tasks {
+		cost += int64(t.Step.Instruction.GetMemoryCostInMB())
+	}
+	return
 }

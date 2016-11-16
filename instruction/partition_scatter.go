@@ -47,6 +47,10 @@ func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *ScatterPartitions) GetMemoryCostInMB() int {
+	return 1
+}
+
 func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
 	shardCount := len(writers)
 

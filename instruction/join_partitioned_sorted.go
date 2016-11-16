@@ -52,6 +52,10 @@ func (b *JoinPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	}
 }
 
+func (b *JoinPartitionedSorted) GetMemoryCostInMB() int {
+	return 1
+}
+
 // Top streamingly compare and get the top n items
 func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int,
 	isLeftOuterJoin, isRightOuterJoin bool) {
