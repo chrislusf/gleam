@@ -63,7 +63,7 @@ message Instruction {
 	required string name = 1;
 	repeated DatasetShardLocation inputShardLocations = 2;
 	repeated DatasetShardLocation OutputShardLocations = 3;
-	optional MergeSortedTo mergeSortedTo = 4;
+	optional int32 memoryInMB = 4;
 	optional JoinPartitionedSorted joinPartitionedSorted = 5;
 	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
 	optional PipeAsArgs pipeAsArgs = 7;
@@ -77,6 +77,7 @@ message Instruction {
 	optional Script script = 15;
 	optional LocalSort localSort = 16;
 	optional AdapterSplitReader adapterSplitReader = 17;
+	optional MergeSortedTo mergeSortedTo = 18;
 }
 
 message ScatterPartitions {

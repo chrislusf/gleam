@@ -7,19 +7,16 @@ import (
 // CoGroup joins two datasets by the key,
 // Each result row becomes this format:
 //   (key, []left_rows, []right_rows)
-func (d *Dataset) CoGroup(other *Dataset, indexes ...int) *Dataset {
-	if len(indexes) == 0 {
-		indexes = []int{1}
-	}
-	orderBys := getOrderBysFromIndexes(indexes)
-	sorted_d := d.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
+func (d *Dataset) CoGroup(other *Dataset, sortOptions ...*SortOption) *Dataset {
+	sortOption := concat(sortOptions)
+	sorted_d := d.Partition(len(d.Shards), sortOption).LocalSort(sortOption)
 	if d == other {
 		// this should not happen, but just in case
-		return sorted_d.LocalGroupBy(indexes)
+		return sorted_d.LocalGroupBy(sortOption)
 	}
-	sorted_other := other.Partition(len(d.Shards), indexes...).LocalSort(orderBys)
-	t := sorted_d.CoGroupPartitionedSorted(sorted_other, indexes)
-	t.IsLocalSorted = orderBys
+	sorted_other := other.Partition(len(d.Shards), sortOption).LocalSort(sortOption)
+	t := sorted_d.CoGroupPartitionedSorted(sorted_other, sortOption.Indexes())
+	t.IsLocalSorted = sortOption.orderByList
 	return t
 }
 

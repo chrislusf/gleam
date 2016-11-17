@@ -9,7 +9,6 @@ import (
 	"runtime/pprof"
 
 	"github.com/chrislusf/gleam/flow"
-	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
@@ -67,9 +66,6 @@ func main() {
       function(x, y)
         return x + y
       end
-    `).Top(5, instruction.OrderBy{
-		Index: 2,
-		Order: instruction.Ascending,
-	}).Fprintf(os.Stdout, "%s\t%d\n").Run()
+    `).Top(5, flow.OrderBy(2, true)).Fprintf(os.Stdout, "%s\t%d\n").Run()
 
 }

@@ -18,10 +18,10 @@ func (d *Dataset) RoundRobin(shard int) *Dataset {
 // This is devided into 2 steps:
 // 1. Each record is sharded to a local shard
 // 2. The destination shard will collect its child shards and merge into one
-func (d *Dataset) Partition(shard int, indexes ...int) *Dataset {
-	if len(indexes) == 0 {
-		indexes = []int{1}
-	}
+func (d *Dataset) Partition(shard int, sortOptions ...*SortOption) *Dataset {
+	sortOption := concat(sortOptions)
+
+	indexes := sortOption.Indexes()
 	if intArrayEquals(d.IsPartitionedBy, indexes) && shard == len(d.Shards) {
 		return d
 	}

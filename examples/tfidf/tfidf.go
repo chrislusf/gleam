@@ -40,7 +40,7 @@ func main() {
         function(x, y)
             return x + y
         end
-    `, 1, 2)
+    `, flow.Field(1, 2))
 
 	docFreq := termFreq.Map(`
         function(word, docId, count)
@@ -56,7 +56,7 @@ func main() {
         function(word, df, docId, tf)
             return word, docId, tf, df, tf*%d/df
         end
-    `, len(fileNames))).Sort(5).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
+    `, len(fileNames))).Sort(flow.Field(5)).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
 
 	f.Run()
 
