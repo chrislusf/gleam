@@ -46,11 +46,12 @@ func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 }
 
 // Select selects multiple fields into the next dataset. The index starts from 1.
-func (d *Dataset) Select(indexes ...int) *Dataset {
+func (d *Dataset) Select(sortOptions ...*SortOption) *Dataset {
+	sortOption := concat(sortOptions)
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Select"
 	step.Script = d.FlowContext.CreateScript()
-	step.Script.Select(indexes)
+	step.Script.Select(sortOption.Indexes())
 	return ret
 }
 
