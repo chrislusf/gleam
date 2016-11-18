@@ -14,6 +14,10 @@ type pair struct {
 	data []byte
 }
 
+// Sort sort on specific fields, default to the first field.
+// Required Memory: about same size as each partition.
+// example usage: Sort(Field(1,2).Memory(128)) means
+// sorting on field 1 and 2, and each partition can be hold in 128MB memory.
 func (d *Dataset) Sort(sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
@@ -24,18 +28,8 @@ func (d *Dataset) Sort(sortOptions ...*SortOption) *Dataset {
 	return ret
 }
 
-// SortBy e.g. SortBy(Field(1,2))
-func (d *Dataset) SortBy(sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
-	ret := d.LocalSort(sortOption)
-	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption)
-	}
-	return ret
-}
-
 // Top streams through total n items, picking reverse ordered k items with O(n*log(k)) complexity.
+// Required Memory: about same size as n items in memory
 func (d *Dataset) Top(k int, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
@@ -56,7 +50,7 @@ func (d *Dataset) LocalSort(sortOptions ...*SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList))
+	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, sortOption.MemorySizeInMB))
 	return ret
 }
 
