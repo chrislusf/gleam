@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/util"
 )
@@ -15,10 +16,10 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerNam
 		as.inMemoryChannels.Cleanup(channelName)
 	}()
 
-	// println(writerName, "start in memory writing to", channelName, "expected reader:", readerCount)
+	log.Println(writerName, "start in memory writing to", channelName, "expected reader:", readerCount)
 
 	buf := make([]byte, util.BUFFER_SIZE)
 	io.CopyBuffer(ch.incomingChannel.Writer, r, buf)
 
-	// println(writerName, "finish writing to", channelName)
+	log.Println(writerName, "finish in memory writing to", channelName)
 }

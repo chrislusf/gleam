@@ -68,11 +68,12 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	status.Request = request
 	taskGroup.RequestId = instructions.HashCode()
 
-	// fmt.Printf("starting on %s: %v\n", allocation.Allocated, request)
+	// log.Printf("starting on %s: %s\n", allocation.Allocated, taskGroup)
 
 	if err := RemoteDirectExecute(allocation.Location.URL(), request); err != nil {
 		log.Printf("remote exeuction error %v: %v", err, request)
 	}
+	// log.Printf("stopped on %s: %s\n", allocation.Allocated, taskGroup)
 	status.StopTime = time.Now()
 }
 

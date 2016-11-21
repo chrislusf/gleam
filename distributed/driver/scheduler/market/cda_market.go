@@ -16,6 +16,7 @@
 package market
 
 import (
+	//"fmt"
 	"sync"
 )
 
@@ -81,13 +82,18 @@ func (m *Market) AddDemand(r Requirement, bid float64, retChan chan Supply) {
 
 func (m *Market) FetcherLoop() {
 	for {
+		// println("FetcherLoop Lock:", len(m.Demands))
 		m.Lock.Lock()
 		for len(m.Demands) == 0 {
+			// println("FetcherLoop wait:", len(m.Demands))
 			m.hasDemands.Wait()
 		}
+		// println("FetcherLoop UnLock:", len(m.Demands))
 		m.Lock.Unlock()
 
+		// println("fetching current demands:", len(m.Demands))
 		m.FetchFn(m.Demands)
+		// println("fetching finished demands:", len(m.Demands))
 	}
 }
 
@@ -151,6 +157,7 @@ func (m *Market) pickBestDemandFor(supply Supply) (ret Demand, matched bool) {
 
 	if matched {
 		ret = m.Demands[maxIndex]
+		// fmt.Printf("matched demand: %+v\n", ret)
 		m.Demands = append(m.Demands[:maxIndex], m.Demands[maxIndex+1:]...)
 	}
 

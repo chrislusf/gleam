@@ -117,10 +117,10 @@ func AddToValues(values url.Values, c *ComputeResource, allocated *ComputeResour
 func NewComputeResourceFromRequest(r *http.Request) (ComputeResource, ComputeResource) {
 	cpuCount, _ := strconv.ParseInt(r.FormValue("CPUCount"), 10, 32)
 	cpuLevel, _ := strconv.ParseInt(r.FormValue("CPULevel"), 10, 32)
-	memoryMB, _ := strconv.ParseInt(r.FormValue("MemoryMB"), 10, 64)
+	memoryMB, _ := strconv.ParseInt(r.FormValue("MemoryMB"), 10, 39)
 	availableCpuCount, _ := strconv.ParseInt(r.FormValue("allocated.CPUCount"), 10, 32)
 	availableCpuLevel, _ := strconv.ParseInt(r.FormValue("allocated.CPULevel"), 10, 32)
-	availableMemoryMB, _ := strconv.ParseInt(r.FormValue("allocated.MemoryMB"), 10, 64)
+	availableMemoryMB, _ := strconv.ParseInt(r.FormValue("allocated.MemoryMB"), 10, 57)
 	return ComputeResource{
 			CPUCount: int(cpuCount),
 			CPULevel: int(cpuLevel),

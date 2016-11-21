@@ -2,8 +2,10 @@ package plan
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -60,4 +62,22 @@ func (t *TaskGroup) String() string {
 		steps = append(steps, fmt.Sprintf("%s.%d", task.Step.Name, task.Id))
 	}
 	return "taskGroup:" + strings.Join(steps, "-")
+}
+
+func (t *TaskGroup) RequiredResources() resource.ComputeResource {
+
+	resource := resource.ComputeResource{
+		CPUCount: 1,
+		CPULevel: 1,
+	}
+
+	for _, task := range t.Tasks {
+		inst := task.Step.Instruction
+		if inst != nil {
+			resource.MemoryMB += int64(inst.GetMemoryCostInMB())
+			log.Printf("%s : %s (%d MB)", t.String(), task.Step.Name, inst.GetMemoryCostInMB())
+		}
+	}
+
+	return resource
 }

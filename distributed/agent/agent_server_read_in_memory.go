@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io"
+	"log"
 	"net"
 
 	"github.com/chrislusf/gleam/util"
@@ -9,13 +10,13 @@ import (
 
 func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, channelName string) {
 
-	// println(readerName, "waits for", channelName)
+	log.Println(readerName, "waits in memory for", channelName)
 
 	ch := as.inMemoryChannels.WaitForNamedDatasetShard(channelName)
 
-	// println(readerName, "start reading", channelName)
+	log.Println(readerName, "start in memory reading", channelName)
 	buf := make([]byte, util.BUFFER_SIZE)
 	io.CopyBuffer(conn, ch.Reader, buf)
 
-	// println(readerName, "finish reading", channelName)
+	log.Println(readerName, "finish in memory reading", channelName)
 }

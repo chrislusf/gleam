@@ -13,11 +13,11 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelName string) {
 
-	// println(name, "is waited to read")
+	log.Println(readerName, "is waited to read", channelName)
 
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(channelName)
 
-	// println(readerName, "start reading", channelName)
+	log.Println(readerName, "start reading", channelName)
 
 	writer := bufio.NewWriterSize(conn, util.BUFFER_SIZE)
 
@@ -68,5 +68,5 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 
 	writer.Flush()
 
-	// println(readerName, "finish reading", channelName, count, "bytes")
+	log.Println(readerName, "finish reading", channelName, count, "bytes")
 }

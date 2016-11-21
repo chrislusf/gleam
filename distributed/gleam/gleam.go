@@ -12,10 +12,10 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	a "github.com/chrislusf/gleam/distributed/agent"
-	"github.com/chrislusf/gleam/msg"
 	exe "github.com/chrislusf/gleam/distributed/executor"
 	"github.com/chrislusf/gleam/distributed/netchan"
 	m "github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 	"github.com/golang/protobuf/proto"
@@ -40,7 +40,7 @@ var (
 		Rack:         agent.Flag("rack", "rack name").Default("defaultRack").String(),
 		MaxExecutor:  agent.Flag("executor.max", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
 		CPULevel:     agent.Flag("executor.cpu.level", "relative computing power of single cpu core").Default("1").Int(),
-		MemoryMB:     agent.Flag("executor.memory", "memory size in MB").Default("1024").Int64(),
+		MemoryMB:     agent.Flag("memory", "memory limit in MB").Default("1024").Int64(),
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
 	}
 	cpuProfile = agent.Flag("cpuprofile", "cpu profile output file").Default("").String()

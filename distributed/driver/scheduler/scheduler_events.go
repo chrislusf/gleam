@@ -83,7 +83,7 @@ func (s *Scheduler) EventLoop() {
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
 						location, _ := s.GetShardLocation(shard)
 						request := NewDeleteDatasetShardRequest(shard.Name())
-						// println("deleting", ds.Name(), "on", location.URL())
+						// println("deleting", shard.Name(), "on", location.URL())
 						if err := RemoteDirectExecute(location.URL(), request); err != nil {
 							println("Purging dataset error:", err.Error())
 						}

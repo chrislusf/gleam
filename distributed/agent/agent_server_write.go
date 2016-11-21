@@ -14,7 +14,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	dsStore := as.storageBackend.CreateNamedDatasetShard(channelName)
 
-	// println(writerName, "start writing to", channelName, "expected reader:", readerCount)
+	log.Println(writerName, "start writing to", channelName, "expected reader:", readerCount)
 
 	var count int64
 
@@ -35,13 +35,15 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 		}
 	}
 
-	// println(writerName, "finish writing to", channelName, count, "bytes")
+	log.Println(writerName, "finish writing to", channelName, count, "bytes")
+
 	util.WriteEOFMessage(dsStore)
 }
 
 func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,
 	deleteRequest *msg.DeleteDatasetShardRequest) *msg.DeleteDatasetShardResponse {
 
+	log.Println("deleting", *deleteRequest.Name)
 	as.storageBackend.DeleteNamedDatasetShard(*deleteRequest.Name)
 
 	return nil
