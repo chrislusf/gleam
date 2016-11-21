@@ -3,6 +3,7 @@ package agent
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/store"
 )
@@ -27,6 +28,8 @@ func NewLocalDatasetShardsManager(dir string, port int) *LocalDatasetShardsManag
 
 func (m *LocalDatasetShardsManager) doDelete(name string) {
 
+	// println("deleting from LocalDatasetShardsManager:", name)
+
 	ds, ok := m.name2Store[name]
 	if !ok {
 		return
@@ -39,8 +42,12 @@ func (m *LocalDatasetShardsManager) doDelete(name string) {
 
 func (m *LocalDatasetShardsManager) DeleteNamedDatasetShard(name string) {
 
+	// println("locking LocalDatasetShardsManager to delete", name)
+
 	m.Lock()
 	defer m.Unlock()
+
+	// println("locked LocalDatasetShardsManager to delete", name)
 
 	m.doDelete(name)
 
@@ -81,4 +88,25 @@ func (m *LocalDatasetShardsManager) WaitForNamedDatasetShard(name string) store.
 
 	return nil
 
+}
+
+// purge executor status older than 24 hours to save memory
+func (m *LocalDatasetShardsManager) purgeExpiredEntries() {
+	for {
+		func() {
+			m.Lock()
+			cutoverLimit := time.Now().Add(-24 * time.Hour)
+			var oldShardNames []string
+			for name, ds := range m.name2Store {
+				if ds.LastReadAt().Before(cutoverLimit) {
+					oldShardNames = append(oldShardNames, name)
+				}
+			}
+			for _, name := range oldShardNames {
+				m.doDelete(name)
+			}
+			m.Unlock()
+			time.Sleep(1 * time.Hour)
+		}()
+	}
 }

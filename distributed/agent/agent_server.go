@@ -14,9 +14,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -68,6 +68,10 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 		allocatedResource:    &resource.ComputeResource{},
 		localExecutorManager: newLocalExecutorsManager(),
 	}
+
+	go as.storageBackend.purgeExpiredEntries()
+	go as.inMemoryChannels.purgeExpiredEntries()
+	go as.localExecutorManager.purgeExpiredEntries()
 
 	err = as.init()
 	if err != nil {

@@ -24,7 +24,6 @@ func newLocalExecutorsManager() *LocalExecutorManager {
 	m := &LocalExecutorManager{
 		id2ExecutorStatus: make(map[uint32]*AgentExecutorStatus),
 	}
-	go m.purgeExpiredEntries()
 	return m
 }
 

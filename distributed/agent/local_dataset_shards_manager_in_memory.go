@@ -3,6 +3,7 @@ package agent
 import (
 	"io"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/util"
 )
@@ -12,6 +13,8 @@ type trackedChannel struct {
 	outgoingChannels []*util.Piper
 	index            int
 	wg               *sync.WaitGroup
+	lastWriteAt      time.Time
+	isClosed         bool
 }
 
 func newTrackedChannel(readerCount int) *trackedChannel {
@@ -21,6 +24,7 @@ func newTrackedChannel(readerCount int) *trackedChannel {
 		outgoingChannels: make([]*util.Piper, readerCount),
 		index:            0,
 		wg:               &wg,
+		lastWriteAt:      time.Now(),
 	}
 	if readerCount > 1 {
 		for i, _ := range t.outgoingChannels {
@@ -38,6 +42,8 @@ func newTrackedChannel(readerCount int) *trackedChannel {
 			for _, outgoingChan := range t.outgoingChannels {
 				outgoingChan.Writer.Close()
 			}
+			t.lastWriteAt = time.Now()
+			t.isClosed = true
 		}()
 	}
 	return t
@@ -98,9 +104,13 @@ func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string
 
 	for {
 		if tc, ok := m.name2Channel[name]; ok {
+			println("found existing channel", name, "closed:", tc.isClosed)
+			if tc.isClosed {
+				return nil
+			}
 			return tc.borrowChannel()
 		}
-		// println("waiting for", name, m, m.name2Channel[name])
+		println("waiting for", name, m, m.name2Channel[name])
 		m.name2ChannelCond.Wait()
 		// println("woke up for", name, m, m.name2Channel[name])
 	}
@@ -115,4 +125,25 @@ func (m *LocalDatasetShardsManagerInMemory) Cleanup(name string) {
 	defer m.Unlock()
 
 	m.doDelete(name)
+}
+
+// purge executor status older than 24 hours to save memory
+func (m *LocalDatasetShardsManagerInMemory) purgeExpiredEntries() {
+	for {
+		func() {
+			m.Lock()
+			cutoverLimit := time.Now().Add(-24 * time.Hour)
+			var oldShardNames []string
+			for name, tc := range m.name2Channel {
+				if tc.lastWriteAt.Before(cutoverLimit) {
+					oldShardNames = append(oldShardNames, name)
+				}
+			}
+			for _, name := range oldShardNames {
+				m.doDelete(name)
+			}
+			m.Unlock()
+			time.Sleep(1 * time.Hour)
+		}()
+	}
 }

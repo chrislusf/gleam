@@ -13,7 +13,6 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerNam
 	defer func() {
 		ch.incomingChannel.Writer.Close()
 		ch.wg.Wait()
-		as.inMemoryChannels.Cleanup(channelName)
 	}()
 
 	log.Println(writerName, "start in memory writing to", channelName, "expected reader:", readerCount)
