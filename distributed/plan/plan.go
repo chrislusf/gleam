@@ -2,7 +2,6 @@ package plan
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/chrislusf/gleam/distributed/resource"
@@ -75,7 +74,7 @@ func (t *TaskGroup) RequiredResources() resource.ComputeResource {
 		inst := task.Step.Instruction
 		if inst != nil {
 			resource.MemoryMB += int64(inst.GetMemoryCostInMB())
-			log.Printf("%s : %s (%d MB)", t.String(), task.Step.Name, inst.GetMemoryCostInMB())
+			// fmt.Printf("%s : %s (%d MB)\n", t.String(), task.Step.Name, inst.GetMemoryCostInMB())
 		}
 	}
 
