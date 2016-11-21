@@ -44,7 +44,7 @@ func (b *CoGroupPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *CoGroupPartitionedSorted) GetMemoryCostInMB() int {
+func (b *CoGroupPartitionedSorted) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

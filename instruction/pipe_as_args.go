@@ -49,7 +49,7 @@ func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *PipeAsArgs) GetMemoryCostInMB() int {
+func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

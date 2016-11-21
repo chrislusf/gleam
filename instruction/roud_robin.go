@@ -41,7 +41,7 @@ func (b *RoundRobin) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *RoundRobin) GetMemoryCostInMB() int {
+func (b *RoundRobin) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

@@ -41,7 +41,7 @@ func (b *Broadcast) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *Broadcast) GetMemoryCostInMB() int {
+func (b *Broadcast) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

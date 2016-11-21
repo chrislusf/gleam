@@ -2,6 +2,7 @@ package plan
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/chrislusf/gleam/distributed/resource"
@@ -23,6 +24,7 @@ type StepGroup struct {
 }
 
 func GroupTasks(fc *flow.FlowContext) ([]*StepGroup, []*TaskGroup) {
+	prepareFlowContext(fc)
 	stepGroups := translateToStepGroups(fc)
 	return stepGroups, translateToTaskGroups(stepGroups)
 }
@@ -72,9 +74,10 @@ func (t *TaskGroup) RequiredResources() resource.ComputeResource {
 
 	for _, task := range t.Tasks {
 		inst := task.Step.Instruction
-		if inst != nil {
-			resource.MemoryMB += int64(inst.GetMemoryCostInMB())
-			// fmt.Printf("%s : %s (%d MB)\n", t.String(), task.Step.Name, inst.GetMemoryCostInMB())
+		if inst != nil && task.Step.OutputDataset != nil {
+			taskMemSize := int64(inst.GetMemoryCostInMB(task.Step.OutputDataset.Meta.TotalSize))
+			resource.MemoryMB += taskMemSize
+			log.Printf("  %s : %s (%d MB)\n", t.String(), task.Step.Name, taskMemSize)
 		}
 	}
 

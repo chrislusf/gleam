@@ -21,6 +21,12 @@ const (
 	MergeTwoShardToOneShard
 )
 
+type DasetsetMetadata struct {
+	TotalSize  int
+	Datacenter string
+	Rack       string
+}
+
 type FlowContext struct {
 	PrevScriptType string
 	PrevScriptPart string
@@ -38,6 +44,7 @@ type Dataset struct {
 	ReadingSteps    []*Step
 	IsPartitionedBy []int
 	IsLocalSorted   []instruction.OrderBy
+	Meta            *DasetsetMetadata
 	RunLocked
 }
 

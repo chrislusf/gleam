@@ -30,7 +30,7 @@ type Instruction interface {
 	Name() string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats)
 	SerializeToCommand() *msg.Instruction
-	GetMemoryCostInMB() int
+	GetMemoryCostInMB(partitionSize int) int
 }
 
 type instructionRunner struct {

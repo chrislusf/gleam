@@ -47,7 +47,7 @@ func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *ScatterPartitions) GetMemoryCostInMB() int {
+func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

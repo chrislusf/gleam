@@ -50,7 +50,7 @@ func (b *LocalTop) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *LocalTop) GetMemoryCostInMB() int {
+func (b *LocalTop) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 

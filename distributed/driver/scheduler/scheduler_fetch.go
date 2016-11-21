@@ -18,16 +18,15 @@ import (
 // Object is Agent's Location
 func (s *Scheduler) Fetch(demands []market.Demand) {
 	var request resource.AllocationRequest
+	var requestedMemory int64
 	for _, d := range demands {
-		demand := d.Requirement.(*plan.TaskGroup)
+		taskGroup := d.Requirement.(*plan.TaskGroup)
+		requiredResource := taskGroup.RequiredResources()
 		request.Requests = append(request.Requests, resource.ComputeRequest{
-			ComputeResource: resource.ComputeResource{
-				CPUCount: 1,
-				CPULevel: 1,
-				MemoryMB: int64(s.Option.TaskMemoryMB),
-			},
-			Inputs: s.findTaskGroupInputs(demand),
+			ComputeResource: requiredResource,
+			Inputs:          s.findTaskGroupInputs(taskGroup),
 		})
+		requestedMemory += requiredResource.MemoryMB
 	}
 
 	result, err := Assign(s.Master, &request)
@@ -36,15 +35,17 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 		time.Sleep(time.Millisecond * time.Duration(15000+rand.Int63n(5000)))
 	} else {
 		if len(result.Allocations) == 0 {
-			log.Printf("%s Failed to allocate any executor.", s.Master)
+			log.Printf("%s No more executors.", s.Master)
 			time.Sleep(time.Millisecond * time.Duration(2000+rand.Int63n(1000)))
 		} else {
-			log.Printf("%s allocated %d executors.", s.Master, len(result.Allocations))
+			var allocatedMemory int64
 			for _, allocation := range result.Allocations {
 				s.Market.AddSupply(market.Supply{
 					Object: allocation,
 				})
+				allocatedMemory += allocation.Allocated.MemoryMB
 			}
+			log.Printf("%s allocated %d executors with %d MB memory.", s.Master, len(result.Allocations), allocatedMemory)
 		}
 	}
 }

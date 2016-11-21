@@ -3,6 +3,7 @@ package instruction
 import (
 	"fmt"
 	"io"
+	"math"
 
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
@@ -55,8 +56,8 @@ func (b *LocalSort) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *LocalSort) GetMemoryCostInMB() int {
-	return b.memoryInMB
+func (b *LocalSort) GetMemoryCostInMB(partitionSize int) int {
+	return int(math.Max(float64(b.memoryInMB), float64(partitionSize)))
 }
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {

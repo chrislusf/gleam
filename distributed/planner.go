@@ -48,12 +48,15 @@ func (fcd *DistributedPlanner) RunFlowContext(fc *flow.FlowContext) {
 	for i, stepGroup := range stepGroups {
 		fmt.Printf("  step group: %d", i)
 		if len(stepGroup.Steps) > 0 && stepGroup.Steps[0].OutputDataset != nil {
-			fmt.Printf(" partition: %d\n", len(stepGroup.Steps[0].OutputDataset.Shards))
-		} else {
-			fmt.Println()
+			fmt.Printf(" partition: %d", len(stepGroup.Steps[0].OutputDataset.Shards))
 		}
+		fmt.Println()
 		for _, step := range stepGroup.Steps {
-			fmt.Printf("    step: %s\n", step.Name)
+			fmt.Printf("    step: %s", step.Name)
+			if step.OutputDataset != nil && step.OutputDataset.Meta.TotalSize > 0 {
+				fmt.Printf(" size: %d MB", step.OutputDataset.Meta.TotalSize)
+			}
+			fmt.Println()
 		}
 	}
 

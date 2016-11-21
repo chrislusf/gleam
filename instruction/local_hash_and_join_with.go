@@ -48,7 +48,7 @@ func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *LocalHashAndJoinWith) GetMemoryCostInMB() int {
+func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int) int {
 	return 1
 }
 
