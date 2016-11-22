@@ -3,6 +3,7 @@ package filesystem
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/colinmarc/hdfs"
