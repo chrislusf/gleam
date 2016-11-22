@@ -9,8 +9,10 @@ import (
 )
 
 /*
-Get the namenode from the hdfs://namenode/... string
-Or based on env HADOOP_CONF_DIR or HADOOP_HOME
+Get the namenode from
+1) the hdfs://namenode/... string
+2) Or from env HADOOP_NAMENODE.
+3) Or based on env HADOOP_CONF_DIR or HADOOP_HOME
 to locate hdfs-site.xml and core-site.xml
 */
 type HdfsFileSystem struct {
@@ -24,6 +26,9 @@ func (fs *HdfsFileSystem) Open(fl *FileLocation) (VirtualFile, error) {
 	namenode, path, err := splitLocationToParts(fl.Location)
 	if err != nil {
 		return nil, err
+	}
+	if namenode == "" {
+		namenode = os.Getenv("HADOOP_NAMENODE")
 	}
 
 	client, err := hdfs.New(namenode)
