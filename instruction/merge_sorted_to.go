@@ -48,7 +48,7 @@ func (b *MergeSortedTo) SerializeToCommand() *msg.Instruction {
 }
 
 func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int) int {
-	return 1
+	return 5
 }
 
 // Top streamingly compare and get the top n items

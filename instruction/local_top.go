@@ -51,7 +51,7 @@ func (b *LocalTop) SerializeToCommand() *msg.Instruction {
 }
 
 func (b *LocalTop) GetMemoryCostInMB(partitionSize int) int {
-	return 1
+	return 5
 }
 
 // Top streamingly compare and get the top n items

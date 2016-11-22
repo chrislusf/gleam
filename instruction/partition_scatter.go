@@ -48,7 +48,7 @@ func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
 }
 
 func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int) int {
-	return 1
+	return 5
 }
 
 func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {

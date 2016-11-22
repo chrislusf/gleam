@@ -50,7 +50,7 @@ func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
 }
 
 func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int) int {
-	return 1
+	return 3
 }
 
 // Top streamingly compare and get the top n items

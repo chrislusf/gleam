@@ -42,7 +42,7 @@ func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
 }
 
 func (b *CollectPartitions) GetMemoryCostInMB(partitionSize int) int {
-	return 1
+	return 3
 }
 
 func DoCollectPartitions(readers []io.Reader, writer io.Writer) {
