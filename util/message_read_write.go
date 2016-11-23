@@ -36,6 +36,7 @@ func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 }
 
 func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) {
+	reader = bufio.NewReader(reader)
 	for err == nil {
 		if count == 0 {
 			io.Copy(ioutil.Discard, reader)
