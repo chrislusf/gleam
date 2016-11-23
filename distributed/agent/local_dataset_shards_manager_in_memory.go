@@ -104,13 +104,13 @@ func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string
 
 	for {
 		if tc, ok := m.name2Channel[name]; ok {
-			println("found existing channel", name, "closed:", tc.isClosed)
+			// println("found existing channel", name, "closed:", tc.isClosed)
 			if tc.isClosed {
 				return nil
 			}
 			return tc.borrowChannel()
 		}
-		println("waiting for", name, m, m.name2Channel[name])
+		// println("waiting for", name, m, m.name2Channel[name])
 		m.name2ChannelCond.Wait()
 		// println("woke up for", name, m, m.name2Channel[name])
 	}
