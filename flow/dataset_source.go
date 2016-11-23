@@ -80,6 +80,8 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 	fn := func(writer io.Writer) {
+		w := bufio.NewWriter(writer)
+		defer w.Flush()
 		file, err := filesystem.Open(fname)
 		if err != nil {
 			log.Panicf("Can not open file %s: %v", fname, err)
@@ -87,9 +89,11 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 		}
 		defer file.Close()
 
-		scanner := bufio.NewScanner(file)
+		reader := bufio.NewReader(file)
+
+		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
-			util.WriteRow(writer, scanner.Bytes())
+			util.WriteRow(w, scanner.Bytes())
 		}
 
 		if err := scanner.Err(); err != nil {
