@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -34,11 +35,13 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 // Otherwise, each row of output is written in tab-separated lines.
 func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 	fn := func(reader io.Reader) error {
+		w := bufio.NewWriter(writer)
+		defer w.Flush()
 		if d.Step.IsPipe {
-			_, err := io.Copy(writer, reader)
+			_, err := io.Copy(w, reader)
 			return err
 		}
-		return util.FprintRowsFromChannel(reader, writer, "\t", "\n")
+		return util.FprintRowsFromChannel(reader, w, "\t", "\n")
 	}
 	return d.Output(fn)
 }
@@ -46,10 +49,12 @@ func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 // Fprintf formats using the format for each row and writes to writer.
 func (d *Dataset) Fprintf(writer io.Writer, format string) *Dataset {
 	fn := func(reader io.Reader) error {
+		w := bufio.NewWriter(writer)
+		defer w.Flush()
 		if d.Step.IsPipe {
-			return util.TsvPrintf(reader, writer, format)
+			return util.TsvPrintf(reader, w, format)
 		}
-		return util.Fprintf(reader, writer, format)
+		return util.Fprintf(reader, w, format)
 	}
 	return d.Output(fn)
 }
