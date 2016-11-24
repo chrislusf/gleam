@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"bufio"
 	"io"
 	"log"
 	"net"
@@ -19,9 +20,12 @@ func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, c
 		return
 	}
 
+	writer := bufio.NewWriter(conn)
+	defer writer.Flush()
+
 	log.Println(readerName, "start in memory reading", channelName)
 	buf := make([]byte, util.BUFFER_SIZE)
-	io.CopyBuffer(conn, ch.Reader, buf)
+	io.CopyBuffer(writer, ch.Reader, buf)
 
 	log.Println(readerName, "finish in memory reading", channelName)
 }

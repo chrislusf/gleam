@@ -94,7 +94,9 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 	}
 
 	buf := make([]byte, BUFFER_SIZE)
-	n, err := io.CopyBuffer(writer, reader, buf)
+	w := bufio.NewWriter(writer)
+	defer w.Flush()
+	n, err := io.CopyBuffer(w, reader, buf)
 	if err != nil {
 		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
 		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
@@ -107,7 +109,9 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	defer writer.Close()
 
 	buf := make([]byte, BUFFER_SIZE)
-	n, err := io.CopyBuffer(writer, reader, buf)
+	w := bufio.NewWriter(writer)
+	defer w.Flush()
+	n, err := io.CopyBuffer(w, reader, buf)
 	if err != nil {
 		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
 	}
