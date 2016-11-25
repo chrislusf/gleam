@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"bufio"
 	"io"
 	"os"
 	"sync"
@@ -72,24 +71,21 @@ func (r *LocalDriver) RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 	shard.ReadyTime = time.Now()
 
 	var writers []io.Writer
-	var bufWriters []*bufio.Writer
 	for _, outgoingChan := range shard.OutgoingChans {
-		w := bufio.NewWriter(outgoingChan.Writer)
-		bufWriters = append(bufWriters, w)
-		writers = append(writers, w)
+		writers = append(writers, outgoingChan.Writer)
 	}
 
-	w := io.MultiWriter(writers...)
-	n, _ := io.Copy(w, shard.IncomingChan.Reader)
-	for _, w := range bufWriters {
-		w.Flush()
-	}
+	util.BufWrites(writers, func(writers []io.Writer) {
+		w := io.MultiWriter(writers...)
+		n, _ := io.Copy(w, shard.IncomingChan.Reader)
+		// println("shard", shard.Name(), "moved", n, "bytes.")
+		shard.Counter = n
+		shard.CloseTime = time.Now()
+	})
+
 	for _, outgoingChan := range shard.OutgoingChans {
 		outgoingChan.Writer.Close()
 	}
-	// println("shard", shard.Name(), "moved", n, "bytes.")
-	shard.Counter = n
-	shard.CloseTime = time.Now()
 }
 
 func (r *LocalDriver) RunStep(wg *sync.WaitGroup, step *Step) {

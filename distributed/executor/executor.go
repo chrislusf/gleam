@@ -1,6 +1,7 @@
 package executor
 
 import (
+	//"bufio"
 	"io"
 	"os"
 	"os/exec"
@@ -103,6 +104,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 
 	readers := setupReaders(wg, i, inChan, isFirst)
 	writers := setupWriters(wg, i, outChan, isLast, readerCount)
+
 	defer func() {
 		for _, writer := range writers {
 			if c, ok := writer.(io.Closer); ok {
@@ -111,22 +113,26 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, inChan, outChan *uti
 		}
 	}()
 
-	if f := instruction.InstructionRunner.GetInstructionFunction(i); f != nil {
-		//TODO use the stats
-		stats := &instruction.Stats{}
-		f(readers, writers, stats)
-		return
-	}
+	util.BufWrites(writers, func(writers []io.Writer) {
+		if f := instruction.InstructionRunner.GetInstructionFunction(i); f != nil {
+			//TODO use the stats
+			stats := &instruction.Stats{}
+			f(readers, writers, stats)
+			return
+		}
 
-	// println("starting", *i.Name, "inChan", inChan, "outChan", outChan)
-	if i.GetScript() != nil {
-		command := exec.Command(
-			i.GetScript().GetPath(), i.GetScript().GetArgs()...,
-		)
-		wg.Add(1)
-		util.Execute(wg, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
+		// println("starting", *i.Name, "inChan", inChan, "outChan", outChan)
+		if i.GetScript() != nil {
+			command := exec.Command(
+				i.GetScript().GetPath(), i.GetScript().GetArgs()...,
+			)
+			wg.Add(1)
+			util.Execute(wg, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
 
-	} else {
-		panic("what is this? " + i.String())
-	}
+		} else {
+			panic("what is this? " + i.String())
+		}
+
+	})
+
 }
