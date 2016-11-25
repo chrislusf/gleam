@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/resource"
+	"github.com/chrislusf/gleam/msg"
 )
 
 type Scheduler struct {
