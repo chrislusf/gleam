@@ -57,6 +57,7 @@ message InstructionSet {
 	repeated Instruction instructions = 1;
 	required int32 readerCount = 2;
 	optional uint32 flowHashCode = 3;
+	optional bool isProfiling = 4;
 }
 
 message Instruction {

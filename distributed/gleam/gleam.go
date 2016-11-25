@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"runtime"
 	"runtime/pprof"
 	"strconv"
+	"strings"
 	"sync"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -71,6 +73,15 @@ func main() {
 		instructions := msg.InstructionSet{}
 		if err := proto.Unmarshal(rawData, &instructions); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
+		}
+
+		if *instructions.IsProfiling {
+			f, err := os.Create(fmt.Sprintf("exe-%d-%s.pprof", instructions.GetFlowHashCode(), strings.Join(instructions.InstructionNames(), "-")))
+			if err != nil {
+				log.Fatal(err)
+			}
+			pprof.StartCPUProfile(f)
+			defer pprof.StopCPUProfile()
 		}
 		exe.NewExecutor(nil, &instructions).ExecuteInstructionSet()
 

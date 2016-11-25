@@ -20,6 +20,13 @@ func (m *InstructionSet) HashCode() uint32 {
 	return util.Hash([]byte(m.String()))
 }
 
+func (m *InstructionSet) InstructionNames() (stepNames []string) {
+	for _, ins := range m.GetInstructions() {
+		stepNames = append(stepNames, ins.GetName())
+	}
+	return
+}
+
 func (i *Instruction) SetInputLocations(locations []resource.DataLocation) {
 	for _, loc := range locations {
 		i.InputShardLocations = append(i.InputShardLocations, &DatasetShardLocation{

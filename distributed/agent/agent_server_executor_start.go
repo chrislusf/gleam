@@ -43,10 +43,6 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
-	var steps []string
-	for _, ins := range startRequest.GetInstructions().GetInstructions() {
-		steps = append(steps, ins.GetName())
-	}
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
@@ -54,7 +50,7 @@ func (as *AgentServer) handleStart(conn net.Conn,
 		executableFullFilename,
 		"execute",
 		"--steps",
-		strings.Join(steps, "-"),
+		strings.Join(startRequest.GetInstructions().InstructionNames(), "-"),
 	)
 	stdin, err := command.StdinPipe()
 	if err != nil {
