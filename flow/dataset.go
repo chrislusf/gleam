@@ -11,7 +11,7 @@ func NewDataset(context *FlowContext) *Dataset {
 	d := &Dataset{
 		Id:          len(context.Datasets),
 		FlowContext: context,
-		Meta:        &DasetsetMetadata{},
+		Meta:        &DasetsetMetadata{TotalSize: -1},
 	}
 	context.Datasets = append(context.Datasets, d)
 	return d

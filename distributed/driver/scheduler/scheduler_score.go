@@ -31,7 +31,7 @@ func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) 
 func memoryCost(tg *plan.TaskGroup) (cost int64) {
 	for _, t := range tg.Tasks {
 		if t.Step.Instruction != nil && t.Step.OutputDataset != nil {
-			cost += int64(t.Step.Instruction.GetMemoryCostInMB(t.Step.OutputDataset.Meta.TotalSize))
+			cost += int64(t.Step.Instruction.GetMemoryCostInMB(t.Step.OutputDataset.GetPartitionSize()))
 		}
 	}
 	return

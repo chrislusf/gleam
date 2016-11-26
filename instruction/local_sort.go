@@ -56,8 +56,8 @@ func (b *LocalSort) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *LocalSort) GetMemoryCostInMB(partitionSize int) int {
-	return int(math.Max(float64(b.memoryInMB), float64(partitionSize)))
+func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
+	return int64(math.Max(float64(b.memoryInMB), float64(partitionSize)))
 }
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {

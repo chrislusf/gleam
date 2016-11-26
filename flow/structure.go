@@ -22,7 +22,7 @@ const (
 )
 
 type DasetsetMetadata struct {
-	TotalSize  int
+	TotalSize  int64
 	Datacenter string
 	Rack       string
 }

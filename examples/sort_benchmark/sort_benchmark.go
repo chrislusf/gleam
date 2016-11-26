@@ -13,19 +13,30 @@ func main() {
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	gleamSortStandalone()
+	gleamSortDistributed()
 
+}
+
+func gleamSortStandalone() {
+
+	New().TextFile(
+		"/Users/chris/Desktop/record_1Gb_input.txt",
+	).Map(`
+       function(line)
+         return string.sub(line, 1, 10), string.sub(line, 13)
+       end
+   `).Partition(4).Sort().Fprintf(os.Stdout, "%s  %s\n").Run()
 }
 
 func linuxSortDistributed() {
 
 	New().TextFile(
 		"/Users/chris/Desktop/record_1Gb_input.txt",
-	).Hint(TotalSize(1024)).Map(`
+	).Map(`
        function(line)
          return string.sub(line, 1, 10), string.sub(line, 13)
        end
-   `).Partition(4).Pipe("sort").Fprintf(os.Stdout, "%s  %s\n").Run(distributed.Option())
+   `).Partition(4).Pipe("sort -k 1").Fprintf(os.Stdout, "%s  %s\n").Run(distributed.Option())
 }
 
 func gleamSortDistributed() {
@@ -37,15 +48,4 @@ func gleamSortDistributed() {
          return string.sub(line, 1, 10), string.sub(line, 13)
        end
    `).Partition(4).Sort().Fprintf(os.Stdout, "%s  %s\n").Run(distributed.Option())
-}
-
-func gleamSortStandalone() {
-
-	New().TextFile(
-		"/Users/chris/Desktop/record_1Gb_input.txt",
-	).Hint(TotalSize(1024)).Map(`
-       function(line)
-         return string.sub(line, 1, 10), string.sub(line, 13)
-       end
-   `).Partition(4).Sort().Fprintf(os.Stdout, "%s  %s\n").Run()
 }

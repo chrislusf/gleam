@@ -12,7 +12,7 @@ func (d *Dataset) Hint(options ...DasetsetHint) *Dataset {
 
 // TotalSize hints the total size in MB for all the partitions.
 // This is usually used when sorting is needed.
-func TotalSize(n int) DasetsetHint {
+func TotalSize(n int64) DasetsetHint {
 	return func(d *Dataset) {
 		d.Meta.TotalSize = n
 	}
@@ -20,9 +20,9 @@ func TotalSize(n int) DasetsetHint {
 
 // PartitionSize hints the partition size in MB.
 // This is usually used when sorting is needed.
-func PartitionSize(n int) DasetsetHint {
+func PartitionSize(n int64) DasetsetHint {
 	return func(d *Dataset) {
-		d.Meta.TotalSize = n * len(d.GetShards())
+		d.Meta.TotalSize = n * int64(len(d.GetShards()))
 	}
 }
 

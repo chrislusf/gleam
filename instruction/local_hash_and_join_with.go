@@ -48,8 +48,8 @@ func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int) int {
-	return int(float32(partitionSize) * 1.1)
+func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
+	return int64(float32(partitionSize) * 1.1)
 }
 
 // Top streamingly compare and get the top n items

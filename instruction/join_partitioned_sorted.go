@@ -52,7 +52,7 @@ func (b *JoinPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *JoinPartitionedSorted) GetMemoryCostInMB(partitionSize int) int {
+func (b *JoinPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 5
 }
 

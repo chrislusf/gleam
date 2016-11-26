@@ -53,8 +53,8 @@ func (fcd *DistributedPlanner) RunFlowContext(fc *flow.FlowContext) {
 		fmt.Println()
 		for _, step := range stepGroup.Steps {
 			fmt.Printf("    step: %s", step.Name)
-			if step.OutputDataset != nil && step.OutputDataset.Meta.TotalSize > 0 {
-				fmt.Printf(" size: %d MB", step.OutputDataset.Meta.TotalSize)
+			if step.OutputDataset != nil {
+				fmt.Printf(" size: %d MB", step.OutputDataset.GetTotalSize())
 			}
 			fmt.Println()
 		}

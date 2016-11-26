@@ -28,7 +28,7 @@ sys	0m1.108s
 # Final Performance
 1m54s for distributed 4-parition gleam sorting. (15m34->1m54, reduced to 12.2%)
 2m30s for distributed 4-parition linux sorting on gleam. (6m49s->2m30s, reduced basic linux sort time to 37%)
-3m5s for distributed gleam sorting. (7m7s->3m5s, reduced to 43%)
+3m5s for standalone gleam sorting. (7m7s->3m5s, reduced to 43%)
 
 # Notes
 

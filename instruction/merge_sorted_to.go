@@ -47,7 +47,7 @@ func (b *MergeSortedTo) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int) int {
+func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 5
 }
 

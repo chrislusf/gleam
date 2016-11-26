@@ -16,8 +16,8 @@ type pair struct {
 
 // Sort sort on specific fields, default to the first field.
 // Required Memory: about same size as each partition.
-// example usage: Sort(Field(1,2).Memory(128)) means
-// sorting on field 1 and 2, and each partition can be hold in 128MB memory.
+// example usage: Sort(Field(1,2)) means
+// sorting on field 1 and 2.
 func (d *Dataset) Sort(sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
@@ -50,7 +50,7 @@ func (d *Dataset) LocalSort(sortOptions ...*SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, sortOption.MemorySizeInMB))
+	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3))
 	return ret
 }
 

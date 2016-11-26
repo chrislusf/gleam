@@ -5,8 +5,7 @@ import (
 )
 
 type SortOption struct {
-	orderByList    []instruction.OrderBy
-	MemorySizeInMB int
+	orderByList []instruction.OrderBy
 }
 
 // By groups the indexes, usually start from 1, into a []int
@@ -41,11 +40,6 @@ func (o *SortOption) By(index int, ascending bool) *SortOption {
 	return o
 }
 
-func (o *SortOption) Memory(sizeInMB int) *SortOption {
-	o.MemorySizeInMB = sizeInMB
-	return o
-}
-
 // return a list of indexes
 func (o *SortOption) Indexes() []int {
 	var ret []int
@@ -62,7 +56,6 @@ func concat(sortOptions []*SortOption) *SortOption {
 	ret := &SortOption{}
 	for _, sortOption := range sortOptions {
 		ret.orderByList = append(ret.orderByList, sortOption.orderByList...)
-		ret.MemorySizeInMB += sortOption.MemorySizeInMB
 	}
 	return ret
 }

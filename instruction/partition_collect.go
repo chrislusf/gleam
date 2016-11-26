@@ -41,7 +41,7 @@ func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *CollectPartitions) GetMemoryCostInMB(partitionSize int) int {
+func (b *CollectPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 

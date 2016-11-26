@@ -55,7 +55,7 @@ func (b *AdapterSplitReader) SerializeToCommand() *msg.Instruction {
 	}
 }
 
-func (b *AdapterSplitReader) GetMemoryCostInMB(partitionSize int) int {
+func (b *AdapterSplitReader) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
