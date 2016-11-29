@@ -50,10 +50,12 @@ var (
 	writer             = app.Command("write", "Write data to a topic")
 	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
 	writerAgentAddress = writer.Flag("agent", "agent host:port").Default("localhost:45327").String()
+	writeToDisk        = writer.Flag("onDisk", "write to memory").Default("false").Bool()
 
 	reader             = app.Command("read", "Read data from a topic")
 	readTopic          = reader.Flag("topic", "Name of a source topic").Required().String()
 	readerAgentAddress = reader.Flag("agent", "agent host:port").Default("localhost:45327").String()
+	readFromDisk       = reader.Flag("onDisk", "read from memory").Default("false").Bool()
 )
 
 func main() {
@@ -90,7 +92,7 @@ func main() {
 		inChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, inChan.Reader, 1)
+		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, *writeToDisk, inChan.Reader, 1)
 		wg.Add(1)
 		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan.Writer, true, os.Stderr)
 		wg.Wait()
@@ -100,7 +102,7 @@ func main() {
 		outChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, outChan.Writer)
+		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, *readFromDisk, outChan.Writer)
 		wg.Add(1)
 		util.ChannelToLineWriter(&wg, "stdout", outChan.Reader, os.Stdout, os.Stderr)
 		wg.Wait()

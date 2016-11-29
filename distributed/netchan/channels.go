@@ -14,7 +14,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, outChan io.WriteCloser) error {
+func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, onDisk bool, outChan io.WriteCloser) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -24,7 +24,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&msg.ControlMessage{
-		IsMemoryIO: proto.Bool(true),
+		IsOnDiskIO: proto.Bool(onDisk),
 		ReadRequest: &msg.ReadRequest{
 			ChannelName: proto.String(channelName),
 			ReaderName:  proto.String(readerName),
@@ -38,7 +38,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	return nil
 }
 
-func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, inChan io.Reader, readerCount int) error {
+func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
 
 	readWriter, err := net.Dial("tcp", address)
 	if err != nil {
@@ -48,7 +48,7 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&msg.ControlMessage{
-		IsMemoryIO: proto.Bool(true),
+		IsOnDiskIO: proto.Bool(onDisk),
 		WriteRequest: &msg.WriteRequest{
 			ChannelName: proto.String(channelName),
 			ReaderCount: proto.Int32(int32(readerCount)),

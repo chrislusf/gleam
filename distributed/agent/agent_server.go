@@ -166,7 +166,7 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	command *msg.ControlMessage) *msg.ControlMessage {
 	reply := &msg.ControlMessage{}
 	if command.GetReadRequest() != nil {
-		if command.GetIsMemoryIO() {
+		if !command.GetIsOnDiskIO() {
 			as.handleInMemoryReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
 		} else {
 			as.handleReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
@@ -174,7 +174,7 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 		return nil
 	}
 	if command.GetWriteRequest() != nil {
-		if command.GetIsMemoryIO() {
+		if !command.GetIsOnDiskIO() {
 			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		} else {
 			as.handleLocalWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))

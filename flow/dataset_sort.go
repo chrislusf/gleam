@@ -50,7 +50,7 @@ func (d *Dataset) LocalSort(sortOptions ...*SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3))
+	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3, d.GetIsOnDiskIO()))
 	return ret
 }
 
@@ -64,7 +64,7 @@ func (d *Dataset) LocalTop(n int, sortOptions ...*SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalTop(n, sortOption.orderByList))
+	step.SetInstruction(instruction.NewLocalTop(n, sortOption.orderByList, d.GetIsOnDiskIO()))
 	return ret
 }
 
@@ -83,7 +83,7 @@ func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) 
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
-	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList))
+	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList, d.GetIsOnDiskIO()))
 	return ret
 }
 

@@ -11,6 +11,7 @@ import (
 )
 
 type NetworkType int
+type ModeIO int
 
 const (
 	OneShardToOneShard NetworkType = iota
@@ -21,8 +22,15 @@ const (
 	MergeTwoShardToOneShard
 )
 
+const (
+	ModeUnset ModeIO = iota
+	ModeInMemory
+	ModeOnDisk
+)
+
 type DasetsetMetadata struct {
 	TotalSize  int64
+	OnDisk     ModeIO
 	Datacenter string
 	Rack       string
 }

@@ -8,16 +8,15 @@ import (
 	"net"
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
 
 func NewStartRequest(dir string, instructions *msg.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *msg.ControlMessage {
 	request := &msg.ControlMessage{
-		IsMemoryIO: proto.Bool(true),
 		StartRequest: &msg.StartRequest{
 			Instructions: instructions,
 			Dir:          proto.String(dir),

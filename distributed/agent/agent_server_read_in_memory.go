@@ -11,21 +11,21 @@ import (
 
 func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, channelName string) {
 
-	log.Println(readerName, "waits in memory for", channelName)
+	log.Println("in memory", readerName, "waits for", channelName)
 
 	ch := as.inMemoryChannels.WaitForNamedDatasetShard(channelName)
 
 	if ch == nil {
-		log.Println(readerName, "in memory read an empty", channelName)
+		log.Println("in memory", readerName, "read an empty", channelName)
 		return
 	}
 
 	writer := bufio.NewWriter(conn)
 	defer writer.Flush()
 
-	log.Println(readerName, "start in memory reading", channelName)
+	log.Println("in memory", readerName, "start reading", channelName)
 	buf := make([]byte, util.BUFFER_SIZE)
-	io.CopyBuffer(writer, ch.Reader, buf)
+	count, err := io.CopyBuffer(writer, ch.Reader, buf)
 
-	log.Println(readerName, "finish in memory reading", channelName)
+	log.Printf("in memory %s finish reading %s bytes:%d %v", readerName, channelName, count, err)
 }

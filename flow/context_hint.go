@@ -28,3 +28,19 @@ func (d *Dataset) GetTotalSize() int64 {
 func (d *Dataset) GetPartitionSize() int64 {
 	return d.GetTotalSize() / int64(len(d.Shards))
 }
+
+func (d *Dataset) GetIsOnDiskIO() bool {
+	if d.Meta.OnDisk == ModeUnset {
+		var isOnDisk bool
+		for _, ds := range d.Step.InputDatasets {
+			isOnDisk = isOnDisk || ds.GetIsOnDiskIO()
+		}
+		if isOnDisk {
+			d.Meta.OnDisk = ModeOnDisk
+		} else {
+			d.Meta.OnDisk = ModeInMemory
+		}
+	}
+
+	return d.Meta.OnDisk == ModeOnDisk
+}

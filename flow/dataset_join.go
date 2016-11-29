@@ -45,6 +45,6 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, sortOption *SortOption
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
-	step.SetInstruction(instruction.NewJoinPartitionedSorted(isLeftOuterJoin, isRightOuterJoin, sortOption.Indexes()))
+	step.SetInstruction(instruction.NewJoinPartitionedSorted(isLeftOuterJoin, isRightOuterJoin, sortOption.Indexes(), this.GetIsOnDiskIO()))
 	return ret
 }

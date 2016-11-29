@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"bufio"
 	"io"
 	"log"
 	"net"
@@ -14,33 +13,28 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	dsStore := as.storageBackend.CreateNamedDatasetShard(channelName)
 
-	writer := bufio.NewWriter(dsStore)
-	defer writer.Flush()
-
-	log.Println(writerName, "start writing to", channelName, "expected reader:", readerCount)
+	log.Println("on disk", writerName, "start writing", channelName, "expected reader:", readerCount)
 
 	var count int64
 
-	r := bufio.NewReaderSize(reader, util.BUFFER_SIZE)
-
 	for {
-		message, err := util.ReadMessage(r)
+		message, err := util.ReadMessage(reader)
 		if err == io.EOF {
 			// println("agent recv eof:", string(message.Bytes()))
 			break
 		}
 		if err == nil {
 			count += int64(len(message))
-			util.WriteMessage(writer, message)
+			util.WriteMessage(dsStore, message)
 			// println("agent recv:", string(message.Bytes()))
 		} else {
 			log.Printf("Failed to read message: %v", err)
 		}
 	}
 
-	log.Println(writerName, "finish writing to", channelName, count, "bytes")
+	log.Println("on disk", writerName, "finish writing", channelName, count, "bytes")
 
-	util.WriteEOFMessage(writer)
+	util.WriteEOFMessage(dsStore)
 }
 
 func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,

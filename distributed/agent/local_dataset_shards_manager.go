@@ -66,7 +66,7 @@ func (m *LocalDatasetShardsManager) CreateNamedDatasetShard(name string) store.D
 	s := store.NewLocalFileDataStore(m.dir, fmt.Sprintf("%s-%d", name, m.port))
 
 	m.name2Store[name] = s
-	println(name, "is broadcasting...")
+	// println(name, "is broadcasting...")
 	m.name2StoreCond.Broadcast()
 
 	return s

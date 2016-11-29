@@ -20,7 +20,7 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, sortOptions ...*SortOpt
 	ret.IsLocalSorted = that.IsLocalSorted
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
-	step.SetInstruction(instruction.NewLocalHashAndJoinWith(sortOption.Indexes()))
+	step.SetInstruction(instruction.NewLocalHashAndJoinWith(sortOption.Indexes(), this.GetIsOnDiskIO()))
 	return ret
 }
 

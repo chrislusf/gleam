@@ -12,7 +12,7 @@ package msg;
 ///////////////////////////////////
 
 message ControlMessage {
-	optional bool isMemoryIO = 1;
+	optional bool isOnDiskIO = 1;
 	optional StartRequest startRequest = 2;
 	optional StartResponse startResponse = 3;
 	optional StopRequest stopRequest = 4;
@@ -65,7 +65,7 @@ message Instruction {
 	repeated DatasetShardLocation inputShardLocations = 2;
 	repeated DatasetShardLocation OutputShardLocations = 3;
 	optional int32 memoryInMB = 4;
-	optional JoinPartitionedSorted joinPartitionedSorted = 5;
+	optional bool onDisk = 5;
 	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
 	optional PipeAsArgs pipeAsArgs = 7;
 	optional ScatterPartitions scatterPartitions = 8;
@@ -79,6 +79,7 @@ message Instruction {
 	optional LocalSort localSort = 16;
 	optional AdapterSplitReader adapterSplitReader = 17;
 	optional MergeSortedTo mergeSortedTo = 18;
+	optional JoinPartitionedSorted joinPartitionedSorted = 19;
 }
 
 message ScatterPartitions {

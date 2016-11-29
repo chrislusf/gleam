@@ -18,7 +18,7 @@ type DataStore interface {
 type LocalFileDataStore struct {
 	dir         string
 	name        string
-	store       *RotatingFileStore
+	store       *SingleFileStore
 	lastWriteAt time.Time
 	lastReadAt  time.Time
 }
@@ -27,12 +27,8 @@ func NewLocalFileDataStore(dir, name string) (ds *LocalFileDataStore) {
 	ds = &LocalFileDataStore{
 		dir:  dir,
 		name: name,
-		store: &RotatingFileStore{
-			Filename:    path.Join(dir, name+".dat"),
-			MaxMegaByte: 256,
-			MaxDays:     0, // unlimited
-			MaxBackups:  0, // unlimited
-			LocalTime:   true,
+		store: &SingleFileStore{
+			Filename: path.Join(dir, name+".dat"),
 		},
 		lastWriteAt: time.Now(),
 	}

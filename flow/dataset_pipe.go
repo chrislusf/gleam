@@ -17,6 +17,6 @@ func (d *Dataset) Pipe(code string) *Dataset {
 func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.IsPipe = true
-	step.SetInstruction(instruction.NewPipeAsArgs(code))
+	step.SetInstruction(instruction.NewPipeAsArgs(code, d.GetIsOnDiskIO()))
 	return ret
 }

@@ -78,7 +78,7 @@ func setupReaders(wg *sync.WaitGroup, i *msg.Instruction, inPiper *util.Piper, i
 			wg.Add(1)
 			inChan := util.NewPiper()
 			// println(i.GetName(), "connecting to", inputLocation.Address(), "to read", inputLocation.GetName())
-			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inChan.Writer)
+			go netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), i.GetOnDisk(), inChan.Writer)
 			readers = append(readers, inChan.Reader)
 		}
 	}
@@ -92,7 +92,7 @@ func setupWriters(wg *sync.WaitGroup, i *msg.Instruction, outPiper *util.Piper, 
 			wg.Add(1)
 			outChan := util.NewPiper()
 			// println(i.GetName(), "connecting to", outputLocation.Address(), "to write", outputLocation.GetName(), "readerCount", readerCount)
-			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outChan.Reader, readerCount)
+			go netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), i.GetOnDisk(), outChan.Reader, readerCount)
 			writers = append(writers, outChan.Writer)
 		}
 	}

@@ -26,6 +26,16 @@ func PartitionSize(n int64) DasetsetHint {
 	}
 }
 
+func OnDisk(onDisk bool) DasetsetHint {
+	return func(d *Dataset) {
+		if onDisk {
+			d.Meta.OnDisk = ModeOnDisk
+		} else {
+			d.Meta.OnDisk = ModeInMemory
+		}
+	}
+}
+
 /*
 
 // Datacenter hints the previous dataset output location

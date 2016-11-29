@@ -17,6 +17,7 @@ func init() {
 			return NewLocalSort(
 				toOrderBys(m.GetLocalSort().GetOrderBys()),
 				int(m.GetMemoryInMB()),
+				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -31,10 +32,11 @@ type pair struct {
 type LocalSort struct {
 	orderBys   []OrderBy
 	memoryInMB int
+	onDisk     bool
 }
 
-func NewLocalSort(orderBys []OrderBy, memoryInMB int) *LocalSort {
-	return &LocalSort{orderBys, memoryInMB}
+func NewLocalSort(orderBys []OrderBy, memoryInMB int, onDisk bool) *LocalSort {
+	return &LocalSort{orderBys, memoryInMB, onDisk}
 }
 
 func (b *LocalSort) Name() string {
@@ -49,7 +51,8 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 
 func (b *LocalSort) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name: proto.String(b.Name()),
+		Name:   proto.String(b.Name()),
+		OnDisk: proto.Bool(b.onDisk),
 		LocalSort: &msg.LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},

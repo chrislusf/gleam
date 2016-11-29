@@ -97,7 +97,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
 			// println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
-			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
+			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)
@@ -114,7 +114,7 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
 			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", inChan)
-			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), inChan.Writer); err != nil {
+			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), inChan.Writer); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)

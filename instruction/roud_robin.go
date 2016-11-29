@@ -11,17 +11,18 @@ import (
 func init() {
 	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
 		if m.GetRoundRobin() != nil {
-			return NewRoundRobin()
+			return NewRoundRobin(m.GetOnDisk())
 		}
 		return nil
 	})
 }
 
 type RoundRobin struct {
+	onDisk bool
 }
 
-func NewRoundRobin() *RoundRobin {
-	return &RoundRobin{}
+func NewRoundRobin(onDisk bool) *RoundRobin {
+	return &RoundRobin{onDisk}
 }
 
 func (b *RoundRobin) Name() string {
@@ -37,6 +38,7 @@ func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, s
 func (b *RoundRobin) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
 		Name:       proto.String(b.Name()),
+		OnDisk:     proto.Bool(b.onDisk),
 		RoundRobin: &msg.RoundRobin{},
 	}
 }
