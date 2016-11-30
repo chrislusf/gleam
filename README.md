@@ -1,4 +1,6 @@
 # gleam
+[![Build Status](https://travis-ci.org/chrislusf/gleam.svg?branch=master)](https://travis-ci.org/chrislusf/gleam)
+
 Gleam is a high performance and efficient distributed execution system, and also 
 simple, generic, flexible and easy to customize.
 
