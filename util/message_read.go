@@ -86,20 +86,3 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 	}
 	return m, nil
 }
-
-func WriteEOFMessage(writer io.Writer) (err error) {
-	if err = binary.Write(writer, binary.LittleEndian, int32(-1)); err != nil {
-		return fmt.Errorf("Failed to write message length: %v", err)
-	}
-	return
-}
-
-func WriteMessage(writer io.Writer, m []byte) (err error) {
-	if err = binary.Write(writer, binary.LittleEndian, int32(len(m))); err != nil {
-		return fmt.Errorf("Failed to write message length: %v", err)
-	}
-	if _, err = writer.Write(m); err != nil {
-		return fmt.Errorf("Failed to write message content: %v", err)
-	}
-	return
-}

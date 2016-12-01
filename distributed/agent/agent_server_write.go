@@ -17,6 +17,8 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	var count int64
 
+	messageWriter := util.NewBufferedMessageWriter(dsStore, 54)
+
 	for {
 		message, err := util.ReadMessage(reader)
 		if err == io.EOF {
@@ -25,16 +27,18 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 		}
 		if err == nil {
 			count += int64(len(message))
-			util.WriteMessage(dsStore, message)
+			messageWriter.WriteMessage(message)
 			// println("agent recv:", string(message.Bytes()))
 		} else {
 			log.Printf("Failed to read message: %v", err)
 		}
 	}
 
+	messageWriter.Flush()
+	util.WriteEOFMessage(dsStore)
+
 	log.Println("on disk", writerName, "finish writing", channelName, count, "bytes")
 
-	util.WriteEOFMessage(dsStore)
 }
 
 func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,
