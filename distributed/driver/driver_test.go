@@ -16,7 +16,7 @@ func TestInstructionSet(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	f := flow.New().SetRunner(Distributed)
+	f := flow.New()
 	f.Strings(fileNames).Partition(3).PipeAsArgs("ls -l $1").FlatMap(`
       function(line)
         return line:gmatch("%w+")
@@ -39,7 +39,7 @@ func TestInstructionSet(t *testing.T) {
 
 func TestPlanning(t *testing.T) {
 
-	f := flow.New().SetRunner(Distributed).Init(`
+	f := flow.New().Init(`
 	function splitter(line)
         return line:gmatch("%w+")
     end

@@ -5,13 +5,9 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/chrislusf/gleam/util"
 )
 
 func TestNormalHttpCopy(t *testing.T) {
-
-	util.SetupHttpClient(nil)
 
 	files := []string{
 		os.Args[0], "http_server.go", "../scheduler/scheduler.go", "fetch_url.go",
@@ -21,7 +17,7 @@ func TestNormalHttpCopy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to start local server: %v", err)
 	}
-	rsyncServer.StartRsyncServer(nil, ":0")
+	rsyncServer.StartRsyncServer(":0")
 
 	err = FetchFilesTo(fmt.Sprintf("localhost:%d", rsyncServer.Port), "/tmp")
 	if err != nil {
