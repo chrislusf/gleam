@@ -18,7 +18,6 @@ func init() {
 }
 
 type Broadcast struct {
-	onDisk bool
 }
 
 func NewBroadcast() *Broadcast {
@@ -38,7 +37,6 @@ func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, st
 func (b *Broadcast) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
 		Name:      proto.String(b.Name()),
-		OnDisk:    proto.Bool(b.onDisk),
 		Broadcast: &msg.Broadcast{},
 	}
 }

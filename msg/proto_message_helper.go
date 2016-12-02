@@ -30,9 +30,10 @@ func (m *InstructionSet) InstructionNames() (stepNames []string) {
 func (i *Instruction) SetInputLocations(locations []resource.DataLocation) {
 	for _, loc := range locations {
 		i.InputShardLocations = append(i.InputShardLocations, &DatasetShardLocation{
-			Name: proto.String(loc.Name),
-			Host: proto.String(loc.Location.Server),
-			Port: proto.Int32(int32(loc.Location.Port)),
+			Name:   proto.String(loc.Name),
+			Host:   proto.String(loc.Location.Server),
+			Port:   proto.Int32(int32(loc.Location.Port)),
+			OnDisk: proto.Bool(loc.OnDisk),
 		})
 	}
 }
@@ -40,9 +41,10 @@ func (i *Instruction) SetInputLocations(locations []resource.DataLocation) {
 func (i *Instruction) SetOutputLocations(locations []resource.DataLocation) {
 	for _, loc := range locations {
 		i.OutputShardLocations = append(i.OutputShardLocations, &DatasetShardLocation{
-			Name: proto.String(loc.Name),
-			Host: proto.String(loc.Location.Server),
-			Port: proto.Int32(int32(loc.Location.Port)),
+			Name:   proto.String(loc.Name),
+			Host:   proto.String(loc.Location.Server),
+			Port:   proto.Int32(int32(loc.Location.Port)),
+			OnDisk: proto.Bool(loc.OnDisk),
 		})
 	}
 }

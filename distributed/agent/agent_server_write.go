@@ -17,7 +17,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	var count int64
 
-	messageWriter := util.NewBufferedMessageWriter(dsStore, 54)
+	messageWriter := util.NewBufferedMessageWriter(dsStore, util.BUFFER_SIZE)
 
 	for {
 		message, err := util.ReadMessage(reader)

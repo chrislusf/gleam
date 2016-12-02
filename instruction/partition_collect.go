@@ -11,20 +11,17 @@ import (
 func init() {
 	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
 		if m.GetCollectPartitions() != nil {
-			return NewCollectPartitions(
-				m.GetOnDisk(),
-			)
+			return NewCollectPartitions()
 		}
 		return nil
 	})
 }
 
 type CollectPartitions struct {
-	onDisk bool
 }
 
-func NewCollectPartitions(onDisk bool) *CollectPartitions {
-	return &CollectPartitions{onDisk}
+func NewCollectPartitions() *CollectPartitions {
+	return &CollectPartitions{}
 }
 
 func (b *CollectPartitions) Name() string {
@@ -40,7 +37,6 @@ func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Wr
 func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
 		Name:              proto.String(b.Name()),
-		OnDisk:            proto.Bool(b.onDisk),
 		CollectPartitions: &msg.CollectPartitions{},
 	}
 }

@@ -23,8 +23,7 @@ const (
 )
 
 const (
-	ModeUnset ModeIO = iota
-	ModeInMemory
+	ModeInMemory ModeIO = iota
 	ModeOnDisk
 )
 

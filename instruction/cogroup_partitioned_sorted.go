@@ -13,7 +13,6 @@ func init() {
 		if m.GetCoGroupPartitionedSorted() != nil {
 			return NewCoGroupPartitionedSorted(
 				toInts(m.GetCoGroupPartitionedSorted().GetIndexes()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -22,11 +21,10 @@ func init() {
 
 type CoGroupPartitionedSorted struct {
 	indexes []int
-	onDisk  bool
 }
 
-func NewCoGroupPartitionedSorted(indexes []int, onDisk bool) *CoGroupPartitionedSorted {
-	return &CoGroupPartitionedSorted{indexes, onDisk}
+func NewCoGroupPartitionedSorted(indexes []int) *CoGroupPartitionedSorted {
+	return &CoGroupPartitionedSorted{indexes}
 }
 
 func (b *CoGroupPartitionedSorted) Name() string {
@@ -41,8 +39,7 @@ func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers 
 
 func (b *CoGroupPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		CoGroupPartitionedSorted: &msg.CoGroupPartitionedSorted{
 			Indexes: getIndexes(b.indexes),
 		},

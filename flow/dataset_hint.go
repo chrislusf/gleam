@@ -26,14 +26,32 @@ func PartitionSize(n int64) DasetsetHint {
 	}
 }
 
-func OnDisk(onDisk bool) DasetsetHint {
-	return func(d *Dataset) {
-		if onDisk {
-			d.Meta.OnDisk = ModeOnDisk
-		} else {
-			d.Meta.OnDisk = ModeInMemory
+// OnDisk ensure the intermediate dataset are persisted to disk.
+// This allows executors to run not in parallel if executors are limited.
+func (d *Dataset) OnDisk(fn func(*Dataset) *Dataset) *Dataset {
+	ret := fn(d)
+
+	var parents, currents []*Dataset
+	currents = append(currents, ret)
+	for {
+		for _, t := range currents {
+			if t != ret && t.Step.OutputDataset != nil {
+				t.Step.OutputDataset.Meta.OnDisk = ModeOnDisk
+			}
+			for _, p := range t.Step.InputDatasets {
+				if p != d {
+					parents = append(parents, p)
+				}
+			}
 		}
+		if len(parents) == 0 {
+			break
+		}
+		currents = parents
+		parents = nil
 	}
+
+	return ret
 }
 
 /*

@@ -71,6 +71,7 @@ type Location struct {
 type DataLocation struct {
 	Name     string   `json:"name,omitempty"`
 	Location Location `json:"location,omitempty"`
+	OnDisk   bool     `json:"onDisk,omitempty"`
 }
 
 type Allocation struct {

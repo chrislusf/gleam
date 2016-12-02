@@ -16,19 +16,18 @@ import (
 func init() {
 	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
 		if m.GetPipeAsArgs() != nil {
-			return NewPipeAsArgs(m.GetPipeAsArgs().GetCode(), m.GetOnDisk())
+			return NewPipeAsArgs(m.GetPipeAsArgs().GetCode())
 		}
 		return nil
 	})
 }
 
 type PipeAsArgs struct {
-	code   string
-	onDisk bool
+	code string
 }
 
-func NewPipeAsArgs(code string, onDisk bool) *PipeAsArgs {
-	return &PipeAsArgs{code, onDisk}
+func NewPipeAsArgs(code string) *PipeAsArgs {
+	return &PipeAsArgs{code}
 }
 
 func (b *PipeAsArgs) Name() string {
@@ -43,8 +42,7 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 
 func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		PipeAsArgs: &msg.PipeAsArgs{
 			Code: proto.String(b.code),
 		},

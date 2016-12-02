@@ -65,7 +65,7 @@ message Instruction {
 	repeated DatasetShardLocation inputShardLocations = 2;
 	repeated DatasetShardLocation OutputShardLocations = 3;
 	optional int32 memoryInMB = 4;
-	optional bool onDisk = 5;
+	optional JoinPartitionedSorted joinPartitionedSorted = 5;
 	optional CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
 	optional PipeAsArgs pipeAsArgs = 7;
 	optional ScatterPartitions scatterPartitions = 8;
@@ -79,7 +79,6 @@ message Instruction {
 	optional LocalSort localSort = 16;
 	optional AdapterSplitReader adapterSplitReader = 17;
 	optional MergeSortedTo mergeSortedTo = 18;
-	optional JoinPartitionedSorted joinPartitionedSorted = 19;
 }
 
 message ScatterPartitions {
@@ -162,6 +161,7 @@ message DatasetShardLocation {
 	required string Name = 1;
 	required string Host = 2;
 	required int32 Port = 3;
+	required bool onDisk = 4;
 }
 
 message StartResponse {

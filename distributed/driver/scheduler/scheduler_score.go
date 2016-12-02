@@ -23,7 +23,7 @@ func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) 
 			// log.Printf("Strange1: %s not allocated yet.", input.Name())
 			continue
 		}
-		cost += dataLocation.Distance(loc)
+		cost += dataLocation.Location.Distance(loc)
 	}
 	return float64(bid) / cost
 }

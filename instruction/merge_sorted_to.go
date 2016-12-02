@@ -14,7 +14,6 @@ func init() {
 		if m.GetMergeSortedTo() != nil {
 			return NewMergeSortedTo(
 				toOrderBys(m.GetMergeSortedTo().GetOrderBys()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -23,11 +22,10 @@ func init() {
 
 type MergeSortedTo struct {
 	orderBys []OrderBy
-	onDisk   bool
 }
 
-func NewMergeSortedTo(orderBys []OrderBy, onDisk bool) *MergeSortedTo {
-	return &MergeSortedTo{orderBys, onDisk}
+func NewMergeSortedTo(orderBys []OrderBy) *MergeSortedTo {
+	return &MergeSortedTo{orderBys}
 }
 
 func (b *MergeSortedTo) Name() string {
@@ -42,8 +40,7 @@ func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer
 
 func (b *MergeSortedTo) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		MergeSortedTo: &msg.MergeSortedTo{
 			OrderBys: getOrderBys(b.orderBys),
 		},

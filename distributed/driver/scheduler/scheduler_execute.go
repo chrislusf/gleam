@@ -34,15 +34,13 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 			log.Printf("The shard is missing?: %s", shard.Name())
 			continue
 		}
-		inputLocations = append(inputLocations, resource.DataLocation{
-			Name:     shard.Name(),
-			Location: loc,
-		})
+		inputLocations = append(inputLocations, loc)
 	}
 	for _, shard := range lastTask.OutputShards {
 		outputLocations = append(outputLocations, resource.DataLocation{
 			Name:     shard.Name(),
 			Location: allocation.Location,
+			OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 		})
 	}
 
@@ -97,8 +95,8 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
 			// println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
-			if err := netchan.DialWriteChannel(wg, "driver_input", location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
-				println("starting:", task.Step.Name, "output location:", location.URL(), shard.Name(), "error:", err.Error())
+			if err := netchan.DialWriteChannel(wg, "driver_input", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
+				println("starting:", task.Step.Name, "output location:", location.Location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)
 	}
@@ -113,9 +111,9 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 		inChan := task.InputChans[i]
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
-			// println(task.Step.Name, "reading from", shard.Name(), "at", location.URL(), "to", inChan)
-			if err := netchan.DialReadChannel(wg, "driver_output", location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), inChan.Writer); err != nil {
-				println("starting:", task.Step.Name, "input location:", location.URL(), shard.Name(), "error:", err.Error())
+			// println(task.Step.Name, "reading from", shard.Name(), "at", location.Location.URL(), "to", inChan, "onDisk", shard.Dataset.GetIsOnDiskIO())
+			if err := netchan.DialReadChannel(wg, "driver_output", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), inChan.Writer); err != nil {
+				println("starting:", task.Step.Name, "input location:", location.Location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)
 	}

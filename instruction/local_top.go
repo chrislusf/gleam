@@ -15,7 +15,6 @@ func init() {
 			return NewLocalTop(
 				int(m.GetLocalTop().GetN()),
 				toOrderBys(m.GetLocalTop().GetOrderBys()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -25,11 +24,10 @@ func init() {
 type LocalTop struct {
 	n        int
 	orderBys []OrderBy
-	onDisk   bool
 }
 
-func NewLocalTop(n int, orderBys []OrderBy, onDisk bool) *LocalTop {
-	return &LocalTop{n, orderBys, onDisk}
+func NewLocalTop(n int, orderBys []OrderBy) *LocalTop {
+	return &LocalTop{n, orderBys}
 }
 
 func (b *LocalTop) Name() string {
@@ -44,8 +42,7 @@ func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, sta
 
 func (b *LocalTop) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		LocalTop: &msg.LocalTop{
 			N:        proto.Int32(int32(b.n)),
 			OrderBys: getOrderBys(b.orderBys),

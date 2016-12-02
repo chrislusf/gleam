@@ -57,13 +57,14 @@ func linuxSortStandalone() {
 func gleamSortDistributed() {
 
 	f := flow.New().TextFile(
-		"/Users/chris/Desktop/record_1Gb_input.txt",
+		"/Users/chris/Desktop/record_10000_input.txt",
 	).Hint(flow.TotalSize(1024)).Map(`
        function(line)
          return string.sub(line, 1, 10), string.sub(line, 13)
        end
-   `).Hint(flow.OnDisk(true)).Partition(4).Sort().Fprintf(
-		os.Stdout, "%s  %s\n")
+   `).OnDisk(func(d *flow.Dataset) *flow.Dataset {
+		return d.Partition(4).Sort()
+	}).Fprintf(os.Stdout, "%s  %s\n")
 
 	f.Run(distributed.Option())
 }

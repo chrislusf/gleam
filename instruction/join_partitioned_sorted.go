@@ -15,7 +15,6 @@ func init() {
 				m.GetJoinPartitionedSorted().GetIsLeftOuterJoin(),
 				m.GetJoinPartitionedSorted().GetIsRightOuterJoin(),
 				toInts(m.GetJoinPartitionedSorted().GetIndexes()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -26,11 +25,10 @@ type JoinPartitionedSorted struct {
 	isLeftOuterJoin  bool
 	isRightOuterJoin bool
 	indexes          []int
-	onDisk           bool
 }
 
-func NewJoinPartitionedSorted(isLeftOuterJoin bool, isRightOuterJoin bool, indexes []int, onDisk bool) *JoinPartitionedSorted {
-	return &JoinPartitionedSorted{isLeftOuterJoin, isRightOuterJoin, indexes, onDisk}
+func NewJoinPartitionedSorted(isLeftOuterJoin bool, isRightOuterJoin bool, indexes []int) *JoinPartitionedSorted {
+	return &JoinPartitionedSorted{isLeftOuterJoin, isRightOuterJoin, indexes}
 }
 
 func (b *JoinPartitionedSorted) Name() string {
@@ -45,8 +43,7 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 
 func (b *JoinPartitionedSorted) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		JoinPartitionedSorted: &msg.JoinPartitionedSorted{
 			IsLeftOuterJoin:  proto.Bool(b.isLeftOuterJoin),
 			IsRightOuterJoin: proto.Bool(b.isRightOuterJoin),

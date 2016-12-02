@@ -62,13 +62,21 @@ func (s *Scheduler) EventLoop() {
 						// tell the driver to write to me
 						for _, shard := range tasks[0].InputShards {
 							// println("registering", shard.Name(), "at", allocation.Location.URL())
-							s.SetShardLocation(shard, allocation.Location)
+							s.SetShardLocation(shard, resource.DataLocation{
+								Name:     shard.Name(),
+								Location: allocation.Location,
+								OnDisk:   shard.Dataset.GetIsOnDiskIO(),
+							})
 						}
 					}
 
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
-						// println("registering", shard.Name(), "at", allocation.Location.URL())
-						s.SetShardLocation(shard, allocation.Location)
+						// println("registering", shard.Name(), "at", allocation.Location.URL(), "onDisk", shard.Dataset.GetIsOnDiskIO())
+						s.SetShardLocation(shard, resource.DataLocation{
+							Name:     shard.Name(),
+							Location: allocation.Location,
+							OnDisk:   shard.Dataset.GetIsOnDiskIO(),
+						})
 					}
 					// println("sending task group started with:", tasks[0].Step.Name)
 					s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
@@ -84,7 +92,7 @@ func (s *Scheduler) EventLoop() {
 						location, _ := s.GetShardLocation(shard)
 						request := NewDeleteDatasetShardRequest(shard.Name())
 						// println("deleting", shard.Name(), "on", location.URL())
-						if err := RemoteDirectExecute(location.URL(), request); err != nil {
+						if err := RemoteDirectExecute(location.Location.URL(), request); err != nil {
 							println("Purging dataset error:", err.Error())
 						}
 					}
@@ -104,11 +112,11 @@ func needsInputFromDriver(task *flow.Task) bool {
 	return false
 }
 
-func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (resource.Location, bool) {
+func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (resource.DataLocation, bool) {
 	location, found := s.shardLocator.GetShardLocation(shard.Name())
 	return location, found
 }
 
-func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc resource.Location) {
+func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc resource.DataLocation) {
 	s.shardLocator.SetShardLocation(shard.Name(), loc)
 }

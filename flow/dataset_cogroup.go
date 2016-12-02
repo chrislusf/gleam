@@ -28,6 +28,6 @@ func (this *Dataset) CoGroupPartitionedSorted(that *Dataset, indexes []int) (ret
 
 	inputs := []*Dataset{this, that}
 	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
-	step.SetInstruction(instruction.NewCoGroupPartitionedSorted(indexes, this.GetIsOnDiskIO()))
+	step.SetInstruction(instruction.NewCoGroupPartitionedSorted(indexes))
 	return ret
 }

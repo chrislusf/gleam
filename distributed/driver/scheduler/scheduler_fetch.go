@@ -35,7 +35,7 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 		time.Sleep(time.Millisecond * time.Duration(15000+rand.Int63n(5000)))
 	} else {
 		if len(result.Allocations) == 0 {
-			log.Printf("%s No more new executors.", s.Master)
+			// log.Printf("%s No more new executors.", s.Master)
 			time.Sleep(time.Millisecond * time.Duration(2000+rand.Int63n(1000)))
 		} else {
 			var allocatedMemory int64
@@ -59,7 +59,7 @@ func (s *Scheduler) findTaskGroupInputs(tg *plan.TaskGroup) (ret []resource.Data
 			continue
 		}
 		ret = append(ret, resource.DataResource{
-			Location:   dataLocation,
+			Location:   dataLocation.Location,
 			DataSizeMB: 1, // TODO: read previous run's size
 		})
 	}

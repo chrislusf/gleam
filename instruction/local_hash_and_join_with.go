@@ -15,7 +15,6 @@ func init() {
 		if m.GetLocalHashAndJoinWith() != nil {
 			return NewLocalHashAndJoinWith(
 				toInts(m.GetLocalHashAndJoinWith().GetIndexes()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -24,11 +23,10 @@ func init() {
 
 type LocalHashAndJoinWith struct {
 	indexes []int
-	onDisk  bool
 }
 
-func NewLocalHashAndJoinWith(indexes []int, onDisk bool) *LocalHashAndJoinWith {
-	return &LocalHashAndJoinWith{indexes, onDisk}
+func NewLocalHashAndJoinWith(indexes []int) *LocalHashAndJoinWith {
+	return &LocalHashAndJoinWith{indexes}
 }
 
 func (b *LocalHashAndJoinWith) Name() string {
@@ -43,8 +41,7 @@ func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io
 
 func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		LocalHashAndJoinWith: &msg.LocalHashAndJoinWith{
 			Indexes: getIndexes(b.indexes),
 		},

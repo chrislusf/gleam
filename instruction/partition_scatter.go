@@ -14,7 +14,6 @@ func init() {
 		if m.GetScatterPartitions() != nil {
 			return NewScatterPartitions(
 				toInts(m.GetScatterPartitions().GetIndexes()),
-				m.GetOnDisk(),
 			)
 		}
 		return nil
@@ -23,11 +22,10 @@ func init() {
 
 type ScatterPartitions struct {
 	indexes []int
-	onDisk  bool
 }
 
-func NewScatterPartitions(indexes []int, onDisk bool) *ScatterPartitions {
-	return &ScatterPartitions{indexes, onDisk}
+func NewScatterPartitions(indexes []int) *ScatterPartitions {
+	return &ScatterPartitions{indexes}
 }
 
 func (b *ScatterPartitions) Name() string {
@@ -42,8 +40,7 @@ func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Wr
 
 func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
 	return &msg.Instruction{
-		Name:   proto.String(b.Name()),
-		OnDisk: proto.Bool(b.onDisk),
+		Name: proto.String(b.Name()),
 		ScatterPartitions: &msg.ScatterPartitions{
 			Indexes: getIndexes(b.indexes),
 		},
