@@ -29,16 +29,14 @@ func (fcd *DistributedPlanner) RunFlowContext(fc *flow.FlowContext) {
 		firstTask := taskGroup.Tasks[0]
 		lastTask := taskGroup.Tasks[len(taskGroup.Tasks)-1]
 		if len(firstTask.Step.InputDatasets) > 0 {
-			for _, ds := range firstTask.Step.InputDatasets {
-				fmt.Printf("  input:  dataset %v\n", ds.Id)
-				for _, shard := range ds.Shards {
-					fmt.Printf("    shard: %v\n", shard.Name())
-				}
+			fmt.Printf("  input:\n")
+			for _, shard := range firstTask.InputShards {
+				fmt.Printf("    shard: %v\n", shard.Name())
 			}
 		}
 		if lastTask.Step.OutputDataset != nil {
-			fmt.Printf("  output: dataset %v\n", lastTask.Step.OutputDataset.Id)
-			for _, shard := range lastTask.Step.OutputDataset.Shards {
+			fmt.Printf("  output:\n")
+			for _, shard := range lastTask.OutputShards {
 				fmt.Printf("    shard: %v\n", shard.Name())
 			}
 		}
