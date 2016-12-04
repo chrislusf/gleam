@@ -45,27 +45,28 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
 
 	command.Stderr = errWriter
 
-	// fmt.Println(name, "starting...")
+	fmt.Println(name, "starting...")
 
 	if startError := command.Start(); startError != nil {
 		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, command)
 		return
 	}
 
-	// fmt.Printf("Command is waiting: %v\n", command)
+	fmt.Printf("%s Command is waiting..\n", name)
 
 	wg.Wait()
 
 	if waitError := command.Wait(); waitError != nil {
-		fmt.Fprintf(errWriter, "Wait error %+v. command:%+v\n", waitError, command)
+		fmt.Fprintf(errWriter, "%s Wait error %+v.\n", name, waitError)
 	}
 
-	// fmt.Printf("Command is finished.\n %+v\n", command)
-
-	// fmt.Println(name, "stopping output writer.")
+	fmt.Println(name, "stopping output writer.")
 	if closeOutput {
 		if c, ok := writer.(io.Closer); ok {
 			c.Close()
 		}
 	}
+
+	fmt.Printf("%s Command is finished.\n", name)
+
 }

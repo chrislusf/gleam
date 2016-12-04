@@ -41,9 +41,9 @@ func (b *LocalSort) Name() string {
 	return "LocalSort"
 }
 
-func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoLocalSort(readers[0], writers[0], b.orderBys)
+func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoLocalSort(readers[0], writers[0], b.orderBys)
 	}
 }
 
@@ -60,7 +60,7 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 	return int64(math.Max(float64(b.memoryInMB), float64(partitionSize)))
 }
 
-func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
+func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)
 	err := util.ProcessMessage(reader, func(input []byte) error {
@@ -73,9 +73,10 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
 	})
 	if err != nil {
 		fmt.Printf("Sort>Failed to read input data:%v\n", err)
+		return err
 	}
 	if len(kvs) == 0 {
-		return
+		return nil
 	}
 	timsort.Sort(kvs, func(a, b interface{}) bool {
 		return pairsLessThan(orderBys, a, b)
@@ -85,6 +86,7 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) {
 		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
 		util.WriteMessage(writer, kv.(pair).data)
 	}
+	return nil
 }
 
 func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {

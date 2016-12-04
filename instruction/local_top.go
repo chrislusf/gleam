@@ -34,9 +34,9 @@ func (b *LocalTop) Name() string {
 	return "LocalTop"
 }
 
-func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoLocalTop(readers[0], writers[0], b.n, b.orderBys)
+func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoLocalTop(readers[0], writers[0], b.n, b.orderBys)
 	}
 }
 
@@ -55,7 +55,7 @@ func (b *LocalTop) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
+func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 
@@ -78,6 +78,7 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
 	})
 	if err != nil {
 		fmt.Printf("Top>Failed to process input data:%v\n", err)
+		return err
 	}
 
 	// read data out of the priority queue
@@ -90,6 +91,8 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) {
 	for i := length - 1; i >= 0; i-- {
 		util.WriteMessage(writer, itemsToReverse[i])
 	}
+
+	return nil
 }
 
 func newMinQueueOfPairs(orderBys []OrderBy) *util.PriorityQueue {

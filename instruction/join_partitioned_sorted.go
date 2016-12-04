@@ -35,9 +35,9 @@ func (b *JoinPartitionedSorted) Name() string {
 	return "JoinPartitionedSorted"
 }
 
-func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoJoinPartitionedSorted(readers[0], readers[1], writers[0], b.indexes, b.isLeftOuterJoin, b.isRightOuterJoin)
+func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoJoinPartitionedSorted(readers[0], readers[1], writers[0], b.indexes, b.isLeftOuterJoin, b.isRightOuterJoin)
 	}
 }
 
@@ -58,7 +58,7 @@ func (b *JoinPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 {
 
 // Top streamingly compare and get the top n items
 func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int,
-	isLeftOuterJoin, isRightOuterJoin bool) {
+	isLeftOuterJoin, isRightOuterJoin bool) error {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
@@ -151,6 +151,8 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 			}
 		}
 	}
+
+	return nil
 
 }
 

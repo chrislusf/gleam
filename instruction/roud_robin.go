@@ -28,9 +28,9 @@ func (b *RoundRobin) Name() string {
 	return "RoundRobin"
 }
 
-func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoRoundRobin(readers[0], writers)
+func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoRoundRobin(readers[0], writers)
 	}
 }
 
@@ -45,9 +45,9 @@ func (b *RoundRobin) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 1
 }
 
-func DoRoundRobin(reader io.Reader, writers []io.Writer) {
+func DoRoundRobin(reader io.Reader, writers []io.Writer) error {
 	count, shardCount := 0, len(writers)
-	util.ProcessMessage(reader, func(data []byte) error {
+	return util.ProcessMessage(reader, func(data []byte) error {
 		if count >= shardCount {
 			count = 0
 		}

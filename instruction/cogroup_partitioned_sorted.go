@@ -31,9 +31,9 @@ func (b *CoGroupPartitionedSorted) Name() string {
 	return "CoGroupPartitionedSorted"
 }
 
-func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoCoGroupPartitionedSorted(readers[0], readers[1], writers[0], b.indexes)
+func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoCoGroupPartitionedSorted(readers[0], readers[1], writers[0], b.indexes)
 	}
 }
 
@@ -51,7 +51,7 @@ func (b *CoGroupPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 
 }
 
 // Top streamingly compare and get the top n items
-func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int) {
+func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int) error {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
@@ -82,4 +82,5 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 		util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
 		rightValuesWithSameKey, rightHasValue = <-rightChan
 	}
+	return nil
 }

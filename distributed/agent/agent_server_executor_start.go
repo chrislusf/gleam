@@ -43,6 +43,22 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
+	for i := 0; i < 3; i++ {
+		err = as.doCommand(conn, startRequest, stat, dir, reply)
+		if err == nil {
+			break
+		}
+	}
+
+	return reply
+}
+
+func (as *AgentServer) doCommand(
+	conn net.Conn,
+	startRequest *msg.StartRequest,
+	stat *AgentExecutorStatus,
+	dir string,
+	reply *msg.StartResponse) (err error) {
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
@@ -54,7 +70,8 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	)
 	stdin, err := command.StdinPipe()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to create stdin pipe: %v", err)
+		return
 	}
 	// msg.Env = startRequest.Envs
 	command.Dir = dir
@@ -86,13 +103,13 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	}
 
 	// wait for finish
-	command.Wait()
+	err = command.Wait()
 	// println("finished", startRequest.GetInstructions().String())
 	stat.StopTime = time.Now()
 
 	// log.Printf("Finish command %+v", msg)
 
-	return reply
+	return err
 }
 
 func (as *AgentServer) plusAllocated(allocated resource.ComputeResource) {

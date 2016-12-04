@@ -28,7 +28,7 @@ type Stats struct {
 
 type Instruction interface {
 	Name() string
-	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats)
+	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error
 	SerializeToCommand() *msg.Instruction
 	GetMemoryCostInMB(partitionSize int64) int64
 }
@@ -41,7 +41,7 @@ func (r *instructionRunner) Register(f func(*msg.Instruction) Instruction) {
 	r.functions = append(r.functions, f)
 }
 
-func (r *instructionRunner) GetInstructionFunction(i *msg.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) {
+func (r *instructionRunner) GetInstructionFunction(i *msg.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	for _, f := range r.functions {
 		if inst := f(i); inst != nil {
 			return inst.Function()

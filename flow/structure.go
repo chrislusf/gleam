@@ -71,7 +71,7 @@ type Step struct {
 	FlowContext    *FlowContext
 	InputDatasets  []*Dataset
 	OutputDataset  *Dataset
-	Function       func([]io.Reader, []io.Writer, *instruction.Stats)
+	Function       func([]io.Reader, []io.Writer, *instruction.Stats) error
 	Instruction    instruction.Instruction
 	Tasks          []*Task
 	Name           string

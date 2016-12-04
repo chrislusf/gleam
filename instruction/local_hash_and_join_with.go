@@ -33,9 +33,9 @@ func (b *LocalHashAndJoinWith) Name() string {
 	return "LocalHashAndJoinWith"
 }
 
-func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes)
+func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes)
 	}
 }
 
@@ -53,7 +53,7 @@ func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int) {
+func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int) error {
 	hashmap := make(map[string][]interface{})
 	err := util.ProcessMessage(leftReader, func(input []byte) error {
 		if keys, vals, err := genKeyBytesAndValues(input, indexes); err != nil {
@@ -65,10 +65,11 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 	})
 	if err != nil {
 		fmt.Printf("Sort>Failed to read input data:%v\n", err)
+		return err
 	}
 	if len(hashmap) == 0 {
 		io.Copy(ioutil.Discard, rightReader)
-		return
+		return nil
 	}
 
 	err = util.ProcessMessage(rightReader, func(input []byte) error {
@@ -90,4 +91,5 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 	if err != nil {
 		fmt.Printf("LocalHashAndJoinWith>Failed to process the bigger input data:%v\n", err)
 	}
+	return err
 }

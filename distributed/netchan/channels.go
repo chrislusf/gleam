@@ -33,9 +33,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 
 	util.WriteMessage(readWriter, data)
 
-	util.ReaderToChannel(wg, channelName, readWriter, outChan, true, os.Stderr)
-
-	return nil
+	return util.ReaderToChannel(wg, channelName, readWriter, outChan, true, os.Stderr)
 }
 
 func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
@@ -58,9 +56,8 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 
 	util.WriteMessage(readWriter, data)
 
-	util.ChannelToWriter(wg, channelName, inChan, readWriter, os.Stderr)
-
 	// println("writing to data", channelName, "finished.")
 
-	return nil
+	return util.ChannelToWriter(wg, channelName, inChan, readWriter, os.Stderr)
+
 }

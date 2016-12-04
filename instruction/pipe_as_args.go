@@ -34,9 +34,9 @@ func (b *PipeAsArgs) Name() string {
 	return "PipeAsArgs"
 }
 
-func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoPipeAsArgs(readers[0], writers[0], b.code)
+func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoPipeAsArgs(readers[0], writers[0], b.code)
 	}
 }
 
@@ -54,7 +54,7 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) {
+func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) error {
 	var wg sync.WaitGroup
 
 	err := util.ProcessMessage(reader, func(input []byte) error {
@@ -90,4 +90,5 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "PipeArgs> Error: %v\n", err)
 	}
+	return err
 }

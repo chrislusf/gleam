@@ -41,7 +41,7 @@ func NewExecutor(option *ExecutorOption, instructions *msg.InstructionSet) *Exec
 	}
 }
 
-func (exe *Executor) ExecuteInstructionSet() {
+func (exe *Executor) ExecuteInstructionSet() error {
 	var wg sync.WaitGroup
 
 	prevIsPipe := false
@@ -68,6 +68,8 @@ func (exe *Executor) ExecuteInstructionSet() {
 	}
 
 	wg.Wait()
+
+	return nil
 }
 
 func setupReaders(wg *sync.WaitGroup, i *msg.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {

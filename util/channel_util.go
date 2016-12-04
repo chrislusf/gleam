@@ -54,27 +54,35 @@ const (
 )
 
 // setup asynchronously to merge multiple channels into one channel
-func CopyMultipleReaders(readers []io.Reader, writer io.Writer) {
+func CopyMultipleReaders(readers []io.Reader, writer io.Writer) error {
 	writerChan := make(chan []byte, 16*len(readers))
-	var wg sync.WaitGroup
-	for i, reader := range readers {
-		wg.Add(1)
-		go func(i int, reader io.Reader) {
-			defer wg.Done()
-			ProcessMessage(reader, func(data []byte) error {
+	errChan := make(chan error, len(readers))
+	for _, reader := range readers {
+		go func(reader io.Reader) {
+			err := ProcessMessage(reader, func(data []byte) error {
 				writerChan <- data
 				return nil
 			})
-		}(i, reader)
+			errChan <- err
+		}(reader)
 	}
 	go func() {
-		wg.Wait()
-		close(writerChan)
+		for data := range writerChan {
+			if err := WriteMessage(writer, data); err != nil {
+				errChan <- fmt.Errorf("WriteMessage Error: %v", err)
+				break
+			}
+		}
 	}()
-
-	for data := range writerChan {
-		WriteMessage(writer, data)
+	for range readers {
+		err := <-errChan
+		if err != nil {
+			return err
+		}
 	}
+	close(writerChan)
+
+	return nil
 }
 
 func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
@@ -86,7 +94,7 @@ func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
 	close(outChan)
 }
 
-func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
+func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) error {
 	defer wg.Done()
 	defer reader.Close()
 	if closeOutput {
@@ -98,11 +106,13 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 	if err != nil {
 		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
 		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
+		return err
 	}
 	// println("reader", name, "copied", n, "bytes.")
+	return nil
 }
 
-func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
+func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) error {
 	defer wg.Done()
 	defer writer.Close()
 
@@ -114,6 +124,7 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
 	}
 	// println("writer", name, "moved", n, "bytes.")
+	return err
 }
 
 func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {

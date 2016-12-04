@@ -39,9 +39,9 @@ func (b *AdapterSplitReader) Name() string {
 	return "AdapterSplitReader"
 }
 
-func (b *AdapterSplitReader) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoAdapterSplitReader(readers[0], writers[0], b.adapterName, b.connectionId)
+func (b *AdapterSplitReader) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoAdapterSplitReader(readers[0], writers[0], b.adapterName, b.connectionId)
 	}
 }
 
@@ -59,11 +59,10 @@ func (b *AdapterSplitReader) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
-func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, connectionId string) {
+func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, connectionId string) error {
 	a, found := adapter.AdapterManager.GetAdapter(adapterName)
 	if !found {
-		fmt.Fprintf(os.Stderr, "Failed to load adapter type %s", adapterName)
-		return
+		return fmt.Errorf("Failed to load adapter type %s", adapterName)
 	}
 	for {
 		row, err := util.ReadRow(reader)
@@ -80,6 +79,7 @@ func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, conne
 		a.LoadConfiguration(split.GetConfiguration())
 		a.ReadSplit(split, writer)
 	}
+	return nil
 }
 
 func decodeSplit(data []byte) adapter.Split {

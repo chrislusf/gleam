@@ -85,7 +85,13 @@ func main() {
 			pprof.StartCPUProfile(f)
 			defer pprof.StopCPUProfile()
 		}
-		exe.NewExecutor(nil, &instructions).ExecuteInstructionSet()
+
+		err = util.Retry(func() error {
+			return exe.NewExecutor(nil, &instructions).ExecuteInstructionSet()
+		})
+		if err != nil {
+			log.Fatalf("Failed after retries: %v", err)
+		}
 
 	case writer.FullCommand():
 

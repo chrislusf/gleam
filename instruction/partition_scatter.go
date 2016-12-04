@@ -32,9 +32,9 @@ func (b *ScatterPartitions) Name() string {
 	return "ScatterPartitions"
 }
 
-func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) {
-		DoScatterPartitions(readers[0], writers, b.indexes)
+func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+		return DoScatterPartitions(readers[0], writers, b.indexes)
 	}
 }
 
@@ -51,10 +51,10 @@ func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 5
 }
 
-func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
+func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) error {
 	shardCount := len(writers)
 
-	util.ProcessMessage(reader, func(data []byte) error {
+	return util.ProcessMessage(reader, func(data []byte) error {
 		keyObjects, err := util.DecodeRowKeys(data, indexes)
 		if err != nil {
 			log.Printf("Failed to find keys on %v", indexes)
@@ -64,4 +64,5 @@ func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) {
 		util.WriteMessage(writers[x], data)
 		return nil
 	})
+
 }

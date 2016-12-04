@@ -2,6 +2,7 @@ package flow
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -15,19 +16,19 @@ import (
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
 func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
-	fn := func(writer io.Writer) {
+	fn := func(writer io.Writer) error {
 		listener, err := net.Listen(network, address)
 		if err != nil {
-			log.Panicf("Fail to listen on %s %s: %v", network, address, err)
+			return fmt.Errorf("Fail to listen on %s %s: %v", network, address, err)
 		}
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Panicf("Fail to accept on %s %s: %v", network, address, err)
+			return fmt.Errorf("Fail to accept on %s %s: %v", network, address, err)
 		}
 		defer conn.Close()
 		defer util.WriteEOFMessage(writer)
 
-		util.TakeTsv(conn, -1, func(message []string) error {
+		return util.TakeTsv(conn, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
@@ -42,10 +43,10 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 
 // ReadTsv read tab-separated lines from the reader
 func (fc *FlowContext) ReadTsv(reader io.Reader) (ret *Dataset) {
-	fn := func(writer io.Writer) {
+	fn := func(writer io.Writer) error {
 		defer util.WriteEOFMessage(writer)
 
-		util.TakeTsv(reader, -1, func(message []string) error {
+		return util.TakeTsv(reader, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
@@ -62,16 +63,26 @@ func (fc *FlowContext) ReadTsv(reader io.Reader) (ret *Dataset) {
 // Function f writes to this writer.
 // The written bytes should be MsgPack encoded []byte.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
-func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
+func (fc *FlowContext) Source(f func(io.Writer) error) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Source"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+		errChan := make(chan error, len(writers))
 		// println("running source task...")
 		for _, writer := range writers {
-			f(writer)
+			go func(writer io.Writer) {
+				errChan <- f(writer)
+			}(writer)
 		}
+		for range writers {
+			err := <-errChan
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 	return
 }
@@ -79,13 +90,12 @@ func (fc *FlowContext) Source(f func(io.Writer)) (ret *Dataset) {
 // TextFile reads the file content as lines and feed into the flow.
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
-	fn := func(writer io.Writer) {
+	fn := func(writer io.Writer) error {
 		w := bufio.NewWriter(writer)
 		defer w.Flush()
 		file, err := filesystem.Open(fname)
 		if err != nil {
-			log.Panicf("Can not open file %s: %v", fname, err)
-			return
+			return fmt.Errorf("Can not open file %s: %v", fname, err)
 		}
 		defer file.Close()
 
@@ -93,12 +103,17 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
-			util.WriteRow(w, scanner.Bytes())
+			if err := util.WriteRow(w, scanner.Bytes()); err != nil {
+				return err
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
 			log.Printf("Scan file %s: %v", fname, err)
+			return err
 		}
+
+		return nil
 	}
 	return fc.Source(fn)
 }
@@ -109,11 +124,15 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Channel"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
 		for data := range ch {
-			util.WriteRow(writers[0], data)
+			err := util.WriteRow(writers[0], data)
+			if err != nil {
+				return err
+			}
 			stats.Count++
 		}
+		return nil
 	}
 	return
 }
