@@ -121,7 +121,7 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	defer w.Flush()
 	n, err := io.CopyBuffer(w, reader, buf)
 	if err != nil {
-		fmt.Fprintf(errorOutput, "%s> Moved %d bytes: %v\n", name, n, err)
+		fmt.Fprintf(errorOutput, "%s>Moved %d bytes: %v\n", name, n, err)
 	}
 	// println("writer", name, "moved", n, "bytes.")
 	return err
