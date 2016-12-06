@@ -19,10 +19,13 @@ func ListFiles(dir string, pattern string) (fileNames []string) {
 	return
 }
 
-func Range(from, to int) func(io.Writer) {
-	return func(outChan io.Writer) {
+func Range(from, to int) func(io.Writer) error {
+	return func(outChan io.Writer) error {
 		for i := from; i < to; i++ {
-			WriteRow(outChan, i)
+			if err := WriteRow(outChan, i); err != nil {
+				return err
+			}
 		}
+		return nil
 	}
 }
