@@ -8,18 +8,21 @@ language: go
 go:
  - tip
 
-services:
- - docker
-
 env:
-- GOMAXPROCS=4 GORACE="halt_on_error=1"
+  global:
+    - LUAROCKS=2.3.0
+  matrix:
+    - LUA=lua5.1
+    - LUA=lua5.2
+    - LUA=lua5.3
+    - LUA=luajit     # latest stable version (2.0.4)
+    - LUA=luajit2.0  # current head of 2.0 branch
+    - LUA=luajit2.1  # current head of 2.1 branch
+
 
 before_install:
- - echo "$TRAVIS_GO_VERSION"
- - export PATH=/home/travis/gopath/bin:$PATH
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install bzr     ; fi
- - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install docker  ; fi
+ - source .travis/setenv_lua.sh
+ - luarocks install --server=http://luarocks.org/dev gleam-lua
 
 install:
  - go get ./...
