@@ -72,7 +72,7 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
 		return nil
 	})
 	if err != nil {
-		fmt.Printf("Sort>Failed to read input data:%v\n", err)
+		fmt.Printf("Sort>Failed to read:%v\n", err)
 		return err
 	}
 	if len(kvs) == 0 {
@@ -84,7 +84,9 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
 
 	for _, kv := range kvs {
 		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
-		util.WriteMessage(writer, kv.(pair).data)
+		if err := util.WriteMessage(writer, kv.(pair).data); err != nil {
+			return fmt.Errorf("Sort>Failed to write: %v", err)
+		}
 	}
 	return nil
 }

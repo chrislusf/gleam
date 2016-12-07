@@ -12,11 +12,11 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelName string) {
 
-	log.Println("on disk", readerName, "watis for", channelName)
+	log.Println("on disk", readerName, "waits for", channelName)
 
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(channelName)
 
-	log.Println("on disk", readerName, "start reading", channelName)
+	log.Println("on disk", readerName, "starts reading", channelName)
 
 	var offset int64
 

@@ -35,13 +35,21 @@ func (d *Dataset) OnDisk(fn func(*Dataset) *Dataset) *Dataset {
 	currents = append(currents, ret)
 	for {
 		for _, t := range currents {
-			if t != ret && t.Step.OutputDataset != nil {
+			isFirstDataset, isLastDataset := false, false
+			if t == ret {
+				isLastDataset = true
+			} else if t.Step.OutputDataset != nil {
 				t.Step.OutputDataset.Meta.OnDisk = ModeOnDisk
 			}
 			for _, p := range t.Step.InputDatasets {
 				if p != d {
 					parents = append(parents, p)
+				} else {
+					isFirstDataset = true
 				}
+			}
+			if !isFirstDataset && !isLastDataset {
+				t.Step.Meta.IsRestartable = true
 			}
 		}
 		if len(parents) == 0 {

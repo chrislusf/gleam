@@ -34,6 +34,10 @@ type DasetsetMetadata struct {
 	Rack       string
 }
 
+type StepMetadata struct {
+	IsRestartable bool
+}
+
 type FlowContext struct {
 	PrevScriptType string
 	PrevScriptPart string
@@ -80,6 +84,7 @@ type Step struct {
 	IsPipe         bool
 	Script         script.Script
 	Command        *script.Command // used in Pipe()
+	Meta           *StepMetadata
 	Params         map[string]interface{}
 	RunLocked
 }

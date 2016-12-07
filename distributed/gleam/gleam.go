@@ -29,8 +29,8 @@ var (
 	master        = app.Command("master", "Start a master process")
 	masterAddress = master.Flag("address", "listening address host:port").Default(":45326").String()
 
-	executor               = app.Command("execute", "Execute an instruction set")
-	executorInstructionSet = executor.Flag("steps", "The instruction set").String()
+	executor     = app.Command("execute", "Execute an instruction set")
+	executorNote = executor.Flag("note", "description").String()
 
 	agent       = app.Command("agent", "Agent that can accept read, write requests, manage executors")
 	agentOption = &a.AgentServerOption{
@@ -86,11 +86,8 @@ func main() {
 			defer pprof.StopCPUProfile()
 		}
 
-		err = util.Retry(func() error {
-			return exe.NewExecutor(nil, &instructions).ExecuteInstructionSet()
-		})
-		if err != nil {
-			log.Fatalf("Failed after retries: %v", err)
+		if err := exe.NewExecutor(nil, &instructions).ExecuteInstructionSet(); err != nil {
+			log.Fatalf("Failed task %s: %v", *executorNote, err)
 		}
 
 	case writer.FullCommand():

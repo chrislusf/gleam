@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
@@ -127,6 +128,7 @@ func (as *AgentServer) Run() {
 		go func() {
 			defer as.wg.Done()
 			defer conn.Close()
+			conn.SetDeadline(time.Time{})
 			as.handleRequest(conn)
 		}()
 	}

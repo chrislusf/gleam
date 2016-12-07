@@ -30,7 +30,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 			messageWriter.WriteMessage(message)
 			// println("agent recv:", string(message.Bytes()))
 		} else {
-			log.Printf("on disk %s Failed to send to %s: %v", writerName, channelName, err)
+			log.Printf("on disk %s Failed to write to %s: %v", writerName, channelName, err)
 		}
 	}
 

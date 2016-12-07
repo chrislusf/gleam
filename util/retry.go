@@ -1,6 +1,7 @@
 package util
 
 import (
+	"log"
 	"time"
 )
 
@@ -15,13 +16,18 @@ func TimeDelayedRetry(fn func() error, waitTimes ...time.Duration) error {
 		return nil
 	}
 
-	for _, t := range waitTimes {
+	log.Printf("Failed due to %v, retrying...", err)
+
+	for i, t := range waitTimes {
 		time.Sleep(t)
 		err = fn()
 		if err == nil {
 			return nil
 		}
+		log.Printf("Failed %d time due to %v", i+1, err)
 	}
+
+	log.Printf("Failed due to %v, gave up!", err)
 
 	return err
 }

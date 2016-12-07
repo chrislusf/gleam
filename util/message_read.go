@@ -65,7 +65,7 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 	var length int32
 	err = binary.Read(reader, binary.LittleEndian, &length)
 	if err == io.EOF {
-		return
+		return nil, io.EOF
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message length: %v", err)
@@ -79,7 +79,7 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 	m = make([]byte, length)
 	_, err = io.ReadFull(reader, m)
 	if err == io.EOF {
-		return
+		return nil, fmt.Errorf("Unexpected EOF when reading message size %d.", length)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message content: %v", err)

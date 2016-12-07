@@ -51,8 +51,7 @@ func DoRoundRobin(reader io.Reader, writers []io.Writer) error {
 		if count >= shardCount {
 			count = 0
 		}
-		util.WriteMessage(writers[count], data)
 		count++
-		return nil
+		return util.WriteMessage(writers[count], data)
 	})
 }

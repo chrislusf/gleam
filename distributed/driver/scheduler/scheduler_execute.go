@@ -13,7 +13,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup, allocation resource.Allocation, wg *sync.WaitGroup) {
+func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup, allocation resource.Allocation, wg *sync.WaitGroup) error {
 	// s.setupInputChannels(flowContext, tasks[0], allocation.Location, wg)
 
 	// fmt.Printf("allocated %s on %v\n", tasks[0].Name(), allocation.Location)
@@ -52,6 +52,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	instructions.IsProfiling = &profileOrNot
 
 	request := NewStartRequest(
+		taskGroup.String(),
 		s.Option.Module,
 		instructions,
 		allocation.Allocated,
@@ -71,11 +72,16 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 
 	// log.Printf("starting on %s: %s\n", allocation.Allocated, taskGroup)
 
+	defer func() {
+		status.StopTime = time.Now()
+	}()
+
 	if err := RemoteDirectExecute(allocation.Location.URL(), request); err != nil {
 		log.Printf("remote exeuction error %v: %v", err, request)
+		return err
 	}
-	// log.Printf("stopped on %s: %s\n", allocation.Allocated, taskGroup)
-	status.StopTime = time.Now()
+
+	return nil
 }
 
 func (s *Scheduler) localExecute(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {

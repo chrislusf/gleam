@@ -16,6 +16,13 @@ type SubmitTaskGroup struct {
 	WaitGroup   *sync.WaitGroup
 }
 
+type TaskGroupStatus struct {
+	FlowContext *flow.FlowContext
+	TaskGroup   *plan.TaskGroup
+	Completed   bool
+	Error       error
+}
+
 type ReleaseTaskGroupInputs struct {
 	FlowContext *flow.FlowContext
 	TaskGroups  []*plan.TaskGroup
@@ -46,6 +53,12 @@ func (s *Scheduler) EventLoop() {
 					if !needsInputFromDriver(tasks[0]) {
 						// wait until inputs are registed
 						s.shardLocator.waitForInputDatasetShardLocations(tasks[0])
+					}
+					if isInputOnDisk(tasks[0]) {
+						// wait until on disk inputs are completed
+						for _, stepGroup := range event.TaskGroup.ParentStepGroup.Parents {
+							stepGroup.WaitForAllTasksToComplete()
+						}
 					}
 
 					// fmt.Printf("inputs of %s is %s\n", tasks[0].Name(), s.allInputLocations(tasks[0]))
@@ -78,8 +91,11 @@ func (s *Scheduler) EventLoop() {
 							OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 						})
 					}
-					// println("sending task group started with:", tasks[0].Step.Name)
-					s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
+					if err := s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup); err != nil {
+						taskGroup.MarkStop(err)
+					} else {
+						taskGroup.MarkStop(err)
+					}
 				}
 			}()
 		case ReleaseTaskGroupInputs:
@@ -110,6 +126,24 @@ func needsInputFromDriver(task *flow.Task) bool {
 		}
 	}
 	return false
+}
+
+func isInputOnDisk(task *flow.Task) bool {
+	for _, shard := range task.InputShards {
+		if shard.Dataset.Meta.OnDisk != flow.ModeOnDisk {
+			return false
+		}
+	}
+	return true
+}
+
+func isRestartableTasks(tasks []*flow.Task) bool {
+	for _, task := range tasks {
+		if !task.Step.Meta.IsRestartable {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (resource.DataLocation, bool) {

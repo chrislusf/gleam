@@ -61,8 +61,7 @@ func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int) e
 			return err
 		}
 		x := util.PartitionByKeys(shardCount, keyObjects)
-		util.WriteMessage(writers[x], data)
-		return nil
+		return util.WriteMessage(writers[x], data)
 	})
 
 }

@@ -47,6 +47,7 @@ message StartRequest {
 	required ComputeResource resource = 4;
 	required string host = 5;
 	required int32 port = 6;
+	required string name = 7;
 }
 
 ///////////////////////////////////

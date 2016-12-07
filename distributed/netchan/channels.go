@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
@@ -21,6 +22,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 		wg.Done()
 		return fmt.Errorf("Fail to dial read %s: %v", address, err)
 	}
+	readWriter.SetDeadline(time.Time{})
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&msg.ControlMessage{
@@ -31,7 +33,10 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 		},
 	})
 
-	util.WriteMessage(readWriter, data)
+	if err = util.WriteMessage(readWriter, data); err != nil {
+		wg.Done()
+		return err
+	}
 
 	return util.ReaderToChannel(wg, channelName, readWriter, outChan, true, os.Stderr)
 }
@@ -43,6 +48,7 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 		wg.Done()
 		return fmt.Errorf("Fail to dial write %s: %v", address, err)
 	}
+	readWriter.SetDeadline(time.Time{})
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&msg.ControlMessage{
@@ -54,9 +60,10 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 		},
 	})
 
-	util.WriteMessage(readWriter, data)
-
-	// println("writing to data", channelName, "finished.")
+	if err = util.WriteMessage(readWriter, data); err != nil {
+		wg.Done()
+		return err
+	}
 
 	return util.ChannelToWriter(wg, channelName, inChan, readWriter, os.Stderr)
 

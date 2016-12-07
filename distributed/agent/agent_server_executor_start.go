@@ -2,13 +2,13 @@ package agent
 
 import (
 	//"encoding/binary"
+	"fmt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/resource"
@@ -44,7 +44,7 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	defer as.minusAllocated(allocated)
 
 	for i := 0; i < 3; i++ {
-		err = as.doCommand(conn, startRequest, stat, dir, reply)
+		err = as.doCommand(conn, startRequest, stat, dir, reply, i)
 		if err == nil {
 			break
 		}
@@ -58,15 +58,16 @@ func (as *AgentServer) doCommand(
 	startRequest *msg.StartRequest,
 	stat *AgentExecutorStatus,
 	dir string,
-	reply *msg.StartResponse) (err error) {
+	reply *msg.StartResponse,
+	attempt int) (err error) {
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
 	command := exec.Command(
 		executableFullFilename,
 		"execute",
-		"--steps",
-		strings.Join(startRequest.GetInstructions().InstructionNames(), "-"),
+		"--note",
+		fmt.Sprintf("%s %d", startRequest.GetName(), attempt),
 	)
 	stdin, err := command.StdinPipe()
 	if err != nil {
