@@ -86,8 +86,6 @@ func (m *LocalDatasetShardsManager) WaitForNamedDatasetShard(name string) store.
 		m.name2StoreCond.Wait()
 	}
 
-	return nil
-
 }
 
 // purge executor status older than 24 hours to save memory
@@ -98,7 +96,8 @@ func (m *LocalDatasetShardsManager) purgeExpiredEntries() {
 			cutoverLimit := time.Now().Add(-24 * time.Hour)
 			var oldShardNames []string
 			for name, ds := range m.name2Store {
-				if ds.LastReadAt().Before(cutoverLimit) {
+				if ds.LastWriteAt().Before(cutoverLimit) && ds.LastReadAt().Before(cutoverLimit) {
+					println("purging dataset", name, "last write:", ds.LastWriteAt().String(), "last read:", ds.LastReadAt().String())
 					oldShardNames = append(oldShardNames, name)
 				}
 			}
