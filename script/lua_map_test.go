@@ -59,11 +59,13 @@ func TestLuaFilter(t *testing.T) {
 		func(outputReader io.Reader) {
 			row, _ := util.ReadRow(outputReader)
 			if !(row[0].(uint64) == 1999 && bytes.Equal(row[1].([]byte), []byte("x1999"))) {
+				fmt.Printf("row: %+v\n", row)
 				t.Errorf("failed filter results: %+v", row)
 			}
 
 			row, _ = util.ReadRow(outputReader)
 			if !(row[0].(uint64) == 1 && bytes.Equal(row[1].([]byte), []byte("x1"))) {
+				fmt.Printf("row: %+v\n", row)
 				t.Errorf("failed filter results: %+v", row)
 			}
 
