@@ -145,7 +145,7 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 	data, err := util.ReadMessage(conn)
 
 	if err != nil {
-		log.Printf("Failed to read command %s:%v", err)
+		log.Printf("Failed to read command:%v", err)
 		return
 	}
 

@@ -17,7 +17,7 @@ import (
 )
 
 type FileHash struct {
-	fullPath string `json:"path,omitempty"`
+	FullPath string `json:"path,omitempty"`
 	File     string `json:"file,omitempty"`
 	Hash     uint32 `json:"hash,omitempty"`
 }
@@ -60,9 +60,9 @@ func (rs *RsyncServer) fileHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := r.URL.Path[len("/file/"):]
 	for _, fh := range rs.fileHashes {
 		if fh.File == fileName {
-			file, err := os.Open(fh.fullPath)
+			file, err := os.Open(fh.FullPath)
 			if err != nil {
-				log.Printf("Can not read file: %s", fh.fullPath)
+				log.Printf("Can not read file: %s", fh.FullPath)
 				return
 			}
 			defer file.Close()
@@ -112,7 +112,7 @@ func GenerateFileHash(fileName string) (*FileHash, error) {
 	crc := hasher.Sum32()
 
 	return &FileHash{
-		fullPath: fileName,
+		FullPath: fileName,
 		File:     filepath.Base(fileName),
 		Hash:     crc,
 	}, nil

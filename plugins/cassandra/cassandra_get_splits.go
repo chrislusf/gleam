@@ -39,7 +39,7 @@ func (c *CassandraAdapter) GetSplits(connectionId string, aq adapter.AdapterQuer
 		partitionKeys = append(partitionKeys, column.Name)
 	}
 
-	// devide by token range
+	// divide by token range
 	if query.Partition == 0 {
 		query.Partition = 32
 	}

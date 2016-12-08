@@ -18,7 +18,6 @@ import (
 // Object is Agent's Location
 func (s *Scheduler) Fetch(demands []market.Demand) {
 	var request resource.AllocationRequest
-	var requestedMemory int64
 	for _, d := range demands {
 		taskGroup := d.Requirement.(*plan.TaskGroup)
 		requiredResource := taskGroup.RequiredResources()
@@ -26,7 +25,6 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 			ComputeResource: requiredResource,
 			Inputs:          s.findTaskGroupInputs(taskGroup),
 		})
-		requestedMemory += requiredResource.MemoryMB
 	}
 
 	result, err := Assign(s.Master, &request)

@@ -8,7 +8,7 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// encode and write
+// WriteRow encode and write a row of data
 func WriteRow(outChan io.Writer, anyObject ...interface{}) error {
 	encoded, err := EncodeRow(anyObject...)
 	if err != nil {
@@ -17,7 +17,7 @@ func WriteRow(outChan io.Writer, anyObject ...interface{}) error {
 	return WriteMessage(outChan, encoded)
 }
 
-// read and decode
+// ReadRow read and decode one row of data
 func ReadRow(ch io.Reader) (row []interface{}, err error) {
 	encodedBytes, hasErr := ReadMessage(ch)
 	if hasErr != nil {
@@ -29,6 +29,7 @@ func ReadRow(ch io.Reader) (row []interface{}, err error) {
 	return row, err
 }
 
+// EncodeRow encode one row of data to a blob
 func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	encoder := msgpack.NewEncoder(&buf)
@@ -44,11 +45,12 @@ func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// EncodeRow decode one row of data from a blob
 func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 	for {
 		var v interface{}
-		if err := decoder.Decode(&v); err != nil {
+		if err = decoder.Decode(&v); err != nil {
 			err = fmt.Errorf("decode row error: %s\n", string(encodedBytes))
 			break
 		}
@@ -57,6 +59,8 @@ func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	return objects, err
 }
 
+// DecodeRowKeysValues decode a row of data, with the indexes[] specified fields as key fields
+// and the rest of fields as value fields
 func DecodeRowKeysValues(encodedBytes []byte, indexes []int) (keys, values []interface{}, err error) {
 	objects, err := DecodeRow(encodedBytes)
 	used := make([]bool, len(objects))
@@ -73,7 +77,7 @@ func DecodeRowKeysValues(encodedBytes []byte, indexes []int) (keys, values []int
 
 }
 
-// DecodeRowKeys decode fields by index, starting from 1
+// DecodeRowKeys decode key fields by index[], starting from 1
 func DecodeRowKeys(encodedBytes []byte, indexes []int) (keys []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 

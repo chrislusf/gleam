@@ -1,4 +1,4 @@
-// Pacakge driver coordinates distributed execution.
+// Package driver coordinates distributed execution.
 package driver
 
 import (

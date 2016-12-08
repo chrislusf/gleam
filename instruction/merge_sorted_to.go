@@ -68,7 +68,7 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) 
 			}
 		} else {
 			if err != io.EOF {
-				log.Printf("DoMergeSortedTo failed start :%v")
+				log.Printf("DoMergeSortedTo failed start :%v", err)
 				return err
 			}
 		}
