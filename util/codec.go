@@ -24,9 +24,6 @@ func ReadRow(ch io.Reader) (row []interface{}, err error) {
 		return nil, hasErr
 	}
 	if row, err = DecodeRow(encodedBytes); err != nil {
-		if err == io.EOF {
-			return
-		}
 		return nil, fmt.Errorf("ReadRow failed to decode byte: %v", err)
 	}
 	return row, err
@@ -55,7 +52,7 @@ func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 		var v interface{}
 		if err = decoder.Decode(&v); err != nil {
 			if err == io.EOF {
-				break
+				return objects, nil
 			}
 			err = fmt.Errorf("decode row error %v: %s\n", err, string(encodedBytes))
 			break
