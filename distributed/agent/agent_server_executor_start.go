@@ -1,8 +1,6 @@
 package agent
 
 import (
-	//"encoding/binary"
-	"fmt"
 	"log"
 	"net"
 	"os"
@@ -43,12 +41,7 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
-	for i := 0; i < 3; i++ {
-		err = as.doCommand(conn, startRequest, stat, dir, reply, i)
-		if err == nil {
-			break
-		}
-	}
+	as.doCommand(conn, startRequest, stat, dir, reply)
 
 	return reply
 }
@@ -58,8 +51,7 @@ func (as *AgentServer) doCommand(
 	startRequest *msg.StartRequest,
 	stat *AgentExecutorStatus,
 	dir string,
-	reply *msg.StartResponse,
-	attempt int) (err error) {
+	reply *msg.StartResponse) (err error) {
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
@@ -67,7 +59,7 @@ func (as *AgentServer) doCommand(
 		executableFullFilename,
 		"execute",
 		"--note",
-		fmt.Sprintf("%s %d", startRequest.GetName(), attempt),
+		startRequest.GetName(),
 	)
 	stdin, err := command.StdinPipe()
 	if err != nil {
