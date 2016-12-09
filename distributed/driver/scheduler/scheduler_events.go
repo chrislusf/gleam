@@ -7,6 +7,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/util"
 )
 
 type SubmitTaskGroup struct {
@@ -91,10 +92,16 @@ func (s *Scheduler) EventLoop() {
 							OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 						})
 					}
-					if err := s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup); err != nil {
+
+					fn := func() error {
+						err := s.remoteExecuteOnLocation(event.FlowContext, taskGroup, allocation, event.WaitGroup)
 						taskGroup.MarkStop(err)
+						return err
+					}
+					if isRestartableTasks(tasks) {
+						util.Retry(fn)
 					} else {
-						taskGroup.MarkStop(err)
+						fn()
 					}
 				}
 			}()
