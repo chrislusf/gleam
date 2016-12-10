@@ -48,7 +48,6 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 		wg.Done()
 		return fmt.Errorf("Fail to dial write %s: %v", address, err)
 	}
-	readWriter.SetDeadline(time.Time{})
 	defer readWriter.Close()
 
 	data, err := proto.Marshal(&msg.ControlMessage{
