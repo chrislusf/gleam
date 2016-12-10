@@ -128,7 +128,9 @@ func (as *AgentServer) Run() {
 		go func() {
 			defer as.wg.Done()
 			defer conn.Close()
-			conn.SetDeadline(time.Time{})
+			if err = conn.SetDeadline(time.Time{}); err != nil {
+				fmt.Printf("Failed to set timeout: %v\n", err)
+			}
 			as.handleRequest(conn)
 		}()
 	}
