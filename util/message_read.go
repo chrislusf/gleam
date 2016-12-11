@@ -77,9 +77,10 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 		return
 	}
 	m = make([]byte, length)
-	_, err = io.ReadFull(reader, m)
+	var n int
+	n, err = io.ReadFull(reader, m)
 	if err == io.EOF {
-		return nil, fmt.Errorf("Unexpected EOF when reading message size %d.", length)
+		return nil, fmt.Errorf("Unexpected EOF when reading message size %d, but actual only %d.", length, n)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message content: %v", err)

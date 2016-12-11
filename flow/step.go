@@ -2,6 +2,7 @@ package flow
 
 import (
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/instruction"
 )
@@ -41,7 +42,9 @@ func (step *Step) RunFunction(task *Task) {
 	}
 
 	task.Stats = &instruction.Stats{}
-	task.Step.Function(readers, writers, task.Stats)
+	if err := task.Step.Function(readers, writers, task.Stats); err != nil {
+		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
+	}
 
 	for _, writer := range writers {
 		if c, ok := writer.(io.Closer); ok {

@@ -27,5 +27,14 @@ func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, c
 	buf := make([]byte, util.BUFFER_SIZE)
 	count, err := io.CopyBuffer(writer, ch.Reader, buf)
 
-	log.Printf("in memory %s finish reading %s bytes:%d %v", readerName, channelName, count, err)
+	if err == nil {
+		if ch.Error != nil {
+			log.Printf("in memory %s failed because writing to %s failed: %d %v", readerName, channelName, count, ch.Error)
+		} else {
+			log.Printf("in memory %s finished reading %s bytes:%d", readerName, channelName, count)
+		}
+	} else {
+		log.Printf("in memory %s failed reading %s bytes:%d %v", readerName, channelName, count, err)
+	}
+
 }
