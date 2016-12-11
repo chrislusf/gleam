@@ -22,9 +22,7 @@ func (d *Dataset) Sort(sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	ret := d.LocalSort(sortOption)
-	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption)
-	}
+	ret = ret.TreeMergeSortedTo(1, 10, sortOption)
 	return ret
 }
 
@@ -85,6 +83,17 @@ func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) 
 	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
 	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList))
 	return ret
+}
+
+func (d *Dataset) TreeMergeSortedTo(partitionCount int, factor int, sortOptions ...*SortOption) (ret *Dataset) {
+	if len(d.Shards) > factor && len(d.Shards) > partitionCount {
+		t := d.MergeSortedTo(len(d.Shards)/factor, sortOptions...)
+		return t.TreeMergeSortedTo(partitionCount, factor, sortOptions...)
+	}
+	if len(d.Shards) > partitionCount {
+		return d.MergeSortedTo(partitionCount, sortOptions...)
+	}
+	return d
 }
 
 func isOrderByEquals(a []instruction.OrderBy, b []instruction.OrderBy) bool {
