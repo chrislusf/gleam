@@ -24,5 +24,8 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerNam
 	buf := make([]byte, util.BUFFER_SIZE)
 	count, err := io.CopyBuffer(writer, r, buf)
 
+	ch.incomingChannel.Error = err
+	ch.incomingChannel.Counter = count
+
 	log.Printf("in memory %s finish writing %s bytes:%d %v", writerName, channelName, count, err)
 }

@@ -7,7 +7,8 @@ import (
 type Piper struct {
 	Reader  *io.PipeReader
 	Writer  *io.PipeWriter
-	Counter int
+	Counter int64
+	Error   error
 }
 
 func NewPiper() *Piper {
