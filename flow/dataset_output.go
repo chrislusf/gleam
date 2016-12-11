@@ -25,6 +25,7 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 		for range readers {
 			err := <-errChan
 			if err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to process output: %v\n", err)
 				return err
 			}
 		}
