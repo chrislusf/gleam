@@ -121,7 +121,7 @@ func (as *AgentServer) Run() {
 		conn, err := as.listener.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
-			os.Exit(1)
+			continue
 		}
 		// Handle connections in a new goroutine.
 		as.wg.Add(1)
@@ -130,6 +130,9 @@ func (as *AgentServer) Run() {
 			defer conn.Close()
 			if err = conn.SetDeadline(time.Time{}); err != nil {
 				fmt.Printf("Failed to set timeout: %v\n", err)
+			}
+			if c, ok := conn.(*net.TCPConn); ok {
+				c.SetKeepAlive(true)
 			}
 			as.handleRequest(conn)
 		}()

@@ -17,13 +17,16 @@ import (
 
 func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, onDisk bool, outChan io.WriteCloser) error {
 
-	readWriter, err := net.Dial("tcp", address)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		wg.Done()
 		return fmt.Errorf("Fail to dial read %s: %v", address, err)
 	}
-	readWriter.SetDeadline(time.Time{})
-	defer readWriter.Close()
+	defer conn.Close()
+	conn.SetDeadline(time.Time{})
+	if c, ok := conn.(*net.TCPConn); ok {
+		c.SetKeepAlive(true)
+	}
 
 	data, err := proto.Marshal(&msg.ControlMessage{
 		IsOnDiskIO: proto.Bool(onDisk),
@@ -33,22 +36,26 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 		},
 	})
 
-	if err = util.WriteMessage(readWriter, data); err != nil {
+	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
 		return err
 	}
 
-	return util.ReaderToChannel(wg, channelName, readWriter, outChan, true, os.Stderr)
+	return util.ReaderToChannel(wg, channelName, conn, outChan, true, os.Stderr)
 }
 
 func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
 
-	readWriter, err := net.Dial("tcp", address)
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		wg.Done()
 		return fmt.Errorf("Fail to dial write %s: %v", address, err)
 	}
-	defer readWriter.Close()
+	defer conn.Close()
+	conn.SetDeadline(time.Time{})
+	if c, ok := conn.(*net.TCPConn); ok {
+		c.SetKeepAlive(true)
+	}
 
 	data, err := proto.Marshal(&msg.ControlMessage{
 		IsOnDiskIO: proto.Bool(onDisk),
@@ -59,11 +66,11 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 		},
 	})
 
-	if err = util.WriteMessage(readWriter, data); err != nil {
+	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
 		return err
 	}
 
-	return util.ChannelToWriter(wg, channelName, inChan, readWriter, os.Stderr)
+	return util.ChannelToWriter(wg, channelName, inChan, conn, os.Stderr)
 
 }
