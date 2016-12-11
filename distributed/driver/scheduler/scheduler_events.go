@@ -55,8 +55,8 @@ func (s *Scheduler) EventLoop() {
 						// wait until inputs are registed
 						s.shardLocator.waitForInputDatasetShardLocations(tasks[0])
 					}
-					if isInputOnDisk(tasks[0]) {
-						// wait until on disk inputs are completed
+					if isInputOnDisk(tasks[0]) && !isRestartableTasks(tasks) {
+						// for non-restartable taskGroup, wait until on disk inputs are completed
 						for _, stepGroup := range event.TaskGroup.ParentStepGroup.Parents {
 							stepGroup.WaitForAllTasksToComplete()
 						}
