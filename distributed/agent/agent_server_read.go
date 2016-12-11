@@ -19,14 +19,17 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 	log.Println("on disk", readerName, "starts reading", channelName)
 
 	var offset int64
+	var err error
 
-	buf := make([]byte, 4)
+	var size int32
+	sizeBuf := make([]byte, 4)
+	sizeReader := bytes.NewReader(sizeBuf)
 
 	var count int64
 
 	// loop for every read
 	for {
-		_, err := dsStore.ReadAt(buf, offset)
+		_, err = dsStore.ReadAt(sizeBuf, offset)
 		if err != nil {
 			// connection is closed
 			if err != io.EOF {
@@ -36,8 +39,8 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 			break
 		}
 
-		var size int32
-		binary.Read(bytes.NewReader(buf), binary.LittleEndian, &size)
+		sizeReader.Reset(sizeBuf)
+		binary.Read(sizeReader, binary.LittleEndian, &size)
 		if size < 0 {
 			// size == -1 means EOF
 			break
@@ -57,11 +60,15 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 		}
 		offset += int64(size)
 
-		util.WriteMessage(conn, messageBytes)
+		err = util.WriteMessage(conn, messageBytes)
+		if err != nil {
+			log.Printf("Write %s to %s failed at %d: %v", channelName, readerName, offset, err)
+			break
+		}
 
 		count += int64(size)
 
 	}
 
-	log.Println("on disk", readerName, "finish reading", channelName, count, "bytes")
+	log.Println("on disk", readerName, "finish reading", channelName, "byte:", count, "err:", err)
 }
