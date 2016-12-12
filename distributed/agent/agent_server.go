@@ -107,6 +107,7 @@ func (r *AgentServer) init() (err error) {
 	return
 }
 
+// Run starts the heartbeating to master and starts accepting requests.
 func (as *AgentServer) Run() {
 	//register agent
 	killHeartBeaterChan := make(chan bool, 1)
@@ -139,12 +140,12 @@ func (as *AgentServer) Run() {
 	}
 }
 
+// Stop stops handling incoming requests and waits out all ongoing requests
 func (r *AgentServer) Stop() {
 	r.listener.Close()
 	r.wg.Wait()
 }
 
-// Handles incoming requests.
 func (r *AgentServer) handleRequest(conn net.Conn) {
 
 	data, err := util.ReadMessage(conn)
