@@ -44,7 +44,8 @@ func NewExecutor(option *ExecutorOption, instructions *msg.InstructionSet) *Exec
 
 func (exe *Executor) ExecuteInstructionSet() error {
 	var wg sync.WaitGroup
-	errChan := make(chan error, 3*len(exe.instructions.GetInstructions()))
+	exeErrChan := make(chan error, len(exe.instructions.GetInstructions()))
+	ioErrChan := make(chan error, 2*len(exe.instructions.GetInstructions()))
 	finishedChan := make(chan bool, 1)
 
 	prevIsPipe := false
@@ -54,7 +55,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		outputChan := util.NewPiper()
 		wg.Add(1)
 		go func(index int, instruction *msg.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
-			exe.ExecuteInstruction(&wg, errChan, inChan, outChan,
+			exe.ExecuteInstruction(&wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
 				instruction,
 				index == 0,
@@ -77,7 +78,11 @@ func (exe *Executor) ExecuteInstructionSet() error {
 
 	select {
 	case <-finishedChan:
-	case err := <-errChan:
+	case err := <-ioErrChan:
+		if err != nil {
+			return err
+		}
+	case err := <-exeErrChan:
 		if err != nil {
 			return err
 		}
@@ -86,7 +91,9 @@ func (exe *Executor) ExecuteInstructionSet() error {
 	return nil
 }
 
-func setupReaders(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {
+func setupReaders(wg *sync.WaitGroup, ioErrChan chan error,
+	i *msg.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {
+
 	if !isFirst {
 		readers = append(readers, inPiper.Reader)
 	} else {
@@ -97,7 +104,7 @@ func setupReaders(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, in
 			go func(inputLocation *msg.DatasetShardLocation) {
 				err := netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inputLocation.GetOnDisk(), inChan.Writer)
 				if err != nil {
-					errChan <- fmt.Errorf("Failed %s DialReadChannel: %v", i.GetName(), err)
+					ioErrChan <- fmt.Errorf("Failed %s reading %s from %s: %v", i.GetName(), inputLocation.GetName(), inputLocation.Address(), err)
 				}
 			}(inputLocation)
 			readers = append(readers, inChan.Reader)
@@ -105,7 +112,9 @@ func setupReaders(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, in
 	}
 	return
 }
-func setupWriters(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, outPiper *util.Piper, isLast bool, readerCount int) (writers []io.Writer) {
+func setupWriters(wg *sync.WaitGroup, ioErrChan chan error,
+	i *msg.Instruction, outPiper *util.Piper, isLast bool, readerCount int) (writers []io.Writer) {
+
 	if !isLast {
 		writers = append(writers, outPiper.Writer)
 	} else {
@@ -116,7 +125,7 @@ func setupWriters(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, ou
 			go func(outputLocation *msg.DatasetShardLocation) {
 				err := netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outputLocation.GetOnDisk(), outChan.Reader, readerCount)
 				if err != nil {
-					errChan <- fmt.Errorf("Failed %s DialWriteChannel: %v", i.GetName(), err)
+					ioErrChan <- fmt.Errorf("Failed %s writing %s to %s: %v", i.GetName(), outputLocation.GetName(), outputLocation.Address(), err)
 				}
 			}(outputLocation)
 			writers = append(writers, outChan.Writer)
@@ -125,11 +134,13 @@ func setupWriters(wg *sync.WaitGroup, errChan chan error, i *msg.Instruction, ou
 	return
 }
 
-func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, errChan chan error, inChan, outChan *util.Piper, prevIsPipe bool, i *msg.Instruction, isFirst, isLast bool, readerCount int) {
+func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, ioErrChan, exeErrChan chan error,
+	inChan, outChan *util.Piper, prevIsPipe bool, i *msg.Instruction, isFirst, isLast bool, readerCount int) {
+
 	defer wg.Done()
 
-	readers := setupReaders(wg, errChan, i, inChan, isFirst)
-	writers := setupWriters(wg, errChan, i, outChan, isLast, readerCount)
+	readers := setupReaders(wg, ioErrChan, i, inChan, isFirst)
+	writers := setupWriters(wg, ioErrChan, i, outChan, isLast, readerCount)
 
 	defer func() {
 		for _, writer := range writers {
@@ -146,7 +157,7 @@ func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, errChan chan error, 
 			err := f(readers, writers, stats)
 			if err != nil {
 				// println(i.GetName(), "running error", err.Error())
-				errChan <- fmt.Errorf("Failed running %s: %v", i.GetName(), err)
+				exeErrChan <- fmt.Errorf("Failed executing %s: %v", i.GetName(), err)
 			}
 			return
 		}
