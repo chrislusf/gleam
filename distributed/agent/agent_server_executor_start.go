@@ -68,7 +68,9 @@ func (as *AgentServer) doCommand(
 	}
 	// msg.Env = startRequest.Envs
 	command.Dir = dir
+	// the "gleam execute" stdout actually should always be empty
 	command.Stdout = conn
+	// the "gleam execute" stderr goes directly back to the driver
 	command.Stderr = conn
 	err = command.Start()
 	if err != nil {
@@ -97,6 +99,9 @@ func (as *AgentServer) doCommand(
 
 	// wait for finish
 	err = command.Wait()
+	if err != nil {
+		reply.Error = proto.String(err.Error())
+	}
 	// println("finished", startRequest.GetInstructions().String())
 	stat.StopTime = time.Now()
 
