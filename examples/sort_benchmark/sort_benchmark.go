@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"os"
 	"runtime/pprof"
 
@@ -8,12 +9,19 @@ import (
 	"github.com/chrislusf/gleam/flow"
 )
 
+var (
+	size          = flag.Int("size", 2, "0 for small, 1 for 1GB, 2 for 10GB")
+	isDistributed = flag.Bool("distributed", true, "distributed mode or not")
+)
+
 func main() {
+	flag.Parse()
+
 	f, _ := os.Create("p.prof")
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	bigFile := 2
+	bigFile := *size
 
 	fileName := "/Users/chris/Desktop/record_10000_input.txt"
 	partition := 2
@@ -29,7 +37,7 @@ func main() {
 		size = 10240
 	}
 
-	gleamSortDistributed(fileName, size, partition)
+	gleamSortDistributed(fileName, size, partition, *isDistributed)
 
 }
 
@@ -70,7 +78,7 @@ func linuxSortStandalone(fileName string, partition int) {
     `).MergeSortedTo(1).Fprintf(os.Stdout, "%s  %s\n").Run()
 }
 
-func gleamSortDistributed(fileName string, size int64, partition int) {
+func gleamSortDistributed(fileName string, size int64, partition int, isDistributed bool) {
 
 	f := flow.New().TextFile(
 		fileName,
@@ -83,6 +91,11 @@ func gleamSortDistributed(fileName string, size int64, partition int) {
 	}).Fprintf(os.Stdout, "%s  %s\n")
 
 	// f.Run(distributed.Planner())
+	// return
 
-	f.Run(distributed.Option())
+	if isDistributed {
+		f.Run(distributed.Option())
+	} else {
+		f.Run()
+	}
 }
