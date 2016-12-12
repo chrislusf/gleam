@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -87,15 +89,21 @@ func doExecute(server string, conn io.ReadWriteCloser, command *msg.ControlMessa
 	// println("command sent")
 
 	// read output and print it to stdout
+	// the output from "gleam execute" should be just errors
+	var b bytes.Buffer
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
-		fmt.Printf("%s>%s\n", server, scanner.Text())
+		fmt.Fprintf(&b, "%s>%s\n", server, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("Failed to scan output: %v", err)
 	}
 
-	return err
+	if b.Len() == 0 {
+		return nil
+	}
+
+	return errors.New(b.String())
 }
 
 func RemoteDirectCommand(server string, command *msg.ControlMessage) (response *msg.ControlMessage, err error) {
