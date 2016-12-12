@@ -106,7 +106,9 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 			}
 		}(shard)
 	}
-	task.Step.RunFunction(task)
+	if err := task.Step.RunFunction(task); err != nil {
+		log.Fatalf("Failed to send source data: %v", err)
+	}
 }
 
 func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
@@ -123,5 +125,7 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 			}
 		}(shard)
 	}
-	task.Step.RunFunction(task)
+	if err := task.Step.RunFunction(task); err != nil {
+		log.Fatalf("Failed to collect output: %v", err)
+	}
 }
