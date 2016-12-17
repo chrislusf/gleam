@@ -46,9 +46,9 @@ func (s *Scheduler) EventLoop() {
 			go func() {
 				defer event.WaitGroup.Done()
 				tasks := event.TaskGroup.Tasks
+				lastTask := tasks[len(tasks)-1]
 				if tasks[0].Step.IsOnDriverSide {
 					// these should be only one task on the driver side
-					lastTask := tasks[len(tasks)-1]
 					s.localExecute(event.FlowContext, lastTask, event.WaitGroup)
 				} else {
 					if !needsInputFromDriver(tasks[0]) {
@@ -84,7 +84,7 @@ func (s *Scheduler) EventLoop() {
 						}
 					}
 
-					for _, shard := range tasks[len(tasks)-1].OutputShards {
+					for _, shard := range lastTask.OutputShards {
 						// println("registering", shard.Name(), "at", allocation.Location.URL(), "onDisk", shard.Dataset.GetIsOnDiskIO())
 						s.SetShardLocation(shard, resource.DataLocation{
 							Name:     shard.Name(),
@@ -98,6 +98,7 @@ func (s *Scheduler) EventLoop() {
 						taskGroup.MarkStop(err)
 						return err
 					}
+
 					if isRestartableTasks(tasks) {
 						util.Retry(fn)
 					} else {
