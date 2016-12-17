@@ -42,6 +42,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 			Location: allocation.Location,
 			OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 		})
+		shard.Meta.URI = allocation.Location.URL()
 	}
 
 	firstInstruction.SetInputLocations(inputLocations)
@@ -78,8 +79,10 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 
 	if err := RemoteDirectExecute(allocation.Location.URL(), request); err != nil {
 		log.Printf("remote exeuction error %v: %v", err, request)
+		setOutputShardsError(lastTask, err)
 		return err
 	}
+	setOutputShardsStatus(lastTask, flow.Successful)
 
 	return nil
 }
@@ -127,5 +130,21 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 	}
 	if err := task.Step.RunFunction(task); err != nil {
 		log.Fatalf("Failed to collect output: %v", err)
+	}
+}
+
+func setOutputShardsError(lastTask *flow.Task, err error) {
+	for _, shard := range lastTask.OutputShards {
+		shard.Meta.Error = err
+	}
+}
+
+func setOutputShardsStatus(lastTask *flow.Task, status flow.DatasetShardStatus) {
+	for _, shard := range lastTask.OutputShards {
+		if status == flow.Successful {
+			shard.Meta.Timestamp = time.Now()
+			shard.Meta.Error = nil
+		}
+		shard.Meta.Status = status
 	}
 }

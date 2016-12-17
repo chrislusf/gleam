@@ -11,7 +11,7 @@ func (fc *FlowContext) NewStep() (step *Step) {
 	step = &Step{
 		Id:     len(fc.Steps),
 		Params: make(map[string]interface{}),
-		Meta:   &StepMetadata{},
+		Meta:   &StepMetadata{IsIdempotent: true},
 	}
 	fc.Steps = append(fc.Steps, step)
 	return

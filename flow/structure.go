@@ -11,7 +11,6 @@ import (
 )
 
 type NetworkType int
-type ModeIO int
 
 const (
 	OneShardToOneShard NetworkType = iota
@@ -22,20 +21,40 @@ const (
 	MergeTwoShardToOneShard
 )
 
+type DatasetShardStatus int
+
+const (
+	Untouched DatasetShardStatus = iota
+	LocationAssigned
+	InProgress
+	InRetry
+	Failed
+	Successful
+)
+
+type ModeIO int
+
 const (
 	ModeInMemory ModeIO = iota
 	ModeOnDisk
 )
 
 type DasetsetMetadata struct {
-	TotalSize  int64
-	OnDisk     ModeIO
-	Datacenter string
-	Rack       string
+	TotalSize int64
+	OnDisk    ModeIO
+}
+
+type DasetsetShardMetadata struct {
+	TotalSize int64
+	Timestamp time.Time
+	URI       string
+	Status    DatasetShardStatus
+	Error     error
 }
 
 type StepMetadata struct {
 	IsRestartable bool
+	IsIdempotent  bool
 }
 
 type FlowContext struct {
@@ -68,6 +87,7 @@ type DatasetShard struct {
 	Counter       int64
 	ReadyTime     time.Time
 	CloseTime     time.Time
+	Meta          *DasetsetShardMetadata
 }
 
 type Step struct {
