@@ -107,7 +107,7 @@ func (tl *TeamMaster) findDataCenter(req *resource.AllocationRequest) (*resource
 		return dc, nil
 	}
 
-	if tl.MasterResource.Topology.ContainsDataCenters() {
+	if !tl.MasterResource.Topology.ContainsDataCenters() {
 		return nil, fmt.Errorf("No data centers found.")
 	}
 

@@ -58,7 +58,7 @@ func NewRack(name string) *Rack {
 func (tp *Topology) ContainsDataCenters() bool {
 	tp.RLock()
 	defer tp.RUnlock()
-	return len(tp.DataCenters) == 0
+	return len(tp.DataCenters) != 0
 }
 
 func (tp *Topology) GetDataCenter(name string) (*DataCenter, bool) {
