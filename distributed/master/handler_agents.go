@@ -12,10 +12,6 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (tl *TeamMaster) listAgentsHandler(w http.ResponseWriter, r *http.Request) {
-	util.Json(w, r, http.StatusAccepted, tl.MasterResource.Topology)
-}
-
 func (tl *TeamMaster) requestAgentHandler(w http.ResponseWriter, r *http.Request) {
 	requestBlob := []byte(r.FormValue("request"))
 	var request resource.AllocationRequest

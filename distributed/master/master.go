@@ -7,18 +7,10 @@ import (
 	"log"
 	"net"
 	"net/http"
-
-	"github.com/chrislusf/gleam/util"
 )
 
 type TeamMaster struct {
 	MasterResource *MasterResource
-}
-
-func (tl *TeamMaster) statusHandler(w http.ResponseWriter, r *http.Request) {
-	infos := make(map[string]interface{})
-	infos["Version"] = "0.001"
-	util.Json(w, r, http.StatusOK, infos)
 }
 
 func RunMaster(tlsConfig *tls.Config, listenOn string) {
@@ -27,10 +19,8 @@ func RunMaster(tlsConfig *tls.Config, listenOn string) {
 
 	masterMux := http.NewServeMux()
 
-	masterMux.HandleFunc("/", tl.statusHandler)
 	masterMux.HandleFunc("/agent/assign", tl.requestAgentHandler)
 	masterMux.HandleFunc("/agent/update", tl.updateAgentHandler)
-	masterMux.HandleFunc("/agent/", tl.listAgentsHandler)
 
 	var listener net.Listener
 	var err error
