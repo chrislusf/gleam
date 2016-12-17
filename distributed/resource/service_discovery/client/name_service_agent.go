@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
+	"github.com/chrislusf/gleam/distributed/master"
 	"github.com/chrislusf/gleam/util"
 )
 

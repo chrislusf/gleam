@@ -15,8 +15,8 @@ import (
 
 	a "github.com/chrislusf/gleam/distributed/agent"
 	exe "github.com/chrislusf/gleam/distributed/executor"
+	m "github.com/chrislusf/gleam/distributed/master"
 	"github.com/chrislusf/gleam/distributed/netchan"
-	m "github.com/chrislusf/gleam/distributed/resource/service_discovery/master"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/chrislusf/gleam/util/on_interrupt"
