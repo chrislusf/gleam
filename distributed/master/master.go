@@ -7,29 +7,11 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"sync"
 
 	"github.com/chrislusf/gleam/util"
 )
 
-type NamedChannelMap struct {
-	name2Chans map[string][]*ChannelInformation
-	sync.Mutex
-}
-
-func (m *NamedChannelMap) GetChannels(name string) ([]*ChannelInformation, bool) {
-	ret, ok := m.name2Chans[name]
-	return ret, ok
-}
-
-func (m *NamedChannelMap) SetChannels(name string, chans []*ChannelInformation) {
-	m.Lock()
-	defer m.Unlock()
-	m.name2Chans[name] = chans
-}
-
 type TeamMaster struct {
-	channels       *NamedChannelMap
 	MasterResource *MasterResource
 }
 
@@ -41,7 +23,6 @@ func (tl *TeamMaster) statusHandler(w http.ResponseWriter, r *http.Request) {
 
 func RunMaster(tlsConfig *tls.Config, listenOn string) {
 	tl := &TeamMaster{}
-	tl.channels = &NamedChannelMap{name2Chans: make(map[string][]*ChannelInformation)}
 	tl.MasterResource = NewMasterResource()
 
 	masterMux := http.NewServeMux()
@@ -50,7 +31,6 @@ func RunMaster(tlsConfig *tls.Config, listenOn string) {
 	masterMux.HandleFunc("/agent/assign", tl.requestAgentHandler)
 	masterMux.HandleFunc("/agent/update", tl.updateAgentHandler)
 	masterMux.HandleFunc("/agent/", tl.listAgentsHandler)
-	masterMux.HandleFunc("/channel/", tl.handleChannel)
 
 	var listener net.Listener
 	var err error

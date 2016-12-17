@@ -8,10 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"time"
 
 	"github.com/chrislusf/gleam/distributed/resource"
-	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
@@ -146,27 +144,6 @@ func doCommand(server string, conn io.ReadWriteCloser, command *msg.ControlMessa
 	}
 
 	return response, err
-}
-
-func getCommandConnection(leader string, agentName string) (io.ReadWriteCloser, error) {
-	l := client.NewNameServiceProxy(leader)
-
-	// looking for the agentName
-	var target string
-	for {
-		locations := l.Find(agentName)
-		if len(locations) > 0 {
-			target = locations[0]
-		}
-		if target != "" {
-			break
-		} else {
-			time.Sleep(time.Second)
-			print("z")
-		}
-	}
-
-	return getDirectCommandConnection(target)
 }
 
 func getDirectCommandConnection(target string) (io.ReadWriteCloser, error) {

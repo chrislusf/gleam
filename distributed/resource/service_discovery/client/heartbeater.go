@@ -27,25 +27,6 @@ func NewHeartBeater(ip string, localPort int, leader string) *HeartBeater {
 	return h
 }
 
-func (h *HeartBeater) StartChannelHeartBeat(killChan chan bool, chanName string) {
-	connected := false
-	for {
-		ret := h.beat(func(values url.Values) string {
-			return "/channel/" + chanName
-		})
-		if ret == true && connected == false {
-			fmt.Printf("connected with master %s\n", h.Leaders)
-		}
-		connected = ret
-		select {
-		case <-killChan:
-			return
-		default:
-			time.Sleep(time.Duration(rand.Int63n(h.SleepSeconds/2)+h.SleepSeconds/2) * time.Second)
-		}
-	}
-}
-
 // Starts heart beating
 func (h *HeartBeater) StartAgentHeartBeat(killChan chan bool, fn func(url.Values)) {
 	connected := false
