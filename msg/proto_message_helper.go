@@ -3,7 +3,7 @@ package msg
 import (
 	"fmt"
 
-	"github.com/chrislusf/gleam/distributed/resource"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -27,7 +27,7 @@ func (m *InstructionSet) InstructionNames() (stepNames []string) {
 	return
 }
 
-func (i *Instruction) SetInputLocations(locations []resource.DataLocation) {
+func (i *Instruction) SetInputLocations(locations []pb.DataLocation) {
 	for _, loc := range locations {
 		i.InputShardLocations = append(i.InputShardLocations, &DatasetShardLocation{
 			Name:   proto.String(loc.Name),
@@ -38,7 +38,7 @@ func (i *Instruction) SetInputLocations(locations []resource.DataLocation) {
 	}
 }
 
-func (i *Instruction) SetOutputLocations(locations []resource.DataLocation) {
+func (i *Instruction) SetOutputLocations(locations []pb.DataLocation) {
 	for _, loc := range locations {
 		i.OutputShardLocations = append(i.OutputShardLocations, &DatasetShardLocation{
 			Name:   proto.String(loc.Name),

@@ -5,8 +5,8 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -69,14 +69,14 @@ func (s *Scheduler) EventLoop() {
 
 					// get assigned executor location
 					supply := <-pickedServerChan
-					allocation := supply.Object.(resource.Allocation)
+					allocation := supply.Object.(*pb.Allocation)
 					defer s.Market.ReturnSupply(supply)
 
 					if needsInputFromDriver(tasks[0]) {
 						// tell the driver to write to me
 						for _, shard := range tasks[0].InputShards {
 							// println("registering", shard.Name(), "at", allocation.Location.URL())
-							s.SetShardLocation(shard, resource.DataLocation{
+							s.SetShardLocation(shard, pb.DataLocation{
 								Name:     shard.Name(),
 								Location: allocation.Location,
 								OnDisk:   shard.Dataset.GetIsOnDiskIO(),
@@ -86,7 +86,7 @@ func (s *Scheduler) EventLoop() {
 
 					for _, shard := range lastTask.OutputShards {
 						// println("registering", shard.Name(), "at", allocation.Location.URL(), "onDisk", shard.Dataset.GetIsOnDiskIO())
-						s.SetShardLocation(shard, resource.DataLocation{
+						s.SetShardLocation(shard, pb.DataLocation{
 							Name:     shard.Name(),
 							Location: allocation.Location,
 							OnDisk:   shard.Dataset.GetIsOnDiskIO(),
@@ -154,11 +154,11 @@ func isRestartableTasks(tasks []*flow.Task) bool {
 	return true
 }
 
-func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (resource.DataLocation, bool) {
+func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (pb.DataLocation, bool) {
 	location, found := s.shardLocator.GetShardLocation(shard.Name())
 	return location, found
 }
 
-func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc resource.DataLocation) {
+func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc pb.DataLocation) {
 	s.shardLocator.SetShardLocation(shard.Name(), loc)
 }

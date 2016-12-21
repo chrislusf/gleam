@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -15,11 +14,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/resource"
-	"github.com/chrislusf/gleam/distributed/resource/service_discovery/client"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc"
 )
 
 type AgentServerOption struct {
@@ -40,12 +39,14 @@ type AgentServer struct {
 	Master                string
 	wg                    sync.WaitGroup
 	listener              net.Listener
-	computeResource       *resource.ComputeResource
-	allocatedResource     *resource.ComputeResource
+	computeResource       *pb.ComputeResource
+	allocatedResource     *pb.ComputeResource
 	allocatedResourceLock sync.Mutex
 	storageBackend        *LocalDatasetShardsManager
 	inMemoryChannels      *LocalDatasetShardsManagerInMemory
 	localExecutorManager  *LocalExecutorManager
+
+	grpcConection *grpc.ClientConn
 }
 
 func NewAgentServer(option *AgentServerOption) *AgentServer {
@@ -61,12 +62,12 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 		Master:           *option.Master,
 		storageBackend:   NewLocalDatasetShardsManager(*option.Dir, *option.Port),
 		inMemoryChannels: NewLocalDatasetShardsManagerInMemory(),
-		computeResource: &resource.ComputeResource{
-			CPUCount: *option.MaxExecutor,
-			CPULevel: *option.CPULevel,
-			MemoryMB: *option.MemoryMB,
+		computeResource: &pb.ComputeResource{
+			CpuCount: int32(*option.MaxExecutor),
+			CpuLevel: int32(*option.CPULevel),
+			MemoryMb: *option.MemoryMB,
 		},
-		allocatedResource:    &resource.ComputeResource{},
+		allocatedResource:    &pb.ComputeResource{},
 		localExecutorManager: newLocalExecutorsManager(),
 	}
 
@@ -109,13 +110,8 @@ func (r *AgentServer) init() (err error) {
 
 // Run starts the heartbeating to master and starts accepting requests.
 func (as *AgentServer) Run() {
-	//register agent
-	killHeartBeaterChan := make(chan bool, 1)
-	go client.NewHeartBeater(*as.Option.Host, *as.Option.Port, as.Master).StartAgentHeartBeat(killHeartBeaterChan, func(values url.Values) {
-		resource.AddToValues(values, as.computeResource, as.allocatedResource)
-		values.Add("dataCenter", *as.Option.DataCenter)
-		values.Add("rack", *as.Option.Rack)
-	})
+
+	go as.heartbeat()
 
 	for {
 		// Listen for an incoming connection.

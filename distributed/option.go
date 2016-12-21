@@ -19,6 +19,7 @@ type DistributedOption struct {
 func Option() *DistributedOption {
 	return &DistributedOption{
 		Master:       "localhost:45326",
+		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
 		Host:         "localhost",
@@ -37,6 +38,11 @@ func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
 		Host:         o.Host,
 		Port:         o.Port,
 	})
+}
+
+func (o *DistributedOption) SetDataCenter(dataCenter string) *DistributedOption {
+	o.DataCenter = dataCenter
+	return o
 }
 
 func (o *DistributedOption) SetMaster(master string) *DistributedOption {

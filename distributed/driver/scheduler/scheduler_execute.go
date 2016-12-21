@@ -8,12 +8,14 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/util"
 )
 
-func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup, allocation resource.Allocation, wg *sync.WaitGroup) error {
+func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup,
+	allocation *pb.Allocation, wg *sync.WaitGroup) error {
+
 	// s.setupInputChannels(flowContext, tasks[0], allocation.Location, wg)
 
 	// fmt.Printf("allocated %s on %v\n", tasks[0].Name(), allocation.Location)
@@ -27,7 +29,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	lastInstruction := instructions.GetInstructions()[len(instructions.GetInstructions())-1]
 	firstTask := taskGroup.Tasks[0]
 	lastTask := taskGroup.Tasks[len(taskGroup.Tasks)-1]
-	var inputLocations, outputLocations []resource.DataLocation
+	var inputLocations, outputLocations []pb.DataLocation
 	for _, shard := range firstTask.InputShards {
 		loc, hasLocation := s.GetShardLocation(shard)
 		if !hasLocation {
@@ -37,7 +39,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		inputLocations = append(inputLocations, loc)
 	}
 	for _, shard := range lastTask.OutputShards {
-		outputLocations = append(outputLocations, resource.DataLocation{
+		outputLocations = append(outputLocations, pb.DataLocation{
 			Name:     shard.Name(),
 			Location: allocation.Location,
 			OnDisk:   shard.Dataset.GetIsOnDiskIO(),

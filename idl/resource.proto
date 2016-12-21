@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package master_rpc;
+
+service GleamMaster {
+  rpc GetResources(ComputeRequest) returns (AllocationResult) {}
+  rpc SendHeartbeat(stream Heartbeat) returns (Empty) {}
+}
+
+//////////////////////////////////////////////////
+message ComputeRequest {
+  string data_center = 1;
+  repeated ComputeResource compute_resources = 2;
+}
+
+message ComputeResource {
+  int32 cpu_count = 1;
+  int32 cpu_level = 2;
+  int32 gpu_count = 3;
+  int32 gpu_level = 4;
+  int64 memory_mb = 5;
+  int64 disk_mb = 6;
+}
+
+message DataResource {
+  Location location = 1;
+  int64 size = 2;
+}
+
+message Location {
+  string data_center = 1;
+  string rack = 2;
+  string server = 3;
+  int32 port = 4;
+}
+
+message Allocation {
+  Location location = 1;
+  ComputeResource allocated = 2;
+}
+
+message AllocationResult {
+	repeated Allocation allocations = 1;
+}
+
+//////////////////////////////////////////////////
+message Heartbeat {
+  Location location = 1;
+  ComputeResource resource = 2;
+  ComputeResource allocated = 3;
+}
+message Empty {}
+
+//////////////////////////////////////////////////
+message DataLocation {
+  string name = 1;
+  Location location = 2;
+  bool onDisk = 3;
+}

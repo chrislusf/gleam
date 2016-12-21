@@ -9,23 +9,25 @@ import (
 	"io/ioutil"
 	"net"
 
-	"github.com/chrislusf/gleam/distributed/resource"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
 
-func NewStartRequest(name string, dir string, instructions *msg.InstructionSet, allocated resource.ComputeResource, envs []string, host string, port int32) *msg.ControlMessage {
+func NewStartRequest(name string, dir string, instructions *msg.InstructionSet,
+	allocated *pb.ComputeResource, envs []string, host string, port int32) *msg.ControlMessage {
+
 	request := &msg.ControlMessage{
 		StartRequest: &msg.StartRequest{
 			Instructions: instructions,
 			Dir:          proto.String(dir),
 			Resource: &msg.ComputeResource{
-				CpuCount: proto.Int32(int32(allocated.CPUCount)),
-				CpuLevel: proto.Int32(int32(allocated.CPULevel)),
-				Memory:   proto.Int32(int32(allocated.MemoryMB)),
-				GpuCount: proto.Int32(int32(allocated.GPUCount)),
-				GpuLevel: proto.Int32(int32(allocated.GPULevel)),
+				CpuCount: proto.Int32(int32(allocated.CpuCount)),
+				CpuLevel: proto.Int32(int32(allocated.CpuLevel)),
+				Memory:   proto.Int32(int32(allocated.MemoryMb)),
+				GpuCount: proto.Int32(int32(allocated.GpuCount)),
+				GpuLevel: proto.Int32(int32(allocated.GpuLevel)),
 			},
 			Host: proto.String(host),
 			Port: proto.Int32(port),

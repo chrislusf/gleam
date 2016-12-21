@@ -18,7 +18,7 @@ func main() {
 
 	join := a.RightOuterJoin(b).Fprintf(os.Stdout, "%s : %s %s, %s %s\n")
 
-	join.Run(distributed.Planner())
+	// join.Run(distributed.Planner())
 
 	join.Run(distributed.Option())
 

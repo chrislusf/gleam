@@ -3,38 +3,59 @@
 package master
 
 import (
-	"crypto/tls"
+	"io"
 	"log"
 	"net"
 	"net/http"
+
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/soheilhy/cmux"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
-type TeamMaster struct {
-	MasterResource *MasterResource
+var masterServer *MasterServer
+
+func init() {
+	masterServer = newMasterServer()
 }
 
-func RunMaster(tlsConfig *tls.Config, listenOn string) {
-	tl := &TeamMaster{}
-	tl.MasterResource = NewMasterResource()
+func RunMaster(listenOn string) {
 
-	masterMux := http.NewServeMux()
-
-	masterMux.HandleFunc("/agent/assign", tl.requestAgentHandler)
-	masterMux.HandleFunc("/agent/update", tl.updateAgentHandler)
-
-	var listener net.Listener
-	var err error
-	if tlsConfig == nil {
-		listener, err = net.Listen("tcp", listenOn)
-	} else {
-		listener, err = tls.Listen("tcp", listenOn, tlsConfig)
-	}
+	listener, err := net.Listen("tcp", listenOn)
 	if err != nil {
-		log.Fatalf("Volume server fail to serve public: %v", err)
+		log.Fatalf("master server fails to listen on %s: %v", listenOn, err)
 	}
 
-	if e := http.Serve(listener, masterMux); e != nil {
-		log.Fatalf("Volume server fail to serve public: %v", e)
+	m := cmux.New(listener)
+
+	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	httpL := m.Match(cmux.HTTP1Fast())
+
+	// Create your protocol servers.
+	grpcS := grpc.NewServer()
+	pb.RegisterGleamMasterServer(grpcS, masterServer)
+	reflection.Register(grpcS)
+
+	httpS := &http.Server{Handler: &masterHttpHandler{mux: mux}}
+
+	go grpcS.Serve(grpcL)
+	go httpS.Serve(httpL)
+
+	if err := m.Serve(); err != nil {
+		log.Fatalf("master server failed to serve: %v", err)
 	}
 
+}
+
+type masterHttpHandler struct {
+	mux map[string]func(http.ResponseWriter, *http.Request)
+}
+
+func (m *masterHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h, ok := m.mux[r.URL.String()]; ok {
+		h(w, r)
+		return
+	}
+	io.WriteString(w, "My server: "+r.URL.String())
 }

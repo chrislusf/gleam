@@ -3,16 +3,16 @@ package driver
 import (
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/resource"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
 
 type RemoteExecutorStatus struct {
 	util.ExecutorStatus
-	Allocation resource.Allocation
+	Allocation *pb.Allocation
 	taskGroup  *plan.TaskGroup
 }
 

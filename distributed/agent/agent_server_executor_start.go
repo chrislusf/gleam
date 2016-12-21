@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/distributed/rsync"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"
@@ -33,9 +33,9 @@ func (as *AgentServer) handleStart(conn net.Conn,
 		return reply
 	}
 
-	allocated := resource.ComputeResource{
-		CPUCount: int(startRequest.GetResource().GetCpuCount()),
-		MemoryMB: int64(startRequest.GetResource().GetMemory()),
+	allocated := pb.ComputeResource{
+		CpuCount: int32(startRequest.GetResource().GetCpuCount()),
+		MemoryMb: int64(startRequest.GetResource().GetMemory()),
 	}
 
 	as.plusAllocated(allocated)
@@ -110,13 +110,13 @@ func (as *AgentServer) doCommand(
 	return err
 }
 
-func (as *AgentServer) plusAllocated(allocated resource.ComputeResource) {
+func (as *AgentServer) plusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
 	defer as.allocatedResourceLock.Unlock()
 	*as.allocatedResource = as.allocatedResource.Plus(allocated)
 }
 
-func (as *AgentServer) minusAllocated(allocated resource.ComputeResource) {
+func (as *AgentServer) minusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
 	defer as.allocatedResourceLock.Unlock()
 	*as.allocatedResource = as.allocatedResource.Minus(allocated)

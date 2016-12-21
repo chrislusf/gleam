@@ -1,30 +1,26 @@
 package scheduler
 
 import (
-	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
-	"net/url"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/resource"
-	"github.com/chrislusf/gleam/util"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
 
 // Requirement is TaskGroup
 // Object is Agent's Location
 func (s *Scheduler) Fetch(demands []market.Demand) {
-	var request resource.AllocationRequest
+	var request pb.ComputeRequest
+	request.DataCenter = s.Option.DataCenter
 	for _, d := range demands {
 		taskGroup := d.Requirement.(*plan.TaskGroup)
 		requiredResource := taskGroup.RequiredResources()
-		request.Requests = append(request.Requests, resource.ComputeRequest{
-			ComputeResource: requiredResource,
-			Inputs:          s.findTaskGroupInputs(taskGroup),
-		})
+		request.ComputeResources = append(request.ComputeResources, requiredResource)
 	}
 
 	result, err := Assign(s.Master, &request)
@@ -36,49 +32,29 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 			// log.Printf("%s No more new executors.", s.Master)
 			time.Sleep(time.Millisecond * time.Duration(2000+rand.Int63n(1000)))
 		} else {
+			if s.Option.DataCenter == "" {
+				s.Option.DataCenter = result.Allocations[0].Location.DataCenter
+			}
 			var allocatedMemory int64
 			for _, allocation := range result.Allocations {
 				s.Market.AddSupply(market.Supply{
 					Object: allocation,
 				})
-				allocatedMemory += allocation.Allocated.MemoryMB
+				allocatedMemory += allocation.Allocated.MemoryMb
 			}
 			log.Printf("%s allocated %d executors with %d MB memory.", s.Master, len(result.Allocations), allocatedMemory)
 		}
 	}
 }
 
-func (s *Scheduler) findTaskGroupInputs(tg *plan.TaskGroup) (ret []resource.DataResource) {
-	firstTask := tg.Tasks[0]
-	for _, input := range firstTask.InputShards {
-		dataLocation, found := s.GetShardLocation(input)
-		if !found {
-			// log.Printf("Strange2: %s not allocated yet.", input.Name())
-			continue
-		}
-		ret = append(ret, resource.DataResource{
-			Location:   dataLocation.Location,
-			DataSizeMB: 1, // TODO: read previous run's size
-		})
-	}
-	return
-}
+func Assign(master string, request *pb.ComputeRequest) (*pb.AllocationResult, error) {
 
-func Assign(leader string, request *resource.AllocationRequest) (*resource.AllocationResult, error) {
-	values := make(url.Values)
-	requestBlob, _ := json.Marshal(request)
-	values.Add("request", string(requestBlob))
-	jsonBlob, err := util.Post(util.SchemePrefix+leader+"/agent/assign", values)
+	conn, err := grpc.Dial(master, grpc.WithInsecure())
 	if err != nil {
-		return nil, err
+		log.Printf("fail to dial %s: %v", master, err)
 	}
-	var ret resource.AllocationResult
-	err = json.Unmarshal(jsonBlob, &ret)
-	if err != nil {
-		return nil, fmt.Errorf("/agent/assign result JSON unmarshal error:%v, json:%s", err, string(jsonBlob))
-	}
-	if ret.Error != "" {
-		return nil, fmt.Errorf("/agent/assign error:%v", ret.Error)
-	}
-	return &ret, nil
+	defer conn.Close()
+	client := pb.NewGleamMasterClient(conn)
+
+	return client.GetResources(context.Background(), request)
 }

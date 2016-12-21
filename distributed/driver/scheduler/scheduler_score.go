@@ -3,20 +3,20 @@ package scheduler
 import (
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/resource"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 )
 
 func (s *Scheduler) Score(r market.Requirement, bid float64, obj market.Object) float64 {
-	alloc := obj.(resource.Allocation)
+	alloc := obj.(*pb.Allocation)
 	tg, loc := r.(*plan.TaskGroup), alloc.Location
 
 	memCost := memoryCost(tg)
-	if memCost > alloc.Allocated.MemoryMB {
+	if memCost > alloc.Allocated.MemoryMb {
 		return -1
 	}
 
 	firstTask := tg.Tasks[0]
-	cost := float64(alloc.Allocated.MemoryMB-memCost) * 10
+	cost := float64(alloc.Allocated.MemoryMb-memCost) * 10
 	for _, input := range firstTask.InputShards {
 		dataLocation, found := s.GetShardLocation(input)
 		if !found {

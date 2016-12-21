@@ -27,7 +27,7 @@ var (
 	app = kingpin.New("gleamd", "distributed gleam, acts as master, agent, or executor")
 
 	master        = app.Command("master", "Start a master process")
-	masterAddress = master.Flag("address", "listening address host:port").Default(":45326").String()
+	masterAddress = master.Flag("adddress", "listening address host:port").Default(":45326").String()
 
 	executor     = app.Command("execute", "Execute an instruction set")
 	executorNote = executor.Flag("note", "description").String()
@@ -47,12 +47,12 @@ var (
 	}
 	cpuProfile = agent.Flag("cpuprofile", "cpu profile output file").Default("").String()
 
-	writer             = app.Command("write", "Write data to a topic")
+	writer             = app.Command("write", "Write data to a topic, input from console")
 	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
 	writerAgentAddress = writer.Flag("agent", "agent host:port").Default("localhost:45327").String()
 	writeToDisk        = writer.Flag("onDisk", "write to memory").Default("false").Bool()
 
-	reader             = app.Command("read", "Read data from a topic")
+	reader             = app.Command("read", "Read data from a topic, output to console")
 	readTopic          = reader.Flag("topic", "Name of a source topic").Required().String()
 	readerAgentAddress = reader.Flag("agent", "agent host:port").Default("localhost:45327").String()
 	readFromDisk       = reader.Flag("onDisk", "read from memory").Default("false").Bool()
@@ -63,8 +63,8 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
 	case master.FullCommand():
-		println("listening on", *masterAddress)
-		m.RunMaster(nil, *masterAddress)
+		println("master listening on", *masterAddress)
+		m.RunMaster(*masterAddress)
 
 	case executor.FullCommand():
 

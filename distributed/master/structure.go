@@ -1,36 +1,38 @@
-package resource
+package master
 
 import (
 	"sync"
 	"time"
+
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 )
 
 type AgentInformation struct {
-	Location      Location
+	Location      pb.Location
 	LastHeartBeat time.Time
-	Resource      ComputeResource
-	Allocated     ComputeResource
+	Resource      pb.ComputeResource
+	Allocated     pb.ComputeResource
 }
 
 type Rack struct {
 	sync.RWMutex
 	Name      string
 	Agents    map[string]*AgentInformation
-	Resource  ComputeResource
-	Allocated ComputeResource
+	Resource  pb.ComputeResource
+	Allocated pb.ComputeResource
 }
 
 type DataCenter struct {
 	sync.RWMutex
 	Name      string
 	Racks     map[string]*Rack
-	Resource  ComputeResource
-	Allocated ComputeResource
+	Resource  pb.ComputeResource
+	Allocated pb.ComputeResource
 }
 
 type Topology struct {
-	Resource  ComputeResource
-	Allocated ComputeResource
+	Resource  pb.ComputeResource
+	Allocated pb.ComputeResource
 	sync.RWMutex
 	DataCenters map[string]*DataCenter
 }
@@ -53,12 +55,6 @@ func NewRack(name string) *Rack {
 		Name:   name,
 		Agents: make(map[string]*AgentInformation),
 	}
-}
-
-func (tp *Topology) ContainsDataCenters() bool {
-	tp.RLock()
-	defer tp.RUnlock()
-	return len(tp.DataCenters) != 0
 }
 
 func (tp *Topology) GetDataCenter(name string) (*DataCenter, bool) {
@@ -128,11 +124,11 @@ func (rack *Rack) AddAgent(a *AgentInformation) {
 	rack.Agents[a.Location.URL()] = a
 }
 
-func (rack *Rack) DropAgent(a *AgentInformation) {
+func (rack *Rack) DropAgent(location *pb.Location) {
 	rack.Lock()
 	defer rack.Unlock()
 
-	delete(rack.Agents, a.Location.URL())
+	delete(rack.Agents, location.URL())
 }
 
 func (rack *Rack) GetAgents() map[string]*AgentInformation {

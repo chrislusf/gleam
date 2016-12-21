@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
+	pb "github.com/chrislusf/gleam/idl/master_rpc"
 )
 
 type TaskGroup struct {
@@ -74,18 +74,18 @@ func (t *TaskGroup) String() string {
 	return "taskGroup:" + strings.Join(steps, "-")
 }
 
-func (t *TaskGroup) RequiredResources() resource.ComputeResource {
+func (t *TaskGroup) RequiredResources() *pb.ComputeResource {
 
-	resource := resource.ComputeResource{
-		CPUCount: 1,
-		CPULevel: 1,
+	resource := &pb.ComputeResource{
+		CpuCount: 1,
+		CpuLevel: 1,
 	}
 
 	for _, task := range t.Tasks {
 		inst := task.Step.Instruction
 		if inst != nil && task.Step.OutputDataset != nil {
 			taskMemSize := inst.GetMemoryCostInMB(task.Step.OutputDataset.GetPartitionSize())
-			resource.MemoryMB += taskMemSize
+			resource.MemoryMb += taskMemSize
 			log.Printf("  %s : %s (%d MB)\n", t.String(), task.Step.Name, taskMemSize)
 		}
 	}
