@@ -48,10 +48,11 @@ func (b *RoundRobin) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoRoundRobin(reader io.Reader, writers []io.Writer) error {
 	count, shardCount := 0, len(writers)
 	return util.ProcessMessage(reader, func(data []byte) error {
-		if count >= shardCount {
+		if count >= shardCount-1 {
 			count = 0
+		} else {
+			count++
 		}
-		count++
 		return util.WriteMessage(writers[count], data)
 	})
 }
