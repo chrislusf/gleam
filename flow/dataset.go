@@ -7,7 +7,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func NewDataset(context *FlowContext) *Dataset {
+func newDataset(context *FlowContext) *Dataset {
 	d := &Dataset{
 		Id:          len(context.Datasets),
 		FlowContext: context,
@@ -40,7 +40,7 @@ func (d *Dataset) Run(option ...FlowOption) {
 	}
 }
 
-func (d *Dataset) SetupShard(n int) {
+func (d *Dataset) setupShard(n int) {
 	for i := 0; i < n; i++ {
 		ds := &DatasetShard{
 			Id:           i,

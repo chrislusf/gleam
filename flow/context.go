@@ -35,8 +35,8 @@ func (fc *FlowContext) Run(options ...FlowOption) {
 }
 
 func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {
-	ret = NewDataset(fc)
-	ret.SetupShard(shardSize)
+	ret = newDataset(fc)
+	ret.setupShard(shardSize)
 	return
 }
 
