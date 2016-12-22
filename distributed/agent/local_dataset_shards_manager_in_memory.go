@@ -115,8 +115,6 @@ func (m *LocalDatasetShardsManagerInMemory) WaitForNamedDatasetShard(name string
 		// println("woke up for", name, m, m.name2Channel[name])
 	}
 
-	return nil
-
 }
 
 func (m *LocalDatasetShardsManagerInMemory) Cleanup(name string) {
