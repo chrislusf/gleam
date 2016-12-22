@@ -1,8 +1,8 @@
 package plan
 
 import (
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 )
 

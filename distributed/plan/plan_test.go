@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/msg"
 )
 
 func TestPlanning(t *testing.T) {

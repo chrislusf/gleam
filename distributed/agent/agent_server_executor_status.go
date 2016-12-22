@@ -3,8 +3,8 @@ package agent
 import (
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/distributed/driver"
+	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 )
 
