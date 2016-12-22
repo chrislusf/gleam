@@ -23,7 +23,7 @@ func Field(indexes ...int) *SortOption {
 func OrderBy(index int, ascending bool) *SortOption {
 	ret := &SortOption{
 		orderByList: []instruction.OrderBy{
-			instruction.OrderBy{
+			{
 				Index: index,
 				Order: instruction.Descending,
 			},

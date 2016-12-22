@@ -27,7 +27,7 @@ func newTrackedChannel(readerCount int) *trackedChannel {
 		lastWriteAt:      time.Now(),
 	}
 	if readerCount > 1 {
-		for i, _ := range t.outgoingChannels {
+		for i := range t.outgoingChannels {
 			t.outgoingChannels[i] = util.NewPiper()
 		}
 		t.wg.Add(1)

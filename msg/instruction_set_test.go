@@ -12,7 +12,7 @@ func TestEncodingDecoding(t *testing.T) {
 		FlowHashCode: proto.Uint32(1234567),
 		ReaderCount:  proto.Int32(23),
 		Instructions: []*Instruction{
-			&Instruction{
+			{
 				Name: proto.String("map1"),
 				Script: &Script{
 					IsPipe: proto.Bool(true),
@@ -20,14 +20,14 @@ func TestEncodingDecoding(t *testing.T) {
 					Args:   []string{"/etc/passwd"},
 				},
 			},
-			&Instruction{
+			{
 				Name: proto.String("map2"),
 				Script: &Script{
 					IsPipe: proto.Bool(true),
 					Path:   proto.String("sort"),
 				},
 			},
-			&Instruction{
+			{
 				Name: proto.String("map4"),
 				Script: &Script{
 					IsPipe: proto.Bool(true),
