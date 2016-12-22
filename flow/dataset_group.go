@@ -19,7 +19,7 @@ func (d *Dataset) LocalGroupBy(sortOptions ...*SortOption) *Dataset {
 	indexes := sortOption.Indexes()
 	ret.IsPartitionedBy = indexes
 	step.Name = "LocalGroupBy"
-	step.Script = d.FlowContext.CreateScript()
+	step.Script = d.FlowContext.createScript()
 	step.Script.GroupBy(indexes)
 	return ret
 }
