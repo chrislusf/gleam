@@ -113,7 +113,7 @@ func (s *Scheduler) EventLoop() {
 				for _, taskGroup := range event.TaskGroups {
 					tasks := taskGroup.Tasks
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
-						location, _ := s.GetShardLocation(shard)
+						location, _ := s.getShardLocation(shard)
 						request := NewDeleteDatasetShardRequest(shard.Name())
 						// println("deleting", shard.Name(), "on", location.URL())
 						if err := RemoteDirectExecute(location.Location.URL(), request); err != nil {
@@ -154,7 +154,7 @@ func isRestartableTasks(tasks []*flow.Task) bool {
 	return true
 }
 
-func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (pb.DataLocation, bool) {
+func (s *Scheduler) getShardLocation(shard *flow.DatasetShard) (pb.DataLocation, bool) {
 	location, found := s.shardLocator.GetShardLocation(shard.Name())
 	return location, found
 }

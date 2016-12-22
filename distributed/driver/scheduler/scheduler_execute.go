@@ -31,7 +31,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	lastTask := taskGroup.Tasks[len(taskGroup.Tasks)-1]
 	var inputLocations, outputLocations []pb.DataLocation
 	for _, shard := range firstTask.InputShards {
-		loc, hasLocation := s.GetShardLocation(shard)
+		loc, hasLocation := s.getShardLocation(shard)
 		if !hasLocation {
 			log.Printf("The shard is missing?: %s", shard.Name())
 			continue
@@ -98,7 +98,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
 
 	for _, shard := range task.OutputShards {
-		location, _ := s.GetShardLocation(shard)
+		location, _ := s.getShardLocation(shard)
 		shard.IncomingChan = util.NewPiper()
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
@@ -117,7 +117,7 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
 	for i, shard := range task.InputShards {
-		location, _ := s.GetShardLocation(shard)
+		location, _ := s.getShardLocation(shard)
 		inChan := task.InputChans[i]
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {

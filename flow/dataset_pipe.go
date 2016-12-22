@@ -5,6 +5,9 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
+// Pipe runs the code as an external program, which processes the
+// tab-separated input from the program's stdin, and outout to
+// stdout also in tab-separated lines.
 func (d *Dataset) Pipe(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Pipe"
@@ -13,7 +16,12 @@ func (d *Dataset) Pipe(code string) *Dataset {
 	return ret
 }
 
-// PipeAsArgs is similar to xargs, but simpler
+// PipeAsArgs takes each row of input, bind to variables in parameter
+// code. The variables are specified via $1, $2, etc. The code is
+// run as the command for an external program for each row of input.
+//
+// Watch for performance impact since it starts one Os process
+// for each line of input.
 func (d *Dataset) PipeAsArgs(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.IsPipe = true
