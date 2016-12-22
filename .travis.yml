@@ -30,4 +30,4 @@ script:
  - go test -race -coverprofile=coverage.txt -covermode=atomic -timeout=90s ./...
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+ - bash <(curl -s https://codecov.io/bash)
