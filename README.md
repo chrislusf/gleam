@@ -3,6 +3,7 @@
 [![GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow?status.svg)](https://godoc.org/github.com/chrislusf/gleam/flow)
 [![Wiki](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/chrislusf/gleam/wiki)
 [![Go Report Card](https://goreportcard.com/badge/github.com/chrislusf/gleam)](https://goreportcard.com/report/github.com/chrislusf/gleam)
+[![codecov](https://codecov.io/gh/chrislusf/gleam/branch/master/graph/badge.svg)](https://codecov.io/gh/chrislusf/gleam)
 
 Gleam is a high performance and efficient distributed execution system, and also 
 simple, generic, flexible and easy to customize.
