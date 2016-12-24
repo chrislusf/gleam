@@ -38,10 +38,7 @@ func translateToInstruction(task *flow.Task) (ret *msg.Instruction) {
 	// Command can come from Pipe() directly
 	// get an exec.Command
 	// println("processing step:", task.Step.Name)
-	if task.Step.Command == nil {
-		task.Step.Command = task.Step.Script.GetCommand()
-	}
-	command := task.Step.Command
+	command := task.Step.GetScriptCommand()
 
 	return &msg.Instruction{
 		Name: proto.String(task.Step.Name),
