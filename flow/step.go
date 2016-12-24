@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/chrislusf/gleam/instruction"
+	"github.com/chrislusf/gleam/script"
 )
 
 func (fc *FlowContext) NewStep() (step *Step) {
@@ -55,4 +56,11 @@ func (step *Step) RunFunction(task *Task) error {
 		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
 	}
 	return err
+}
+
+func (step *Step) GetScriptCommand() *script.Command {
+	if step.Command == nil {
+		return step.Script.GetCommand()
+	}
+	return step.Command
 }
