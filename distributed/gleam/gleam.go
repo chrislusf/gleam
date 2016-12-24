@@ -35,7 +35,7 @@ var (
 	agent       = app.Command("agent", "Agent that can accept read, write requests, manage executors")
 	agentOption = &a.AgentServerOption{
 		Dir:          agent.Flag("dir", "agent folder to store computed data").Default(os.TempDir()).String(),
-		Host:         agent.Flag("host", "agent listening host address. Required in 2-way SSL mode.").Default("").String(),
+		Host:         agent.Flag("host", "agent listening host address. Required in 2-way SSL mode.").Default("localhost").String(),
 		Port:         agent.Flag("port", "agent listening port").Default("45327").Int(),
 		Master:       agent.Flag("master", "master address").Default("localhost:45326").String(),
 		DataCenter:   agent.Flag("dataCenter", "data center name").Default("defaultDataCenter").String(),
