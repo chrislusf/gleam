@@ -24,7 +24,7 @@ func (this *Dataset) LocalHashAndJoinWith(that *Dataset, sortOptions ...*SortOpt
 	return ret
 }
 
-// Broadcast replicates itself in all shards.
+// Broadcast replicates itself to all shards.
 func (d *Dataset) Broadcast(shardCount int) *Dataset {
 	if shardCount == 1 && len(d.Shards) == shardCount {
 		return d
