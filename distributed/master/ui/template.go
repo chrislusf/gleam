@@ -55,7 +55,7 @@ var StatusTpl = template.Must(template.New("status").Parse(`<!DOCTYPE html>
               <th>Rack</th>
               <th>Server</th>
               <th>Port</th>
-              <th>Last Seen</th>
+              <th>Last Heartbeat</th>
               <th>Resource</th>
               <th>Allocated</th>
             </tr>
