@@ -17,7 +17,7 @@ func TestLuaCommander(t *testing.T) {
 
 func TestLuaMap(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test mapper",
 		func(script Script) {
 			script.Map(`function(x,y,z) return x+1, y.."yyy", not z end`)
@@ -41,7 +41,7 @@ func TestLuaMap(t *testing.T) {
 
 func TestLuaFilter(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test filter",
 		func(script Script) {
 			script.Filter(`
@@ -75,7 +75,7 @@ func TestLuaFilter(t *testing.T) {
 
 func TestLuaFlatMap(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test FlatMap",
 		func(script Script) {
 			script.FlatMap(`
@@ -106,7 +106,7 @@ func TestLuaFlatMap(t *testing.T) {
 
 func TestLuaSelect(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test filter",
 		func(script Script) {
 			script.Select([]int{2, 1})
@@ -132,7 +132,7 @@ func TestLuaSelect(t *testing.T) {
 
 func TestLuaLimit(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test Limit",
 		func(script Script) {
 			script.Limit(1)
@@ -152,21 +152,29 @@ func TestLuaLimit(t *testing.T) {
 	)
 }
 
-func testScript(testName string, invokeLuaScriptFunc func(script Script),
+func testLuaScript(testName string, invokeLuaScriptFunc func(script Script),
 	inputFunc func(inputWriter io.Writer),
 	outputFunc func(outputReader io.Reader)) {
+
 	var luaScript Script
 
 	luaScript = NewLuaScript()
 	luaScript.Init("")
 
+	testScript(testName, luaScript, invokeLuaScriptFunc, inputFunc, outputFunc)
+}
+
+func testScript(testName string, script Script, invokeScriptFunc func(script Script),
+	inputFunc func(inputWriter io.Writer),
+	outputFunc func(outputReader io.Reader)) {
+
 	input, output := util.NewPiper(), util.NewPiper()
 
-	invokeLuaScriptFunc(luaScript)
+	invokeScriptFunc(script)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go util.Execute(&wg, testName, luaScript.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
+	go util.Execute(&wg, testName, script.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
 
 	wg.Add(1)
 	go func() {

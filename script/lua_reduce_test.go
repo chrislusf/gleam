@@ -9,7 +9,7 @@ import (
 
 func TestLuaReduce(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test ReduceBy",
 		func(script Script) {
 			script.Reduce(`
@@ -36,7 +36,7 @@ func TestLuaReduce(t *testing.T) {
 
 func TestLuaReduceByMultipleValues(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test ReduceBy",
 		func(script Script) {
 			script.ReduceBy(`
@@ -73,7 +73,7 @@ func TestLuaReduceByMultipleValues(t *testing.T) {
 
 func TestLuaReduceBySingleValues(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test ReduceBy",
 		func(script Script) {
 			script.ReduceBy(`
@@ -110,7 +110,7 @@ func TestLuaReduceBySingleValues(t *testing.T) {
 
 func TestLuaGroupByMultipleValue(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test GroupBy",
 		func(script Script) {
 			script.GroupBy([]int{1, 2})
@@ -143,7 +143,7 @@ func TestLuaGroupByMultipleValue(t *testing.T) {
 
 func TestLuaGroupByZeroValue(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test GroupBy",
 		func(script Script) {
 			script.GroupBy([]int{1, 2})
@@ -176,7 +176,7 @@ func TestLuaGroupByZeroValue(t *testing.T) {
 
 func TestLuaGroupBySingleValues(t *testing.T) {
 
-	testScript(
+	testLuaScript(
 		"test GroupBy",
 		func(script Script) {
 			script.GroupBy([]int{1, 2})
