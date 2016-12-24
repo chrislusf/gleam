@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -24,13 +23,13 @@ import (
 type AgentServerOption struct {
 	Master       *string
 	Host         *string
-	Port         *int
+	Port         *int32
 	Dir          *string
 	DataCenter   *string
 	Rack         *string
-	MaxExecutor  *int
+	MaxExecutor  *int32
 	MemoryMB     *int64
-	CPULevel     *int
+	CPULevel     *int32
 	CleanRestart *bool
 }
 
@@ -60,7 +59,7 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 	as := &AgentServer{
 		Option:           option,
 		Master:           *option.Master,
-		storageBackend:   NewLocalDatasetShardsManager(*option.Dir, *option.Port),
+		storageBackend:   NewLocalDatasetShardsManager(*option.Dir, int(*option.Port)),
 		inMemoryChannels: NewLocalDatasetShardsManagerInMemory(),
 		computeResource: &pb.ComputeResource{
 			CpuCount: int32(*option.MaxExecutor),
@@ -84,13 +83,13 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 }
 
 func (r *AgentServer) init() (err error) {
-	r.listener, err = net.Listen("tcp", *r.Option.Host+":"+strconv.Itoa(*r.Option.Port))
+	r.listener, err = net.Listen("tcp", fmt.Sprintf("%v:%d", *r.Option.Host, *r.Option.Port))
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("AgentServer starts on", *r.Option.Host+":"+strconv.Itoa(*r.Option.Port))
+	fmt.Println("AgentServer starts on", fmt.Sprintf("%v:%d", *r.Option.Host, *r.Option.Port))
 
 	if *r.Option.CleanRestart {
 		if fileInfos, err := ioutil.ReadDir(r.storageBackend.dir); err == nil {

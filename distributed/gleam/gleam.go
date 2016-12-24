@@ -36,12 +36,12 @@ var (
 	agentOption = &a.AgentServerOption{
 		Dir:          agent.Flag("dir", "agent folder to store computed data").Default(os.TempDir()).String(),
 		Host:         agent.Flag("host", "agent listening host address. Required in 2-way SSL mode.").Default("localhost").String(),
-		Port:         agent.Flag("port", "agent listening port").Default("45327").Int(),
+		Port:         agent.Flag("port", "agent listening port").Default("45327").Int32(),
 		Master:       agent.Flag("master", "master address").Default("localhost:45326").String(),
 		DataCenter:   agent.Flag("dataCenter", "data center name").Default("defaultDataCenter").String(),
 		Rack:         agent.Flag("rack", "rack name").Default("defaultRack").String(),
-		MaxExecutor:  agent.Flag("executor.max", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int(),
-		CPULevel:     agent.Flag("executor.cpu.level", "relative computing power of single cpu core").Default("1").Int(),
+		MaxExecutor:  agent.Flag("executor.max", "upper limit of executors").Default(strconv.Itoa(runtime.NumCPU())).Int32(),
+		CPULevel:     agent.Flag("executor.cpu.level", "relative computing power of single cpu core").Default("1").Int32(),
 		MemoryMB:     agent.Flag("memory", "memory limit in MB").Default("1024").Int64(),
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
 	}
