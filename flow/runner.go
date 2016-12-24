@@ -18,20 +18,20 @@ type FlowOption interface {
 	GetFlowRunner() FlowRunner
 }
 
-type LocalDriver struct{}
+type localDriver struct{}
 
 var (
-	Local LocalDriver
+	local localDriver
 )
 
-func (r *LocalDriver) RunFlowContext(fc *FlowContext) {
+func (r *localDriver) RunFlowContext(fc *FlowContext) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	r.RunFlowContextAsync(&wg, fc)
 	wg.Wait()
 }
 
-func (r *LocalDriver) RunFlowContextAsync(wg *sync.WaitGroup, fc *FlowContext) {
+func (r *localDriver) RunFlowContextAsync(wg *sync.WaitGroup, fc *FlowContext) {
 	defer wg.Done()
 
 	on_interrupt.OnInterrupt(fc.OnInterrupt, nil)
@@ -40,13 +40,13 @@ func (r *LocalDriver) RunFlowContextAsync(wg *sync.WaitGroup, fc *FlowContext) {
 		if step.OutputDataset == nil {
 			wg.Add(1)
 			go func(step *Step) {
-				r.RunStep(wg, step)
+				r.runStep(wg, step)
 			}(step)
 		}
 	}
 }
 
-func (r *LocalDriver) RunDataset(wg *sync.WaitGroup, d *Dataset) {
+func (r *localDriver) runDataset(wg *sync.WaitGroup, d *Dataset) {
 	defer wg.Done()
 	d.Lock()
 	defer d.Unlock()
@@ -58,15 +58,15 @@ func (r *LocalDriver) RunDataset(wg *sync.WaitGroup, d *Dataset) {
 	for _, shard := range d.Shards {
 		wg.Add(1)
 		go func(shard *DatasetShard) {
-			r.RunDatasetShard(wg, shard)
+			r.runDatasetShard(wg, shard)
 		}(shard)
 	}
 
 	wg.Add(1)
-	r.RunStep(wg, d.Step)
+	r.runStep(wg, d.Step)
 }
 
-func (r *LocalDriver) RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
+func (r *localDriver) runDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 	defer wg.Done()
 	shard.ReadyTime = time.Now()
 
@@ -88,25 +88,25 @@ func (r *LocalDriver) RunDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 	}
 }
 
-func (r *LocalDriver) RunStep(wg *sync.WaitGroup, step *Step) {
+func (r *localDriver) runStep(wg *sync.WaitGroup, step *Step) {
 	defer wg.Done()
 
 	for _, task := range step.Tasks {
 		wg.Add(1)
 		go func(task *Task) {
-			r.RunTask(wg, task)
+			r.runTask(wg, task)
 		}(task)
 	}
 
 	for _, ds := range step.InputDatasets {
 		wg.Add(1)
 		go func(ds *Dataset) {
-			r.RunDataset(wg, ds)
+			r.runDataset(wg, ds)
 		}(ds)
 	}
 }
 
-func (r *LocalDriver) RunTask(wg *sync.WaitGroup, task *Task) {
+func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 	defer wg.Done()
 
 	// try to run Function first

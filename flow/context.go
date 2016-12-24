@@ -26,7 +26,7 @@ func New() (fc *FlowContext) {
 
 func (fc *FlowContext) Run(options ...FlowOption) {
 	if len(options) == 0 {
-		Local.RunFlowContext(fc)
+		local.RunFlowContext(fc)
 	} else {
 		for _, option := range options {
 			option.GetFlowRunner().RunFlowContext(fc)
