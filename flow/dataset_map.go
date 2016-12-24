@@ -10,6 +10,7 @@ func (d *Dataset) Map(code string) *Dataset {
 }
 
 // ForEach operates on each row, but the results are not collected.
+// This is used to create some side effects.
 func (d *Dataset) ForEach(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "ForEach"
