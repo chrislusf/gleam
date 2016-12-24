@@ -120,9 +120,11 @@ func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 	}
 
 	// get an exec.Command
+	task.Step.Lock()
 	if task.Step.Command == nil {
 		task.Step.Command = task.Step.Script.GetCommand()
 	}
+	task.Step.Unlock()
 	execCommand := task.Step.Command.ToOsExecCommand()
 
 	if task.Step.NetworkType == OneShardToOneShard {
