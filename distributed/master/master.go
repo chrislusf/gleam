@@ -26,6 +26,7 @@ func RunMaster(listenOn string) {
 	if err != nil {
 		log.Fatalf("master server fails to listen on %s: %v", listenOn, err)
 	}
+	defer listener.Close()
 
 	m := cmux.New(listener)
 
