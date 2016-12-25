@@ -27,7 +27,7 @@ var (
 	app = kingpin.New("gleamd", "distributed gleam, acts as master, agent, or executor")
 
 	master        = app.Command("master", "Start a master process")
-	masterAddress = master.Flag("adddress", "listening address host:port").Default(":45326").String()
+	masterAddress = master.Flag("address", "listening address host:port").Default(":45326").String()
 
 	executor     = app.Command("execute", "Execute an instruction set")
 	executorNote = executor.Flag("note", "description").String()
