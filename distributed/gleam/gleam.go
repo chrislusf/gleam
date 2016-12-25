@@ -126,7 +126,6 @@ func main() {
 			})
 		}
 
-		agentServer := a.NewAgentServer(agentOption)
-		agentServer.Run()
+		a.RunAgentServer(agentOption)
 	}
 }

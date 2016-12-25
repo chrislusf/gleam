@@ -16,6 +16,7 @@ import (
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
+	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
 
@@ -35,8 +36,6 @@ type AgentServerOption struct {
 type AgentServer struct {
 	Option                *AgentServerOption
 	Master                string
-	wg                    sync.WaitGroup
-	listener              net.Listener
 	computeResource       *pb.ComputeResource
 	allocatedResource     *pb.ComputeResource
 	allocatedResourceLock sync.Mutex
@@ -47,7 +46,7 @@ type AgentServer struct {
 	grpcConection *grpc.ClientConn
 }
 
-func NewAgentServer(option *AgentServerOption) *AgentServer {
+func RunAgentServer(option *AgentServerOption) {
 	absoluteDir, err := filepath.Abs(util.CleanPath(*option.Dir))
 	if err != nil {
 		panic(err)
@@ -72,56 +71,53 @@ func NewAgentServer(option *AgentServerOption) *AgentServer {
 	go as.storageBackend.purgeExpiredEntries()
 	go as.inMemoryChannels.purgeExpiredEntries()
 	go as.localExecutorManager.purgeExpiredEntries()
+	go as.heartbeat()
 
-	err = as.init()
-	if err != nil {
-		panic(err)
-	}
-
-	return as
-}
-
-func (r *AgentServer) init() (err error) {
-	r.listener, err = net.Listen("tcp", fmt.Sprintf("%v:%d", *r.Option.Host, *r.Option.Port))
-
+	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("AgentServer starts on", fmt.Sprintf("%v:%d", *r.Option.Host, *r.Option.Port))
+	fmt.Println("AgentServer starts on", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
 
-	if *r.Option.CleanRestart {
-		if fileInfos, err := ioutil.ReadDir(r.storageBackend.dir); err == nil {
-			suffix := fmt.Sprintf("-%d.dat", *r.Option.Port)
+	if *option.CleanRestart {
+		if fileInfos, err := ioutil.ReadDir(as.storageBackend.dir); err == nil {
+			suffix := fmt.Sprintf("-%d.dat", *option.Port)
 			for _, fi := range fileInfos {
 				name := fi.Name()
 				if !fi.IsDir() && strings.HasSuffix(name, suffix) {
 					// println("removing old dat file:", name)
-					os.Remove(filepath.Join(r.storageBackend.dir, name))
+					os.Remove(filepath.Join(as.storageBackend.dir, name))
 				}
 			}
 		}
 	}
 
-	return
+	m := cmux.New(listener)
+	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
+	tcpListener := m.Match(cmux.Any())
+
+	go as.serveGRPC(grpcListener)
+	go as.serveGRPC(tcpListener)
+
+	if err := m.Serve(); !strings.Contains(err.Error(), "use of closed network connection") {
+		panic(err)
+	}
+
 }
 
 // Run starts the heartbeating to master and starts accepting requests.
-func (as *AgentServer) Run() {
-
-	go as.heartbeat()
+func (as *AgentServer) serveGRPC(listener net.Listener) {
 
 	for {
 		// Listen for an incoming connection.
-		conn, err := as.listener.Accept()
+		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			continue
 		}
 		// Handle connections in a new goroutine.
-		as.wg.Add(1)
 		go func() {
-			defer as.wg.Done()
 			defer conn.Close()
 			if err = conn.SetDeadline(time.Time{}); err != nil {
 				fmt.Printf("Failed to set timeout: %v\n", err)
@@ -132,12 +128,6 @@ func (as *AgentServer) Run() {
 			as.handleRequest(conn)
 		}()
 	}
-}
-
-// Stop stops handling incoming requests and waits out all ongoing requests
-func (r *AgentServer) Stop() {
-	r.listener.Close()
-	r.wg.Wait()
 }
 
 func (r *AgentServer) handleRequest(conn net.Conn) {
