@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/plan"
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"

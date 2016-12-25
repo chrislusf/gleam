@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package master_rpc;
+package pb;
 
 service GleamMaster {
   rpc GetResources(ComputeRequest) returns (AllocationResult) {}

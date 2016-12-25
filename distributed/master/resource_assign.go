@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 )
 
 func (t *Topology) allocateDataCenter(requests []*pb.ComputeResource) (string, error) {

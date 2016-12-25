@@ -7,7 +7,7 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

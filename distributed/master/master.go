@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

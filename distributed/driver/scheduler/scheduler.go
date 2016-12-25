@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/msg"
 )
 

@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
 	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"

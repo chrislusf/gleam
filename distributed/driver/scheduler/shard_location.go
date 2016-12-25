@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/chrislusf/gleam/flow"
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 )
 
 type DatasetShardLocator struct {

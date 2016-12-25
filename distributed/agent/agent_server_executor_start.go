@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/rsync"
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"

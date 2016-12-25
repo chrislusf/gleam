@@ -1,4 +1,4 @@
-package master_rpc
+package pb
 
 import (
 	"fmt"

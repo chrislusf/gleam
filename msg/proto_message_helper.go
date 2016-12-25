@@ -3,7 +3,7 @@ package msg
 import (
 	"fmt"
 
-	pb "github.com/chrislusf/gleam/idl/master_rpc"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
