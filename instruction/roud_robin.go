@@ -3,13 +3,12 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetRoundRobin() != nil {
 			return NewRoundRobin()
 		}
@@ -34,10 +33,10 @@ func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, s
 	}
 }
 
-func (b *RoundRobin) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name:       proto.String(b.Name()),
-		RoundRobin: &msg.RoundRobin{},
+func (b *RoundRobin) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name:       b.Name(),
+		RoundRobin: &pb.RoundRobin{},
 	}
 }
 

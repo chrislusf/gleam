@@ -4,13 +4,12 @@ import (
 	"io"
 	"log"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetMergeSortedTo() != nil {
 			return NewMergeSortedTo(
 				toOrderBys(m.GetMergeSortedTo().GetOrderBys()),
@@ -38,10 +37,10 @@ func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer
 	}
 }
 
-func (b *MergeSortedTo) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		MergeSortedTo: &msg.MergeSortedTo{
+func (b *MergeSortedTo) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		MergeSortedTo: &pb.MergeSortedTo{
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}

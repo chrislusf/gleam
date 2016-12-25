@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -42,10 +42,10 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 }
 
 func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,
-	deleteRequest *msg.DeleteDatasetShardRequest) *msg.DeleteDatasetShardResponse {
+	deleteRequest *pb.DeleteDatasetShardRequest) *pb.DeleteDatasetShardResponse {
 
-	log.Println("deleting", *deleteRequest.Name)
-	as.storageBackend.DeleteNamedDatasetShard(*deleteRequest.Name)
+	log.Println("deleting", deleteRequest.Name)
+	as.storageBackend.DeleteNamedDatasetShard(deleteRequest.Name)
 
 	return nil
 }

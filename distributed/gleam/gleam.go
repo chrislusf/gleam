@@ -17,7 +17,7 @@ import (
 	exe "github.com/chrislusf/gleam/distributed/executor"
 	m "github.com/chrislusf/gleam/distributed/master"
 	"github.com/chrislusf/gleam/distributed/netchan"
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 	"github.com/golang/protobuf/proto"
@@ -72,12 +72,12 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to read stdin: %v", err)
 		}
-		instructions := msg.InstructionSet{}
+		instructions := pb.InstructionSet{}
 		if err := proto.Unmarshal(rawData, &instructions); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
 		}
 
-		if *instructions.IsProfiling {
+		if instructions.IsProfiling {
 			f, err := os.Create(fmt.Sprintf("exe-%d-%s.pprof", instructions.GetFlowHashCode(), strings.Join(instructions.InstructionNames(), "-")))
 			if err != nil {
 				log.Fatal(err)

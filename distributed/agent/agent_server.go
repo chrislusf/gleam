@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
@@ -150,7 +149,7 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 		return
 	}
 
-	newCmd := &msg.ControlMessage{}
+	newCmd := &pb.ControlMessage{}
 	if err := proto.Unmarshal(data, newCmd); err != nil {
 		log.Fatal("unmarshaling error: ", err)
 	}
@@ -166,31 +165,30 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 }
 
 func (as *AgentServer) handleCommandConnection(conn net.Conn,
-	command *msg.ControlMessage) *msg.ControlMessage {
-	reply := &msg.ControlMessage{}
+	command *pb.ControlMessage) *pb.ControlMessage {
+	reply := &pb.ControlMessage{}
 	if command.GetReadRequest() != nil {
 		if !command.GetIsOnDiskIO() {
-			as.handleInMemoryReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
+			as.handleInMemoryReadConnection(conn, command.ReadRequest.ReaderName, command.ReadRequest.ChannelName)
 		} else {
-			as.handleReadConnection(conn, *command.ReadRequest.ReaderName, *command.ReadRequest.ChannelName)
+			as.handleReadConnection(conn, command.ReadRequest.ReaderName, command.ReadRequest.ChannelName)
 		}
 		return nil
 	}
 	if command.GetWriteRequest() != nil {
 		if !command.GetIsOnDiskIO() {
-			as.handleLocalInMemoryWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
+			as.handleLocalInMemoryWriteConnection(conn, command.WriteRequest.WriterName, command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		} else {
-			as.handleLocalWriteConnection(conn, *command.WriteRequest.WriterName, *command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
+			as.handleLocalWriteConnection(conn, command.WriteRequest.WriterName, command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		}
 		return nil
 	}
 	if command.GetStartRequest() != nil {
 		// println("start from", *command.StartRequest.Host)
-		if *command.StartRequest.Host == "" {
+		if command.StartRequest.Host == "" {
 			remoteAddress := conn.RemoteAddr().String()
 			// println("remote address is", remoteAddress)
-			host := remoteAddress[:strings.LastIndex(remoteAddress, ":")]
-			command.StartRequest.Host = &host
+			command.StartRequest.Host = remoteAddress[:strings.LastIndex(remoteAddress, ":")]
 		}
 		reply.StartResponse = as.handleStart(conn, command.StartRequest)
 		// return nil to avoid writing the response to the connection.

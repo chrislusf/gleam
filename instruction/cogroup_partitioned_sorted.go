@@ -3,13 +3,12 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetCoGroupPartitionedSorted() != nil {
 			return NewCoGroupPartitionedSorted(
 				toInts(m.GetCoGroupPartitionedSorted().GetIndexes()),
@@ -37,10 +36,10 @@ func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers 
 	}
 }
 
-func (b *CoGroupPartitionedSorted) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		CoGroupPartitionedSorted: &msg.CoGroupPartitionedSorted{
+func (b *CoGroupPartitionedSorted) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		CoGroupPartitionedSorted: &pb.CoGroupPartitionedSorted{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

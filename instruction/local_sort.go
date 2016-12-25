@@ -5,14 +5,13 @@ import (
 	"io"
 	"math"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 	"github.com/psilva261/timsort"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetLocalSort() != nil {
 			return NewLocalSort(
 				toOrderBys(m.GetLocalSort().GetOrderBys()),
@@ -47,10 +46,10 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 	}
 }
 
-func (b *LocalSort) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		LocalSort: &msg.LocalSort{
+func (b *LocalSort) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		LocalSort: &pb.LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}
@@ -121,11 +120,11 @@ func getIndexes(storedValues []int) (indexes []int32) {
 	return
 }
 
-func getOrderBys(storedValues []OrderBy) (orderBys []*msg.OrderBy) {
+func getOrderBys(storedValues []OrderBy) (orderBys []*pb.OrderBy) {
 	for _, o := range storedValues {
-		orderBys = append(orderBys, &msg.OrderBy{
-			Index: proto.Int32(int32(o.Index)),
-			Order: proto.Int32(int32(o.Order)),
+		orderBys = append(orderBys, &pb.OrderBy{
+			Index: int32(o.Index),
+			Order: int32(o.Order),
 		})
 	}
 	return

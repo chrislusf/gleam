@@ -1,4 +1,4 @@
-package msg
+package pb
 
 import (
 	"testing"
@@ -9,29 +9,29 @@ import (
 func TestEncodingDecoding(t *testing.T) {
 
 	instructions := &InstructionSet{
-		FlowHashCode: proto.Uint32(1234567),
-		ReaderCount:  proto.Int32(23),
+		FlowHashCode: 1234567,
+		ReaderCount:  23,
 		Instructions: []*Instruction{
 			{
-				Name: proto.String("map1"),
+				Name: "map1",
 				Script: &Script{
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("cat"),
+					IsPipe: true,
+					Path:   "cat",
 					Args:   []string{"/etc/passwd"},
 				},
 			},
 			{
-				Name: proto.String("map2"),
+				Name: "map2",
 				Script: &Script{
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("sort"),
+					IsPipe: true,
+					Path:   "sort",
 				},
 			},
 			{
-				Name: proto.String("map4"),
+				Name: "map4",
 				Script: &Script{
-					IsPipe: proto.Bool(true),
-					Path:   proto.String("cat"),
+					IsPipe: true,
+					Path:   "cat",
 				},
 			},
 		},

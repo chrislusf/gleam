@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -17,7 +17,7 @@ func toInts(indexes []int32) []int {
 	return ret
 }
 
-func toOrderBys(orderBys []*msg.OrderBy) (ret []OrderBy) {
+func toOrderBys(orderBys []*pb.OrderBy) (ret []OrderBy) {
 	for _, o := range orderBys {
 		ret = append(ret, OrderBy{
 			Index: int(o.GetIndex()),

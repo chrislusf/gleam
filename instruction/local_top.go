@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetLocalTop() != nil {
 			return NewLocalTop(
 				int(m.GetLocalTop().GetN()),
@@ -40,11 +39,11 @@ func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, sta
 	}
 }
 
-func (b *LocalTop) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		LocalTop: &msg.LocalTop{
-			N:        proto.Int32(int32(b.n)),
+func (b *LocalTop) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		LocalTop: &pb.LocalTop{
+			N:        int32(b.n),
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -31,10 +31,10 @@ type ExecutorOption struct {
 type Executor struct {
 	Option       *ExecutorOption
 	Master       string
-	instructions *msg.InstructionSet
+	instructions *pb.InstructionSet
 }
 
-func NewExecutor(option *ExecutorOption, instructions *msg.InstructionSet) *Executor {
+func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Executor {
 
 	return &Executor{
 		Option:       option,
@@ -54,7 +54,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		inputChan := prevOutputChan
 		outputChan := util.NewPiper()
 		wg.Add(1)
-		go func(index int, instruction *msg.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
+		go func(index int, instruction *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
 			exe.ExecuteInstruction(&wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
 				instruction,
@@ -92,7 +92,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 }
 
 func setupReaders(wg *sync.WaitGroup, ioErrChan chan error,
-	i *msg.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {
+	i *pb.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {
 
 	if !isFirst {
 		readers = append(readers, inPiper.Reader)
@@ -101,7 +101,7 @@ func setupReaders(wg *sync.WaitGroup, ioErrChan chan error,
 			wg.Add(1)
 			inChan := util.NewPiper()
 			// println(i.GetName(), "connecting to", inputLocation.Address(), "to read", inputLocation.GetName())
-			go func(inputLocation *msg.DatasetShardLocation) {
+			go func(inputLocation *pb.DatasetShardLocation) {
 				err := netchan.DialReadChannel(wg, i.GetName(), inputLocation.Address(), inputLocation.GetName(), inputLocation.GetOnDisk(), inChan.Writer)
 				if err != nil {
 					ioErrChan <- fmt.Errorf("Failed %s reading %s from %s: %v", i.GetName(), inputLocation.GetName(), inputLocation.Address(), err)
@@ -113,7 +113,7 @@ func setupReaders(wg *sync.WaitGroup, ioErrChan chan error,
 	return
 }
 func setupWriters(wg *sync.WaitGroup, ioErrChan chan error,
-	i *msg.Instruction, outPiper *util.Piper, isLast bool, readerCount int) (writers []io.Writer) {
+	i *pb.Instruction, outPiper *util.Piper, isLast bool, readerCount int) (writers []io.Writer) {
 
 	if !isLast {
 		writers = append(writers, outPiper.Writer)
@@ -122,7 +122,7 @@ func setupWriters(wg *sync.WaitGroup, ioErrChan chan error,
 			wg.Add(1)
 			outChan := util.NewPiper()
 			// println(i.GetName(), "connecting to", outputLocation.Address(), "to write", outputLocation.GetName(), "readerCount", readerCount)
-			go func(outputLocation *msg.DatasetShardLocation) {
+			go func(outputLocation *pb.DatasetShardLocation) {
 				err := netchan.DialWriteChannel(wg, i.GetName(), outputLocation.Address(), outputLocation.GetName(), outputLocation.GetOnDisk(), outChan.Reader, readerCount)
 				if err != nil {
 					ioErrChan <- fmt.Errorf("Failed %s writing %s to %s: %v", i.GetName(), outputLocation.GetName(), outputLocation.Address(), err)
@@ -135,7 +135,7 @@ func setupWriters(wg *sync.WaitGroup, ioErrChan chan error,
 }
 
 func (exe *Executor) ExecuteInstruction(wg *sync.WaitGroup, ioErrChan, exeErrChan chan error,
-	inChan, outChan *util.Piper, prevIsPipe bool, i *msg.Instruction, isFirst, isLast bool, readerCount int) {
+	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int) {
 
 	defer wg.Done()
 

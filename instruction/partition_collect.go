@@ -3,13 +3,12 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetCollectPartitions() != nil {
 			return NewCollectPartitions()
 		}
@@ -34,10 +33,10 @@ func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Wr
 	}
 }
 
-func (b *CollectPartitions) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name:              proto.String(b.Name()),
-		CollectPartitions: &msg.CollectPartitions{},
+func (b *CollectPartitions) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name:              b.Name(),
+		CollectPartitions: &pb.CollectPartitions{},
 	}
 }
 

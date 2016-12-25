@@ -4,13 +4,12 @@ import (
 	"io"
 	"log"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetScatterPartitions() != nil {
 			return NewScatterPartitions(
 				toInts(m.GetScatterPartitions().GetIndexes()),
@@ -38,10 +37,10 @@ func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Wr
 	}
 }
 
-func (b *ScatterPartitions) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		ScatterPartitions: &msg.ScatterPartitions{
+func (b *ScatterPartitions) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		ScatterPartitions: &pb.ScatterPartitions{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

@@ -7,14 +7,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetPipeAsArgs() != nil {
 			return NewPipeAsArgs(m.GetPipeAsArgs().GetCode())
 		}
@@ -40,11 +39,11 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 	}
 }
 
-func (b *PipeAsArgs) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		PipeAsArgs: &msg.PipeAsArgs{
-			Code: proto.String(b.code),
+func (b *PipeAsArgs) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		PipeAsArgs: &pb.PipeAsArgs{
+			Code: b.code,
 		},
 	}
 }

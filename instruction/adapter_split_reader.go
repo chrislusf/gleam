@@ -9,13 +9,12 @@ import (
 	"os"
 
 	"github.com/chrislusf/gleam/adapter"
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetAdapterSplitReader() != nil {
 			return NewAdapterSplitReader(
 				m.GetAdapterSplitReader().GetAdapterName(),
@@ -45,12 +44,12 @@ func (b *AdapterSplitReader) Function() func(readers []io.Reader, writers []io.W
 	}
 }
 
-func (b *AdapterSplitReader) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		AdapterSplitReader: &msg.AdapterSplitReader{
-			AdapterName:  proto.String(b.adapterName),
-			ConnectionId: proto.String(b.adapterName),
+func (b *AdapterSplitReader) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		AdapterSplitReader: &pb.AdapterSplitReader{
+			AdapterName:  b.adapterName,
+			ConnectionId: b.adapterName,
 		},
 	}
 }

@@ -5,13 +5,12 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetLocalHashAndJoinWith() != nil {
 			return NewLocalHashAndJoinWith(
 				toInts(m.GetLocalHashAndJoinWith().GetIndexes()),
@@ -39,10 +38,10 @@ func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io
 	}
 }
 
-func (b *LocalHashAndJoinWith) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		LocalHashAndJoinWith: &msg.LocalHashAndJoinWith{
+func (b *LocalHashAndJoinWith) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		LocalHashAndJoinWith: &pb.LocalHashAndJoinWith{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

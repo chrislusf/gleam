@@ -3,13 +3,12 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetBroadcast() != nil {
 			return NewBroadcast()
 		}
@@ -34,10 +33,10 @@ func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, st
 	}
 }
 
-func (b *Broadcast) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name:      proto.String(b.Name()),
-		Broadcast: &msg.Broadcast{},
+func (b *Broadcast) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name:      b.Name(),
+		Broadcast: &pb.Broadcast{},
 	}
 }
 

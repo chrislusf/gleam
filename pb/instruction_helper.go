@@ -1,0 +1,48 @@
+package pb
+
+import (
+	"fmt"
+
+	"github.com/chrislusf/gleam/util"
+)
+
+func (m *DatasetShard) Name() string {
+	return fmt.Sprintf("f%d-d%d-s%d", m.FlowHashCode, m.DatasetId, m.DatasetShardId)
+}
+
+func (m *DatasetShardLocation) Address() string {
+	return fmt.Sprintf("%s:%d", m.Host, m.Port)
+}
+
+func (m *InstructionSet) HashCode() uint32 {
+	return util.Hash([]byte(m.String()))
+}
+
+func (m *InstructionSet) InstructionNames() (stepNames []string) {
+	for _, ins := range m.GetInstructions() {
+		stepNames = append(stepNames, ins.GetName())
+	}
+	return
+}
+
+func (i *Instruction) SetInputLocations(locations []DataLocation) {
+	for _, loc := range locations {
+		i.InputShardLocations = append(i.InputShardLocations, &DatasetShardLocation{
+			Name:   loc.Name,
+			Host:   loc.Location.Server,
+			Port:   int32(loc.Location.Port),
+			OnDisk: loc.OnDisk,
+		})
+	}
+}
+
+func (i *Instruction) SetOutputLocations(locations []DataLocation) {
+	for _, loc := range locations {
+		i.OutputShardLocations = append(i.OutputShardLocations, &DatasetShardLocation{
+			Name:   loc.Name,
+			Host:   loc.Location.Server,
+			Port:   int32(loc.Location.Port),
+			OnDisk: loc.OnDisk,
+		})
+	}
+}

@@ -7,7 +7,6 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/pb"
-	"github.com/chrislusf/gleam/msg"
 )
 
 type Scheduler struct {
@@ -22,7 +21,7 @@ type Scheduler struct {
 }
 
 type RemoteExecutorStatus struct {
-	Request      *msg.ControlMessage
+	Request      *pb.ControlMessage
 	Allocation   *pb.Allocation
 	RequestTime  time.Time
 	InputLength  int

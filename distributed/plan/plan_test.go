@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 )
 
 func TestPlanning(t *testing.T) {
@@ -44,7 +44,7 @@ func TestPlanning(t *testing.T) {
 	}
 }
 
-func PrintInstructionSet(instructions *msg.InstructionSet) {
+func PrintInstructionSet(instructions *pb.InstructionSet) {
 	for _, ins := range instructions.GetInstructions() {
 		println(ins.String())
 	}

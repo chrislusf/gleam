@@ -11,17 +11,16 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/chrislusf/gleam/pb"
-	"github.com/chrislusf/gleam/msg"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"
 )
 
 func (as *AgentServer) handleStart(conn net.Conn,
-	startRequest *msg.StartRequest) *msg.StartResponse {
+	startRequest *pb.StartRequest) *pb.StartResponse {
 
 	// println("starting", startRequest.GetInstructions())
-	reply := &msg.StartResponse{}
-	stat := as.localExecutorManager.getExecutorStatus(*startRequest.GetInstructions().FlowHashCode)
+	reply := &pb.StartResponse{}
+	stat := as.localExecutorManager.getExecutorStatus(startRequest.GetInstructions().FlowHashCode)
 	stat.RequestTime = time.Now()
 
 	dir := path.Join(*as.Option.Dir, startRequest.GetDir())
@@ -29,14 +28,11 @@ func (as *AgentServer) handleStart(conn net.Conn,
 	err := rsync.FetchFilesTo(startRequest.GetHost()+":"+strconv.Itoa(int(startRequest.GetPort())), dir)
 	if err != nil {
 		log.Printf("Failed to download file: %v", err)
-		reply.Error = proto.String(err.Error())
+		reply.Error = err.Error()
 		return reply
 	}
 
-	allocated := pb.ComputeResource{
-		CpuCount: int32(startRequest.GetResource().GetCpuCount()),
-		MemoryMb: int64(startRequest.GetResource().GetMemory()),
-	}
+	allocated := *startRequest.GetResource()
 
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
@@ -48,10 +44,10 @@ func (as *AgentServer) handleStart(conn net.Conn,
 
 func (as *AgentServer) doCommand(
 	conn net.Conn,
-	startRequest *msg.StartRequest,
+	startRequest *pb.StartRequest,
 	stat *AgentExecutorStatus,
 	dir string,
-	reply *msg.StartResponse) (err error) {
+	reply *pb.StartResponse) (err error) {
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
@@ -76,9 +72,9 @@ func (as *AgentServer) doCommand(
 	if err != nil {
 		log.Printf("Failed to start command %s under %s: %v",
 			command.Path, command.Dir, err)
-		reply.Error = proto.String(err.Error())
+		reply.Error = err.Error()
 	} else {
-		reply.Pid = proto.Int32(int32(command.Process.Pid))
+		reply.Pid = int32(command.Process.Pid)
 	}
 	stat.Process = command.Process
 
@@ -100,7 +96,7 @@ func (as *AgentServer) doCommand(
 	// wait for finish
 	err = command.Wait()
 	if err != nil {
-		reply.Error = proto.String(err.Error())
+		reply.Error = err.Error()
 	}
 	// println("finished", startRequest.GetInstructions().String())
 	stat.StopTime = time.Now()

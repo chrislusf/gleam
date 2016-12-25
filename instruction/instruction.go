@@ -3,7 +3,7 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 )
 
 var (
@@ -29,19 +29,19 @@ type Stats struct {
 type Instruction interface {
 	Name() string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error
-	SerializeToCommand() *msg.Instruction
+	SerializeToCommand() *pb.Instruction
 	GetMemoryCostInMB(partitionSize int64) int64
 }
 
 type instructionRunner struct {
-	functions []func(*msg.Instruction) Instruction
+	functions []func(*pb.Instruction) Instruction
 }
 
-func (r *instructionRunner) Register(f func(*msg.Instruction) Instruction) {
+func (r *instructionRunner) Register(f func(*pb.Instruction) Instruction) {
 	r.functions = append(r.functions, f)
 }
 
-func (r *instructionRunner) GetInstructionFunction(i *msg.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (r *instructionRunner) GetInstructionFunction(i *pb.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	for _, f := range r.functions {
 		if inst := f(i); inst != nil {
 			return inst.Function()

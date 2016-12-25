@@ -5,9 +5,7 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/pb"
-	"github.com/chrislusf/gleam/msg"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 type RemoteExecutorStatus struct {
@@ -16,19 +14,19 @@ type RemoteExecutorStatus struct {
 	taskGroup  *plan.TaskGroup
 }
 
-func ToProto(channelStatuses []*util.ChannelStatus) (ret []*msg.ChannelStatus) {
+func ToProto(channelStatuses []*util.ChannelStatus) (ret []*pb.ChannelStatus) {
 	for _, stat := range channelStatuses {
-		ret = append(ret, &msg.ChannelStatus{
-			Length:    proto.Int64(stat.Length),
-			StartTime: proto.Int64(stat.StartTime.Unix()),
-			StopTime:  proto.Int64(stat.StopTime.Unix()),
-			Name:      proto.String(stat.Name),
+		ret = append(ret, &pb.ChannelStatus{
+			Length:    stat.Length,
+			StartTime: stat.StartTime.Unix(),
+			StopTime:  stat.StopTime.Unix(),
+			Name:      stat.Name,
 		})
 	}
 	return
 }
 
-func FromProto(channelStatuses []*msg.ChannelStatus) (ret []*util.ChannelStatus) {
+func FromProto(channelStatuses []*pb.ChannelStatus) (ret []*util.ChannelStatus) {
 	for _, stat := range channelStatuses {
 		ret = append(ret, &util.ChannelStatus{
 			Length:    stat.GetLength(),

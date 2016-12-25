@@ -49,9 +49,8 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	firstInstruction.SetInputLocations(inputLocations)
 	lastInstruction.SetOutputLocations(outputLocations)
 
-	instructions.FlowHashCode = &flowContext.HashCode
-	profileOrNot := false // enable this when profiling executors
-	instructions.IsProfiling = &profileOrNot
+	instructions.FlowHashCode = flowContext.HashCode
+	instructions.IsProfiling = false // enable this when profiling executors
 
 	request := NewStartRequest(
 		taskGroup.String(),

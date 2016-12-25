@@ -3,13 +3,12 @@ package instruction
 import (
 	"io"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/golang/protobuf/proto"
 )
 
 func init() {
-	InstructionRunner.Register(func(m *msg.Instruction) Instruction {
+	InstructionRunner.Register(func(m *pb.Instruction) Instruction {
 		if m.GetJoinPartitionedSorted() != nil {
 			return NewJoinPartitionedSorted(
 				m.GetJoinPartitionedSorted().GetIsLeftOuterJoin(),
@@ -41,12 +40,12 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 	}
 }
 
-func (b *JoinPartitionedSorted) SerializeToCommand() *msg.Instruction {
-	return &msg.Instruction{
-		Name: proto.String(b.Name()),
-		JoinPartitionedSorted: &msg.JoinPartitionedSorted{
-			IsLeftOuterJoin:  proto.Bool(b.isLeftOuterJoin),
-			IsRightOuterJoin: proto.Bool(b.isRightOuterJoin),
+func (b *JoinPartitionedSorted) SerializeToCommand() *pb.Instruction {
+	return &pb.Instruction{
+		Name: b.Name(),
+		JoinPartitionedSorted: &pb.JoinPartitionedSorted{
+			IsLeftOuterJoin:  (b.isLeftOuterJoin),
+			IsRightOuterJoin: (b.isRightOuterJoin),
 			Indexes:          getIndexes(b.indexes),
 		},
 	}

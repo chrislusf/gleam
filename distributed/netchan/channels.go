@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chrislusf/gleam/msg"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 )
@@ -28,11 +28,11 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 		c.SetKeepAlive(true)
 	}
 
-	data, err := proto.Marshal(&msg.ControlMessage{
-		IsOnDiskIO: proto.Bool(onDisk),
-		ReadRequest: &msg.ReadRequest{
-			ChannelName: proto.String(channelName),
-			ReaderName:  proto.String(readerName),
+	data, err := proto.Marshal(&pb.ControlMessage{
+		IsOnDiskIO: onDisk,
+		ReadRequest: &pb.ReadRequest{
+			ChannelName: channelName,
+			ReaderName:  readerName,
 		},
 	})
 
@@ -57,12 +57,12 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 		c.SetKeepAlive(true)
 	}
 
-	data, err := proto.Marshal(&msg.ControlMessage{
-		IsOnDiskIO: proto.Bool(onDisk),
-		WriteRequest: &msg.WriteRequest{
-			ChannelName: proto.String(channelName),
-			ReaderCount: proto.Int32(int32(readerCount)),
-			WriterName:  proto.String(writerName),
+	data, err := proto.Marshal(&pb.ControlMessage{
+		IsOnDiskIO: onDisk,
+		WriteRequest: &pb.WriteRequest{
+			ChannelName: channelName,
+			ReaderCount: int32(readerCount),
+			WriterName:  writerName,
 		},
 	})
 

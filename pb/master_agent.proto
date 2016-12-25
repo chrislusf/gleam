@@ -1,0 +1,279 @@
+syntax = "proto3";
+
+package pb;
+
+service GleamMaster {
+  rpc GetResources(ComputeRequest) returns (AllocationResult) {}
+  rpc SendHeartbeat(stream Heartbeat) returns (Empty) {}
+}
+
+//////////////////////////////////////////////////
+message ComputeRequest {
+  string data_center = 1;
+  repeated ComputeResource compute_resources = 2;
+}
+
+message ComputeResource {
+  int32 cpu_count = 1;
+  int32 cpu_level = 2;
+  int32 gpu_count = 3;
+  int32 gpu_level = 4;
+  int64 memory_mb = 5;
+  int64 disk_mb = 6;
+}
+
+message DataResource {
+  Location location = 1;
+  int64 size = 2;
+}
+
+message Location {
+  string data_center = 1;
+  string rack = 2;
+  string server = 3;
+  int32 port = 4;
+}
+
+message Allocation {
+  Location location = 1;
+  ComputeResource allocated = 2;
+}
+
+message AllocationResult {
+	repeated Allocation allocations = 1;
+}
+
+//////////////////////////////////////////////////
+message Heartbeat {
+  Location location = 1;
+  ComputeResource resource = 2;
+  ComputeResource allocated = 3;
+}
+message Empty {}
+
+//////////////////////////////////////////////////
+message DataLocation {
+  string name = 1;
+  Location location = 2;
+  bool onDisk = 3;
+}
+
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+
+message ControlMessage {
+	bool isOnDiskIO = 1;
+	StartRequest startRequest = 2;
+	StartResponse startResponse = 3;
+	StopRequest stopRequest = 4;
+	StopResponse stopResponse = 5;
+	GetStatusRequest getStatusRequest = 6;
+	GetStatusResponse getStatusResponse = 7;
+	DeleteDatasetShardRequest deleteDatasetShardRequest = 8;
+	DeleteDatasetShardResponse deleteDatasetShardResponse = 9;
+	LocalStatusReportRequest localStatusReportRequest = 10;
+	LocalStatusReportResponse localStatusReportResponse = 11;
+	ReadRequest readRequest = 12;
+	WriteRequest writeRequest = 13;
+}
+
+message NetChan {
+	string server = 1;
+	int32 port = 2;
+}
+
+message StartResponse {
+	int32 pid = 1;
+	string error = 2;
+	NetChan stderr = 3;
+	repeated NetChan outputs = 4;
+}
+
+message StopResponse {
+	uint32 startRequestHash = 1;
+	string error = 2;
+}
+
+message GetStatusRequest {
+	uint32 startRequestHash = 1;
+}
+
+message ChannelStatus {
+	int64 length = 1;
+	int64 startTime = 2;
+	int64 stopTime = 3;
+	string name = 4;
+}
+
+message GetStatusResponse {
+	uint32 startRequestHash = 1;
+	string error = 2;
+	repeated ChannelStatus inputStatuses = 3;
+	repeated ChannelStatus outputStatuses = 4;
+	int64 requestTime = 5;
+	int64 startTime = 6;
+	int64 stopTime = 7;
+}
+
+message DeleteDatasetShardRequest {
+	string name = 1;
+}
+
+message DeleteDatasetShardResponse {
+	string error = 1;
+}
+
+message LocalStatusReportRequest {
+	uint32 startRequestHash = 1;
+	string error = 2;
+	repeated ChannelStatus inputStatuses = 3;
+	repeated ChannelStatus outputStatuses = 4;
+}
+
+message LocalStatusReportResponse {
+	string error = 1;
+}
+
+message WriteRequest {
+	string channelName = 1;
+	string writerName = 2;
+	int32 readerCount = 3;
+}
+
+message ReadRequest {
+	string channelName = 1;
+	string readerName = 2;
+}
+
+message StartRequest {
+	InstructionSet instructions = 1;
+	repeated string files = 2;
+	string dir = 3;
+	ComputeResource resource = 4;
+	string host = 5;
+	int32 port = 6;
+	string name = 7;
+}
+
+message StopRequest {
+	uint32 startRequestHash = 1;
+}
+
+///////////////////////////////////
+// Distributed Instructions
+///////////////////////////////////
+
+message InstructionSet {
+	repeated Instruction instructions = 1;
+	int32 readerCount = 2;
+	uint32 flowHashCode = 3;
+	bool isProfiling = 4;
+}
+
+message Instruction {
+	string name = 1;
+	repeated DatasetShardLocation inputShardLocations = 2;
+	repeated DatasetShardLocation OutputShardLocations = 3;
+	int32 memoryInMB = 4;
+	JoinPartitionedSorted joinPartitionedSorted = 5;
+	CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
+	PipeAsArgs pipeAsArgs = 7;
+	ScatterPartitions scatterPartitions = 8;
+	CollectPartitions collectPartitions = 9;
+	InputSplitReader inputSplitReader = 10;
+	RoundRobin roundRobin = 11;
+	LocalTop localTop = 12;
+	Broadcast broadcast = 13;
+	LocalHashAndJoinWith localHashAndJoinWith = 14;
+	Script script = 15;
+	LocalSort localSort = 16;
+	AdapterSplitReader adapterSplitReader = 17;
+	MergeSortedTo mergeSortedTo = 18;
+}
+
+message ScatterPartitions {
+	repeated int32 indexes = 1;
+}
+
+message RoundRobin {
+}
+
+message CollectPartitions {
+}
+
+message LocalSort {
+	repeated OrderBy orderBys = 1;
+}
+
+message LocalTop {
+	int32 n = 1;
+	repeated OrderBy orderBys = 2;
+}
+
+message MergeSortedTo {
+	repeated OrderBy orderBys = 1;
+}
+
+message OrderBy{
+	int32 index = 1;
+	int32 order = 2;
+}
+
+message JoinPartitionedSorted {
+	repeated int32 indexes = 1;
+	bool isLeftOuterJoin = 2;
+	bool isRightOuterJoin = 3;
+}
+
+message CoGroupPartitionedSorted {
+	repeated int32 indexes = 1;
+}
+
+message PipeAsArgs {
+	string code = 1;
+}
+
+message Script {
+	bool isPipe = 1;
+	string path = 2;
+	repeated string args = 3;
+	repeated string env = 4;
+}
+
+message InputSplitReader {
+	string inputType = 1;
+}
+
+message AdapterSplitReader {
+	string adapterName = 1;
+	string connectionId = 2;
+}
+
+message Broadcast {
+}
+
+message LocalHashAndJoinWith {
+	repeated int32 indexes = 1;
+}
+
+///////////////////////////////////
+// Distributed Computing
+///////////////////////////////////
+
+message DatasetShard {
+	string FlowName = 1;
+	int32 DatasetId = 2;
+	int32 DatasetShardId = 3;
+	uint32 FlowHashCode = 4; //uint32 must be optional
+}
+
+message DatasetShardLocation {
+	string Name = 1;
+	string Host = 2;
+	int32 Port = 3;
+	bool onDisk = 4;
+}
