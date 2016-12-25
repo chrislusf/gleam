@@ -27,8 +27,8 @@ install:
  - go get ./...
 
 script:
- - go test -race ./...
- # - ./go.test.sh
+ # - go test -race ./...
+ - ./go.test.sh
 
-# after_success:
-#  - bash <(curl -s https://codecov.io/bash)
+after_success:
+ - bash <(curl -s https://codecov.io/bash)

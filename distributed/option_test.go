@@ -35,8 +35,6 @@ func TestInstructionSet(t *testing.T) {
       end
     `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n")
 
-	f.Run()
-
-	os.Exit(0)
+	// f.Run()
 
 }
