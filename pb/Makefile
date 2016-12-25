@@ -3,4 +3,4 @@ all: gen
 .PHONY : gen
 
 gen:
-	protoc resource.proto --go_out=plugins=grpc:.
+	protoc master.proto --go_out=plugins=grpc:.
