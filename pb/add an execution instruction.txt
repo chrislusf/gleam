@@ -15,7 +15,7 @@ Taking adding InputSplitReader as example:
 
 3. generate protobuf files
 
-    protoc --go_out=. *.proto
+    make
 
 
 4. in github.com/chrislusf/gleam/instruction
