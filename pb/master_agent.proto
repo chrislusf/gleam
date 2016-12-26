@@ -65,32 +65,37 @@ message DataLocation {
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 
+
+service GleamAgent {
+  rpc Execute(ExecutionRequest) returns (stream ExecutionResponse) {}
+  rpc Delete(DeleteDatasetShardRequest) returns (DeleteDatasetShardResponse) {}
+}
+
+message ExecutionRequest {
+	InstructionSet instructions = 1;
+	repeated string files = 2;
+	string dir = 3;
+	ComputeResource resource = 4;
+	string name = 5;
+	string host = 6;
+	int32 port = 7;
+}
+
+message ExecutionResponse {
+	bytes output = 1;
+	bytes error = 2;
+}
+
 message ControlMessage {
 	bool isOnDiskIO = 1;
-	StartRequest startRequest = 2;
-	StartResponse startResponse = 3;
+	ReadRequest readRequest = 2;
+	WriteRequest writeRequest = 3;
 	StopRequest stopRequest = 4;
 	StopResponse stopResponse = 5;
 	GetStatusRequest getStatusRequest = 6;
 	GetStatusResponse getStatusResponse = 7;
-	DeleteDatasetShardRequest deleteDatasetShardRequest = 8;
-	DeleteDatasetShardResponse deleteDatasetShardResponse = 9;
-	LocalStatusReportRequest localStatusReportRequest = 10;
-	LocalStatusReportResponse localStatusReportResponse = 11;
-	ReadRequest readRequest = 12;
-	WriteRequest writeRequest = 13;
-}
-
-message NetChan {
-	string server = 1;
-	int32 port = 2;
-}
-
-message StartResponse {
-	int32 pid = 1;
-	string error = 2;
-	NetChan stderr = 3;
-	repeated NetChan outputs = 4;
+	LocalStatusReportRequest localStatusReportRequest = 8;
+	LocalStatusReportResponse localStatusReportResponse = 9;
 }
 
 message StopResponse {
@@ -147,16 +152,6 @@ message WriteRequest {
 message ReadRequest {
 	string channelName = 1;
 	string readerName = 2;
-}
-
-message StartRequest {
-	InstructionSet instructions = 1;
-	repeated string files = 2;
-	string dir = 3;
-	ComputeResource resource = 4;
-	string host = 5;
-	int32 port = 6;
-	string name = 7;
 }
 
 message StopRequest {

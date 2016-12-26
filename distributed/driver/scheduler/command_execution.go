@@ -14,23 +14,6 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func NewStartRequest(name string, dir string, instructions *pb.InstructionSet,
-	allocated *pb.ComputeResource, envs []string, host string, port int32) *pb.ControlMessage {
-
-	request := &pb.ControlMessage{
-		StartRequest: &pb.StartRequest{
-			Instructions: instructions,
-			Dir:          dir,
-			Resource:     allocated,
-			Host:         host,
-			Port:         port,
-			Name:         name,
-		},
-	}
-
-	return request
-}
-
 func NewGetStatusRequest(requestId uint32) *pb.ControlMessage {
 	return &pb.ControlMessage{
 		GetStatusRequest: &pb.GetStatusRequest{
@@ -43,14 +26,6 @@ func NewStopRequest(requestId uint32) *pb.ControlMessage {
 	return &pb.ControlMessage{
 		StopRequest: &pb.StopRequest{
 			StartRequestHash: requestId,
-		},
-	}
-}
-
-func NewDeleteDatasetShardRequest(name string) *pb.ControlMessage {
-	return &pb.ControlMessage{
-		DeleteDatasetShardRequest: &pb.DeleteDatasetShardRequest{
-			Name: name,
 		},
 	}
 }

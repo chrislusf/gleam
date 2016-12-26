@@ -97,8 +97,8 @@ func RunAgentServer(option *AgentServerOption) {
 	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
 	tcpListener := m.Match(cmux.Any())
 
-	go as.serveGRPC(grpcListener)
-	go as.serveGRPC(tcpListener)
+	go as.serveGrpc(grpcListener)
+	go as.serveTcp(tcpListener)
 
 	if err := m.Serve(); !strings.Contains(err.Error(), "use of closed network connection") {
 		panic(err)
@@ -107,7 +107,7 @@ func RunAgentServer(option *AgentServerOption) {
 }
 
 // Run starts the heartbeating to master and starts accepting requests.
-func (as *AgentServer) serveGRPC(listener net.Listener) {
+func (as *AgentServer) serveTcp(listener net.Listener) {
 
 	for {
 		// Listen for an incoming connection.
@@ -173,21 +173,7 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 		}
 		return nil
 	}
-	if command.GetStartRequest() != nil {
-		// println("start from", *command.StartRequest.Host)
-		if command.StartRequest.Host == "" {
-			remoteAddress := conn.RemoteAddr().String()
-			// println("remote address is", remoteAddress)
-			command.StartRequest.Host = remoteAddress[:strings.LastIndex(remoteAddress, ":")]
-		}
-		reply.StartResponse = as.handleStart(conn, command.StartRequest)
-		// return nil to avoid writing the response to the connection.
-		// Currently the connection is used for reading outputs
-		return nil
-	}
-	if command.GetDeleteDatasetShardRequest() != nil {
-		reply.DeleteDatasetShardResponse = as.handleDeleteDatasetShard(conn, command.DeleteDatasetShardRequest)
-	} else if command.GetGetStatusRequest() != nil {
+	if command.GetGetStatusRequest() != nil {
 		reply.GetStatusResponse = as.handleGetStatusRequest(command.GetGetStatusRequest())
 	} else if command.GetStopRequest() != nil {
 		reply.StopResponse = as.handleStopRequest(command.GetStopRequest())
