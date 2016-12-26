@@ -80,9 +80,8 @@ func testPureGo(times int) {
 }
 
 func testLuajit(times int) {
-	startTime := time.Now()
 	var count int64
-	startTime = time.Now()
+	startTime := time.Now()
 	flow.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
       function(n)
 	    local count = 0

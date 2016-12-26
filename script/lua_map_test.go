@@ -143,7 +143,6 @@ func TestLuaLimit(t *testing.T) {
 		},
 		func(outputReader io.Reader) {
 			row, _ := util.ReadRow(outputReader)
-			row, _ = util.ReadRow(outputReader)
 			if row != nil {
 				t.Errorf("failed to take 1 row: %+v", row)
 			}
