@@ -1,9 +1,6 @@
 package scheduler
 
 import (
-	"bufio"
-	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,50 +25,6 @@ func NewStopRequest(requestId uint32) *pb.ControlMessage {
 			StartRequestHash: requestId,
 		},
 	}
-}
-
-func RemoteDirectExecute(server string, command *pb.ControlMessage) error {
-	conn, err := getDirectCommandConnection(server)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	return doExecute(server, conn, command)
-}
-
-// doExecute() sends a request and expects the output from the connection
-func doExecute(server string, conn io.ReadWriteCloser, command *pb.ControlMessage) error {
-
-	// serialize the commend
-	data, err := proto.Marshal(command)
-	if err != nil {
-		return fmt.Errorf("marshaling execute request error: %v", err)
-	}
-
-	// send the command
-	if err = util.WriteMessage(conn, data); err != nil {
-		return fmt.Errorf("failed to write to %s: %v", server, err)
-	}
-
-	// println("command sent")
-
-	// read output and print it to stdout
-	// the output from "gleam execute" should be just errors
-	var b bytes.Buffer
-	scanner := bufio.NewScanner(conn)
-	for scanner.Scan() {
-		fmt.Fprintf(&b, "%s>%s\n", server, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("Failed to scan output: %v", err)
-	}
-
-	if b.Len() == 0 {
-		return nil
-	}
-
-	return errors.New(b.String())
 }
 
 func RemoteDirectCommand(server string, command *pb.ControlMessage) (response *pb.ControlMessage, err error) {
