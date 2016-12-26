@@ -30,12 +30,10 @@ func init() {
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
 		}
 	} else {
-		// println("Loading configuration from gleam.yaml...")
 		connections := viper.GetStringMap("connections")
 		for k, c := range connections {
 			m := c.(map[string]interface{})
 			adapterName := m["adapter"].(string)
-			// println("Registering connection:", k, "adatper:", adapterName)
 			ci := RegisterConnection(k, adapterName)
 			for n, v := range m {
 				// println("  ", n, "=", v)

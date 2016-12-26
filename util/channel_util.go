@@ -17,10 +17,10 @@ On the wire Message format, pipe:
 
 Channel Message format:
   []byte
-    consequtive sections of []byte, each section is an object encoded in msgpack format
+    consecutive sections of []byte, each section is an object encoded in msgpack format
 
 	This is not actually an array object,
-	but just a consequtive list of encoded bytes for each object,
+	but just a consecutive list of encoded bytes for each object,
 	because msgpack can sequentially decode the objects
 
 When used by Shell scripts:
