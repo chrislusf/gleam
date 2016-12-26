@@ -38,12 +38,12 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 
 	if err != nil {
 		wg.Done()
-		return err
+		return fmt.Errorf("Fail to marshal ReadRequest: %v", err)
 	}
 
 	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
-		return err
+		return fmt.Errorf("Fail to write ReadRequest: %v", err)
 	}
 
 	return util.ReaderToChannel(wg, channelName, conn, outChan, true, os.Stderr)
@@ -73,12 +73,12 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 
 	if err != nil {
 		wg.Done()
-		return err
+		return fmt.Errorf("Fail to marshal WriteRequest: %v", err)
 	}
 
 	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
-		return err
+		return fmt.Errorf("Fail to write WriteRequest: %v", err)
 	}
 
 	return util.ChannelToWriter(wg, channelName, inChan, conn, os.Stderr)
