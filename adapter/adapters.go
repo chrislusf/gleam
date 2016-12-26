@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	AdapterManager = &adatperManager{
+	AdapterManager = &adapterManager{
 		adapters: make(map[string]func() Adapter),
 	}
 	ConnectionManager = &connectionManager{
@@ -30,10 +30,12 @@ func init() {
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
 		}
 	} else {
+		// println("Loading configuration from gleam.yaml...")
 		connections := viper.GetStringMap("connections")
 		for k, c := range connections {
 			m := c.(map[string]interface{})
 			adapterName := m["adapter"].(string)
+			// println("Registering connection:", k, "adapter:", adapterName)
 			ci := RegisterConnection(k, adapterName)
 			for n, v := range m {
 				// println("  ", n, "=", v)
@@ -55,7 +57,7 @@ func RegisterAdapter(name string, fn func() Adapter) {
 	AdapterManager.adapters[name] = fn
 }
 
-func (am *adatperManager) GetAdapter(name string) (Adapter, bool) {
+func (am *adapterManager) GetAdapter(name string) (Adapter, bool) {
 	am.RLock()
 	defer am.RUnlock()
 	a, ok := am.adapters[name]
@@ -79,7 +81,7 @@ func RegisterConnection(id string, adapterName string) *ConnectionInfo {
 	return ci
 }
 
-type adatperManager struct {
+type adapterManager struct {
 	sync.RWMutex
 	adapters map[string]func() Adapter
 }
