@@ -36,6 +36,11 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 		},
 	})
 
+	if err != nil {
+		wg.Done()
+		return err
+	}
+
 	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
 		return err
@@ -65,6 +70,11 @@ func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, cha
 			WriterName:  writerName,
 		},
 	})
+
+	if err != nil {
+		wg.Done()
+		return err
+	}
 
 	if err = util.WriteMessage(conn, data); err != nil {
 		wg.Done()
