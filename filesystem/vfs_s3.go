@@ -36,7 +36,7 @@ func (fs *S3FileSystem) Open(fl *FileLocation) (VirtualFile, error) {
 	bucketName, objectKey, err := splitS3LocationToParts(fl.Location)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to split S3 location to parts <Location> %s: <Error> %v", fl.Location, err)
 	}
 
 	params := &s3.GetObjectInput{
