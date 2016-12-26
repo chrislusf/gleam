@@ -7,7 +7,7 @@ import (
 
 // BufWrites ensures all writers are bufio.Writer
 // For any bufio.Writer created here, flush it before returning.
-func BufWrites(rawWriters []io.Writer, funciton func([]io.Writer)) {
+func BufWrites(rawWriters []io.Writer, function func([]io.Writer)) {
 	var writers []io.Writer
 	var bufWriters []*bufio.Writer
 	for _, w := range rawWriters {
@@ -20,7 +20,7 @@ func BufWrites(rawWriters []io.Writer, funciton func([]io.Writer)) {
 		}
 	}
 
-	funciton(writers)
+	function(writers)
 
 	for _, w := range bufWriters {
 		w.Flush()
