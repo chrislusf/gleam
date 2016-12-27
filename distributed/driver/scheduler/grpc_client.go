@@ -34,7 +34,7 @@ func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
 			break
 		}
 		if response.GetError() != nil {
-			return errors.New(string(response.GetError()))
+			return errors.New(server + ">" + string(response.GetError()))
 		}
 		fmt.Fprintf(os.Stdout, "%s>%s", server, string(response.GetOutput()))
 	}
