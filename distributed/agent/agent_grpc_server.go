@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/rsync"
@@ -59,6 +58,10 @@ func (as *AgentServer) executeCommand(
 	dir string,
 	stat *AgentExecutorStatus,
 ) (err error) {
+
+	ctx := stream.Context()
+	errChan := make(chan error, 3) // normal exit, stdout, stderr
+
 	// start the command
 	executableFullFilename, _ := osext.Executable()
 	stat.StartTime = time.Now()
@@ -86,19 +89,15 @@ func (as *AgentServer) executeCommand(
 	// msg.Env = startRequest.Envs
 	command.Dir = dir
 
-	err = command.Start()
-	if err != nil {
+	if err = command.Start(); err != nil {
 		log.Printf("Failed to start command %s under %s: %v",
 			command.Path, command.Dir, err)
 		return err
 	}
 	stat.Process = command.Process
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go streamOutput(&wg, stream, stdout)
-	wg.Add(1)
-	go streamError(&wg, stream, stderr)
+	go streamOutput(errChan, stream, stdout)
+	go streamError(errChan, stream, stderr)
 
 	// send instruction set to executor
 	msgMessageBytes, err := proto.Marshal(startRequest.GetInstructions())
@@ -107,40 +106,56 @@ func (as *AgentServer) executeCommand(
 			startRequest.GetInstructions().String(), err)
 		return err
 	}
-	_, err = stdin.Write(msgMessageBytes)
-	if err != nil {
+	if _, err = stdin.Write(msgMessageBytes); err != nil {
 		log.Printf("Failed to write command: %v", err)
 		return err
 	}
-	err = stdin.Close()
-	if err != nil {
+	if err = stdin.Close(); err != nil {
 		log.Printf("Failed to close command: %v", err)
 		return err
 	}
 
 	// wait for finish
-	err = command.Wait()
-	if err != nil {
-		log.Printf("Failed to run command: %v", err)
+	go func() {
+		waitErr := command.Wait()
+		if waitErr != nil {
+			log.Printf("Failed to run command: %v", waitErr)
+		}
+		stat.StopTime = time.Now()
+		// only the command send a nil to errChan
+		errChan <- waitErr
+	}()
+
+	select {
+	case err = <-errChan:
+		if err != nil {
+			log.Printf("Error running command %s %+v: %v", command.Path, command.Args, err)
+		}
+		return err
+	case <-ctx.Done():
+		log.Printf("Cancelled command %s %+v", command.Path, command.Args)
+		if err := command.Process.Kill(); err != nil {
+			log.Printf("failed to kill: %v", err)
+		}
+		if err := command.Process.Release(); err != nil {
+			log.Printf("failed to release: %v", err)
+		}
+		return ctx.Err()
 	}
-	stat.StopTime = time.Now()
 
-	wg.Wait()
-	// log.Printf("Finish command %+v", msg)
-
-	return err
 }
 
 // Delete deletes a particular dataset shard
 func (as *AgentServer) Delete(ctx context.Context, deleteRequest *pb.DeleteDatasetShardRequest) (*pb.DeleteDatasetShardResponse, error) {
+
 	log.Println("deleting", deleteRequest.Name)
 	as.storageBackend.DeleteNamedDatasetShard(deleteRequest.Name)
+	as.inMemoryChannels.Cleanup(deleteRequest.Name)
 
 	return &pb.DeleteDatasetShardResponse{}, nil
 }
 
-func streamOutput(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
-	defer wg.Done()
+func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
 
 	buffer := make([]byte, 1024)
 	for {
@@ -155,14 +170,13 @@ func streamOutput(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Output: buffer[0:n],
 		}); sendErr != nil {
-			log.Printf("Failed to send output response: %v", sendErr)
-			break
+			errChan <- fmt.Errorf("Failed to send output response: %v", sendErr)
+			return
 		}
 	}
 }
 
-func streamError(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
-	defer wg.Done()
+func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
 
 	buffer := make([]byte, 1024)
 	for {
@@ -177,8 +191,8 @@ func streamError(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader 
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Error: buffer[0:n],
 		}); sendErr != nil {
-			log.Printf("Failed to send error response: %v", sendErr)
-			break
+			errChan <- fmt.Errorf("Failed to send error response: %v", sendErr)
+			return
 		}
 	}
 }

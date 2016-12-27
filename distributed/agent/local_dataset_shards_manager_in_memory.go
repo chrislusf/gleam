@@ -72,10 +72,10 @@ func NewLocalDatasetShardsManagerInMemory() *LocalDatasetShardsManagerInMemory {
 }
 
 func (m *LocalDatasetShardsManagerInMemory) doDelete(name string) {
-
-	// println("deleting", name, "from", m, m.name2Channel[name])
-	delete(m.name2Channel, name)
-
+	if tc, ok := m.name2Channel[name]; ok {
+		delete(m.name2Channel, name)
+		tc.incomingChannel.Writer.Close()
+	}
 }
 
 func (m *LocalDatasetShardsManagerInMemory) CreateNamedDatasetShard(name string, readerCount int) *trackedChannel {

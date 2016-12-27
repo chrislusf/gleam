@@ -58,11 +58,13 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	go sched.EventLoop()
 
 	on_interrupt.OnInterrupt(func() {
+		println("interrupted...")
 		fcd.OnInterrupt(fc, sched)
+		println("cleaning up...")
 		fcd.cleanup(sched, fc)
 	}, func() {
+		println("exit...")
 		fcd.OnExit(fc, sched)
-		fcd.cleanup(sched, fc)
 	})
 
 	// schedule to run the steps

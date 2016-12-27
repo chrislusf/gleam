@@ -115,6 +115,9 @@ func (s *Scheduler) EventLoop() {
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
 						location, _ := s.getShardLocation(shard)
 						// println("deleting", shard.Name(), "on", location.URL())
+						if location.Location == nil {
+							continue
+						}
 						if err := sendDeleteRequest(location.Location.URL(), &pb.DeleteDatasetShardRequest{
 							Name: shard.Name(),
 						}); err != nil {

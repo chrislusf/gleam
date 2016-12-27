@@ -3,9 +3,7 @@ package agent
 import (
 	"io"
 	"log"
-	"net"
 
-	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -39,13 +37,4 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	log.Println("on disk", writerName, "finish writing", channelName, count, "bytes")
 
-}
-
-func (as *AgentServer) handleDeleteDatasetShard(conn net.Conn,
-	deleteRequest *pb.DeleteDatasetShardRequest) *pb.DeleteDatasetShardResponse {
-
-	log.Println("deleting", deleteRequest.Name)
-	as.storageBackend.DeleteNamedDatasetShard(deleteRequest.Name)
-
-	return nil
 }
