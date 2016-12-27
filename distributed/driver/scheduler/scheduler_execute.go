@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/distributed/plan"
@@ -51,6 +52,8 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	instructions.FlowHashCode = flowContext.HashCode
 	instructions.IsProfiling = false // enable this when profiling executors
 
+	status, _ := s.getRemoteExecutorStatus(instructions.HashCode())
+
 	request := &pb.ExecutionRequest{
 		Instructions: instructions,
 		Files:        nil,
@@ -61,7 +64,15 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 		Port:         int32(s.Option.DriverPort),
 	}
 
+	status.RequestTime = time.Now()
+	status.Allocation = allocation
+	status.Request = request
 	taskGroup.RequestId = instructions.HashCode()
+	defer func() {
+		status.StopTime = time.Now()
+	}()
+
+	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
 	if err := sendExecutionRequest(allocation.Location.URL(), request); err != nil {
 		log.Printf("remote exeuction error %v: %v", err, request)

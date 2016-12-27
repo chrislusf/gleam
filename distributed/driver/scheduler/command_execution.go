@@ -19,14 +19,6 @@ func NewGetStatusRequest(requestId uint32) *pb.ControlMessage {
 	}
 }
 
-func NewStopRequest(requestId uint32) *pb.ControlMessage {
-	return &pb.ControlMessage{
-		StopRequest: &pb.StopRequest{
-			StartRequestHash: requestId,
-		},
-	}
-}
-
 func RemoteDirectCommand(server string, command *pb.ControlMessage) (response *pb.ControlMessage, err error) {
 	conn, err := getDirectCommandConnection(server)
 	if err != nil {

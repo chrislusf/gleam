@@ -175,10 +175,6 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 	}
 	if command.GetGetStatusRequest() != nil {
 		reply.GetStatusResponse = as.handleGetStatusRequest(command.GetGetStatusRequest())
-	} else if command.GetStopRequest() != nil {
-		reply.StopResponse = as.handleStopRequest(command.GetStopRequest())
-	} else if command.GetLocalStatusReportRequest() != nil {
-		reply.LocalStatusReportResponse = as.handleLocalStatusReportRequest(command.GetLocalStatusReportRequest())
 	}
 	return reply
 }

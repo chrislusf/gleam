@@ -7,48 +7,12 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
 )
 
-func (fcd *FlowContextDriver) ShowFlowStatus(
-	fc *flow.FlowContext,
-	sched *scheduler.Scheduler) {
-	status := fcd.collectStatusFromRemoteExecutors(sched)
-	fcd.printDistributedStatus(sched, status)
-}
-
-func (fcd *FlowContextDriver) OnInterrupt(
-	fc *flow.FlowContext,
-	sched *scheduler.Scheduler) {
-	fcd.ShowFlowStatus(fc, sched)
-}
-
-func (fcd *FlowContextDriver) OnExit(
-	fc *flow.FlowContext,
-	sched *scheduler.Scheduler) {
-	var wg sync.WaitGroup
-	for _, tg := range fcd.taskGroups {
-		wg.Add(1)
-		go func(tg *plan.TaskGroup) {
-			defer wg.Done()
-
-			requestId := tg.RequestId
-			request, ok := sched.RemoteExecutorStatuses[requestId]
-			if !ok {
-				fmt.Printf("No executors for %v\n", tg)
-				return
-			}
-			// println("checking", request.Allocation.Location.URL(), requestId)
-			if err := askExecutorToStopRequest(request.Allocation.Location.URL(), requestId); err != nil {
-				fmt.Printf("Error to stop request %d on %s: %v\n", requestId, request.Allocation.Location.URL(), err)
-				return
-			}
-		}(tg)
-	}
-	wg.Wait()
-
-}
+// removing this feature to collect executors status on control+c
+// moving to UI
+// the logic is kept for later reference
 
 func (fcd *FlowContextDriver) printDistributedStatus(sched *scheduler.Scheduler, stats []*RemoteExecutorStatus) {
 	fmt.Print("\n")
@@ -132,9 +96,4 @@ func askExecutorStatusForRequest(server string, requestId uint32) (*RemoteExecut
 			StopTime:              time.Unix(response.GetStopTime(), 0),
 		},
 	}, nil
-}
-
-func askExecutorToStopRequest(server string, requestId uint32) (err error) {
-	_, err = scheduler.RemoteDirectCommand(server, scheduler.NewStopRequest(requestId))
-	return
 }

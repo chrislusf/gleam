@@ -21,7 +21,7 @@ type Scheduler struct {
 }
 
 type RemoteExecutorStatus struct {
-	Request      *pb.ControlMessage
+	Request      *pb.ExecutionRequest
 	Allocation   *pb.Allocation
 	RequestTime  time.Time
 	InputLength  int

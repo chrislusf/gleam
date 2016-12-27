@@ -90,17 +90,8 @@ message ControlMessage {
 	bool isOnDiskIO = 1;
 	ReadRequest readRequest = 2;
 	WriteRequest writeRequest = 3;
-	StopRequest stopRequest = 4;
-	StopResponse stopResponse = 5;
-	GetStatusRequest getStatusRequest = 6;
-	GetStatusResponse getStatusResponse = 7;
-	LocalStatusReportRequest localStatusReportRequest = 8;
-	LocalStatusReportResponse localStatusReportResponse = 9;
-}
-
-message StopResponse {
-	uint32 startRequestHash = 1;
-	string error = 2;
+	GetStatusRequest getStatusRequest = 4;
+	GetStatusResponse getStatusResponse = 5;
 }
 
 message GetStatusRequest {
@@ -132,17 +123,6 @@ message DeleteDatasetShardResponse {
 	string error = 1;
 }
 
-message LocalStatusReportRequest {
-	uint32 startRequestHash = 1;
-	string error = 2;
-	repeated ChannelStatus inputStatuses = 3;
-	repeated ChannelStatus outputStatuses = 4;
-}
-
-message LocalStatusReportResponse {
-	string error = 1;
-}
-
 message WriteRequest {
 	string channelName = 1;
 	string writerName = 2;
@@ -152,10 +132,6 @@ message WriteRequest {
 message ReadRequest {
 	string channelName = 1;
 	string readerName = 2;
-}
-
-message StopRequest {
-	uint32 startRequestHash = 1;
 }
 
 ///////////////////////////////////

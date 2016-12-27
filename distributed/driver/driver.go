@@ -59,13 +59,8 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 	on_interrupt.OnInterrupt(func() {
 		println("interrupted...")
-		fcd.OnInterrupt(fc, sched)
-		println("cleaning up...")
 		fcd.cleanup(sched, fc)
-	}, func() {
-		println("exit...")
-		fcd.OnExit(fc, sched)
-	})
+	}, nil)
 
 	// schedule to run the steps
 	var wg sync.WaitGroup
