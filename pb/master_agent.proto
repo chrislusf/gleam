@@ -84,6 +84,8 @@ message ExecutionRequest {
 message ExecutionResponse {
 	bytes output = 1;
 	bytes error = 2;
+	double system_time = 3;
+	double user_time = 4;
 }
 
 message ControlMessage {

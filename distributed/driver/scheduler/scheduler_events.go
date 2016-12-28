@@ -110,6 +110,7 @@ func (s *Scheduler) EventLoop() {
 			go func() {
 				defer event.WaitGroup.Done()
 
+				var wg sync.WaitGroup
 				for _, taskGroup := range event.TaskGroups {
 					tasks := taskGroup.Tasks
 					for _, shard := range tasks[len(tasks)-1].OutputShards {
@@ -118,13 +119,18 @@ func (s *Scheduler) EventLoop() {
 						if location.Location == nil {
 							continue
 						}
-						if err := sendDeleteRequest(location.Location.URL(), &pb.DeleteDatasetShardRequest{
-							Name: shard.Name(),
-						}); err != nil {
-							println("Purging dataset error:", err.Error())
-						}
+						wg.Add(1)
+						go func(location pb.DataLocation, shard *flow.DatasetShard) {
+							defer wg.Done()
+							if err := sendDeleteRequest(location.Location.URL(), &pb.DeleteDatasetShardRequest{
+								Name: shard.Name(),
+							}); err != nil {
+								println("Purging dataset error:", err.Error())
+							}
+						}(location, shard)
 					}
 				}
+				wg.Wait()
 
 			}()
 		}

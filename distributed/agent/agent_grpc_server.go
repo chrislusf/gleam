@@ -61,6 +61,7 @@ func (as *AgentServer) executeCommand(
 
 	ctx := stream.Context()
 	errChan := make(chan error, 3) // normal exit, stdout, stderr
+	stopChan := make(chan bool)
 
 	// start the command
 	executableFullFilename, _ := osext.Executable()
@@ -98,6 +99,8 @@ func (as *AgentServer) executeCommand(
 
 	go streamOutput(errChan, stream, stdout)
 	go streamError(errChan, stream, stderr)
+	go streamPulse(errChan, stopChan, stream)
+	defer func() { stopChan <- true }()
 
 	// send instruction set to executor
 	msgMessageBytes, err := proto.Marshal(startRequest.GetInstructions())
@@ -130,8 +133,9 @@ func (as *AgentServer) executeCommand(
 	case err = <-errChan:
 		if err != nil {
 			log.Printf("Error running command %s %+v: %v", command.Path, command.Args, err)
+			return err
 		}
-		return err
+		return sendExitStats(stream, command)
 	case <-ctx.Done():
 		log.Printf("Cancelled command %s %+v", command.Path, command.Args)
 		if err := command.Process.Kill(); err != nil {
@@ -195,6 +199,33 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 			return
 		}
 	}
+}
+
+func streamPulse(errChan chan error, stopChan chan bool, stream pb.GleamAgent_ExecuteServer) error {
+
+	tickChan := time.NewTicker(time.Minute).C
+	for {
+		select {
+		case <-stopChan:
+			return nil
+		case <-tickChan:
+			if sendErr := stream.Send(&pb.ExecutionResponse{}); sendErr != nil {
+				return fmt.Errorf("Failed to send empty response: %v\n", sendErr)
+			}
+		}
+	}
+}
+
+func sendExitStats(stream pb.GleamAgent_ExecuteServer, cmd *exec.Cmd) error {
+	if cmd.ProcessState != nil {
+		if sendErr := stream.Send(&pb.ExecutionResponse{
+			SystemTime: cmd.ProcessState.SystemTime().Seconds(),
+			UserTime:   cmd.ProcessState.UserTime().Seconds(),
+		}); sendErr != nil {
+			return fmt.Errorf("Failed to send exit stats response: %v\n", sendErr)
+		}
+	}
+	return nil
 }
 
 func (as *AgentServer) plusAllocated(allocated pb.ComputeResource) {

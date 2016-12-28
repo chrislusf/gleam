@@ -2,7 +2,6 @@ package plan
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 	"time"
@@ -86,7 +85,7 @@ func (t *TaskGroup) RequiredResources() *pb.ComputeResource {
 		if inst != nil && task.Step.OutputDataset != nil {
 			taskMemSize := inst.GetMemoryCostInMB(task.Step.OutputDataset.GetPartitionSize())
 			resource.MemoryMb += taskMemSize
-			log.Printf("  %s : %s (%d MB)\n", t.String(), task.Step.Name, taskMemSize)
+			// log.Printf("  %s : %s (%d MB)\n", t.String(), task.Step.Name, taskMemSize)
 		}
 	}
 
