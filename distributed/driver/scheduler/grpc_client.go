@@ -39,6 +39,9 @@ func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
 		if response.GetOutput() != nil {
 			fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
 		}
+		if response.GetSystemTime() != 0 {
+			log.Printf("%s %v> SystemTime: %2.2fs UserTime: %2.2fs\n", server, request.GetInstructions().InstructionNames(), response.GetSystemTime(), response.GetUserTime())
+		}
 	}
 
 	return err
