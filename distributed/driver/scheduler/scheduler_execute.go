@@ -75,7 +75,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
 	if err := sendExecutionRequest(allocation.Location.URL(), request); err != nil {
-		log.Printf("remote exeuction error %v: %v", err, request)
+		log.Printf("remote execution error: %v", err)
 		return err
 	}
 
