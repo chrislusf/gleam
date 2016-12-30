@@ -26,6 +26,8 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 	sizeReader := bytes.NewReader(sizeBuf)
 
 	var count int64
+	messageBytesCache := make([]byte, util.BUFFER_SIZE)
+	var messageBytes []byte
 
 	// loop for every read
 	for {
@@ -49,7 +51,11 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 		// println("reading", channelName, offset, "size:", size)
 
 		offset += 4
-		messageBytes := make([]byte, size)
+		if size > util.BUFFER_SIZE {
+			messageBytes = make([]byte, size)
+		} else {
+			messageBytes = messageBytesCache[0:size]
+		}
 		_, err = dsStore.ReadAt(messageBytes, offset)
 		if err != nil {
 			// connection is closed
