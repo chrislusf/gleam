@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
@@ -76,7 +77,7 @@ func (s *Scheduler) EventLoop() {
 						// tell the driver to write to me
 						for _, shard := range tasks[0].InputShards {
 							// println("registering", shard.Name(), "at", allocation.Location.URL())
-							s.SetShardLocation(shard, pb.DataLocation{
+							s.setShardLocation(shard, pb.DataLocation{
 								Name:     shard.Name(),
 								Location: allocation.Location,
 								OnDisk:   shard.Dataset.GetIsOnDiskIO(),
@@ -86,7 +87,7 @@ func (s *Scheduler) EventLoop() {
 
 					for _, shard := range lastTask.OutputShards {
 						// println("registering", shard.Name(), "at", allocation.Location.URL(), "onDisk", shard.Dataset.GetIsOnDiskIO())
-						s.SetShardLocation(shard, pb.DataLocation{
+						s.setShardLocation(shard, pb.DataLocation{
 							Name:     shard.Name(),
 							Location: allocation.Location,
 							OnDisk:   shard.Dataset.GetIsOnDiskIO(),
@@ -100,8 +101,10 @@ func (s *Scheduler) EventLoop() {
 					}
 
 					if isRestartableTasks(tasks) {
-						util.Retry(fn)
+						// s.ResultChan <-
+						util.TimeDelayedRetry(fn, time.Minute, 3*time.Minute)
 					} else {
+						// s.ResultChan <- fn()
 						fn()
 					}
 				}
@@ -169,6 +172,6 @@ func (s *Scheduler) getShardLocation(shard *flow.DatasetShard) (pb.DataLocation,
 	return location, found
 }
 
-func (s *Scheduler) SetShardLocation(shard *flow.DatasetShard, loc pb.DataLocation) {
+func (s *Scheduler) setShardLocation(shard *flow.DatasetShard, loc pb.DataLocation) {
 	s.shardLocator.SetShardLocation(shard.Name(), loc)
 }
