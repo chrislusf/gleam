@@ -17,7 +17,6 @@ import (
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
 	"github.com/soheilhy/cmux"
-	"google.golang.org/grpc"
 )
 
 type AgentServerOption struct {
@@ -42,8 +41,6 @@ type AgentServer struct {
 	storageBackend        *LocalDatasetShardsManager
 	inMemoryChannels      *LocalDatasetShardsManagerInMemory
 	localExecutorManager  *LocalExecutorManager
-
-	grpcConection *grpc.ClientConn
 }
 
 func RunAgentServer(option *AgentServerOption) {
