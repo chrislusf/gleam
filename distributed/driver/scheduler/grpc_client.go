@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,8 +16,10 @@ func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
 	}
+	defer grpcConection.Close()
 	client := pb.NewGleamAgentClient(grpcConection)
 
+	log.Printf("%s %v> starting with %v MB memory...\n", server, request.Name, request.GetResource().GetMemoryMb())
 	stream, err := client.Execute(context.Background(), request)
 	if err != nil {
 		log.Printf("%v.Execute(_) = _, %v", client, err)
@@ -34,13 +35,14 @@ func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
 			break
 		}
 		if response.GetError() != nil {
-			return errors.New(server + ">" + string(response.GetError()))
+			err = fmt.Errorf("%s %v> %v", server, request.Name, string(response.GetError()))
+			return err
 		}
 		if response.GetOutput() != nil {
 			fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
 		}
 		if response.GetSystemTime() != 0 {
-			log.Printf("%s %v> SystemTime: %2.2fs UserTime: %2.2fs\n", server, request.GetInstructions().InstructionNames(), response.GetSystemTime(), response.GetUserTime())
+			log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.Name, response.GetSystemTime(), response.GetUserTime())
 		}
 	}
 
@@ -52,6 +54,7 @@ func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) err
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
 	}
+	defer grpcConection.Close()
 	client := pb.NewGleamAgentClient(grpcConection)
 
 	_, err = client.Delete(context.Background(), request)
