@@ -167,6 +167,10 @@ func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader
 		if err == io.EOF {
 			return
 		}
+		if err != nil {
+			errChan <- fmt.Errorf("Failed to read stdout: %v", err)
+			return
+		}
 		if n == 0 {
 			continue
 		}
@@ -174,7 +178,7 @@ func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Output: buffer[0:n],
 		}); sendErr != nil {
-			errChan <- fmt.Errorf("Failed to send output response: %v", sendErr)
+			errChan <- fmt.Errorf("Failed to send stdout: %v", sendErr)
 			return
 		}
 	}
@@ -188,6 +192,10 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			errChan <- fmt.Errorf("Failed to read stderr: %v", err)
+			return
+		}
 		if n == 0 {
 			continue
 		}
@@ -195,7 +203,7 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Error: buffer[0:n],
 		}); sendErr != nil {
-			errChan <- fmt.Errorf("Failed to send error response: %v", sendErr)
+			errChan <- fmt.Errorf("Failed to send stderr: %v", sendErr)
 			return
 		}
 	}
