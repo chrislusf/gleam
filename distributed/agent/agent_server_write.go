@@ -18,6 +18,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 	messageWriter := util.NewBufferedMessageWriter(dsStore, util.BUFFER_SIZE)
 
 	for {
+
 		message, err := util.ReadMessage(reader)
 		if err == io.EOF {
 			// println("agent recv eof:", string(message.Bytes()))
