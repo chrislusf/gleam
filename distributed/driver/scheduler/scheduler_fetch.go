@@ -49,12 +49,12 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 
 func Assign(master string, request *pb.ComputeRequest) (*pb.AllocationResult, error) {
 
-	conn, err := grpc.Dial(master, grpc.WithInsecure())
+	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("fail to dial %s: %v", master, err)
 	}
-	defer conn.Close()
-	client := pb.NewGleamMasterClient(conn)
+	defer grpcConection.Close()
+	client := pb.NewGleamMasterClient(grpcConection)
 
 	return client.GetResources(context.Background(), request)
 }
