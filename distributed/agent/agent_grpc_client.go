@@ -23,17 +23,17 @@ func (as *AgentServer) heartbeat() {
 
 func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 
-	client, err := as.getClient()
+	grpcConection, err := grpc.Dial(as.Master, grpc.WithInsecure())
 	if err != nil {
-		log.Printf("heartbeat failed to connect...")
-		return err
+		return fmt.Errorf("fail to dial: %v", err)
 	}
+	defer grpcConection.Close()
+
+	client := pb.NewGleamMasterClient(grpcConection)
 
 	stream, err := client.SendHeartbeat(context.Background())
 	if err != nil {
 		log.Printf("%v.SendHeartbeat(_) = _, %v", client, err)
-		as.grpcConection.Close()
-		as.grpcConection = nil
 		return err
 	}
 
@@ -52,22 +52,9 @@ func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 		}
 		if err := stream.Send(beat); err != nil {
 			log.Printf("%v.Send(%v) = %v", stream, beat, err)
-			as.grpcConection.Close()
-			as.grpcConection = nil
 			return err
 		}
 		time.Sleep(sleepInterval)
 	}
 
-}
-
-func (as *AgentServer) getClient() (pb.GleamMasterClient, error) {
-	if as.grpcConection == nil {
-		var err error
-		as.grpcConection, err = grpc.Dial(as.Master, grpc.WithInsecure())
-		if err != nil {
-			return nil, fmt.Errorf("fail to dial: %v", err)
-		}
-	}
-	return pb.NewGleamMasterClient(as.grpcConection), nil
 }
