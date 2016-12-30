@@ -16,7 +16,7 @@ func TimeDelayedRetry(fn func() error, waitTimes ...time.Duration) error {
 		return nil
 	}
 
-	log.Printf("Failed due to %v, retrying...", err)
+	log.Printf("Retrying after failure: %v", err)
 
 	for i, t := range waitTimes {
 		time.Sleep(t)
