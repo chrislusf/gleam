@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -102,10 +103,10 @@ func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writ
 	}
 
 	buf := make([]byte, BUFFER_SIZE)
-	n, err := io.CopyBuffer(writer, reader, buf)
+	var counter int64
+	err := copyBuffer(writer, reader, buf, &counter)
 	if err != nil {
-		// getting this: FlatMap>Failed to read from input to channel: read |0: bad file descriptor
-		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, n, err)
+		fmt.Fprintf(errorOutput, "%s>Read %d bytes from input to channel: %v\n", name, counter, err)
 		return err
 	}
 	// println("reader", name, "copied", n, "bytes.")
@@ -117,11 +118,10 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	defer writer.Close()
 
 	buf := make([]byte, BUFFER_SIZE)
-	w := bufio.NewWriter(writer)
-	defer w.Flush()
-	n, err := io.CopyBuffer(w, reader, buf)
+	var counter int64
+	err := copyBuffer(writer, reader, buf, &counter)
 	if err != nil {
-		fmt.Fprintf(errorOutput, "%s>Moved %d bytes: %v\n", name, n, err)
+		fmt.Fprintf(errorOutput, "%s>Moved %d bytes: %v\n", name, counter, err)
 	}
 	// println("writer", name, "moved", n, "bytes.")
 	return err
@@ -173,4 +173,32 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writ
 		return
 	}
 
+}
+
+func copyBuffer(dst io.Writer, src io.Reader, buf []byte, written *int64) (err error) {
+	for {
+		nr, er := src.Read(buf)
+		if nr > 0 {
+			nw, ew := dst.Write(buf[0:nr])
+			if nw > 0 {
+				atomic.AddInt64(written, int64(nw))
+			}
+			if ew != nil {
+				err = ew
+				break
+			}
+			if nr != nw {
+				err = io.ErrShortWrite
+				break
+			}
+		}
+		if er == io.EOF {
+			break
+		}
+		if er != nil {
+			err = er
+			break
+		}
+	}
+	return err
 }
