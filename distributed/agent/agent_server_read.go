@@ -29,6 +29,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 	messageBytesCache := make([]byte, util.BUFFER_SIZE)
 	var messageBytes []byte
 
+	messageWriter := util.NewBufferedMessageWriter(conn, util.BUFFER_SIZE)
 	// loop for every read
 	for {
 		_, err = dsStore.ReadAt(sizeBuf, offset)
@@ -66,7 +67,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 		}
 		offset += int64(size)
 
-		err = util.WriteMessage(conn, messageBytes)
+		err = messageWriter.WriteMessage(messageBytes)
 		if err != nil {
 			log.Printf("%s failed to receive %s at %d: %v", readerName, channelName, offset, err)
 			break
@@ -75,6 +76,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 		count += int64(size)
 
 	}
+	messageWriter.Flush()
 
 	log.Println("on disk", readerName, "finish reading", channelName, "byte:", count, "err:", err)
 }
