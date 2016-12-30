@@ -70,7 +70,7 @@ func (t *TaskGroup) String() string {
 	for _, task := range t.Tasks {
 		steps = append(steps, fmt.Sprintf("%s.%d", task.Step.Name, task.Id))
 	}
-	return "taskGroup:" + strings.Join(steps, "-")
+	return strings.Join(steps, "-")
 }
 
 func (t *TaskGroup) RequiredResources() *pb.ComputeResource {
