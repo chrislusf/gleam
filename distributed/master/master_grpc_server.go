@@ -3,6 +3,7 @@ package master
 import (
 	"fmt"
 	"io"
+	"log"
 
 	"github.com/chrislusf/gleam/pb"
 	"golang.org/x/net/context"
@@ -47,13 +48,13 @@ func (s *MasterServer) SendHeartbeat(stream pb.GleamMaster_SendHeartbeatServer) 
 		if err == nil {
 			if location == nil {
 				location = heartbeat.Location
-				fmt.Printf("added agent: %v\n", location)
+				log.Printf("added agent: %v", location)
 			}
 		} else {
 			if location != nil {
 				s.Topology.deleteAgentInformation(location)
 			}
-			fmt.Printf("lost agent: %v\n", location)
+			log.Printf("lost agent: %v", location)
 
 			if err == io.EOF {
 				return nil
