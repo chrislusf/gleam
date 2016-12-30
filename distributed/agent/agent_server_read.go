@@ -62,7 +62,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 
 		err = util.WriteMessage(conn, messageBytes)
 		if err != nil {
-			log.Printf("Write %s to %s failed at %d: %v", channelName, readerName, offset, err)
+			log.Printf("%s failed to receive %s at %d: %v", readerName, channelName, offset, err)
 			break
 		}
 
