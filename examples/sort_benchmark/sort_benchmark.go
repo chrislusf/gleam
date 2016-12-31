@@ -12,6 +12,7 @@ import (
 var (
 	size          = flag.Int("size", 2, "0 for small, 1 for 1GB, 2 for 10GB")
 	isDistributed = flag.Bool("distributed", true, "distributed mode or not")
+	isInMemory    = flag.Bool("inMemory", false, "distributed mode but only through memory")
 )
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 		size = 10240
 	}
 
-	gleamSortDistributed(fileName, size, partition, *isDistributed)
+	gleamSortDistributed(fileName, size, partition, *isDistributed, *isInMemory)
 
 }
 
@@ -78,7 +79,7 @@ func linuxSortStandalone(fileName string, partition int) {
     `).MergeSortedTo(1).Fprintf(os.Stdout, "%s  %s\n").Run()
 }
 
-func gleamSortDistributed(fileName string, size int64, partition int, isDistributed bool) {
+func gleamSortDistributed(fileName string, size int64, partition int, isDistributed bool, isInMemory bool) {
 
 	f := flow.New().TextFile(
 		fileName,
@@ -89,6 +90,16 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
    `).OnDisk(func(d *flow.Dataset) *flow.Dataset {
 		return d.Partition(partition).Sort()
 	}).Fprintf(os.Stdout, "%s  %s\n")
+
+	if isInMemory {
+		f = flow.New().TextFile(
+			fileName,
+		).Hint(flow.TotalSize(size)).Map(`
+           function(line)
+             return string.sub(line, 1, 10), string.sub(line, 13)
+           end
+       `).Partition(partition).Sort().Fprintf(os.Stdout, "%s  %s\n")
+	}
 
 	// f.Run(distributed.Planner())
 	// return
