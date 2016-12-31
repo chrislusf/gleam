@@ -186,9 +186,11 @@ func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader
 
 func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
 
+	tee := io.TeeReader(reader, os.Stderr)
+
 	buffer := make([]byte, 1024)
 	for {
-		n, err := reader.Read(buffer)
+		n, err := tee.Read(buffer)
 		if err == io.EOF {
 			break
 		}
