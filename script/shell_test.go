@@ -1,6 +1,7 @@
 package script
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -50,7 +51,7 @@ func testShellScript(testName string, invokeScriptFunc func(script *ShellScript)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go util.Execute(&wg, testName, shellScript.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
+	go util.Execute(context.Background(), &wg, testName, shellScript.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
 
 	wg.Add(1)
 	go func() {

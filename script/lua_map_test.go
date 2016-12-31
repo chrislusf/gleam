@@ -2,6 +2,7 @@ package script
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -176,7 +177,7 @@ func testScript(testName string, script Script, invokeScriptFunc func(script Scr
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go util.Execute(&wg, testName, script.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
+	go util.Execute(context.Background(), &wg, testName, script.GetCommand().ToOsExecCommand(), input.Reader, output.Writer, false, false, true, os.Stderr)
 
 	wg.Add(1)
 	go func() {
