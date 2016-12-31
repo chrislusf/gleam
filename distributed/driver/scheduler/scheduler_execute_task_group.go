@@ -13,9 +13,11 @@ import (
 )
 
 // ExecuteTaskGroup wait for inputs and execute the task group remotely.
+// If cancelled, the output will be cleaned up.
 func (s *Scheduler) ExecuteTaskGroup(ctx context.Context, fc *flow.FlowContext, wg *sync.WaitGroup, taskGroup *plan.TaskGroup, bid float64) {
 
 	defer wg.Done()
+
 	tasks := taskGroup.Tasks
 	lastTask := tasks[len(tasks)-1]
 	if tasks[0].Step.IsOnDriverSide {
@@ -65,17 +67,36 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context, fc *flow.FlowContext, 
 		}
 
 		fn := func() error {
-			err := s.remoteExecuteOnLocation(fc, taskGroup, allocation, wg)
+			err := s.remoteExecuteOnLocation(ctx, fc, taskGroup, allocation, wg)
 			taskGroup.MarkStop(err)
 			return err
 		}
 
-		if isRestartableTasks(tasks) {
-			// s.ResultChan <-
-			util.TimeDelayedRetry(fn, time.Minute, 3*time.Minute)
-		} else {
-			// s.ResultChan <- fn()
-			fn()
-		}
+		util.ExecuteOrCancel(
+			ctx,
+			func() error {
+				if isRestartableTasks(tasks) {
+					return util.TimeDelayedRetry(fn, time.Minute, 3*time.Minute)
+				} else {
+					return fn()
+				}
+			},
+			func() {
+				var w sync.WaitGroup
+				for _, shard := range lastTask.OutputShards {
+					w.Add(1)
+					// println("deleting", shard.Name(), "from", allocation.Location.URL())
+					go func(shard *flow.DatasetShard) {
+						defer w.Done()
+						if err := sendDeleteRequest(allocation.Location.URL(), &pb.DeleteDatasetShardRequest{
+							Name: shard.Name(),
+						}); err != nil {
+							println("Purging dataset error:", err.Error())
+						}
+					}(shard)
+				}
+				w.Wait()
+			},
+		)
 	}
 }

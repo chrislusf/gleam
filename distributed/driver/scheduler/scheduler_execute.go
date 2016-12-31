@@ -14,7 +14,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskGroup *plan.TaskGroup,
+func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context, flowContext *flow.FlowContext, taskGroup *plan.TaskGroup,
 	allocation *pb.Allocation, wg *sync.WaitGroup) error {
 
 	// s.setupInputChannels(flowContext, tasks[0], allocation.Location, wg)
@@ -75,7 +75,7 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
-	if err := sendExecutionRequest(allocation.Location.URL(), request); err != nil {
+	if err := sendExecutionRequest(ctx, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
 		return err
 	}

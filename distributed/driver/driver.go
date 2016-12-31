@@ -56,8 +56,6 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	// this may need more improvements
 	defer fcd.cleanup(sched, fc)
 
-	go sched.EventLoop()
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	on_interrupt.OnInterrupt(func() {
@@ -81,11 +79,13 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowContext) {
 	var wg sync.WaitGroup
-	wg.Add(1)
-	sched.EventChan <- scheduler.ReleaseTaskGroupInputs{
-		FlowContext: fc,
-		TaskGroups:  fcd.taskGroups,
-		WaitGroup:   &wg,
+
+	for _, taskGroup := range fcd.taskGroups {
+		wg.Add(1)
+		go func(taskGroup *plan.TaskGroup) {
+			defer wg.Done()
+			sched.DeleteOutout(taskGroup)
+		}(taskGroup)
 	}
 
 	wg.Wait()

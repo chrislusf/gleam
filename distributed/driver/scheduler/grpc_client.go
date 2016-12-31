@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
+func sendExecutionRequest(ctx context.Context, server string, request *pb.ExecutionRequest) error {
 	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
@@ -20,7 +20,7 @@ func sendExecutionRequest(server string, request *pb.ExecutionRequest) error {
 	client := pb.NewGleamAgentClient(grpcConection)
 
 	log.Printf("%s %v> starting with %v MB memory...\n", server, request.Name, request.GetResource().GetMemoryMb())
-	stream, err := client.Execute(context.Background(), request)
+	stream, err := client.Execute(ctx, request)
 	if err != nil {
 		log.Printf("%v.Execute(_) = _, %v", client, err)
 		return err
