@@ -1,6 +1,7 @@
 package instruction
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -81,7 +82,7 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) error {
 		}
 		// write output to writer
 		wg.Add(1)
-		util.Execute(&wg, "PipeArgs", command.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
+		util.Execute(context.Background(), &wg, "PipeArgs", command.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
 		//wg.Wait()
 		return nil
 	})

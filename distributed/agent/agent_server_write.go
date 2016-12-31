@@ -11,7 +11,7 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 
 	dsStore := as.storageBackend.CreateNamedDatasetShard(channelName)
 
-	log.Println("on disk", writerName, "start writing", channelName, "expected reader:", readerCount)
+	log.Printf("on disk %s starts writing %s expected reader:%d", writerName, channelName, readerCount)
 
 	var count int64
 
@@ -36,6 +36,6 @@ func (as *AgentServer) handleLocalWriteConnection(reader io.Reader, writerName, 
 	messageWriter.Flush()
 	util.WriteEOFMessage(dsStore)
 
-	log.Println("on disk", writerName, "finish writing", channelName, count, "bytes")
+	log.Printf("on disk %s finished writing %s %d bytes", writerName, channelName, count)
 
 }

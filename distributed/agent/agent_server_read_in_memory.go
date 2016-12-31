@@ -11,19 +11,19 @@ import (
 
 func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, channelName string) {
 
-	log.Println("in memory", readerName, "waits for", channelName)
+	log.Printf("in memory %s waits for %s", readerName, channelName)
 
 	ch := as.inMemoryChannels.WaitForNamedDatasetShard(channelName)
 
 	if ch == nil {
-		log.Println("in memory", readerName, "read an empty", channelName)
+		log.Printf("in memory %s read an empty %s", readerName, channelName)
 		return
 	}
 
 	writer := bufio.NewWriter(conn)
 	defer writer.Flush()
 
-	log.Println("in memory", readerName, "start reading", channelName)
+	log.Printf("in memory %s start reading %s", readerName, channelName)
 	buf := make([]byte, util.BUFFER_SIZE)
 	count, err := io.CopyBuffer(writer, ch.Reader, buf)
 
@@ -31,10 +31,10 @@ func (as *AgentServer) handleInMemoryReadConnection(conn net.Conn, readerName, c
 		if ch.Error != nil {
 			log.Printf("in memory %s failed because writing to %s failed: %d %v", readerName, channelName, count, ch.Error)
 		} else {
-			log.Printf("in memory %s finished reading %s bytes:%d", readerName, channelName, count)
+			log.Printf("in memory %s finished reading %s %d bytes", readerName, channelName, count)
 		}
 	} else {
-		log.Printf("in memory %s failed reading %s bytes:%d %v", readerName, channelName, count, err)
+		log.Printf("in memory %s failed reading %s %d bytes %v", readerName, channelName, count, err)
 	}
 
 }

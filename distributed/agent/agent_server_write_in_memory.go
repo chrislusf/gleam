@@ -16,7 +16,7 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerNam
 		ch.wg.Wait()
 	}()
 
-	log.Println("in memory", writerName, "start writing", channelName, "expected reader:", readerCount)
+	log.Printf("in memory %s starts writing %s expected reader:%d", writerName, channelName, readerCount)
 
 	writer := bufio.NewWriter(ch.incomingChannel.Writer)
 	defer writer.Flush()
@@ -27,5 +27,9 @@ func (as *AgentServer) handleLocalInMemoryWriteConnection(r io.Reader, writerNam
 	ch.incomingChannel.Error = err
 	ch.incomingChannel.Counter = count
 
-	log.Printf("in memory %s finish writing %s bytes:%d %v", writerName, channelName, count, err)
+	if err != nil {
+		log.Printf("in memory %s finished writing %s %d bytes: %v", writerName, channelName, count, err)
+	} else {
+		log.Printf("in memory %s finished writing %s %d bytes", writerName, channelName, count)
+	}
 }

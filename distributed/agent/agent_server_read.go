@@ -12,11 +12,11 @@ import (
 
 func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelName string) {
 
-	log.Println("on disk", readerName, "waits for", channelName)
+	log.Printf("on disk %s waits for %s", readerName, channelName)
 
 	dsStore := as.storageBackend.WaitForNamedDatasetShard(channelName)
 
-	log.Println("on disk", readerName, "starts reading", channelName)
+	log.Printf("on disk %s starts reading %s", readerName, channelName)
 
 	var offset int64
 	var err error
@@ -78,5 +78,9 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 	}
 	messageWriter.Flush()
 
-	log.Println("on disk", readerName, "finish reading", channelName, "byte:", count, "err:", err)
+	if err != nil {
+		log.Printf("on disk %s finished reading %s %d bytes error: %v", readerName, channelName, count, err)
+	} else {
+		log.Printf("on disk %s finished reading %s %d bytes", readerName, channelName, count)
+	}
 }
