@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os/exec"
@@ -10,10 +11,17 @@ import (
 // all data passing through pipe are all (size, msgpack_encoded) tuples
 // The input and output should all be this msgpack format.
 // Only the stdin and stdout of Pipe() is line based text.
-func Execute(executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
-	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) {
+func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
+	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) error {
 
-	defer executeWaitGroup.Done()
+	defer func() {
+		executeWaitGroup.Done()
+		if closeOutput {
+			if c, ok := writer.(io.Closer); ok {
+				c.Close()
+			}
+		}
+	}()
 
 	var wg sync.WaitGroup
 
@@ -48,23 +56,28 @@ func Execute(executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
 	// fmt.Println(name, "starting...")
 
 	if startError := command.Start(); startError != nil {
-		fmt.Fprintf(errWriter, "Start error %v: %v\n", startError, command)
-		return
+		return fmt.Errorf("Start error %v: %v\n", startError, command)
 	}
 
 	// fmt.Printf("%s Command is waiting..\n", name)
-
-	wg.Wait()
-
-	if waitError := command.Wait(); waitError != nil {
-		fmt.Fprintf(errWriter, "%s Wait error %+v.\n", name, waitError)
-	}
-
-	// fmt.Println(name, "stopping output writer.")
-	if closeOutput {
-		if c, ok := writer.(io.Closer); ok {
-			c.Close()
+	errChan := make(chan error)
+	go func() {
+		wg.Wait()
+		waitError := command.Wait()
+		if waitError != nil {
+			waitError = fmt.Errorf("%s Wait error %+v.\n", name, waitError)
 		}
+		errChan <- waitError
+	}()
+
+	select {
+	case <-ctx.Done():
+		println("cancel process", command.Process.Pid, name, "...")
+		command.Process.Kill()
+		command.Process.Release()
+		return ctx.Err()
+	case err := <-errChan:
+		return err
 	}
 
 	// fmt.Printf("%s Command is finished.\n", name)

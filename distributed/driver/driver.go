@@ -2,6 +2,7 @@
 package driver
 
 import (
+	"context"
 	"log"
 	"os"
 	"strconv"
@@ -57,8 +58,11 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 	go sched.EventLoop()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	on_interrupt.OnInterrupt(func() {
 		println("interrupted...")
+		cancel()
 		fcd.cleanup(sched, fc)
 	}, nil)
 
@@ -66,12 +70,8 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	var wg sync.WaitGroup
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
-		sched.EventChan <- scheduler.SubmitTaskGroup{
-			FlowContext: fc,
-			TaskGroup:   taskGroup,
-			Bid:         fcd.Option.FlowBid / float64(len(fcd.taskGroups)),
-			WaitGroup:   &wg,
-		}
+		go sched.ExecuteTaskGroup(ctx, fc, &wg, taskGroup,
+			fcd.Option.FlowBid/float64(len(fcd.taskGroups)))
 	}
 	go sched.Market.FetcherLoop()
 

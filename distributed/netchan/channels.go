@@ -3,6 +3,7 @@
 package netchan
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -15,7 +16,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, channelName string, onDisk bool, outChan io.WriteCloser) error {
+func DialReadChannel(ctx context.Context, wg *sync.WaitGroup, readerName string, address string, channelName string, onDisk bool, outChan io.WriteCloser) error {
 
 	conn, err := net.Dial("tcp", address)
 	if err != nil {
@@ -49,7 +50,7 @@ func DialReadChannel(wg *sync.WaitGroup, readerName string, address string, chan
 	return util.ReaderToChannel(wg, channelName, conn, outChan, true, os.Stderr)
 }
 
-func DialWriteChannel(wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
+func DialWriteChannel(ctx context.Context, wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
 
 	conn, err := net.Dial("tcp", address)
 	if err != nil {

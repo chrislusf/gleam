@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -95,7 +96,7 @@ func main() {
 		inChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialWriteChannel(&wg, "stdin", *writerAgentAddress, *writeTopic, *writeToDisk, inChan.Reader, 1)
+		go netchan.DialWriteChannel(context.Background(), &wg, "stdin", *writerAgentAddress, *writeTopic, *writeToDisk, inChan.Reader, 1)
 		wg.Add(1)
 		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan.Writer, true, os.Stderr)
 		wg.Wait()
@@ -105,7 +106,7 @@ func main() {
 		outChan := util.NewPiper()
 		var wg sync.WaitGroup
 		wg.Add(1)
-		go netchan.DialReadChannel(&wg, "stdout", *readerAgentAddress, *readTopic, *readFromDisk, outChan.Writer)
+		go netchan.DialReadChannel(context.Background(), &wg, "stdout", *readerAgentAddress, *readTopic, *readFromDisk, outChan.Writer)
 		wg.Add(1)
 		util.ChannelToLineWriter(&wg, "stdout", outChan.Reader, os.Stdout, os.Stderr)
 		wg.Wait()

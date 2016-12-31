@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"log"
 	"os"
 	"sync"
@@ -82,15 +83,15 @@ func (s *Scheduler) remoteExecuteOnLocation(flowContext *flow.FlowContext, taskG
 	return nil
 }
 
-func (s *Scheduler) localExecute(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	if task.Step.OutputDataset == nil {
-		s.localExecuteOutput(flowContext, task, wg)
+		s.localExecuteOutput(ctx, flowContext, task, wg)
 	} else {
-		s.localExecuteSource(flowContext, task, wg)
+		s.localExecuteSource(ctx, flowContext, task, wg)
 	}
 }
 
-func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
 
 	for _, shard := range task.OutputShards {
@@ -99,7 +100,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
 			// println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
-			if err := netchan.DialWriteChannel(wg, "driver_input", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
+			if err := netchan.DialWriteChannel(ctx, wg, "driver_input", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.Location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)
@@ -109,7 +110,7 @@ func (s *Scheduler) localExecuteSource(flowContext *flow.FlowContext, task *flow
 	}
 }
 
-func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
 	for i, shard := range task.InputShards {
@@ -118,7 +119,7 @@ func (s *Scheduler) localExecuteOutput(flowContext *flow.FlowContext, task *flow
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
 			// println(task.Step.Name, "reading from", shard.Name(), "at", location.Location.URL(), "to", inChan, "onDisk", shard.Dataset.GetIsOnDiskIO())
-			if err := netchan.DialReadChannel(wg, "driver_output", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), inChan.Writer); err != nil {
+			if err := netchan.DialReadChannel(ctx, wg, "driver_output", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), inChan.Writer); err != nil {
 				println("starting:", task.Step.Name, "input location:", location.Location.URL(), shard.Name(), "error:", err.Error())
 			}
 		}(shard)
