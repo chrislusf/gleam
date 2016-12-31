@@ -122,7 +122,7 @@ func (as *AgentServer) executeCommand(
 	go func() {
 		waitErr := command.Wait()
 		if waitErr != nil {
-			log.Printf("Failed to run command: %v", waitErr)
+			log.Printf("Failed to run command %s: %v", startRequest.GetName(), waitErr)
 		}
 		stat.StopTime = time.Now()
 		// only the command send a nil to errChan
