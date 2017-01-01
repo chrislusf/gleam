@@ -41,7 +41,7 @@ func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io
 func (b *LocalHashAndJoinWith) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		LocalHashAndJoinWith: &pb.LocalHashAndJoinWith{
+		LocalHashAndJoinWith: &pb.Instruction_LocalHashAndJoinWith{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

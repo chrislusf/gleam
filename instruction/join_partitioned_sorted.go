@@ -43,7 +43,7 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 func (b *JoinPartitionedSorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		JoinPartitionedSorted: &pb.JoinPartitionedSorted{
+		JoinPartitionedSorted: &pb.Instruction_JoinPartitionedSorted{
 			IsLeftOuterJoin:  (b.isLeftOuterJoin),
 			IsRightOuterJoin: (b.isRightOuterJoin),
 			Indexes:          getIndexes(b.indexes),

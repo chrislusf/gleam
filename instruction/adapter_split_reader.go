@@ -47,7 +47,7 @@ func (b *AdapterSplitReader) Function() func(readers []io.Reader, writers []io.W
 func (b *AdapterSplitReader) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		AdapterSplitReader: &pb.AdapterSplitReader{
+		AdapterSplitReader: &pb.Instruction_AdapterSplitReader{
 			AdapterName:  b.adapterName,
 			ConnectionId: b.adapterName,
 		},

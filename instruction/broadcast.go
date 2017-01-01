@@ -36,7 +36,7 @@ func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, st
 func (b *Broadcast) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name:      b.Name(),
-		Broadcast: &pb.Broadcast{},
+		Broadcast: &pb.Instruction_Broadcast{},
 	}
 }
 

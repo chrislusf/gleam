@@ -49,7 +49,7 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 func (b *LocalSort) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		LocalSort: &pb.LocalSort{
+		LocalSort: &pb.Instruction_LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}

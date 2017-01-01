@@ -152,85 +152,85 @@ message Instruction {
 	repeated DatasetShardLocation inputShardLocations = 2;
 	repeated DatasetShardLocation OutputShardLocations = 3;
 	int32 memoryInMB = 4;
+
+	message JoinPartitionedSorted {
+		repeated int32 indexes = 1;
+		bool isLeftOuterJoin = 2;
+		bool isRightOuterJoin = 3;
+	}
 	JoinPartitionedSorted joinPartitionedSorted = 5;
+
+	message CoGroupPartitionedSorted {
+		repeated int32 indexes = 1;
+	}
 	CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
+
+	message PipeAsArgs {
+		string code = 1;
+	}
 	PipeAsArgs pipeAsArgs = 7;
+
+	message ScatterPartitions {
+		repeated int32 indexes = 1;
+	}
 	ScatterPartitions scatterPartitions = 8;
+
+	message CollectPartitions {
+	}
 	CollectPartitions collectPartitions = 9;
+
+	message InputSplitReader {
+		string inputType = 1;
+	}
 	InputSplitReader inputSplitReader = 10;
+
+	message RoundRobin {
+	}
 	RoundRobin roundRobin = 11;
+
+	message LocalTop {
+		int32 n = 1;
+		repeated OrderBy orderBys = 2;
+	}
 	LocalTop localTop = 12;
+
+	message Broadcast {
+	}
 	Broadcast broadcast = 13;
+
+	message LocalHashAndJoinWith {
+		repeated int32 indexes = 1;
+	}
 	LocalHashAndJoinWith localHashAndJoinWith = 14;
+
+	message Script {
+		bool isPipe = 1;
+		string path = 2;
+		repeated string args = 3;
+		repeated string env = 4;
+	}
 	Script script = 15;
+
+	message LocalSort {
+		repeated OrderBy orderBys = 1;
+	}
 	LocalSort localSort = 16;
+
+	message AdapterSplitReader {
+		string adapterName = 1;
+		string connectionId = 2;
+	}
 	AdapterSplitReader adapterSplitReader = 17;
+
+	message MergeSortedTo {
+		repeated OrderBy orderBys = 1;
+	}
 	MergeSortedTo mergeSortedTo = 18;
-}
-
-message ScatterPartitions {
-	repeated int32 indexes = 1;
-}
-
-message RoundRobin {
-}
-
-message CollectPartitions {
-}
-
-message LocalSort {
-	repeated OrderBy orderBys = 1;
-}
-
-message LocalTop {
-	int32 n = 1;
-	repeated OrderBy orderBys = 2;
-}
-
-message MergeSortedTo {
-	repeated OrderBy orderBys = 1;
 }
 
 message OrderBy{
 	int32 index = 1;
 	int32 order = 2;
-}
-
-message JoinPartitionedSorted {
-	repeated int32 indexes = 1;
-	bool isLeftOuterJoin = 2;
-	bool isRightOuterJoin = 3;
-}
-
-message CoGroupPartitionedSorted {
-	repeated int32 indexes = 1;
-}
-
-message PipeAsArgs {
-	string code = 1;
-}
-
-message Script {
-	bool isPipe = 1;
-	string path = 2;
-	repeated string args = 3;
-	repeated string env = 4;
-}
-
-message InputSplitReader {
-	string inputType = 1;
-}
-
-message AdapterSplitReader {
-	string adapterName = 1;
-	string connectionId = 2;
-}
-
-message Broadcast {
-}
-
-message LocalHashAndJoinWith {
-	repeated int32 indexes = 1;
 }
 
 ///////////////////////////////////

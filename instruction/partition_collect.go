@@ -36,7 +36,7 @@ func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Wr
 func (b *CollectPartitions) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name:              b.Name(),
-		CollectPartitions: &pb.CollectPartitions{},
+		CollectPartitions: &pb.Instruction_CollectPartitions{},
 	}
 }
 

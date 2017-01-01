@@ -39,7 +39,7 @@ func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers 
 func (b *CoGroupPartitionedSorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		CoGroupPartitionedSorted: &pb.CoGroupPartitionedSorted{
+		CoGroupPartitionedSorted: &pb.Instruction_CoGroupPartitionedSorted{
 			Indexes: getIndexes(b.indexes),
 		},
 	}

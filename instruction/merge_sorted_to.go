@@ -40,7 +40,7 @@ func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer
 func (b *MergeSortedTo) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		MergeSortedTo: &pb.MergeSortedTo{
+		MergeSortedTo: &pb.Instruction_MergeSortedTo{
 			OrderBys: getOrderBys(b.orderBys),
 		},
 	}

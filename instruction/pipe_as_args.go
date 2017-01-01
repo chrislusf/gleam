@@ -43,7 +43,7 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 func (b *PipeAsArgs) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		PipeAsArgs: &pb.PipeAsArgs{
+		PipeAsArgs: &pb.Instruction_PipeAsArgs{
 			Code: b.code,
 		},
 	}

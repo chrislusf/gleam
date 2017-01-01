@@ -36,7 +36,7 @@ func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, s
 func (b *RoundRobin) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name:       b.Name(),
-		RoundRobin: &pb.RoundRobin{},
+		RoundRobin: &pb.Instruction_RoundRobin{},
 	}
 }
 

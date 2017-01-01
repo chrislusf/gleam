@@ -42,7 +42,7 @@ func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, sta
 func (b *LocalTop) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
 		Name: b.Name(),
-		LocalTop: &pb.LocalTop{
+		LocalTop: &pb.Instruction_LocalTop{
 			N:        int32(b.n),
 			OrderBys: getOrderBys(b.orderBys),
 		},
