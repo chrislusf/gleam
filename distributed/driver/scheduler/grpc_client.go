@@ -11,7 +11,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-func sendExecutionRequest(ctx context.Context, server string, request *pb.ExecutionRequest) error {
+func sendExecutionRequest(ctx context.Context,
+	statusExecution *pb.FlowExecutionStatus_TaskGroup_Execution,
+	server string, request *pb.ExecutionRequest) error {
 	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
@@ -43,6 +45,8 @@ func sendExecutionRequest(ctx context.Context, server string, request *pb.Execut
 		}
 		if response.GetSystemTime() != 0 {
 			log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.Name, response.GetSystemTime(), response.GetUserTime())
+			statusExecution.SystemTime = response.GetSystemTime()
+			statusExecution.UserTime = response.GetUserTime()
 		}
 	}
 

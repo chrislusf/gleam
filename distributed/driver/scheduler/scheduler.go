@@ -12,12 +12,11 @@ import (
 type Scheduler struct {
 	sync.Mutex
 
-	Master                 string
-	EventChan              chan interface{}
-	Market                 *market.Market
-	Option                 *SchedulerOption
-	shardLocator           *DatasetShardLocator
-	RemoteExecutorStatuses map[uint32]*RemoteExecutorStatus
+	Master       string
+	EventChan    chan interface{}
+	Market       *market.Market
+	Option       *SchedulerOption
+	shardLocator *DatasetShardLocator
 }
 
 type RemoteExecutorStatus struct {
@@ -42,26 +41,12 @@ type SchedulerOption struct {
 
 func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
 	s := &Scheduler{
-		Master:                 leader,
-		EventChan:              make(chan interface{}),
-		Market:                 market.NewMarket(),
-		shardLocator:           NewDatasetShardLocator(),
-		Option:                 option,
-		RemoteExecutorStatuses: make(map[uint32]*RemoteExecutorStatus),
+		Master:       leader,
+		EventChan:    make(chan interface{}),
+		Market:       market.NewMarket(),
+		shardLocator: NewDatasetShardLocator(),
+		Option:       option,
 	}
 	s.Market.SetScoreFunction(s.Score).SetFetchFunction(s.Fetch)
 	return s
-}
-
-func (s *Scheduler) getRemoteExecutorStatus(id uint32) (status *RemoteExecutorStatus, isOld bool) {
-	s.Lock()
-	defer s.Unlock()
-
-	status, isOld = s.RemoteExecutorStatuses[id]
-	if isOld {
-		return status, isOld
-	}
-	status = &RemoteExecutorStatus{}
-	s.RemoteExecutorStatuses[id] = status
-	return status, false
 }

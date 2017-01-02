@@ -12,6 +12,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
@@ -20,10 +21,15 @@ type FlowContextDriver struct {
 
 	stepGroups []*plan.StepGroup
 	taskGroups []*plan.TaskGroup
+
+	status *pb.FlowExecutionStatus
 }
 
 func NewFlowContextDriver(option *Option) *FlowContextDriver {
-	return &FlowContextDriver{Option: option}
+	return &FlowContextDriver{
+		Option: option,
+		status: &pb.FlowExecutionStatus{},
+	}
 }
 
 // driver runs on local, controlling all tasks
@@ -31,6 +37,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 	// task fusion to minimize disk IO
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)
+	fcd.logExecutionPlan(fc)
 
 	// start server to serve files to agents to run exectuors
 	rsyncServer, err := rsync.NewRsyncServer(os.Args[0], nil)
@@ -68,7 +75,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	var wg sync.WaitGroup
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
-		go sched.ExecuteTaskGroup(ctx, fc, &wg, taskGroup,
+		go sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
 			fcd.Option.FlowBid/float64(len(fcd.taskGroups)))
 	}
 	go sched.Market.FetcherLoop()

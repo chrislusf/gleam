@@ -94,5 +94,6 @@ func translateToStepGroups(fc *flow.FlowContext) []*StepGroup {
 		// println("add step group started by", stepGroup.Steps[0].Name, "with", len(stepGroup.Steps), "steps")
 		ret = append(ret, stepGroup)
 	}
+
 	return ret
 }

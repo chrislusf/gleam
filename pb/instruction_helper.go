@@ -2,8 +2,6 @@ package pb
 
 import (
 	"fmt"
-
-	"github.com/chrislusf/gleam/util"
 )
 
 func (m *DatasetShard) Name() string {
@@ -12,10 +10,6 @@ func (m *DatasetShard) Name() string {
 
 func (m *DatasetShardLocation) Address() string {
 	return fmt.Sprintf("%s:%d", m.Host, m.Port)
-}
-
-func (m *InstructionSet) HashCode() uint32 {
-	return util.Hash([]byte(m.String()))
 }
 
 func (m *InstructionSet) InstructionNames() (stepNames []string) {

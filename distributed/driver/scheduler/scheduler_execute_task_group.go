@@ -14,7 +14,11 @@ import (
 
 // ExecuteTaskGroup wait for inputs and execute the task group remotely.
 // If cancelled, the output will be cleaned up.
-func (s *Scheduler) ExecuteTaskGroup(ctx context.Context, fc *flow.FlowContext, wg *sync.WaitGroup, taskGroup *plan.TaskGroup, bid float64) {
+func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
+	fc *flow.FlowContext,
+	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
+	wg *sync.WaitGroup,
+	taskGroup *plan.TaskGroup, bid float64) {
 
 	defer wg.Done()
 
@@ -67,7 +71,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context, fc *flow.FlowContext, 
 		}
 
 		fn := func() error {
-			err := s.remoteExecuteOnLocation(ctx, fc, taskGroup, allocation, wg)
+			err := s.remoteExecuteOnLocation(ctx, fc, statusTaskGroup, taskGroup, allocation, wg)
 			taskGroup.MarkStop(err)
 			return err
 		}

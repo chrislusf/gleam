@@ -40,7 +40,6 @@ type AgentServer struct {
 	allocatedResourceLock sync.Mutex
 	storageBackend        *LocalDatasetShardsManager
 	inMemoryChannels      *LocalDatasetShardsManagerInMemory
-	localExecutorManager  *LocalExecutorManager
 }
 
 func RunAgentServer(option *AgentServerOption) {
@@ -61,13 +60,11 @@ func RunAgentServer(option *AgentServerOption) {
 			CpuLevel: int32(*option.CPULevel),
 			MemoryMb: *option.MemoryMB,
 		},
-		allocatedResource:    &pb.ComputeResource{},
-		localExecutorManager: newLocalExecutorsManager(),
+		allocatedResource: &pb.ComputeResource{},
 	}
 
 	go as.storageBackend.purgeExpiredEntries()
 	go as.inMemoryChannels.purgeExpiredEntries()
-	go as.localExecutorManager.purgeExpiredEntries()
 	go as.heartbeat()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
@@ -140,27 +137,17 @@ func (r *AgentServer) handleRequest(conn net.Conn) {
 	if err := proto.Unmarshal(data, newCmd); err != nil {
 		log.Fatal("unmarshaling error: ", err)
 	}
-	reply := r.handleCommandConnection(conn, newCmd)
-	if reply != nil {
-		data, err := proto.Marshal(reply)
-		if err != nil {
-			log.Fatal("marshaling error: ", err)
-		}
-		conn.Write(data)
-	}
-
+	r.handleCommandConnection(conn, newCmd)
 }
 
 func (as *AgentServer) handleCommandConnection(conn net.Conn,
-	command *pb.ControlMessage) *pb.ControlMessage {
-	reply := &pb.ControlMessage{}
+	command *pb.ControlMessage) {
 	if command.GetReadRequest() != nil {
 		if !command.GetIsOnDiskIO() {
 			as.handleInMemoryReadConnection(conn, command.ReadRequest.ReaderName, command.ReadRequest.ChannelName)
 		} else {
 			as.handleReadConnection(conn, command.ReadRequest.ReaderName, command.ReadRequest.ChannelName)
 		}
-		return nil
 	}
 	if command.GetWriteRequest() != nil {
 		if !command.GetIsOnDiskIO() {
@@ -168,10 +155,5 @@ func (as *AgentServer) handleCommandConnection(conn net.Conn,
 		} else {
 			as.handleLocalWriteConnection(conn, command.WriteRequest.WriterName, command.WriteRequest.ChannelName, int(command.GetWriteRequest().GetReaderCount()))
 		}
-		return nil
 	}
-	if command.GetGetStatusRequest() != nil {
-		reply.GetStatusResponse = as.handleGetStatusRequest(command.GetGetStatusRequest())
-	}
-	return reply
 }

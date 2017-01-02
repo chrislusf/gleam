@@ -28,9 +28,6 @@ func (as *AgentServer) serveGrpc(listener net.Listener) {
 // Execute executes a request and stream stdout and stderr back
 func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgent_ExecuteServer) error {
 
-	stat := as.localExecutorManager.getExecutorStatus(request.GetInstructions().FlowHashCode)
-	stat.RequestTime = time.Now()
-
 	dir := path.Join(*as.Option.Dir, request.GetDir())
 	os.MkdirAll(dir, 0755)
 	err := rsync.FetchFilesTo(request.GetHost()+":"+strconv.Itoa(int(request.GetPort())), dir)
@@ -48,7 +45,7 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
-	return as.executeCommand(stream, request, dir, stat)
+	return as.executeCommand(stream, request, dir)
 
 }
 
@@ -56,7 +53,6 @@ func (as *AgentServer) executeCommand(
 	stream pb.GleamAgent_ExecuteServer,
 	startRequest *pb.ExecutionRequest,
 	dir string,
-	stat *AgentExecutorStatus,
 ) (err error) {
 
 	ctx := stream.Context()
@@ -65,7 +61,6 @@ func (as *AgentServer) executeCommand(
 
 	// start the command
 	executableFullFilename, _ := osext.Executable()
-	stat.StartTime = time.Now()
 	command := exec.Command(
 		executableFullFilename,
 		"execute",
@@ -95,7 +90,6 @@ func (as *AgentServer) executeCommand(
 			command.Path, command.Dir, err)
 		return err
 	}
-	stat.Process = command.Process
 
 	go streamOutput(errChan, stream, stdout)
 	go streamError(errChan, stream, stderr)
@@ -124,7 +118,6 @@ func (as *AgentServer) executeCommand(
 		if waitErr != nil {
 			log.Printf("Failed to run command %s: %v", startRequest.GetName(), waitErr)
 		}
-		stat.StopTime = time.Now()
 		// only the command send a nil to errChan
 		errChan <- waitErr
 	}()

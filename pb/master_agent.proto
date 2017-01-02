@@ -5,6 +5,7 @@ package pb;
 service GleamMaster {
   rpc GetResources(ComputeRequest) returns (AllocationResult) {}
   rpc SendHeartbeat(stream Heartbeat) returns (Empty) {}
+  rpc SendFlowExecutionStatus(stream FlowExecutionStatus) returns (Empty) {}
 }
 
 //////////////////////////////////////////////////
@@ -58,6 +59,59 @@ message DataLocation {
   bool onDisk = 3;
 }
 
+//////////////////////////////////////////////////
+message FlowExecutionStatus {
+
+    message Task {
+        int32 stepId = 1;
+        int32 id = 2; // unique when combined with stepId
+    }
+    message Step {
+        int32 id = 1;
+        string name = 2;
+        repeated int32 parentIds = 3;
+        repeated int32 taskIds = 4;
+        repeated int32 inputDatasetId = 5;
+        int32 outputDatasetId = 6;
+    }
+    message Dataset {
+        int32 id = 1;
+        int32 stepId = 2;
+        repeated int32 readingStepIds = 3;
+    }
+    message DatasetShard {
+        int32 datasetId = 1;
+        int32 id = 2; // unique when combined with datasetId
+    }
+    message StepGroup {
+        repeated int32 stepIds = 1;
+    }
+    message TaskGroup {
+        repeated int32 taskIds = 1;
+        ExecutionRequest request = 2;
+
+        message Execution {
+            int64 start_time = 1;
+            int64 stop_time = 2;
+            double system_time = 3;
+            double user_time = 4;
+            bytes error = 5;
+            bytes output_hash = 6;
+        }
+        repeated Execution executions = 3;
+    }
+
+    repeated StepGroup stepGroups = 1;
+    repeated TaskGroup taskGroups = 2;
+    repeated Dataset datasets = 3;
+    repeated DatasetShard datasetShards = 4;
+    repeated Task tasks = 5;
+    repeated Step steps = 6;
+
+}
+
+
+
 
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
@@ -92,29 +146,6 @@ message ControlMessage {
 	bool isOnDiskIO = 1;
 	ReadRequest readRequest = 2;
 	WriteRequest writeRequest = 3;
-	GetStatusRequest getStatusRequest = 4;
-	GetStatusResponse getStatusResponse = 5;
-}
-
-message GetStatusRequest {
-	uint32 startRequestHash = 1;
-}
-
-message ChannelStatus {
-	int64 length = 1;
-	int64 startTime = 2;
-	int64 stopTime = 3;
-	string name = 4;
-}
-
-message GetStatusResponse {
-	uint32 startRequestHash = 1;
-	string error = 2;
-	repeated ChannelStatus inputStatuses = 3;
-	repeated ChannelStatus outputStatuses = 4;
-	int64 requestTime = 5;
-	int64 startTime = 6;
-	int64 stopTime = 7;
 }
 
 message DeleteDatasetShardRequest {

@@ -14,7 +14,10 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context, flowContext *flow.FlowContext, taskGroup *plan.TaskGroup,
+func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
+	flowContext *flow.FlowContext,
+	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
+	taskGroup *plan.TaskGroup,
 	allocation *pb.Allocation, wg *sync.WaitGroup) error {
 
 	// s.setupInputChannels(flowContext, tasks[0], allocation.Location, wg)
@@ -53,8 +56,6 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context, flowContext *fl
 	instructions.FlowHashCode = flowContext.HashCode
 	instructions.IsProfiling = false // enable this when profiling executors
 
-	status, _ := s.getRemoteExecutorStatus(instructions.HashCode())
-
 	request := &pb.ExecutionRequest{
 		Instructions: instructions,
 		Files:        nil,
@@ -64,19 +65,20 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context, flowContext *fl
 		Host:         s.Option.DriverHost,
 		Port:         int32(s.Option.DriverPort),
 	}
+	statusTaskGroup.Request = request
 
-	status.RequestTime = time.Now()
-	status.Allocation = allocation
-	status.Request = request
-	taskGroup.RequestId = instructions.HashCode()
+	statusExecution := &pb.FlowExecutionStatus_TaskGroup_Execution{}
+	statusTaskGroup.Executions = append(statusTaskGroup.Executions, statusExecution)
+	statusExecution.StartTime = time.Now().Unix()
 	defer func() {
-		status.StopTime = time.Now()
+		statusExecution.StopTime = time.Now().Unix()
 	}()
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
-	if err := sendExecutionRequest(ctx, allocation.Location.URL(), request); err != nil {
+	if err := sendExecutionRequest(ctx, statusExecution, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
+		statusExecution.Error = []byte(err.Error())
 		return err
 	}
 

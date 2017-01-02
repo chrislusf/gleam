@@ -66,3 +66,12 @@ func (s *MasterServer) SendHeartbeat(stream pb.GleamMaster_SendHeartbeatServer) 
 		s.Topology.UpdateAgentInformation(heartbeat)
 	}
 }
+
+func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExecutionStatusServer) error {
+	for {
+		status, err := stream.Recv()
+		if err == nil {
+			log.Printf("Got status: %v", status.String())
+		}
+	}
+}
