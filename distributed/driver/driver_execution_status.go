@@ -10,7 +10,8 @@ import (
 func (fcd *FlowContextDriver) GetTaskGroupStatus(taskGroup *plan.TaskGroup) *pb.FlowExecutionStatus_TaskGroup {
 	for _, status := range fcd.status.TaskGroups {
 		if len(taskGroup.Tasks) == len(status.TaskIds) {
-			if int32(taskGroup.Tasks[0].Id) == status.TaskIds[0] {
+			if int32(taskGroup.Tasks[0].Id) == status.TaskIds[0] &&
+				int32(taskGroup.Tasks[0].Step.Id) == status.StepIds[0] {
 				return status
 			}
 		}
@@ -96,11 +97,13 @@ func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
 	}
 
 	for _, taskGroup := range fcd.taskGroups {
-		var taskIds []int32
+		var stepIds, taskIds []int32
 		for _, task := range taskGroup.Tasks {
+			stepIds = append(stepIds, int32(task.Step.Id))
 			taskIds = append(taskIds, int32(task.Id))
 		}
 		statusTaskGroup := &pb.FlowExecutionStatus_TaskGroup{
+			StepIds: stepIds,
 			TaskIds: taskIds,
 		}
 		fcd.status.TaskGroups = append(

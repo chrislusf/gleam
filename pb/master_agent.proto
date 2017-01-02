@@ -87,8 +87,10 @@ message FlowExecutionStatus {
         repeated int32 stepIds = 1;
     }
     message TaskGroup {
-        repeated int32 taskIds = 1;
-        ExecutionRequest request = 2;
+        repeated int32 stepIds = 1;
+        repeated int32 taskIds = 2;
+
+        ExecutionRequest request = 3;
 
         message Execution {
             int64 start_time = 1;
@@ -98,7 +100,7 @@ message FlowExecutionStatus {
             bytes error = 5;
             bytes output_hash = 6;
         }
-        repeated Execution executions = 3;
+        repeated Execution executions = 4;
     }
 
     repeated StepGroup stepGroups = 1;

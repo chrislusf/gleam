@@ -16,6 +16,17 @@ import (
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
+type Option struct {
+	Master       string
+	DataCenter   string
+	Rack         string
+	TaskMemoryMB int
+	FlowBid      float64
+	Module       string
+	Host         string
+	Port         int
+}
+
 type FlowContextDriver struct {
 	Option *Option
 
@@ -66,7 +77,8 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	on_interrupt.OnInterrupt(func() {
-		println("interrupted...")
+		println("interrupted ...")
+		fcd.printDistributedStatus(os.Stderr)
 		cancel()
 		fcd.cleanup(sched, fc)
 	}, nil)

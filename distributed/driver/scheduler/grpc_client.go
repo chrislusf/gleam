@@ -33,7 +33,6 @@ func sendExecutionRequest(ctx context.Context,
 			break
 		}
 		if err != nil {
-			log.Printf("%v.Execute(_) = _, %v", client, err)
 			break
 		}
 		if response.GetError() != nil {

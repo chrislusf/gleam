@@ -69,9 +69,9 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	statusExecution := &pb.FlowExecutionStatus_TaskGroup_Execution{}
 	statusTaskGroup.Executions = append(statusTaskGroup.Executions, statusExecution)
-	statusExecution.StartTime = time.Now().Unix()
+	statusExecution.StartTime = time.Now().UnixNano()
 	defer func() {
-		statusExecution.StopTime = time.Now().Unix()
+		statusExecution.StopTime = time.Now().UnixNano()
 	}()
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
