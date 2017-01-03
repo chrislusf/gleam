@@ -9,17 +9,17 @@ import (
 )
 
 // WriteRow encode and write a row of data
-func WriteRow(outChan io.Writer, anyObject ...interface{}) error {
+func WriteRow(writer io.Writer, anyObject ...interface{}) error {
 	encoded, err := EncodeRow(anyObject...)
 	if err != nil {
 		return fmt.Errorf("WriteRow encoding error: %v", err)
 	}
-	return WriteMessage(outChan, encoded)
+	return WriteMessage(writer, encoded)
 }
 
 // ReadRow read and decode one row of data
-func ReadRow(ch io.Reader) (row []interface{}, err error) {
-	encodedBytes, hasErr := ReadMessage(ch)
+func ReadRow(reader io.Reader) (row []interface{}, err error) {
+	encodedBytes, hasErr := ReadMessage(reader)
 	if hasErr != nil {
 		return nil, hasErr
 	}
@@ -45,7 +45,7 @@ func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// EncodeRow decode one row of data from a blob
+// DecodeRow decodes one row of data from a blob
 func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 	for {
