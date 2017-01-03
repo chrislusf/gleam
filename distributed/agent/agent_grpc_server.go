@@ -10,7 +10,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/rsync"
+	// "github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"
@@ -30,15 +30,15 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 	dir := path.Join(*as.Option.Dir, request.GetDir())
 	os.MkdirAll(dir, 0755)
 
-	err := rsync.FetchFilesTo(fmt.Sprintf("%s:%d", request.GetHost(), request.GetPort()), dir)
-	if err != nil {
-		if sendErr := stream.Send(&pb.ExecutionResponse{
-			Error: []byte(fmt.Sprintf("Failed to download file: %v", err)),
-		}); sendErr != nil {
-			return sendErr
-		}
-		return err
-	}
+	//err := rsync.FetchFilesTo(fmt.Sprintf("%s:%d", request.GetHost(), request.GetPort()), dir)
+	//if err != nil {
+	//	if sendErr := stream.Send(&pb.ExecutionResponse{
+	//		Error: []byte(fmt.Sprintf("Failed to download file: %v", err)),
+	//	}); sendErr != nil {
+	//		return sendErr
+	//	}
+	//	return err
+	//}
 
 	allocated := *request.GetResource()
 
