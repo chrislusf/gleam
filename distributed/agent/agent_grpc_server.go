@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strconv"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/rsync"
@@ -30,7 +29,8 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 
 	dir := path.Join(*as.Option.Dir, request.GetDir())
 	os.MkdirAll(dir, 0755)
-	err := rsync.FetchFilesTo(request.GetHost()+":"+strconv.Itoa(int(request.GetPort())), dir)
+
+	err := rsync.FetchFilesTo(fmt.Sprintf("%s:%d", request.GetHost(), request.GetPort()), dir)
 	if err != nil {
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Error: []byte(fmt.Sprintf("Failed to download file: %v", err)),
