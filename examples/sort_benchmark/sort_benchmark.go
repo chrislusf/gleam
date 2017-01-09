@@ -13,14 +13,17 @@ var (
 	size          = flag.Int("size", 2, "0 for small, 1 for 1GB, 2 for 10GB")
 	isDistributed = flag.Bool("distributed", true, "distributed mode or not")
 	isInMemory    = flag.Bool("inMemory", false, "distributed mode but only through memory")
+	profFile      = flag.String("pprof", "", "profiling file output name")
 )
 
 func main() {
 	flag.Parse()
 
-	f, _ := os.Create("p.prof")
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	if *profFile != "" {
+		f, _ := os.Create(*profFile)
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	bigFile := *size
 
