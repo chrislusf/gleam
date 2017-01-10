@@ -31,7 +31,7 @@ func RunMaster(listenOn string) {
 	m := cmux.New(listener)
 
 	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	httpL := m.Match(cmux.HTTP1Fast())
+	httpL := m.Match(cmux.Any())
 
 	// Create your protocol servers.
 	grpcS := grpc.NewServer()
