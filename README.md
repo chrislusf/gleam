@@ -1,4 +1,4 @@
-# gleam
+# Gleam
 [![Build Status](https://travis-ci.org/chrislusf/gleam.svg?branch=master)](https://travis-ci.org/chrislusf/gleam)
 [![GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow?status.svg)](https://godoc.org/github.com/chrislusf/gleam/flow)
 [![Wiki](https://img.shields.io/badge/docs-wiki-blue.svg)](https://github.com/chrislusf/gleam/wiki)
