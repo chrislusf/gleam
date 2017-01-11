@@ -71,10 +71,10 @@ function decodeRow(encoded)
   local start = 1
   local x = nil
   local width = 0
-  width, start = mp.unpack(encoded, start)
-  for i=1, width do
+  while start <= length do
+    width = width + 1
     x, start = mp.unpack(encoded, start)
-    decoded[i] = x
+    decoded[width] = x
     if start > length then break end
   end
   return decoded, width
@@ -94,13 +94,15 @@ end
 
 function writeRow(...)
   local width = select('#', ...)
-  local encoded = mp.pack(width)
+  local encoded = ""
   for i=1, width do
     local v = select(i, ...)
     encoded = encoded .. mp.pack(v)
     -- log(i..":"..tostring(v))
   end
-  writeBytes(encoded)
+  if width > 0 then
+    writeBytes(encoded)
+  end
 end
 ------------ helper functions ---------
 function listEquals(x, y)
