@@ -33,6 +33,9 @@ func ReadRow(reader io.Reader) (row []interface{}, err error) {
 func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	encoder := msgpack.NewEncoder(&buf)
+	if err := encoder.Encode(len(anyObject)); err != nil {
+		return nil, err
+	}
 	for _, obj := range anyObject {
 		if objString, isString := obj.(string); isString {
 			if err := encoder.Encode([]byte(objString)); err != nil {
@@ -48,6 +51,13 @@ func EncodeRow(anyObject ...interface{}) ([]byte, error) {
 // DecodeRow decodes one row of data from a blob
 func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
+
+	var width int
+	if err = decoder.Decode(&width); err != nil {
+		err = fmt.Errorf("decode row error %v: %s\n", err, string(encodedBytes))
+		return
+	}
+
 	for {
 		var v interface{}
 		if err = decoder.Decode(&v); err != nil {
@@ -58,6 +68,9 @@ func DecodeRow(encodedBytes []byte) (objects []interface{}, err error) {
 			break
 		}
 		objects = append(objects, v)
+	}
+	if len(objects) != width {
+		return objects, fmt.Errorf("row width error expected %d, actual %d", width, len(objects))
 	}
 	return objects, err
 }

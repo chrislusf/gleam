@@ -10,11 +10,11 @@ func (c *LuaScript) Reduce(code string) {
 		Type: "Reduce",
 		Code: fmt.Sprintf(`
 local _reduce = %s
-local row = readRow()
+local row, width = readRow()
 if row then
   local lastValue = row[1]
   while true do
-    local row = readRow()
+    local row, width = readRow()
     if not row then break end
     if row[1] then
       lastValue = _reduce(lastValue, row[1]) 
@@ -62,9 +62,8 @@ end
 
 local _reduce = %s
 
-local row = readRow()
+local row, rowWidth = readRow()
 if row then
-  local rowWidth = tableLength(row)
   local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
   while true do
     local row = readRow()
@@ -129,9 +128,8 @@ local function _writeKeyValues(keys, valuesList, count, rowWidth)
   writeRow(unpack(row))
 end
 
-local row = readRow()
+local row, rowWidth = readRow()
 if row then
-  local rowWidth = tableLength(row)
 
   local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
   local count = 1

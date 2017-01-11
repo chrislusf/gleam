@@ -25,6 +25,7 @@ func (c *LuaScript) Init(code string) {
 local mp = require "MessagePack"
 mp.set_string 'binary'
 local unpack = table.unpack or unpack
+local NIL = {}
 
 function log(message)
   io.stderr:write(message)
@@ -52,6 +53,7 @@ function numbertobytes(num, width)
   return string.char(_n2b(width-1, math.modf(num/256)))
 end
 
+------------ read functions ---------
 -- read bytes
 function readEncodedBytes()
   local block = io.read(4)
@@ -68,12 +70,14 @@ function decodeRow(encoded)
   local decoded = {}
   local start = 1
   local x = nil
-  while start <= length do
+  local width = 0
+  width, start = mp.unpack(encoded, start)
+  for i=1, width do
     x, start = mp.unpack(encoded, start)
-    table.insert(decoded, x)
+    decoded[i] = x
     if start > length then break end
   end
-  return decoded
+  return decoded, width
 end
 
 function readRow()
@@ -81,6 +85,7 @@ function readRow()
   return decodeRow(encoded)
 end
 
+------------ write functions ---------
 -- write bytes
 function writeBytes(encoded)
   io.write(numbertobytes(string.len(encoded), 4))
@@ -88,32 +93,15 @@ function writeBytes(encoded)
 end
 
 function writeRow(...)
-  local arg={...}
-  local encoded = ""
-  for i,v in ipairs(arg) do
-    if i == 1 then
-      encoded = mp.pack(v)
-    else
-      encoded = encoded .. mp.pack(v)
-    end
+  local width = select('#', ...)
+  local encoded = mp.pack(width)
+  for i=1, width do
+    local v = select(i, ...)
+    encoded = encoded .. mp.pack(v)
   end
-  if #arg > 0 then
-    writeBytes(encoded)
-  end
+  writeBytes(encoded)
 end
-
-function writeUnpackedRow(keys, values, unpackValues, extra)
-  if unpackValues then
-    local unpacked = {}
-    for i, v in ipairs(values) do
-      table.insert(unpacked, v[1])
-    end
-    writeRow(unpack(keys), unpacked, extra)
-  else
-    writeRow(unpack(keys), values, extra)
-  end
-end
-
+------------ helper functions ---------
 function listEquals(x, y)
   for i,v in ipairs(x) do
     if v ~= y[i] then
@@ -121,12 +109,6 @@ function listEquals(x, y)
     end
   end
   return true
-end
-
-function tableLength(T)
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
 end
 
 function set(list)

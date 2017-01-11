@@ -105,6 +105,37 @@ func TestLuaFlatMap(t *testing.T) {
 	)
 }
 
+func TestLuaMapWithNil(t *testing.T) {
+
+	testLuaScript(
+		"test mapper",
+		func(script Script) {
+			script.Map(`
+			function(x, y, z)
+                --log("received "..tostring(x)..":"..tostring(y)..":"..tostring(z))
+				return x, y, z
+			end`)
+		},
+		func(inputWriter io.Writer) {
+			// The row we write has nil on index 1:
+			util.WriteRow(inputWriter, 8888, nil, "hello")
+		},
+		func(outputReader io.Reader) {
+			row, err := util.ReadRow(outputReader)
+			if err != nil {
+				t.Errorf("read row error: %v", err)
+				return
+			}
+			if row[1] != nil {
+				t.Errorf("Row no longer contains nil: %+v", row)
+			}
+			if !(bytes.Equal(row[2].([]byte), []byte("hello"))) {
+				t.Errorf("Row no longer contains elements after nil: %+v", row[2])
+			}
+		},
+	)
+}
+
 func TestLuaSelect(t *testing.T) {
 
 	testLuaScript(

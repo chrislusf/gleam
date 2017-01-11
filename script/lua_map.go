@@ -11,10 +11,10 @@ func (c *LuaScript) Map(code string) {
 		Code: fmt.Sprintf(`
 local _map = %s
 while true do
-  local row = readRow()
+  local row, width = readRow()
   if not row then break end
 
-  local t = {_map(unpack(row))}
+  local t = {_map(unpack(row, 1, width))}
   writeRow(unpack(t))
 end
 `, code),
@@ -30,10 +30,10 @@ while true do
   local encodedBytes = readEncodedBytes()
   if not encodedBytes then break end
 
-  local row = decodeRow(encodedBytes)
+  local row, width = decodeRow(encodedBytes)
   if not row then break end
 
-  if _filter(unpack(row)) then
+  if _filter(unpack(row, 1, width)) then
     writeBytes(encodedBytes)
   end
 end
@@ -47,10 +47,10 @@ func (c *LuaScript) ForEach(code string) {
 		Code: fmt.Sprintf(`
 local _foreach = %s
 while true do
-  local row = readRow()
+  local row, width = readRow()
   if not row then break end
 
-  _foreach(unpack(row))
+  _foreach(unpack(row, 1, width))
 end
 `, code),
 	})
@@ -63,10 +63,10 @@ func (c *LuaScript) FlatMap(code string) {
 local _flatMap = %s
 
 while true do
-  local row = readRow()
+  local row, width = readRow()
   if not row then break end
 
-  local t = _flatMap(unpack(row))
+  local t = _flatMap(unpack(row, 1, width))
   if t then
     for x in t do
       writeRow(x)
@@ -105,11 +105,11 @@ func (c *LuaScript) Limit(n int) {
 local count = %d
 
 while true do
-  local row = readRow()
+  local row, width = readRow()
   if not row then break end
   if count > 0 then
     count = count - 1
-    writeRow(unpack(row))
+    writeRow(unpack(row, 1, width))
   end
 end
 `, n),
