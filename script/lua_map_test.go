@@ -121,19 +121,17 @@ func TestLuaMapWithNil(t *testing.T) {
 			util.WriteRow(inputWriter, 8888, nil, "hello")
 		},
 		func(outputReader io.Reader) {
-			_, err := util.ReadRow(outputReader)
+			row, err := util.ReadRow(outputReader)
 			if err != nil {
 				t.Errorf("read row error: %v", err)
 				return
 			}
-			/*
-				if row[1] != nil {
-					t.Errorf("Row no longer contains nil: %+v", row)
-				}
-				if !(bytes.Equal(row[2].([]byte), []byte("hello"))) {
-					t.Errorf("Row no longer contains elements after nil: %+v", row[2])
-				}
-			*/
+			if row[1] != nil {
+				t.Errorf("Row no longer contains nil: %+v", row)
+			}
+			if !(bytes.Equal(row[2].([]byte), []byte("hello"))) {
+				t.Errorf("Row no longer contains elements after nil: %+v", row[2])
+			}
 		},
 	)
 }
