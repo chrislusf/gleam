@@ -98,6 +98,7 @@ function writeRow(...)
   for i=1, width do
     local v = select(i, ...)
     encoded = encoded .. mp.pack(v)
+    -- log(i..":"..tostring(v))
   end
   writeBytes(encoded)
 end
