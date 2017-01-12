@@ -67,7 +67,7 @@ while true do
   if not row then break end
 
   local t = _flatMap(listUnpack(row))
-  -- TODO: check nil here
+  -- assuming no nil in the returned list
   if t then
     for x in t do
       writeRow(x)
