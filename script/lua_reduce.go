@@ -10,11 +10,11 @@ func (c *LuaScript) Reduce(code string) {
 		Type: "Reduce",
 		Code: fmt.Sprintf(`
 local _reduce = %s
-local row, width = readRow()
+local row = readRow()
 if row then
   local lastValue = row[1]
   while true do
-    local row, width = readRow()
+    local row = readRow()
     if not row then break end
     if row[1] then
       lastValue = _reduce(lastValue, row[1]) 
@@ -34,59 +34,59 @@ local keyIndexes = {%s}
 local keyIndexesSet = set(keyIndexes)
 local keyWidth = #keyIndexes
 
-local function _getKeysAndValues(row, rowWidth)
-  local keys, values = {}, {}
-  for i=1, rowWidth, 1 do
+local function _getKeysAndValues(row)
+  local keys, values = listNew(), listNew()
+  for i=1, row.n, 1 do
     if keyIndexesSet[i] then
-      table.insert(keys, row[i])
+      listInsert(keys, row[i])
     else
-      table.insert(values, row[i])
+      listInsert(values, row[i])
     end
   end
-  if rowWidth-1 == keyWidth then
+  if row.n-1 == keyWidth then
     return keys, values[1]
   end
   return keys, values
 end
 
 local function _writeKeyValues(keys, values, rowWidth)
-  row = {}
-  addToTable(row, keys)
+  row = listNew()
+  listExtend(row, keys)
   if rowWidth-1 == keyWidth then
-    table.insert(row, values)
+    listInsert(row, values)
   else
-    addToTable(row, values)
+    listExtend(row, values)
   end
-  writeRow(unpack(row))
+  writeRow(listUnpack(row))
 end
 
 local _reduce = %s
 
-local row, rowWidth = readRow()
+local row = readRow()
 if row then
-  local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+  local lastKeys, lastValues = _getKeysAndValues(row)
   while true do
     local row = readRow()
     if not row then break end
     
-    local keys, values = _getKeysAndValues(row, rowWidth)
+    local keys, values = _getKeysAndValues(row)
     if not listEquals(keys, lastKeys) then
-      _writeKeyValues(lastKeys, lastValues, rowWidth)
-      lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
+      _writeKeyValues(lastKeys, lastValues, row.n)
+      lastKeys, lastValues = _getKeysAndValues(row)
     else
-      local params = {}
-      if rowWidth-1 == keyWidth then
-        table.insert(params, lastValues)
-        table.insert(params, values)
-        lastValues = _reduce(unpack(params))
+      local params = listNew()
+      if row.n-1 == keyWidth then
+        listInsert(params, lastValues)
+        listInsert(params, values)
+        lastValues = _reduce(listUnpack(params))
       else
-        addToTable(params, lastValues)
-        addToTable(params, values)
-        lastValues = {_reduce(unpack(params))}
+        listExtend(params, lastValues)
+        listExtend(params, values)
+        lastValues = listNew(_reduce(listUnpack(params)))
       end
     end
   end
-  _writeKeyValues(lastKeys, lastValues, rowWidth)
+  _writeKeyValues(lastKeys, lastValues, row.n)
 end
 `, genKeyIndexes(indexes), code),
 	})
@@ -100,56 +100,53 @@ local keyIndexes = {%s}
 local keyIndexesSet = set(keyIndexes)
 local keyWidth = #keyIndexes
 
-local function _getKeysAndValues(row, rowWidth)
-  local keys, values = {}, {}
-  for i=1, rowWidth, 1 do
+local function _getKeysAndValues(row)
+  local keys, values = listNew(), listNew()
+  for i=1, row.n, 1 do
     if keyIndexesSet[i] then
-      table.insert(keys, row[i])
+      listInsert(keys, row[i])
     else
-      table.insert(values, row[i])
+      listInsert(values, row[i])
     end
   end
   return keys, values
 end
 
-local function _writeKeyValues(keys, valuesList, count, rowWidth)
-  row = {}
-  addToTable(row, keys)
+local function _writeKeyValues(keys, valuesList, rowWidth)
+  row = listNew()
+  listExtend(row, keys)
   if rowWidth-1 == keyWidth then
-    local unpacked = {}
-    for _, values in ipairs(valuesList) do
-      table.insert(unpacked, values[1])
+    local unpacked = listNew()
+    for i=1, valuesList.n do
+      listInsert(unpacked, valuesList[i][1])
     end
-    addToTable(row, {unpacked})
+    listInsert(row, unpacked)
   elseif rowWidth ~= keyWidth then
-    addToTable(row, valuesList)
+    listExtend(row, valuesList)
   end
-  table.insert(row, count)
-  writeRow(unpack(row))
+  listInsert(row, valuesList.n)
+  writeRow(listUnpack(row))
 end
 
-local row, rowWidth = readRow()
+local row = readRow()
 if row then
 
-  local lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
-  local count = 1
-  local lastValuesList = {lastValues}
+  local lastKeys, lastValues = _getKeysAndValues(row)
+  local lastValuesList = listNew(lastValues)
   while true do
     local row = readRow()
     if not row then break end
 
-    local keys, values = _getKeysAndValues(row, rowWidth)
+    local keys, values = _getKeysAndValues(row)
     if not listEquals(keys, lastKeys) then
-      _writeKeyValues(lastKeys, lastValuesList, count, rowWidth)
-      lastKeys, lastValues = _getKeysAndValues(row, rowWidth)
-      count = 1
-      lastValuesList = {lastValues}
+      _writeKeyValues(lastKeys, lastValuesList, row.n)
+      lastKeys, lastValues = _getKeysAndValues(row)
+      lastValuesList = listNew(lastValues)
     else
-      table.insert(lastValuesList, values)
-      count = count + 1
+      listInsert(lastValuesList, values)
     end
   end
-  _writeKeyValues(lastKeys, lastValuesList, count, rowWidth)
+  _writeKeyValues(lastKeys, lastValuesList, row.n)
 end
 `, genKeyIndexes(indexes)),
 	})

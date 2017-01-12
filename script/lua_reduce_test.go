@@ -108,6 +108,30 @@ func TestLuaReduceBySingleValues(t *testing.T) {
 	)
 }
 
+func TestLuaReduceByWithNil(t *testing.T) {
+	testLuaScript(
+		"test ReduceBy with nil",
+		func(script Script) {
+			script.ReduceBy(`
+				function(x, y, a, b)
+					return a, b
+				end
+			`, []int{1})
+		},
+		func(inputWriter io.Writer) {
+			util.WriteRow(inputWriter, "key1", 100, nil)
+			util.WriteRow(inputWriter, "key1", 101, 3)
+		},
+		func(outputReader io.Reader) {
+			row, _ := util.ReadRow(outputReader)
+			t.Logf("row1: %+v", row)
+			if !(row[1].(uint64) == 101 && row[2].(uint64) == 3) {
+				t.Errorf("failed ReduceBy results: [%s %d %d]", row...)
+			}
+		},
+	)
+}
+
 func TestLuaGroupByMultipleValue(t *testing.T) {
 
 	testLuaScript(

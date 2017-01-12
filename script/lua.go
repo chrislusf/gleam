@@ -22,14 +22,66 @@ func NewLuajitScript() Script {
 
 func (c *LuaScript) Init(code string) {
 	c.initCode = `
-local mp = require "MessagePack"
-mp.set_string 'binary'
-local unpack = table.unpack or unpack
-local NIL = {}
 
+local mp = require "MessagePack"
+
+mp.set_string 'binary'
+
+--- log to stderr ----
 function log(message)
   io.stderr:write(message)
   io.stderr:write("\n")
+end
+
+-- list operations: pack and unpack a list
+local unpack = table.unpack or unpack
+
+-- collect all non nil elements into a table
+local function listCollect(t)
+  local ret = {}
+  for i=1, t.n do
+    if t[i] then
+      table.insert(ret, t[i])
+    end
+  end
+  return ret
+end
+
+local function listInsert(t, x)
+  t.n = t.n + 1
+  if x and type(x)=="table" and x.n then
+    t[t.n] = listCollect(x)
+  else
+    t[t.n] = x
+  end
+  return t
+end
+
+local function listNew(...)
+  local t = { ... }
+  t.n = select("#", ...)
+  return t
+end
+
+local function listUnpack(t)
+  return unpack(t, 1, t.n)
+end
+
+function listExtend(x, y)
+  if not y then return end
+  for i=1, y.n do listInsert(x,y[i]) end
+end
+
+function listEquals(x, y)
+  if x.n ~= y.n then
+    return false
+  end
+  for i=1,x.n do
+    if x[i] ~= y[i] then
+      return false
+    end
+  end
+  return true
 end
 
 -- Read an integer in LSB order.
@@ -67,17 +119,15 @@ end
 function decodeRow(encoded)
   if not encoded then return nil end
   local length = string.len(encoded)
-  local decoded = {}
+  local decoded = listNew()
   local start = 1
   local x = nil
-  local width = 0
   while start <= length do
-    width = width + 1
     x, start = mp.unpack(encoded, start)
-    decoded[width] = x
+    listInsert(decoded, x)
     if start > length then break end
   end
-  return decoded, width
+  return decoded
 end
 
 function readRow()
@@ -105,24 +155,10 @@ function writeRow(...)
   end
 end
 ------------ helper functions ---------
-function listEquals(x, y)
-  for i,v in ipairs(x) do
-    if v ~= y[i] then
-      return false
-    end
-  end
-  return true
-end
-
 function set(list)
   local s = {}
   for _, l in ipairs(list) do s[l] = true end
   return s
-end
-
-function addToTable(x, y)
-  if not y then return end
-  for _, l in ipairs(y) do table.insert(x,l) end
 end
 
 function split(text, sep)
