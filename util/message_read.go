@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 )
 
+// TakeTsv Reads and processes TSV lines.
+// If count is less than 0, all lines are processed.
 func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
@@ -35,6 +37,8 @@ func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 	return nil
 }
 
+// TakeMessage Reads and processes MessagePack encoded messages.
+// If count is less than 0, all lines are processed.
 func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) {
 	reader = bufio.NewReader(reader)
 	for err == nil {
@@ -57,10 +61,12 @@ func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) 
 	return
 }
 
+// ProcessMessage Reads and processes MessagePack encoded messages until EOF
 func ProcessMessage(reader io.Reader, f func([]byte) error) (err error) {
 	return TakeMessage(reader, -1, f)
 }
 
+// ReadMessage reads out the []byte for one message
 func ReadMessage(reader io.Reader) (m []byte, err error) {
 	var length int32
 	err = binary.Read(reader, binary.LittleEndian, &length)

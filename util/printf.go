@@ -5,8 +5,10 @@ import (
 	"io"
 )
 
-func TsvPrintf(inChan io.Reader, writer io.Writer, format string) error {
-	return TakeTsv(inChan, -1, func(args []string) error {
+// TsvPrintf reads TSV lines from reader,
+// and formats according to a format specifier and writes to writer.
+func TsvPrintf(reader io.Reader, writer io.Writer, format string) error {
+	return TakeTsv(reader, -1, func(args []string) error {
 		var objects []interface{}
 		for _, arg := range args {
 			objects = append(objects, arg)
@@ -19,9 +21,11 @@ func TsvPrintf(inChan io.Reader, writer io.Writer, format string) error {
 	})
 }
 
-func Fprintf(inChan io.Reader, writer io.Writer, format string) error {
+// Fprintf reads MessagePack encoded messages from reader,
+// and formats according to a format specifier and writes to writer.
+func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 
-	return ProcessMessage(inChan, func(encodedBytes []byte) error {
+	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
@@ -37,8 +41,10 @@ func Fprintf(inChan io.Reader, writer io.Writer, format string) error {
 	})
 }
 
-func FprintRowsFromChannel(ch io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
-	return ProcessMessage(ch, func(encodedBytes []byte) error {
+// PrintDelimited Reads and formats MessagePack encoded messages
+// with delimiter and lineSeparator.
+func PrintDelimited(reader io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
+	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))

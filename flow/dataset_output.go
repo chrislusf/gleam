@@ -45,7 +45,7 @@ func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 			_, err := io.Copy(w, reader)
 			return err
 		}
-		return util.FprintRowsFromChannel(reader, w, "\t", "\n")
+		return util.PrintDelimited(reader, w, "\t", "\n")
 	}
 	return d.Output(fn)
 }

@@ -168,7 +168,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writ
 
 	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
 
-	if err := FprintRowsFromChannel(r, w, "\t", "\n"); err != nil {
+	if err := PrintDelimited(r, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}
