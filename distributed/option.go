@@ -1,7 +1,9 @@
 package distributed
 
 import (
+	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/chrislusf/gleam/distributed/driver"
 	"github.com/chrislusf/gleam/flow"
@@ -59,7 +61,11 @@ func (o *DistributedOption) SetMaster(master string) *DistributedOption {
 // The files are placed on the executed task's current working directory.
 func (o *DistributedOption) WithFile(relatedFile ...string) *DistributedOption {
 	for _, f := range relatedFile {
-		o.RequiredFiles = append(o.RequiredFiles, f)
+		relativePath, err := filepath.Rel(".", f)
+		if err != nil {
+			log.Fatalf("Failed to find file %s: %v", f, err)
+		}
+		o.RequiredFiles = append(o.RequiredFiles, relativePath)
 	}
 	return o
 }

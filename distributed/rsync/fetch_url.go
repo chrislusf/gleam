@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -39,13 +40,13 @@ func FetchFilesTo(driverAddress string, dir string) error {
 	}
 
 	for _, fh := range fileList {
-		toFile := filepath.Join(dir, filepath.Base(fh.File))
+		toFile := filepath.Join(dir, fh.FullPath)
 		hasSameHash := false
 		if toFileHash, err := GenerateFileHash(toFile); err == nil {
 			hasSameHash = toFileHash.Hash == fh.Hash
 		}
 		if hasSameHash {
-			// println("skip downloading same", fh.File)
+			println("skip downloading same", toFile)
 			continue
 		}
 		if err = FetchUrl(fmt.Sprintf("%s%s/file/%d", util.SchemePrefix, driverAddress, fh.Hash), toFile); err != nil {
@@ -60,6 +61,10 @@ func FetchUrl(fileUrl string, destFile string) error {
 	_, buf, err := util.DownloadUrl(fileUrl)
 	if err != nil {
 		return fmt.Errorf("Failed to read from %s: %v", fileUrl, err)
+	}
+	err = os.MkdirAll(filepath.Dir(destFile), 0755)
+	if err != nil {
+		return fmt.Errorf("Failed to create folder %s: %v", filepath.Dir(destFile), err)
 	}
 	err = ioutil.WriteFile(destFile, buf, 0755)
 	if err != nil {

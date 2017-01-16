@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -77,8 +76,6 @@ func (d *Dataset) LocalReducerBy(commandLine string, sortOptions ...*SortOption)
 	commandLine = commandLine + " " + strings.Join(keyPositions, ",")
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
-
-	fmt.Printf("CommandLineArguments: %v\n", step.Command.Args)
 
 	return ret
 }

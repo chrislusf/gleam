@@ -1,0 +1,12 @@
+/usr/local/go/bin/go test -v [/Users/chris/dev/gopath/src/github.com/chrislusf/gleam/distributed/rsync]
+=== RUN   TestNormalHttpCopy
+skip downloading same /tmp/http_server.go
+fetching file /store/single_file_store.go
+requesting 2407918519 having 2407918519 sent
+pausing localhost:56909
+--- FAIL: TestNormalHttpCopy (0.01s)
+	http_server_test.go:24: Failed to download file: Failed to download file single_file_store.go: Failed to write /store/single_file_store.go: open /store/single_file_store.go: no such file or directory
+FAIL
+exit status 1
+FAIL	github.com/chrislusf/gleam/distributed/rsync	0.015s
+Error: process exited with code 1.

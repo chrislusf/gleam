@@ -1,19 +1,21 @@
+# This make file is not necessary
+# Just to demonstrate the right process
 all: build
 
-.PHONY : clean build run_local run_distributed
+.PHONY : clean build_mr build run_local run_distributed
 
 clean:
-	rm -f go_mr
-	rm -f word_count_local
-	rm -f word_count_distributed
+	rm -f mr/mr
+	rm -f word_count_in_go
 
-build:
-	go build -o go_mr go_mr.go
-	go build -o word_count_local word_count_local.go
-	go build -o word_count_distributed word_count_distributed.go
+build_mr:
+	cd mr; go build
+
+build: build_mr
+	go build
 
 run_local: build
-	./word_count_local
+	./word_count_in_go -distributed false
 
 run_distributed: build
-	./word_count_distributed
+	./word_count_in_go -distributed true
