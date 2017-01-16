@@ -239,6 +239,9 @@ After the flow is defined, the Run() function can be executed in different ways:
   f.Run(distributed.Planner())
 
 ```
+# Write Mapper Reducer in Go
+
+LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more complicated, but not much. Gleam allows us to write a simple Go code with mapper or reducer logic, and automatically send it over to Gleam agents to execute. See https://github.com/chrislusf/gleam/wiki/Write-Mapper-Reducer-in-Go
 
 # Status
 Gleam is just beginning. Here are a few todo that needs help:
