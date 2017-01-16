@@ -17,14 +17,15 @@ import (
 )
 
 type Option struct {
-	Master       string
-	DataCenter   string
-	Rack         string
-	TaskMemoryMB int
-	FlowBid      float64
-	Module       string
-	Host         string
-	Port         int
+	RequiredFiles []string
+	Master        string
+	DataCenter    string
+	Rack          string
+	TaskMemoryMB  int
+	FlowBid       float64
+	Module        string
+	Host          string
+	Port          int
 }
 
 type FlowContextDriver struct {
@@ -51,7 +52,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	fcd.logExecutionPlan(fc)
 
 	// start server to serve files to agents to run exectuors
-	rsyncServer, err := rsync.NewRsyncServer(os.Args[0], nil)
+	rsyncServer, err := rsync.NewRsyncServer(fcd.Option.RequiredFiles...)
 	if err != nil {
 		log.Fatalf("Failed to start local server: %v", err)
 	}

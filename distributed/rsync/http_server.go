@@ -23,24 +23,17 @@ type FileHash struct {
 }
 
 type RsyncServer struct {
-	Ip             string
-	Port           int
-	listenOn       string
-	ExecutableFile string
-	RelatedFiles   []string
+	Ip           string
+	Port         int
+	listenOn     string
+	RelatedFiles []string
 
 	fileHashes []FileHash
 }
 
-func NewRsyncServer(file string, relatedFiles []string) (*RsyncServer, error) {
+func NewRsyncServer(relatedFiles ...string) (*RsyncServer, error) {
 	rs := &RsyncServer{
-		ExecutableFile: file,
-		RelatedFiles:   relatedFiles,
-	}
-	if fh, err := GenerateFileHash(file); err != nil {
-		log.Printf("Failed1 to read %s: %v", file, err)
-	} else {
-		rs.fileHashes = append(rs.fileHashes, *fh)
+		RelatedFiles: relatedFiles,
 	}
 	for _, f := range rs.RelatedFiles {
 		if fh, err := GenerateFileHash(f); err != nil {
