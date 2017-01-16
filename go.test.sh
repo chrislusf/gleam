@@ -6,6 +6,7 @@ echo "" > coverage.txt
 for d in $(go list ./... \
 	| grep -v vendor  \
 	| grep -v "gleam/pb" \
+	| grep -v "word_count_in_go" \
 	| grep -v "gleam/util"); do
     go test -race -coverprofile=profile.out -covermode=atomic $d
     if [ -f profile.out ]; then
