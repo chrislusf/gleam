@@ -24,7 +24,8 @@ before_install:
  - luarocks install --server=http://luarocks.org/dev gleam-lua
 
 install:
- - go get $(go list ./... | grep -v word_count_in_go)
+ - go get ./...
+ # - go get $(go list ./... | grep -v word_count_in_go)
 
 script:
  # - go test -race ./...
