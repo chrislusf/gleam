@@ -1,11 +1,26 @@
 package flow
 
+import (
+	"github.com/chrislusf/gleam/script"
+)
+
 // Map operates on each row, and the returned results are passed to next dataset.
 func (d *Dataset) Map(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Map"
 	step.Script = d.FlowContext.createScript()
 	step.Script.Map(code)
+	return ret
+}
+
+// Mapper runs the commandLine as an external program
+// The input and output are in MessagePack format.
+// This is mostly used to execute external Go code.
+func (d *Dataset) Mapper(commandLine string) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.Name = "Mapper"
+	step.IsPipe = false
+	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 	return ret
 }
 
