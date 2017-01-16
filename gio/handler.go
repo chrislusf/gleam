@@ -30,7 +30,7 @@ func RegisterReducer(commandName string, fn Reducer) {
 }
 
 // Serve starts processing stdin and writes output to stdout
-func Serve() {
+func RunMapperReducer() {
 	if len(os.Args) < 2 {
 		log.Fatalf("Expecting one command line arguments, but got %v", os.Args)
 	}

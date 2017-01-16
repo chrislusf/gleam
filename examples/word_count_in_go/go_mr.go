@@ -12,7 +12,7 @@ func main() {
 	gio.RegisterMapper("addOne", mapperAddOne)
 	gio.RegisterReducer("sum", reducerSum)
 
-	gio.Serve()
+	gio.RunMapperReducer()
 
 }
 
