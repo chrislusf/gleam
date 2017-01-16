@@ -27,7 +27,7 @@ func (as *AgentServer) serveGrpc(listener net.Listener) {
 // Execute executes a request and stream stdout and stderr back
 func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgent_ExecuteServer) error {
 
-	dir := path.Join(*as.Option.Dir, request.GetInstructions().GetFlowHashCode(), request.GetDir())
+	dir := path.Join(*as.Option.Dir, fmt.Sprintf("%d", request.GetInstructions().GetFlowHashCode()), request.GetDir())
 	os.MkdirAll(dir, 0755)
 
 	err := rsync.FetchFilesTo(fmt.Sprintf("%s:%d", request.GetHost(), request.GetPort()), dir)
