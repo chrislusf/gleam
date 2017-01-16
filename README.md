@@ -8,8 +8,10 @@
 Gleam is a high performance and efficient distributed execution system, and also 
 simple, generic, flexible and easy to customize.
 
-Gleam is built in Go, and the user defined computation can be written in Lua, 
+Gleam is built in Go, and the user defined computation can be written in Go, Lua, 
 Unix pipe tools, or any streaming programs.
+
+It is convenient to write logic in Lua. Go is also supported with a little bit extra effort.
 
 ### High Performance
 
