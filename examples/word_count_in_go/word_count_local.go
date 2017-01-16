@@ -12,9 +12,11 @@ func main() {
 	flow.New().
 		TextFile("/etc/passwd").
 		Pipe("tr 'A-Z' 'a-z'").
-		Mapper("./go_mapper mapper1").
+		Mapper("./go_mr tokenize").
 		Pipe("sort").
-		Pipe("uniq -c").
-		Fprintf(os.Stdout, "%s\n").Run()
+		Mapper("./go_mr addOne").
+		ReducerBy("./go_mr sum").
+		Sort(flow.OrderBy(2, true)).
+		Fprintf(os.Stdout, "%s %d\n").Run()
 
 }

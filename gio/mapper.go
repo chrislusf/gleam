@@ -13,7 +13,7 @@ func Emit(anyObject ...interface{}) error {
 	return util.WriteRow(os.Stdout, anyObject...)
 }
 
-func Process(f func([]interface{}) error) (err error) {
+func ProcessMapper(f Mapper) (err error) {
 	for {
 		row, err := util.ReadRow(os.Stdin)
 		if err != nil {
