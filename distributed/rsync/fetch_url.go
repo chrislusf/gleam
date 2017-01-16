@@ -48,7 +48,7 @@ func FetchFilesTo(driverAddress string, dir string) error {
 			// println("skip downloading same", fh.File)
 			continue
 		}
-		if err = FetchUrl(util.SchemePrefix+driverAddress+"/file/"+fh.File, toFile); err != nil {
+		if err = FetchUrl(fmt.Sprintf("%s%s/file/%d", util.SchemePrefix, driverAddress, fh.Hash), toFile); err != nil {
 			return fmt.Errorf("Failed to download file %s: %v", fh.File, err)
 		}
 	}

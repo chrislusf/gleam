@@ -3,6 +3,7 @@
 package rsync
 
 import (
+	"fmt"
 	"hash/crc32"
 	"io"
 	"log"
@@ -50,9 +51,9 @@ func (rs *RsyncServer) listHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs *RsyncServer) fileHandler(w http.ResponseWriter, r *http.Request) {
-	fileName := r.URL.Path[len("/file/"):]
+	fileHash := r.URL.Path[len("/file/"):]
 	for _, fh := range rs.fileHashes {
-		if fh.File == fileName {
+		if fmt.Sprintf("%d", fh.Hash) == fileHash {
 			file, err := os.Open(fh.FullPath)
 			if err != nil {
 				log.Printf("Can not read file: %s", fh.FullPath)
