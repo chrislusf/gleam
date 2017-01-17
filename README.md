@@ -11,27 +11,25 @@ simple, generic, flexible and easy to customize.
 Gleam is built in Go, and the user defined computation can be written in Go, Lua, 
 Unix pipe tools, or any streaming programs.
 
-It is convenient to write logic in Lua. Go is also supported with a little bit extra effort.
+It is convenient to write logic in Lua, but Lua is not required. Go is also supported with a little bit extra effort.
 
 ### High Performance
 
-* Go itself has high performance and concurrency.
-* LuaJIT also has high performance comparable to C, Java, Go.
+* Go itself has high performance and concurrency. LuaJIT also has high performance comparable to C, Java, Go.
 * LuaJIT stream processes data, no context switches between Go and Lua.
 
 ### Memory Efficient
 
-* Gleam does not have the common GC problem that plagued other languages. Each executor is run in a separated OS process.
-* Gleam master and agent servers does not run actual computation.
-* Gleam master and agent servers are memory efficient, consuming less than 10 MB memory.
-* LuaJIT runs in parallel OS processes. The memory is managed by the OS.
-* One machine can host many more executors.
+* Gleam does not have the common GC problem that plagued other languages. Each executor is run in a separated OS process. The memory is managed by the OS. One machine can host many more executors.
+* Gleam master and agent servers are memory efficient, consuming about 10 MB memory.
 
-The shuffle step in map-shuffle-reduce is costly because it usually needs to go through disk, since usually there are not enough executors to process the data partitions at the same time. But when one server can host many more executors, the partitions generated can be drained directly without touching disk.
+The shuffle step in map-shuffle-reduce is costly because it usually needs to go through disk, since usually there are not enough executors to process the data partitions at the same time. But when executors are memory efficient, they can process more all data without touching disk.
+
+Gleam also tries to automatically adjust the required memory size based on data size hints, avoiding many try-and-error manual tuning steps.
 
 ### Flexible
 * The Gleam flow can run standalone or distributed.
-* Data flows in Gleam either through memory and network, or optionally to disk for later re-tries.
+* Adjustable in memory mode or OnDisk mode. Data flows through memory or optionally to disk.
 
 ### Easy to Customize
 * The Go code is much simpler to read than Scala, Java, C++.
@@ -42,8 +40,7 @@ The shuffle step in map-shuffle-reduce is costly because it usually needs to go 
 Gleam code defines the flow, specifying each dataset(vertex) and computation step(edge), and build up a directed
 acyclic graph(DAG). There are multiple ways to execute the DAG.
 
-The default way is to run locally. This works in most cases. Actually this runs much faster than distributed mode
-if your data is not much.
+The default way is to run locally. This works in most cases. 
 
 Here we mostly talk about the distributed mode.
 
