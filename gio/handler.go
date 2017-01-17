@@ -44,6 +44,7 @@ func RegisterReducer(reducerName string, fn Reducer) {
 	reducers[reducerName] = fn
 }
 
+// Init determines whether the driver program will execute the mapper/reducer or not.
 func Init() {
 	flag.Parse()
 
