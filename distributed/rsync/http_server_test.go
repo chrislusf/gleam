@@ -9,8 +9,11 @@ import (
 
 func TestNormalHttpCopy(t *testing.T) {
 
-	files := []string{
-		"http_server.go", "./test/some_text.txt", "fetch_url.go",
+	files := []FileResource{
+		{os.Args[0], "."},
+		{"http_server.go", "."},
+		{"./test/some_text.txt", "./test/"},
+		{"fetch_url.go", "."},
 	}
 
 	rsyncServer, err := NewRsyncServer(files...)
@@ -25,9 +28,6 @@ func TestNormalHttpCopy(t *testing.T) {
 		t.Fatalf("Failed to download file: %v", err)
 		time.Sleep(time.Minute)
 	}
-
-	os.Remove("/tmp/test/some_text.txt")
-	os.Remove("/tmp/fetch_url.go")
 
 	t.Logf("file downloading works ok.")
 }

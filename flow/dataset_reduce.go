@@ -1,6 +1,9 @@
 package flow
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -40,12 +43,12 @@ func (d *Dataset) ReduceBy(code string, sortOptions ...*SortOption) (ret *Datase
 // ReducerBy runs the commandLine as an external program
 // The input and output are in MessagePack format.
 // This is mostly used to execute external Go code.
-func (d *Dataset) ReducerBy(commandLine string, sortOptions ...*SortOption) (ret *Dataset) {
+func (d *Dataset) ReducerBy(reducerName string, sortOptions ...*SortOption) (ret *Dataset) {
 	sortOption := concat(sortOptions)
 
-	ret = d.LocalSort(sortOption).LocalReducerBy(commandLine, sortOption)
+	ret = d.LocalSort(sortOption).LocalReducerBy(reducerName, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalReducerBy(commandLine, sortOption)
+		ret = ret.MergeSortedTo(1, sortOption).LocalReducerBy(reducerName, sortOption)
 	}
 	return ret
 }
@@ -61,7 +64,7 @@ func (d *Dataset) LocalReduceBy(code string, sortOptions ...*SortOption) *Datase
 	return ret
 }
 
-func (d *Dataset) LocalReducerBy(commandLine string, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LocalReducerBy(reducerName string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	ret, step := add1ShardTo1Step(d)
@@ -73,7 +76,9 @@ func (d *Dataset) LocalReducerBy(commandLine string, sortOptions ...*SortOption)
 	for _, keyPosition := range sortOption.Indexes() {
 		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
 	}
-	commandLine = commandLine + " " + strings.Join(keyPositions, ",")
+
+	commandLine := fmt.Sprintf("./%s -gleam.reducer %s -gleam.keyFields %s",
+		filepath.Base(os.Args[0]), reducerName, strings.Join(keyPositions, ","))
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 

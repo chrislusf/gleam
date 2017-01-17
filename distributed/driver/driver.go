@@ -17,7 +17,7 @@ import (
 )
 
 type Option struct {
-	RequiredFiles []string
+	RequiredFiles []rsync.FileResource
 	Master        string
 	DataCenter    string
 	Rack          string

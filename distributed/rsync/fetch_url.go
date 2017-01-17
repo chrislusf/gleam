@@ -40,7 +40,7 @@ func FetchFilesTo(driverAddress string, dir string) error {
 	}
 
 	for _, fh := range fileList {
-		toFile := filepath.Join(dir, fh.FullPath)
+		toFile := filepath.Join(dir, fh.TargetFolder, fh.File)
 		hasSameHash := false
 		if toFileHash, err := GenerateFileHash(toFile); err == nil {
 			hasSameHash = toFileHash.Hash == fh.Hash
@@ -49,6 +49,7 @@ func FetchFilesTo(driverAddress string, dir string) error {
 			println("skip downloading same", toFile)
 			continue
 		}
+		// println("downloading file", toFile)
 		if err = FetchUrl(fmt.Sprintf("%s%s/file/%d", util.SchemePrefix, driverAddress, fh.Hash), toFile); err != nil {
 			return fmt.Errorf("Failed to download file %s: %v", fh.File, err)
 		}

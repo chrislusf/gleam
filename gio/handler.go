@@ -1,6 +1,7 @@
 package gio
 
 import (
+	"flag"
 	"log"
 	"os"
 	"strconv"
@@ -9,6 +10,20 @@ import (
 
 type Mapper func([]interface{}) error
 type Reducer func(x, y interface{}) (interface{}, error)
+
+type gleamTaskOption struct {
+	Mapper    string
+	Reducer   string
+	KeyFields string
+}
+
+var taskOption gleamTaskOption
+
+func init() {
+	flag.StringVar(&taskOption.Mapper, "gleam.mapper", "", "the generated mapper name")
+	flag.StringVar(&taskOption.Reducer, "gleam.reducer", "", "the generated reducer name")
+	flag.StringVar(&taskOption.KeyFields, "gleam.keyFields", "", "the 1-based key fields")
+}
 
 var (
 	mappers  map[string]Mapper
@@ -21,53 +36,62 @@ func init() {
 }
 
 // RegisterMapper register a mapper function to process a command
-func RegisterMapper(commandName string, fn Mapper) {
-	mappers[commandName] = fn
+func RegisterMapper(mapperName string, fn Mapper) {
+	mappers[mapperName] = fn
 }
 
-func RegisterReducer(commandName string, fn Reducer) {
-	reducers[commandName] = fn
+func RegisterReducer(reducerName string, fn Reducer) {
+	reducers[reducerName] = fn
+}
+
+func Init() {
+	flag.Parse()
+
+	if taskOption.Mapper != "" || taskOption.Reducer != "" {
+		runMapperReducer()
+		os.Exit(0)
+	}
 }
 
 // Serve starts processing stdin and writes output to stdout
-func RunMapperReducer() {
-	if len(os.Args) < 2 {
-		log.Fatalf("Expecting one command line arguments, but got %v", os.Args)
-	}
+func runMapperReducer() {
 
-	commandName := os.Args[1]
-
-	if fn, ok := mappers[commandName]; ok {
-		if err := ProcessMapper(fn); err != nil {
-			log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
-		}
-		return
-	}
-
-	if fn, ok := reducers[commandName]; ok {
-
-		if len(os.Args) < 3 {
-			log.Fatalf("Expecting two command line arguments, but got %v", os.Args)
-		}
-
-		keyPositionsArgument := os.Args[2]
-
-		keyPositions := strings.Split(keyPositionsArgument, ",")
-		var keyIndexes []int
-		for _, keyPosition := range keyPositions {
-			keyIndex, keyIndexError := strconv.Atoi(keyPosition)
-			if keyIndexError != nil {
-				log.Fatalf("Failed to parse key index positions %v: %v", os.Args[2], keyIndexError)
+	if taskOption.Mapper != "" {
+		if fn, ok := mappers[taskOption.Mapper]; ok {
+			if err := ProcessMapper(fn); err != nil {
+				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
 			}
-			keyIndexes = append(keyIndexes, keyIndex)
+			return
+		} else {
+			log.Fatalf("Failed to find mapper function for %v", taskOption.Mapper)
 		}
-
-		if err := ProcessReducer(fn, keyIndexes); err != nil {
-			log.Fatalf("Failed to execute reducer %v: %v", os.Args, err)
-		}
-
-		return
 	}
 
-	log.Fatalf("Failed to find function for %v", commandName)
+	if taskOption.Reducer != "" {
+		if taskOption.KeyFields == "" {
+			log.Fatalf("Also expecting values for -gleam.keyFields! Actual arguments: %v", os.Args)
+		}
+		if fn, ok := reducers[taskOption.Reducer]; ok {
+
+			keyPositions := strings.Split(taskOption.KeyFields, ",")
+			var keyIndexes []int
+			for _, keyPosition := range keyPositions {
+				keyIndex, keyIndexError := strconv.Atoi(keyPosition)
+				if keyIndexError != nil {
+					log.Fatalf("Failed to parse key index positions %v: %v", taskOption.KeyFields, keyIndexError)
+				}
+				keyIndexes = append(keyIndexes, keyIndex)
+			}
+
+			if err := ProcessReducer(fn, keyIndexes); err != nil {
+				log.Fatalf("Failed to execute reducer %v: %v", os.Args, err)
+			}
+
+			return
+		} else {
+			log.Fatalf("Failed to find reducer function for %v", taskOption.Reducer)
+		}
+	}
+
+	log.Fatalf("Failed to find function to execute. Args: %v", os.Args)
 }
