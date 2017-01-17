@@ -17,6 +17,9 @@ It is convenient to write logic in Lua, but Lua is not required. Go is also supp
 
 * Go itself has high performance and concurrency. LuaJIT also has high performance comparable to C, Java, Go.
 * LuaJIT stream processes data, no context switches between Go and Lua.
+* Data flows through memory, optionally to disk.
+* Multiple map reduce steps are merged together for better performance.
+
 
 ### Memory Efficient
 
@@ -29,7 +32,7 @@ Gleam also tries to automatically adjust the required memory size based on data 
 
 ### Flexible
 * The Gleam flow can run standalone or distributed.
-* Adjustable in memory mode or OnDisk mode. Data flows through memory or optionally to disk.
+* Adjustable in memory mode or OnDisk mode.
 
 ### Easy to Customize
 * The Go code is much simpler to read than Scala, Java, C++.
