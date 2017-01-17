@@ -165,10 +165,9 @@ func main() {
 ## Parallel Execution
 Unix Pipes are easy for sequential pipes, but limited to fan out, and even more limited to fan in.
 
-With Gleam, fan-in and fan-out parallel pipes become very easy. (And this can be in distributed mode too!)
+With Gleam, fan-in and fan-out parallel pipes become very easy. 
 
 This example get a list of file names, partitioned into 3 groups, and then process them in parallel.
-This flow can be changed to use Pipe() also, of course.
 
 ```go
 // word_count.go
@@ -245,24 +244,24 @@ After the flow is defined, the Run() function can be executed in different ways:
 
 LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more complicated, but not much. Gleam allows us to write a simple Go code with mapper or reducer logic, and automatically send it over to Gleam agents to execute. See https://github.com/chrislusf/gleam/wiki/Write-Mapper-Reducer-in-Go
 
+# Important Features
+
+* Fault tolerant [OnDisk()](https://godoc.org/github.com/chrislusf/gleam/flow#Dataset.OnDisk).
+* Support Cassandra Fast Data Extraction.
+* Read data from Local, HDFS, or S3.
+
 # Status
-Gleam is just beginning. Here are a few todo that needs help:
-* Add better streaming support
-* Add better integration with Torch
-* Add better SQL database support
+Gleam is just beginning. Here are a few todo items:
+* Add metadata management.
+* Add better SQL database support.
+* Add streaming functions.
 * Caching of often re-calculated data.
-* Fault tolerant on unstable network/cluster.
-
-Maybe:
-* Add Python support
-* Add Javascript support
-
 
 Especially Need Help Now:
 * Go implementation to read Parquet files.
 * Design a good plugin system for accessing external data.
 
-Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
+Please start to use it and give feedback. Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
 
 [![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EEECLJ8QGTTPC) 
 
