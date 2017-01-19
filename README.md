@@ -11,11 +11,11 @@ simple, generic, flexible and easy to customize.
 Gleam is built in Go, and the user defined computation can be written in Go, Lua, 
 Unix pipe tools, or any streaming programs.
 
-It is convenient to write logic in Lua, but Lua is not required. Go is also supported with a little bit extra effort.
+It is convenient to write logic in Lua, but Lua is optional. Go is also supported with a little bit extra effort.
 
 ### High Performance
 
-* Go itself has high performance and concurrency. LuaJIT also has high performance comparable to C, Java, Go.
+* Go itself has high performance and concurrency. Optional LuaJIT also has high performance comparable to C, Java, Go.
 * LuaJIT stream processes data, no context switches between Go and Lua.
 * Data flows through memory, optionally to disk.
 * Multiple map reduce steps are merged together for better performance.
@@ -28,7 +28,7 @@ It is convenient to write logic in Lua, but Lua is not required. Go is also supp
 
 The shuffle step in map-shuffle-reduce is costly because it usually needs to go through disk, since usually there are not enough executors to process the data partitions at the same time. But when executors are memory efficient, they can process more all data without touching disk.
 
-Gleam also tries to automatically adjust the required memory size based on data size hints, avoiding many try-and-error manual tuning steps.
+Gleam also tries to automatically adjust the required memory size based on data size hints, avoiding the try-and-error manual memory tuning effort.
 
 ### Flexible
 * The Gleam flow can run standalone or distributed.
