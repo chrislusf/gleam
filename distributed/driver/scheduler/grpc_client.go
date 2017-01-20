@@ -36,8 +36,7 @@ func sendExecutionRequest(ctx context.Context,
 			break
 		}
 		if response.GetError() != nil {
-			err = fmt.Errorf("%s %v> %v", server, request.Name, string(response.GetError()))
-			return err
+			log.Printf("%s %v>%s", server, request.Name, string(response.GetError()))
 		}
 		if response.GetOutput() != nil {
 			fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
