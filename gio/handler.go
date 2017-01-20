@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type MapperId string
@@ -29,8 +30,10 @@ func init() {
 }
 
 var (
-	mappers  map[string]Mapper
-	reducers map[string]Reducer
+	mappers      map[string]Mapper
+	reducers     map[string]Reducer
+	mappersLock  sync.Mutex
+	reducersLock sync.Mutex
 )
 
 func init() {
@@ -40,12 +43,18 @@ func init() {
 
 // RegisterMapper register a mapper function to process a command
 func RegisterMapper(fn Mapper) MapperId {
+	mappersLock.Lock()
+	defer mappersLock.Unlock()
+
 	mapperName := fmt.Sprintf("m%d", len(mappers)+1)
 	mappers[mapperName] = fn
 	return MapperId(mapperName)
 }
 
 func RegisterReducer(fn Reducer) ReducerId {
+	reducersLock.Lock()
+	defer reducersLock.Unlock()
+
 	reducerName := fmt.Sprintf("r%d", len(reducers)+1)
 	reducers[reducerName] = fn
 	return ReducerId(reducerName)
