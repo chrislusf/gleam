@@ -87,7 +87,7 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 
 ## Word Count
 
-### Go + LuaJIT
+#### Word Count by Go + LuaJIT
 
 The full source code, not snippet, for word count:
 ```go
@@ -118,7 +118,7 @@ func main() {
 
 ```
 
-### Pure Go
+#### Word Count by Pure Go
 
 The above used LuaJIT to simplify the code. The way to write pure Go is here.
 https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
@@ -182,6 +182,7 @@ func sum(x, y interface{}) (interface{}, error) {
 
 ```
 
+#### Word Count by Unix Pipe Tools
 Another way to do the similar:
 ```go
 package main
