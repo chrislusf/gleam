@@ -86,6 +86,9 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 # Standalone Example
 
 ## Word Count
+
+### Go + LuaJIT
+
 The full source code, not snippet, for word count:
 ```go
 package main
@@ -115,26 +118,67 @@ func main() {
 
 ```
 
+### Pure Go
+
 The above used LuaJIT to simplify the code. The way to write pure Go is here.
 https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
 
 Basically, the Go function you want to invoke need to be registered first.
 It will return a mapper or reducer function id, which we can pass it to the flow.
 
-```
-var MapperTokenizer = gio.RegisterMapper(tokenize)
+```go
+package main
 
-...
+import (
+	"strings"
+	"os"
 
-gio.Init()
+	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
+)
 
-...
+var (
+	MapperTokenizer = gio.RegisterMapper(tokenize)
+	MapperAddOne    = gio.RegisterMapper(addOne)
+	ReducerSum      = gio.RegisterReducer(sum)
+)
 
-f := flow.New().TextFile("/etc/passwd").Pipe("tr 'A-Z' 'a-z'")
-		.Mapper("tokenize"). // invoke the registered "tokenize" mapper function.
-		...
+func main(){
+
+	gio.Init()
+
+	f := flow.New().TextFile("/etc/passwd").
+		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
+		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
+		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
-		Fprintf(os.Stdout, "%s %d\n")
+		Fprintf(os.Stdout, "%s %d\n").Run()
+}
+
+func tokenize(row []interface{}) error {
+
+	line := string(row[0].([]byte))
+
+	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
+		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
+	}) {
+		gio.Emit(s)
+	}
+
+	return nil
+}
+
+func addOne(row []interface{}) error {
+	word := string(row[0].([]byte))
+
+	gio.Emit(word, 1)
+
+	return nil
+}
+
+func sum(x, y interface{}) (interface{}, error) {
+	return x.(uint64) + y.(uint64), nil
+}
 
 ```
 

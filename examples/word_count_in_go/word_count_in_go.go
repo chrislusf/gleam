@@ -23,13 +23,10 @@ func main() {
 	flag.Parse() // optional, since gio.Init() will call this also.
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
-	f := flow.New().
-		TextFile("/etc/passwd").
-		Pipe("tr 'A-Z' 'a-z'").
+	f := flow.New().TextFile("/etc/passwd").
 		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
-		Pipe("sort").
-		Mapper(MapperAddOne).  // invoke the registered "addOne" mapper function.
-		ReducerBy(ReducerSum). // invoke the registered "sum" reducer function.
+		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
+		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
 		Fprintf(os.Stdout, "%s %d\n")
 
@@ -45,16 +42,12 @@ func main() {
 }
 
 func tokenize(row []interface{}) error {
-	if len(row) == 0 {
-		return nil
-	}
+
 	line := string(row[0].([]byte))
 
-	if strings.HasPrefix(line, "#") {
-		return nil
-	}
-
-	for _, s := range strings.Split(line, ":") {
+	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
+		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
+	}) {
 		gio.Emit(s)
 	}
 
