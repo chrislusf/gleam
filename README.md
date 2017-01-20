@@ -145,7 +145,7 @@ var (
 
 func main(){
 
-	gio.Init()
+	gio.Init() // required, place it right after main() starts
 
 	f := flow.New().TextFile("/etc/passwd").
 		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
@@ -156,23 +156,18 @@ func main(){
 }
 
 func tokenize(row []interface{}) error {
-
 	line := string(row[0].([]byte))
-
 	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
 		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
 	}) {
 		gio.Emit(s)
 	}
-
 	return nil
 }
 
 func addOne(row []interface{}) error {
 	word := string(row[0].([]byte))
-
 	gio.Emit(word, 1)
-
 	return nil
 }
 
