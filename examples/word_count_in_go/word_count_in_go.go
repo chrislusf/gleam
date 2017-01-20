@@ -14,12 +14,15 @@ var (
 	isDistributed = flag.Bool("distributed", false, "run in distributed or not")
 )
 
-func main() {
-
-	flag.Parse()
+func init() {
 	gio.RegisterMapper("tokenize", tokenize)
 	gio.RegisterMapper("addOne", addOne)
 	gio.RegisterReducer("sum", sum)
+}
+
+func main() {
+
+	flag.Parse()
 	gio.Init()
 
 	f := flow.New().
