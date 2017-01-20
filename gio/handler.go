@@ -45,6 +45,8 @@ func RegisterReducer(reducerName string, fn Reducer) {
 }
 
 // Init determines whether the driver program will execute the mapper/reducer or not.
+// If the command line invokes the mapper or reducer, execute it and exit.
+// This function will invoke flag.Parse() first.
 func Init() {
 	flag.Parse()
 

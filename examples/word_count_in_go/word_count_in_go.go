@@ -15,6 +15,8 @@ var (
 )
 
 func init() {
+	// Usually the functions are registered in init().
+	// So functions registered in other packages can be shared.
 	gio.RegisterMapper("tokenize", tokenize)
 	gio.RegisterMapper("addOne", addOne)
 	gio.RegisterReducer("sum", sum)
@@ -22,16 +24,16 @@ func init() {
 
 func main() {
 
-	flag.Parse()
-	gio.Init()
+	flag.Parse() // optional, since gio.Init() will call this also.
+	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
 	f := flow.New().
 		TextFile("/etc/passwd").
 		Pipe("tr 'A-Z' 'a-z'").
-		Mapper("tokenize").
+		Mapper("tokenize"). // invoke the registered "tokenize" mapper function.
 		Pipe("sort").
-		Mapper("addOne").
-		ReducerBy("sum").
+		Mapper("addOne"). // invoke the registered "addOne" mapper function.
+		ReducerBy("sum"). // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
 		Fprintf(os.Stdout, "%s %d\n")
 
