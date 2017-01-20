@@ -36,7 +36,7 @@ Gleam also tries to automatically adjust the required memory size based on data 
 
 ### Easy to Customize
 * The Go code is much simpler to read than Scala, Java, C++.
-* LuaJIT FFI library can easily invoke any C functions, for even more performance or use any existing C libraries.
+* Optional LuaJIT FFI library can easily invoke any C functions, for even more performance or use any existing C libraries.
 * (future) Write SQL with UDF written in Lua.
 
 # One Flow, Multiple ways to execute
@@ -87,43 +87,9 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 
 ## Word Count
 
-#### Word Count by Go + LuaJIT
-
-The full source code, not snippet, for word count:
-```go
-package main
-
-import (
-	"os"
-
-	"github.com/chrislusf/gleam/flow"
-)
-
-func main() {
-
-	flow.New().TextFile("/etc/passwd").FlatMap(`
-		function(line)
-			return line:gmatch("%w+")
-		end
-	`).Map(`
-		function(word)
-			return word, 1
-		end
-	`).ReduceBy(`
-		function(x, y)
-			return x + y
-		end
-	`).Fprintf(os.Stdout, "%s,%d\n").Run()
-}
-
-```
-
 #### Word Count by Pure Go
 
-The above used LuaJIT to simplify the code. The way to write pure Go is here.
-https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
-
-Basically, the Go function you want to invoke need to be registered first.
+Basically, you need to register the Go functions first.
 It will return a mapper or reducer function id, which we can pass it to the flow.
 
 ```go
@@ -173,6 +139,41 @@ func addOne(row []interface{}) error {
 
 func sum(x, y interface{}) (interface{}, error) {
 	return x.(uint64) + y.(uint64), nil
+}
+
+```
+
+A more blown up example is here.
+https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
+
+
+#### Word Count by LuaJIT
+
+LuaJIT can greatly simplify the code. The full source code, not snippet, for word count:
+```go
+package main
+
+import (
+	"os"
+
+	"github.com/chrislusf/gleam/flow"
+)
+
+func main() {
+
+	flow.New().TextFile("/etc/passwd").FlatMap(`
+		function(line)
+			return line:gmatch("%w+")
+		end
+	`).Map(`
+		function(word)
+			return word, 1
+		end
+	`).ReduceBy(`
+		function(x, y)
+			return x + y
+		end
+	`).Fprintf(os.Stdout, "%s,%d\n").Run()
 }
 
 ```
