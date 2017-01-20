@@ -30,7 +30,7 @@ func Option() *DistributedOption {
 		FlowBid:      100.0,
 		Host:         "localhost",
 		Port:         0,
-	}
+	}.WithDriverFile()
 }
 
 func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
