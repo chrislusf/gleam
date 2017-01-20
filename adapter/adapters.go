@@ -25,7 +25,7 @@ func init() {
 	if err != nil {                     // Handle errors reading the config file
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// skip this
-			println("no gleam.yaml found.")
+			// println("no gleam.yaml found.")
 		} else {
 			panic(fmt.Errorf("Fatal error config file: %s \n", err))
 		}
