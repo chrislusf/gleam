@@ -2,12 +2,15 @@ package gio
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
+type MapperId string
+type ReducerId string
 type Mapper func([]interface{}) error
 type Reducer func(x, y interface{}) (interface{}, error)
 
@@ -36,12 +39,16 @@ func init() {
 }
 
 // RegisterMapper register a mapper function to process a command
-func RegisterMapper(mapperName string, fn Mapper) {
+func RegisterMapper(fn Mapper) MapperId {
+	mapperName := fmt.Sprintf("m%d", len(mappers)+1)
 	mappers[mapperName] = fn
+	return MapperId(mapperName)
 }
 
-func RegisterReducer(reducerName string, fn Reducer) {
+func RegisterReducer(fn Reducer) ReducerId {
+	reducerName := fmt.Sprintf("r%d", len(reducers)+1)
 	reducers[reducerName] = fn
+	return ReducerId(reducerName)
 }
 
 // Init determines whether the driver program will execute the mapper/reducer or not.

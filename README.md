@@ -115,6 +115,29 @@ func main() {
 
 ```
 
+The above used LuaJIT to simplify the code. The way to write pure Go is here.
+https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
+
+Basically, the Go function you want to invoke need to be registered first.
+It will return a mapper or reducer function id, which we can pass it to the flow.
+
+```
+var MapperTokenizer = gio.RegisterMapper(tokenize)
+
+...
+
+gio.Init()
+
+...
+
+f := flow.New().TextFile("/etc/passwd").Pipe("tr 'A-Z' 'a-z'")
+		.Mapper("tokenize"). // invoke the registered "tokenize" mapper function.
+		...
+		Sort(flow.OrderBy(2, true)).
+		Fprintf(os.Stdout, "%s %d\n")
+
+```
+
 Another way to do the similar:
 ```go
 package main

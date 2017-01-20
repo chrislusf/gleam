@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/script"
 )
 
@@ -17,14 +18,13 @@ func (d *Dataset) Map(code string) *Dataset {
 	return ret
 }
 
-// Mapper runs the commandLine as an external program
-// The input and output are in MessagePack format.
-// This is mostly used to execute external Go code.
-func (d *Dataset) Mapper(mapperName string) *Dataset {
+// Mapper runs the mapper registered to the mapperId.
+// This is used to execute pure Go code.
+func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Mapper"
 	step.IsPipe = false
-	commandLine := fmt.Sprintf("./%s -gleam.mapper %s", filepath.Base(os.Args[0]), mapperName)
+	commandLine := fmt.Sprintf("./%s -gleam.mapper %s", filepath.Base(os.Args[0]), string(mapperId))
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 	return ret
 }

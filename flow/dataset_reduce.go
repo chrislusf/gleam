@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/script"
 )
 
@@ -40,15 +41,14 @@ func (d *Dataset) ReduceBy(code string, sortOptions ...*SortOption) (ret *Datase
 	return ret
 }
 
-// ReducerBy runs the commandLine as an external program
-// The input and output are in MessagePack format.
-// This is mostly used to execute external Go code.
-func (d *Dataset) ReducerBy(reducerName string, sortOptions ...*SortOption) (ret *Dataset) {
+// ReducerBy runs the reducer registered to the reducerId.
+// This is used to execute pure Go code.
+func (d *Dataset) ReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOption) (ret *Dataset) {
 	sortOption := concat(sortOptions)
 
-	ret = d.LocalSort(sortOption).LocalReducerBy(reducerName, sortOption)
+	ret = d.LocalSort(sortOption).LocalReducerBy(reducerId, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalReducerBy(reducerName, sortOption)
+		ret = ret.MergeSortedTo(1, sortOption).LocalReducerBy(reducerId, sortOption)
 	}
 	return ret
 }
@@ -64,7 +64,7 @@ func (d *Dataset) LocalReduceBy(code string, sortOptions ...*SortOption) *Datase
 	return ret
 }
 
-func (d *Dataset) LocalReducerBy(reducerName string, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	ret, step := add1ShardTo1Step(d)
@@ -78,7 +78,7 @@ func (d *Dataset) LocalReducerBy(reducerName string, sortOptions ...*SortOption)
 	}
 
 	commandLine := fmt.Sprintf("./%s -gleam.reducer %s -gleam.keyFields %s",
-		filepath.Base(os.Args[0]), reducerName, strings.Join(keyPositions, ","))
+		filepath.Base(os.Args[0]), string(reducerId), strings.Join(keyPositions, ","))
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 

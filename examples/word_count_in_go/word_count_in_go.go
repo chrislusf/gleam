@@ -11,16 +11,12 @@ import (
 )
 
 var (
+	MapperTokenizer = gio.RegisterMapper(tokenize)
+	MapperAddOne    = gio.RegisterMapper(addOne)
+	ReducerSum      = gio.RegisterReducer(sum)
+
 	isDistributed = flag.Bool("distributed", false, "run in distributed or not")
 )
-
-func init() {
-	// Usually the functions are registered in init().
-	// So functions registered in other packages can be shared.
-	gio.RegisterMapper("tokenize", tokenize)
-	gio.RegisterMapper("addOne", addOne)
-	gio.RegisterReducer("sum", sum)
-}
 
 func main() {
 
@@ -30,10 +26,10 @@ func main() {
 	f := flow.New().
 		TextFile("/etc/passwd").
 		Pipe("tr 'A-Z' 'a-z'").
-		Mapper("tokenize"). // invoke the registered "tokenize" mapper function.
+		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
 		Pipe("sort").
-		Mapper("addOne"). // invoke the registered "addOne" mapper function.
-		ReducerBy("sum"). // invoke the registered "sum" reducer function.
+		Mapper(MapperAddOne).  // invoke the registered "addOne" mapper function.
+		ReducerBy(ReducerSum). // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
 		Fprintf(os.Stdout, "%s %d\n")
 
