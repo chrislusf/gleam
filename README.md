@@ -113,7 +113,7 @@ func main(){
 
 	gio.Init() // required, place it right after main() starts
 
-	f := flow.New().TextFile("/etc/passwd").
+	flow.New().TextFile("/etc/passwd").
 		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
 		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
 		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
