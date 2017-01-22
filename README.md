@@ -315,15 +315,16 @@ LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more co
 * Read data from Local, HDFS, or S3.
 
 # Status
-Gleam is just beginning. Here are a few todo items:
-* Add metadata management.
-* Add better SQL database support.
-* Add streaming functions.
-* Caching of often re-calculated data.
+Gleam is just beginning. Here are a few todo items. Welcome any help!
+* Add Kubernetes support.
+* Refactor the plugin system to read external data.
+* Add schema support for each dataset.
+* Support using SQL as a flow step, similar to LINQ.
+* Add windowing functions similar to google dataflow.
+* Add dataset metadata for better caching of often re-calculated data.
 
 Especially Need Help Now:
 * Go implementation to read Parquet files.
-* Design a good plugin system for accessing external data.
 
 Please start to use it and give feedback. Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
 
