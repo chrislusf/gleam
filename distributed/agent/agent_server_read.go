@@ -44,8 +44,7 @@ func (as *AgentServer) handleReadConnection(conn net.Conn, readerName, channelNa
 
 		sizeReader.Reset(sizeBuf)
 		binary.Read(sizeReader, binary.LittleEndian, &size)
-		if size < 0 {
-			// size == -1 means EOF
+		if size == int32(util.MessageControlEOF) {
 			break
 		}
 

@@ -7,7 +7,7 @@ import (
 )
 
 func WriteEOFMessage(writer io.Writer) (err error) {
-	if err = binary.Write(writer, binary.LittleEndian, int32(-1)); err != nil {
+	if err = binary.Write(writer, binary.LittleEndian, int32(MessageControlEOF)); err != nil {
 		return fmt.Errorf("Failed to write message length: %v", err)
 	}
 	return

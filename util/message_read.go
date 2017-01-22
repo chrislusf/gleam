@@ -9,6 +9,12 @@ import (
 	"io/ioutil"
 )
 
+type MessageControl int32
+
+const (
+	MessageControlEOF = MessageControl(-1)
+)
+
 // TakeTsv Reads and processes TSV lines.
 // If count is less than 0, all lines are processed.
 func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
@@ -76,7 +82,7 @@ func ReadMessage(reader io.Reader) (m []byte, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read message length: %v", err)
 	}
-	if length == -1 {
+	if length == int32(MessageControlEOF) {
 		return nil, io.EOF
 	}
 	if length == 0 {
