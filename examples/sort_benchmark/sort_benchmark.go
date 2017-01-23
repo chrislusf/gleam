@@ -7,17 +7,22 @@ import (
 
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
 )
 
 var (
-	size          = flag.Int("size", 2, "0 for small, 1 for 1GB, 2 for 10GB")
-	isDistributed = flag.Bool("distributed", true, "distributed mode or not")
-	isInMemory    = flag.Bool("inMemory", false, "distributed mode but only through memory")
+	size          = flag.Int("size", 0, "0 for small, 1 for 1GB, 2 for 10GB")
+	isPureGo      = flag.Bool("pureGo", true, "run with pure go or LuaJIT")
+	isDistributed = flag.Bool("distributed", false, "distributed mode or not")
+	isInMemory    = flag.Bool("inMemory", true, "distributed mode but only through memory")
 	profFile      = flag.String("pprof", "", "profiling file output name")
+
+	mapperId = gio.RegisterMapper(splitLine)
 )
 
 func main() {
 	flag.Parse()
+	gio.Init()
 
 	if *profFile != "" {
 		f, _ := os.Create(*profFile)
@@ -27,11 +32,11 @@ func main() {
 
 	bigFile := *size
 
-	fileName := "/Users/chris/Desktop/record_10000_input.txt"
+	fileName := "/Users/chris/Desktop/record_10KB_input.txt"
 	partition := 2
 	size := int64(1024)
 	if bigFile == 1 {
-		fileName = "/Users/chris/Desktop/record_1Gb_input.txt"
+		fileName = "/Users/chris/Desktop/record_1GB_input.txt"
 		partition = 4
 		size = 1024
 	}
@@ -41,7 +46,7 @@ func main() {
 		size = 10240
 	}
 
-	gleamSortDistributed(fileName, size, partition, *isDistributed, *isInMemory)
+	gleamSortDistributed(fileName, size, partition, *isPureGo, *isDistributed, *isInMemory)
 
 }
 
@@ -82,27 +87,31 @@ func linuxSortStandalone(fileName string, partition int) {
     `).MergeSortedTo(1).Fprintf(os.Stdout, "%s  %s\n").Run()
 }
 
-func gleamSortDistributed(fileName string, size int64, partition int, isDistributed bool, isInMemory bool) {
+func gleamSortDistributed(fileName string, size int64, partition int, isPureGoMapper, isDistributed, isInMemory bool) {
 
 	f := flow.New().TextFile(
 		fileName,
-	).Hint(flow.TotalSize(size)).Map(`
-       function(line)
-         return string.sub(line, 1, 10), string.sub(line, 13)
-       end
-   `).OnDisk(func(d *flow.Dataset) *flow.Dataset {
-		return d.Partition(partition).Sort()
-	}).Fprintf(os.Stdout, "%s  %s\n")
+	).Hint(flow.TotalSize(size))
 
-	if isInMemory {
-		f = flow.New().TextFile(
-			fileName,
-		).Hint(flow.TotalSize(size)).Map(`
+	if isPureGoMapper {
+		f = f.Mapper(mapperId)
+	} else {
+		f = f.Map(`
            function(line)
              return string.sub(line, 1, 10), string.sub(line, 13)
            end
-       `).Partition(partition).Sort().Fprintf(os.Stdout, "%s  %s\n")
+       `)
 	}
+
+	if isInMemory {
+		f = f.Partition(partition).Sort()
+	} else {
+		f = f.OnDisk(func(d *flow.Dataset) *flow.Dataset {
+			return d.Partition(partition).Sort()
+		})
+	}
+
+	f = f.Fprintf(os.Stdout, "%s  %s\n")
 
 	// f.Run(distributed.Planner())
 	// return
@@ -112,4 +121,10 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
 	} else {
 		f.Run()
 	}
+}
+
+func splitLine(row []interface{}) error {
+	line := row[0].([]byte)
+	gio.Emit(line[0:10], line[12:])
+	return nil
 }
