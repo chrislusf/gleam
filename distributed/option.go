@@ -1,7 +1,6 @@
 package distributed
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 
@@ -63,7 +62,7 @@ func (o *DistributedOption) SetMaster(master string) *DistributedOption {
 func (o *DistributedOption) WithFile(relatedFile, toFolder string) *DistributedOption {
 	relativePath, err := filepath.Rel(".", relatedFile)
 	if err != nil {
-		log.Fatalf("Failed to find file %s: %v", relatedFile, err)
+		relativePath = relatedFile
 	}
 	o.RequiredFiles = append(o.RequiredFiles, rsync.FileResource{relativePath, toFolder})
 	return o
