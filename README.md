@@ -15,7 +15,7 @@ It is convenient to write logic in Lua, but Lua is optional. Go is also supporte
 
 ### High Performance
 
-* Puee Go mappers and reducers have high performance and concurrency. 
+* Pure Go mappers and reducers have high performance and concurrency. 
 * Optional LuaJIT also has high performance comparable to C, Java, Go. It stream processes data, no context switches between Go and Lua. 
 * Data flows through memory, optionally to disk.
 * Multiple map reduce steps are merged together for better performance.
