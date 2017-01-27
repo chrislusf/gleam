@@ -1,7 +1,6 @@
 package flow
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -77,8 +76,14 @@ func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOp
 		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
 	}
 
-	commandLine := fmt.Sprintf("./%s -gleam.reducer %s -gleam.keyFields %s",
-		filepath.Base(os.Args[0]), string(reducerId), strings.Join(keyPositions, ","))
+	var args []string
+	args = append(args, "./"+filepath.Base(os.Args[0]))
+	args = append(args, os.Args[1:]...)
+	args = append(args, "-gleam.reducer")
+	args = append(args, string(reducerId))
+	args = append(args, "-gleam.keyFields")
+	args = append(args, strings.Join(keyPositions, ","))
+	commandLine := strings.Join(args, " ")
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 

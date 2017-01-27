@@ -28,7 +28,7 @@ func main() {
 		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
 		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
-		Fprintf(os.Stdout, "%s %d\n")
+		Fprintf(os.Stdout, "%s\t%d\n")
 
 	if !*isDistributed {
 		println("Running in standalone mode.")

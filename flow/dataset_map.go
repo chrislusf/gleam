@@ -1,9 +1,9 @@
 package flow
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/script"
@@ -24,7 +24,12 @@ func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Mapper"
 	step.IsPipe = false
-	commandLine := fmt.Sprintf("./%s -gleam.mapper %s", filepath.Base(os.Args[0]), string(mapperId))
+	var args []string
+	args = append(args, "./"+filepath.Base(os.Args[0]))
+	args = append(args, os.Args[1:]...)
+	args = append(args, "-gleam.mapper")
+	args = append(args, string(mapperId))
+	commandLine := strings.Join(args, " ")
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 	return ret
 }
