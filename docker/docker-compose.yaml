@@ -1,0 +1,21 @@
+version: '2'
+
+services:
+  master:
+    image: chrislusf/gleam
+    command: "master"
+  agent_1:
+    image: chrislusf/gleam
+    command: 'agent --memory=3000 --master=master:45326'
+    depends_on: 
+     - master
+  agent_2:
+    image: chrislusf/gleam
+    command: 'agent --memory=3000 --master=master:45326'
+    depends_on: 
+     - master
+  agent_3:
+    image: chrislusf/gleam
+    command: 'agent --memory=3000 --master=master:45326'
+    depends_on: 
+     - master

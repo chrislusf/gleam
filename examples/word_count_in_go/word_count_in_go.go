@@ -15,7 +15,8 @@ var (
 	MapperAddOne    = gio.RegisterMapper(addOne)
 	ReducerSum      = gio.RegisterReducer(sum)
 
-	isDistributed = flag.Bool("distributed", false, "run in distributed or not")
+	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
+	isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
 )
 
 func main() {
@@ -30,13 +31,15 @@ func main() {
 		Sort(flow.OrderBy(2, true)).
 		Fprintf(os.Stdout, "%s\t%d\n")
 
-	if !*isDistributed {
+	if *isDistributed {
+		println("Running in distributed mode.")
+		f.Run(distributed.Option())
+	} else if *isDockerCluster {
+		println("Running in docker cluster.")
+		f.Run(distributed.Option().SetMaster("master:45326"))
+	} else {
 		println("Running in standalone mode.")
 		f.Run()
-	} else {
-		println("Running in distributed mode.")
-		println("Adding the map reduce Go binaries.")
-		f.Run(distributed.Option().WithDriverFile())
 	}
 
 }
