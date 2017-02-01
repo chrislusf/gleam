@@ -58,12 +58,9 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	request := &pb.ExecutionRequest{
 		Instructions: instructions,
-		Files:        nil,
 		Dir:          s.Option.Module,
 		Name:         taskGroup.String(),
 		Resource:     allocation.Allocated,
-		Host:         s.Option.DriverHost,
-		Port:         int32(s.Option.DriverPort),
 	}
 	statusTaskGroup.Request = request
 

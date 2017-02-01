@@ -33,13 +33,14 @@ type AgentServerOption struct {
 }
 
 type AgentServer struct {
-	Option                *AgentServerOption
-	Master                string
-	computeResource       *pb.ComputeResource
-	allocatedResource     *pb.ComputeResource
-	allocatedResourceLock sync.Mutex
-	storageBackend        *LocalDatasetShardsManager
-	inMemoryChannels      *LocalDatasetShardsManagerInMemory
+	Option                  *AgentServerOption
+	Master                  string
+	computeResource         *pb.ComputeResource
+	allocatedResource       *pb.ComputeResource
+	allocatedResourceLock   sync.Mutex
+	storageBackend          *LocalDatasetShardsManager
+	inMemoryChannels        *LocalDatasetShardsManagerInMemory
+	receiveFileResourceLock sync.Mutex
 }
 
 func RunAgentServer(option *AgentServerOption) {

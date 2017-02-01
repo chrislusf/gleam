@@ -34,8 +34,6 @@ type SchedulerOption struct {
 	DataCenter   string
 	Rack         string
 	TaskMemoryMB int
-	DriverHost   string
-	DriverPort   int
 	Module       string
 }
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/rsync"
@@ -24,21 +25,61 @@ func (as *AgentServer) serveGrpc(listener net.Listener) {
 	grpcServer.Serve(listener)
 }
 
+func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceServer) error {
+	as.receiveFileResourceLock.Lock()
+	defer as.receiveFileResourceLock.Unlock()
+
+	request, err := stream.Recv()
+	if err != nil {
+		return err
+	}
+
+	dir := path.Join(*as.Option.Dir, fmt.Sprintf("%d", request.GetFlowHashCode()), request.GetDir())
+	os.MkdirAll(dir, 0755)
+
+	toFile := filepath.Join(dir, request.GetName())
+	hasSameHash := false
+	if toFileHash, err := rsync.GenerateFileHash(toFile); err == nil {
+		hasSameHash = toFileHash.Hash == request.GetHash()
+	}
+
+	if err := stream.Send(&pb.FileResourceResponse{hasSameHash, true}); err != nil {
+		return err
+	}
+
+	if hasSameHash {
+		return nil
+	}
+
+	f, err := os.OpenFile(toFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	for {
+		request, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(request.GetContent())
+		if err != nil {
+			log.Printf("Write file error: ", err)
+			return err
+		}
+		if err := stream.Send(&pb.FileResourceResponse{false, true}); err != nil {
+			return err
+		}
+	}
+}
+
 // Execute executes a request and stream stdout and stderr back
 func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgent_ExecuteServer) error {
 
 	dir := path.Join(*as.Option.Dir, fmt.Sprintf("%d", request.GetInstructions().GetFlowHashCode()), request.GetDir())
 	os.MkdirAll(dir, 0755)
-
-	err := rsync.FetchFilesTo(fmt.Sprintf("%s:%d", request.GetHost(), request.GetPort()), dir)
-	if err != nil {
-		if sendErr := stream.Send(&pb.ExecutionResponse{
-			Error: []byte(fmt.Sprintf("Failed to download file: %v", err)),
-		}); sendErr != nil {
-			return sendErr
-		}
-		return err
-	}
 
 	allocated := *request.GetResource()
 

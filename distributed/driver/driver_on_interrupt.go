@@ -17,10 +17,8 @@ func (fcd *FlowContextDriver) printDistributedStatus(writer io.Writer) {
 		for _, tg := range stepGroup.TaskGroups {
 			statusTaskGroup := fcd.GetTaskGroupStatus(tg)
 			for _, stat := range statusTaskGroup.Executions {
-				host := statusTaskGroup.Request.GetHost()
-				port := statusTaskGroup.Request.GetPort()
 				taskGroupName := statusTaskGroup.GetRequest().GetName()
-				fmt.Fprintf(writer, "  %s:%d tasks:%s ", host, port, taskGroupName)
+				fmt.Fprintf(writer, "  tasks:%s ", taskGroupName)
 				if stat.GetStopTime() == 0 {
 					timeTaken := time.Now().Sub(time.Unix(stat.StartTime/1e9, stat.StartTime%1e9))
 					fmt.Fprintf(writer, "took time:%v\n", timeTaken)

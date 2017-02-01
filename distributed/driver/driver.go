@@ -3,9 +3,7 @@ package driver
 
 import (
 	"context"
-	"log"
 	"os"
-	"strconv"
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler"
@@ -51,13 +49,6 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)
 	fcd.logExecutionPlan(fc)
 
-	// start server to serve files to agents to run exectuors
-	rsyncServer, err := rsync.NewRsyncServer(fcd.Option.RequiredFiles...)
-	if err != nil {
-		log.Fatalf("Failed to start local server: %v", err)
-	}
-	rsyncServer.StartRsyncServer(fcd.Option.Host + ":" + strconv.Itoa(fcd.Option.Port))
-
 	// create thes cheduler
 	sched := scheduler.NewScheduler(
 		fcd.Option.Master,
@@ -65,8 +56,6 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 			DataCenter:   fcd.Option.DataCenter,
 			Rack:         fcd.Option.Rack,
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,
-			DriverHost:   fcd.Option.Host,
-			DriverPort:   rsyncServer.Port,
 			Module:       fcd.Option.Module,
 		},
 	)
@@ -89,7 +78,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
 		go sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
-			fcd.Option.FlowBid/float64(len(fcd.taskGroups)))
+			fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
 	}
 	go sched.Market.FetcherLoop()
 

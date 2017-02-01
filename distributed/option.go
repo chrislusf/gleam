@@ -17,8 +17,6 @@ type DistributedOption struct {
 	TaskMemoryMB  int
 	FlowBid       float64
 	Module        string
-	Host          string
-	Port          int
 }
 
 func Option() *DistributedOption {
@@ -27,8 +25,6 @@ func Option() *DistributedOption {
 		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
-		Host:         "localhost",
-		Port:         0,
 	}).WithDriverFile()
 }
 
@@ -41,8 +37,6 @@ func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
 		TaskMemoryMB:  o.TaskMemoryMB,
 		FlowBid:       o.FlowBid,
 		Module:        o.Module,
-		Host:          o.Host,
-		Port:          o.Port,
 	})
 }
 

@@ -2,11 +2,13 @@ package scheduler
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
+	"github.com/chrislusf/gleam/distributed/rsync"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -18,7 +20,8 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	fc *flow.FlowContext,
 	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
-	taskGroup *plan.TaskGroup, bid float64) {
+	taskGroup *plan.TaskGroup,
+	bid float64, relatedFiles []rsync.FileResource) {
 
 	defer wg.Done()
 
@@ -68,6 +71,20 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 				Location: allocation.Location,
 				OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 			})
+		}
+
+		if len(relatedFiles) > 0 {
+			err := withClient(allocation.Location.URL(), func(client pb.GleamAgentClient) error {
+				for _, relatedFile := range relatedFiles {
+					err := sendRelatedFile(ctx, client, fc.HashCode, relatedFile)
+					taskGroup.MarkStop(err)
+					return err
+				}
+				return nil
+			})
+			if err != nil {
+				log.Fatalf("Failed to send related files: %v", err)
+			}
 		}
 
 		fn := func() error {

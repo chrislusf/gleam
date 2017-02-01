@@ -123,18 +123,29 @@ message FlowExecutionStatus {
 
 
 service GleamAgent {
+  rpc SendFileResource(stream FileResourceRequest) returns (stream FileResourceResponse) {}
   rpc Execute(ExecutionRequest) returns (stream ExecutionResponse) {}
   rpc Delete(DeleteDatasetShardRequest) returns (DeleteDatasetShardResponse) {}
 }
 
+message FileResourceRequest {
+	string name = 1;
+	string dir = 2;
+	uint32 hash = 3;
+	uint32 flowHashCode = 4;
+	bytes content = 5;
+}
+
+message FileResourceResponse {
+	bool alreadyExists = 1;
+	bool ok = 2;
+}
+
 message ExecutionRequest {
 	InstructionSet instructions = 1;
-	repeated string files = 2;
-	string dir = 3;
-	ComputeResource resource = 4;
-	string name = 5;
-	string host = 6;
-	int32 port = 7;
+	string dir = 2;
+	ComputeResource resource = 3;
+	string name = 4;
 }
 
 message ExecutionResponse {
