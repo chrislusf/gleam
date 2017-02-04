@@ -102,6 +102,7 @@ type Step struct {
 	NetworkType    NetworkType
 	IsOnDriverSide bool
 	IsPipe         bool
+	IsGoCode       bool
 	Script         script.Script
 	Command        *script.Command // used in Pipe()
 	Meta           *StepMetadata

@@ -3,12 +3,13 @@ package scheduler
 import (
 	"context"
 	"log"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -21,7 +22,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
 	taskGroup *plan.TaskGroup,
-	bid float64, relatedFiles []rsync.FileResource) {
+	bid float64, relatedFiles []resource.FileResource) {
 
 	defer wg.Done()
 
@@ -71,6 +72,15 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 				Location: allocation.Location,
 				OnDisk:   shard.Dataset.GetIsOnDiskIO(),
 			})
+		}
+
+		// send driver code only when using go mapper reducer
+		var hasGoCode bool
+		for _, t := range tasks {
+			hasGoCode = hasGoCode || t.Step.IsGoCode
+		}
+		if hasGoCode {
+			relatedFiles = append(relatedFiles, resource.FileResource{os.Args[0], "."})
 		}
 
 		if len(relatedFiles) > 0 {

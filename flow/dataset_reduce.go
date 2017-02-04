@@ -69,6 +69,7 @@ func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOp
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "LocalReducerBy"
 	step.IsPipe = false
+	step.IsGoCode = true
 
 	// add key indexes for reducer command line option
 	keyPositions := []string{}
@@ -79,10 +80,8 @@ func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOp
 	var args []string
 	args = append(args, "./"+filepath.Base(os.Args[0]))
 	args = append(args, os.Args[1:]...)
-	args = append(args, "-gleam.reducer")
-	args = append(args, string(reducerId))
-	args = append(args, "-gleam.keyFields")
-	args = append(args, strings.Join(keyPositions, ","))
+	args = append(args, "-gleam.reducer="+string(reducerId))
+	args = append(args, "-gleam.keyFields="+strings.Join(keyPositions, ","))
 	commandLine := strings.Join(args, " ")
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()

@@ -1,6 +1,4 @@
-// Package rsync adds file server and copying client to copy files
-// between glow driver and agent.
-package rsync
+package resource
 
 import (
 	"hash/crc32"

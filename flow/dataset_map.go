@@ -24,11 +24,11 @@ func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Mapper"
 	step.IsPipe = false
+	step.IsGoCode = true
 	var args []string
 	args = append(args, "./"+filepath.Base(os.Args[0]))
 	args = append(args, os.Args[1:]...)
-	args = append(args, "-gleam.mapper")
-	args = append(args, string(mapperId))
+	args = append(args, "-gleam.mapper="+string(mapperId))
 	commandLine := strings.Join(args, " ")
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 	return ret

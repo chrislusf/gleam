@@ -1,16 +1,15 @@
 package distributed
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/distributed/driver"
-	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
 )
 
 type DistributedOption struct {
-	RequiredFiles []rsync.FileResource
+	RequiredFiles []resource.FileResource
 	Master        string
 	DataCenter    string
 	Rack          string
@@ -25,7 +24,7 @@ func Option() *DistributedOption {
 		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
-	}).WithDriverFile()
+	})
 }
 
 func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
@@ -58,11 +57,6 @@ func (o *DistributedOption) WithFile(relatedFile, toFolder string) *DistributedO
 	if err != nil {
 		relativePath = relatedFile
 	}
-	o.RequiredFiles = append(o.RequiredFiles, rsync.FileResource{relativePath, toFolder})
+	o.RequiredFiles = append(o.RequiredFiles, resource.FileResource{relativePath, toFolder})
 	return o
-}
-
-// WithDriverFile sends the current executable over
-func (o *DistributedOption) WithDriverFile() *DistributedOption {
-	return o.WithFile(os.Args[0], ".")
 }

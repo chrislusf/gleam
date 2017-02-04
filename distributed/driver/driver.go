@@ -8,14 +8,14 @@ import (
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler"
 	"github.com/chrislusf/gleam/distributed/plan"
-	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
 type Option struct {
-	RequiredFiles []rsync.FileResource
+	RequiredFiles []resource.FileResource
 	Master        string
 	DataCenter    string
 	Rack          string

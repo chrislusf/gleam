@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
 	"github.com/kardianos/osext"
@@ -39,7 +39,7 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 
 	toFile := filepath.Join(dir, request.GetName())
 	hasSameHash := false
-	if toFileHash, err := rsync.GenerateFileHash(toFile); err == nil {
+	if toFileHash, err := resource.GenerateFileHash(toFile); err == nil {
 		hasSameHash = toFileHash.Hash == request.GetHash()
 	}
 
@@ -67,9 +67,6 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 		_, err = f.Write(request.GetContent())
 		if err != nil {
 			log.Printf("Write file error: ", err)
-			return err
-		}
-		if err := stream.Send(&pb.FileResourceResponse{false, true}); err != nil {
 			return err
 		}
 	}

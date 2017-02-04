@@ -7,14 +7,14 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/chrislusf/gleam/distributed/rsync"
+	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
-func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCode uint32, relatedFile rsync.FileResource) error {
-	fh, err := rsync.GenerateFileHash(relatedFile.FullPath)
+func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCode uint32, relatedFile resource.FileResource) error {
+	fh, err := resource.GenerateFileHash(relatedFile.FullPath)
 	if err != nil {
 		log.Printf("Failed2 to read %s: %v", relatedFile.FullPath, err)
 		return err
@@ -75,11 +75,6 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		err = stream.Send(fileResource)
 		if err != nil {
 			log.Printf("%v.SendFileResource(_) = _, %v", client, err)
-			return err
-		}
-		_, err = stream.Recv()
-		if err != nil {
-			log.Printf("%v.CheckFileResourceExists(_) = _, %v", client, err)
 			return err
 		}
 	}

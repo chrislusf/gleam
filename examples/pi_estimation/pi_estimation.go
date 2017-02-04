@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"math/rand"
 	"os"
@@ -9,30 +10,44 @@ import (
 
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/util"
 	glow "github.com/chrislusf/glow/flow"
 )
 
+var (
+	master = flag.String("master", "localhost:45326", "master server location")
+
+	monteCarloMapperId = gio.RegisterMapper(monteCarloMapper)
+	sumReducerId       = gio.RegisterReducer(sumReducer)
+
+	times  = 1024 * 1024 * 80
+	factor = 1024 * 1024
+)
+
 func main() {
+	flag.Parse()
+	gio.Init()
+
 	f, _ := os.Create("p.prof")
 	pprof.StartCPUProfile(f)
 	defer pprof.StopCPUProfile()
 
-	times := 1024 * 1024 * 16
-	networkTrafficReductionFactor := 1024 * 1024
-
 	// uncomment this line if you setup the gleam master and agents
-	testGleam("distributed parallel 7", false, times, networkTrafficReductionFactor)
-	testGleam("local mode parallel 7", true, times, networkTrafficReductionFactor)
+	testPureGoGleam("distributed parallel 7", false)
+	testPureGoGleam("local mode parallel 7", true)
 
-	testPureGo(times)
-	testLuajit(times)
+	testGleam("distributed parallel 7", false)
+	testGleam("local mode parallel 7", true)
+
+	testDirectGo()
+	testLuajit()
 
 	// this is not fair since many optimization is not applied
-	testLocalFlow(times, networkTrafficReductionFactor)
+	testLocalFlow()
 }
 
-func testGleam(name string, isLocal bool, times int, factor int) {
+func testGleam(name string, isLocal bool) {
 	var count int64
 	startTime := time.Now()
 	f := flow.New().Init(`
@@ -56,15 +71,36 @@ func testGleam(name string, isLocal bool, times int, factor int) {
 	if isLocal {
 		f.Run()
 	} else {
-		f.Run(distributed.Option())
+		f.Run(distributed.Option().SetMaster(*master))
 	}
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	fmt.Printf("gleam %s time diff: %s\n", name, time.Now().Sub(startTime))
+	fmt.Printf("gleam %s time cost: %s\n", name, time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testPureGo(times int) {
+func testPureGoGleam(name string, isLocal bool) {
+	var count int64
+	startTime := time.Now()
+	f := flow.New().Init(`
+      function sum(x, y)
+        return x + y
+      end
+    `).Source(util.Range(0, times/factor)).Partition(7).
+		Mapper(monteCarloMapperId).
+		Reduce("sum").SaveFirstRowTo(&count)
+
+	if isLocal {
+		f.Run()
+	} else {
+		f.Run(distributed.Option().SetMaster(*master))
+	}
+
+	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
+	fmt.Printf("pure go gleam %s time cost: %s\n", name, time.Now().Sub(startTime))
+	fmt.Println()
+}
+func testDirectGo() {
 	startTime := time.Now()
 
 	var count int
@@ -75,11 +111,11 @@ func testPureGo(times int) {
 		}
 	}
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	fmt.Printf("pure go time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Printf("direct pure go time cost: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testLuajit(times int) {
+func testLuajit() {
 	var count int64
 	startTime := time.Now()
 	flow.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
@@ -96,11 +132,11 @@ func testLuajit(times int) {
     `, times)).SaveFirstRowTo(&count).Run()
 
 	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
-	fmt.Printf("luajit local time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Printf("luajit local time cost: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
-func testLocalFlow(times int, factor int) {
+func testLocalFlow() {
 	startTime := time.Now()
 	ch := make(chan int)
 	go func() {
@@ -124,6 +160,24 @@ func testLocalFlow(times int, factor int) {
 		fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	}).Run()
 
-	fmt.Printf("flow time diff: %s\n", time.Now().Sub(startTime))
+	fmt.Printf("flow parallel 7 time cost: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
+}
+
+func monteCarloMapper(row []interface{}) error {
+	var count int
+	for i := 0; i < factor; i++ {
+		x, y := rand.Float32(), rand.Float32()
+		if x*x+y*y < 1 {
+			count++
+		}
+	}
+	gio.Emit(count)
+	return nil
+}
+
+func sumReducer(x, y interface{}) (interface{}, error) {
+	a := x.(uint64)
+	b := y.(uint64)
+	return a + b, nil
 }
