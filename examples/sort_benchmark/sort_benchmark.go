@@ -32,7 +32,7 @@ func main() {
 
 	bigFile := *size
 
-	fileName := "/Users/chris/Desktop/record_10KB_input.txt"
+	fileName := "/Users/chris/Desktop/record_10K_input.txt"
 	partition := 2
 	size := int64(1024)
 	if bigFile == 1 {
