@@ -16,7 +16,7 @@ It is convenient to write logic in Lua, but Lua is optional. Go is also supporte
 ### High Performance
 
 * Pure Go mappers and reducers have high performance and concurrency. 
-* Optional LuaJIT also has high performance comparable to C, Java, Go. It stream processes data, no context switches between Go and Lua. 
+* Optional LuaJIT also has high performance comparable to C, Java, Go. It streamingly processes data, without context switch between Go and Lua. 
 * Data flows through memory, optionally to disk.
 * Multiple map reduce steps are merged together for better performance.
 
@@ -25,10 +25,7 @@ It is convenient to write logic in Lua, but Lua is optional. Go is also supporte
 
 * Gleam does not have the common GC problem that plagued other languages. Each executor is run in a separated OS process. The memory is managed by the OS. One machine can host many more executors.
 * Gleam master and agent servers are memory efficient, consuming about 10 MB memory.
-
-The shuffle step in map-shuffle-reduce is costly because it usually needs to go through disk, since usually there are not enough executors to process the data partitions at the same time. But when executors are memory efficient, they can process more all data without touching disk.
-
-Gleam also tries to automatically adjust the required memory size based on data size hints, avoiding the try-and-error manual memory tuning effort.
+* Gleam tries to automatically adjust the required memory size based on data size hints, avoiding the try-and-error manual memory tuning effort.
 
 ### Flexible
 * The Gleam flow can run standalone or distributed.
