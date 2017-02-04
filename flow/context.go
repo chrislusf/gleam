@@ -44,13 +44,13 @@ func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {
 func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToOneShard
-	FromStepToDataset(step, output)
-	FromDatasetToStep(input, step)
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
 
 	if input == nil {
 		task := step.NewTask()
 		if output != nil && output.Shards != nil {
-			FromTaskToDatasetShard(task, output.GetShards()[0])
+			fromTaskToDatasetShard(task, output.GetShards()[0])
 		}
 		return
 	}
@@ -59,9 +59,9 @@ func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *St
 	for i, shard := range input.GetShards() {
 		task := step.NewTask()
 		if output != nil && output.Shards != nil {
-			FromTaskToDatasetShard(task, output.GetShards()[i])
+			fromTaskToDatasetShard(task, output.GetShards()[i])
 		}
-		FromDatasetShardToTask(shard, task)
+		fromDatasetShardToTask(shard, task)
 	}
 	return
 }
@@ -70,16 +70,16 @@ func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *St
 func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = AllShardToOneShard
-	FromStepToDataset(step, output)
-	FromDatasetToStep(input, step)
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
 
 	// setup the network
 	task := step.NewTask()
 	if output != nil {
-		FromTaskToDatasetShard(task, output.GetShards()[0])
+		fromTaskToDatasetShard(task, output.GetShards()[0])
 	}
 	for _, shard := range input.GetShards() {
-		FromDatasetShardToTask(shard, task)
+		fromDatasetShardToTask(shard, task)
 	}
 	return
 }
@@ -89,16 +89,16 @@ func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *St
 func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToAllShard
-	FromStepToDataset(step, output)
-	FromDatasetToStep(input, step)
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
 
 	// setup the network
 	task := step.NewTask()
 	if input != nil {
-		FromDatasetShardToTask(input.GetShards()[0], task)
+		fromDatasetShardToTask(input.GetShards()[0], task)
 	}
 	for _, shard := range output.GetShards() {
-		FromTaskToDatasetShard(task, shard)
+		fromTaskToDatasetShard(task, shard)
 	}
 	return
 }
@@ -106,17 +106,17 @@ func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *St
 func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToEveryNShard
-	FromStepToDataset(step, output)
-	FromDatasetToStep(input, step)
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
 
 	// setup the network
 	m := len(input.GetShards())
 	for i, inShard := range input.GetShards() {
 		task := step.NewTask()
 		for k := 0; k < n; k++ {
-			FromTaskToDatasetShard(task, output.GetShards()[k*m+i])
+			fromTaskToDatasetShard(task, output.GetShards()[k*m+i])
 		}
-		FromDatasetShardToTask(inShard, task)
+		fromDatasetShardToTask(inShard, task)
 	}
 	return
 }
@@ -124,15 +124,15 @@ func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset)
 func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = LinkedNShardToOneShard
-	FromStepToDataset(step, output)
-	FromDatasetToStep(input, step)
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
 
 	// setup the network
 	for i, outShard := range output.GetShards() {
 		task := step.NewTask()
-		FromTaskToDatasetShard(task, outShard)
+		fromTaskToDatasetShard(task, outShard)
 		for k := 0; k < m; k++ {
-			FromDatasetShardToTask(input.GetShards()[i*m+k], task)
+			fromDatasetShardToTask(input.GetShards()[i*m+k], task)
 		}
 	}
 	return
@@ -142,9 +142,9 @@ func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset
 func (f *FlowContext) MergeDatasets1ShardTo1Step(inputs []*Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = MergeTwoShardToOneShard
-	FromStepToDataset(step, output)
+	fromStepToDataset(step, output)
 	for _, input := range inputs {
-		FromDatasetToStep(input, step)
+		fromDatasetToStep(input, step)
 	}
 
 	// setup the network
@@ -152,15 +152,15 @@ func (f *FlowContext) MergeDatasets1ShardTo1Step(inputs []*Dataset, output *Data
 		for shardId, outShard := range output.Shards {
 			task := step.NewTask()
 			for _, input := range inputs {
-				FromDatasetShardToTask(input.GetShards()[shardId], task)
+				fromDatasetShardToTask(input.GetShards()[shardId], task)
 			}
-			FromTaskToDatasetShard(task, outShard)
+			fromTaskToDatasetShard(task, outShard)
 		}
 	}
 	return
 }
 
-func FromStepToDataset(step *Step, output *Dataset) {
+func fromStepToDataset(step *Step, output *Dataset) {
 	if output == nil {
 		return
 	}
@@ -168,7 +168,7 @@ func FromStepToDataset(step *Step, output *Dataset) {
 	step.OutputDataset = output
 }
 
-func FromDatasetToStep(input *Dataset, step *Step) {
+func fromDatasetToStep(input *Dataset, step *Step) {
 	if input == nil {
 		return
 	}
@@ -176,7 +176,7 @@ func FromDatasetToStep(input *Dataset, step *Step) {
 	input.ReadingSteps = append(input.ReadingSteps, step)
 }
 
-func FromDatasetShardToTask(shard *DatasetShard, task *Task) {
+func fromDatasetShardToTask(shard *DatasetShard, task *Task) {
 	piper := util.NewPiper()
 	shard.ReadingTasks = append(shard.ReadingTasks, task)
 	shard.OutgoingChans = append(shard.OutgoingChans, piper)
@@ -184,7 +184,7 @@ func FromDatasetShardToTask(shard *DatasetShard, task *Task) {
 	task.InputChans = append(task.InputChans, piper)
 }
 
-func FromTaskToDatasetShard(task *Task, shard *DatasetShard) {
+func fromTaskToDatasetShard(task *Task, shard *DatasetShard) {
 	if shard != nil {
 		task.OutputShards = append(task.OutputShards, shard)
 	}
