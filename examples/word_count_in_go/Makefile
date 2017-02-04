@@ -14,7 +14,7 @@ run_local: build
 	./word_count_in_go
 
 run_distributed: build
-	./word_count_in_go -distributed true
+	./word_count_in_go -distributed=true
 
 run_in_docker:
 	GOOS=linux go build
