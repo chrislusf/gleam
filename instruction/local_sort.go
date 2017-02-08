@@ -82,7 +82,7 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
 	})
 
 	for _, kv := range kvs {
-		// println("sorted key", string(kv.(pair).keys[0].([]byte)))
+		// println("sorted key", kv.(pair).keys[0].(string))
 		if err := util.WriteMessage(writer, kv.(pair).data); err != nil {
 			return fmt.Errorf("Sort>Failed to write: %v", err)
 		}
@@ -100,14 +100,13 @@ func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
 func pairsLessThan(orderBys []OrderBy, a, b interface{}) bool {
 	x, y := a.(pair), b.(pair)
 	for i, order := range orderBys {
-		if order.Order >= 0 {
-			if util.LessThan(x.keys[i], y.keys[i]) {
-				return true
-			}
-		} else {
-			if !util.LessThan(x.keys[i], y.keys[i]) {
-				return true
-			}
+		normalOrder := order.Order >= 0
+		compared := util.Compare(x.keys[i], y.keys[i])
+		if compared < 0 {
+			return normalOrder
+		}
+		if compared > 0 {
+			return !normalOrder
 		}
 	}
 	return false
