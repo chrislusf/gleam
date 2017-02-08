@@ -55,9 +55,19 @@ func Compare(a interface{}, b interface{}) (ret int) {
 			}
 		}
 	} else if x, ok := a.(string); ok {
-		ret = strings.Compare(x, b.(string))
+		if y, y_ok := b.(string); y_ok {
+			return strings.Compare(x, y)
+		}
+		if y, y_ok := b.([]byte); y_ok {
+			return strings.Compare(x, string(y))
+		}
 	} else if x, ok := a.([]byte); ok {
-		ret = bytes.Compare(x, b.([]byte))
+		if y, y_ok := b.([]byte); y_ok {
+			return bytes.Compare(x, y)
+		}
+		if y, y_ok := b.(string); y_ok {
+			return bytes.Compare(x, []byte(y))
+		}
 	} else {
 		aIsFloat := isFloat(a)
 		bIsFloat := isFloat(b)
