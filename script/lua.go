@@ -25,7 +25,7 @@ func (c *LuaScript) Init(code string) {
 
 local mp = require "MessagePack"
 
-mp.set_string 'binary'
+-- mp.set_string 'binary'
 
 --- log to stderr ----
 function log(message)
