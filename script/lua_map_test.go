@@ -32,7 +32,7 @@ func TestLuaMap(t *testing.T) {
 				fmt.Fprintf(os.Stderr, "read row error: %v", err)
 				return
 			}
-			if !(row[0].(uint64) == 2000 && bytes.Equal(row[1].([]byte), []byte("xxxyyy")) && row[2].(bool) == true) {
+			if !(row[0].(uint64) == 2000 && (row[1].(string) == "xxxyyy") && row[2].(bool) == true) {
 				t.Errorf("failed map results: %+v", row)
 			}
 
@@ -90,15 +90,15 @@ func TestLuaFlatMap(t *testing.T) {
 		},
 		func(outputReader io.Reader) {
 			row, _ := util.ReadRow(outputReader)
-			if !(bytes.Equal(row[0].([]byte), []byte("x1"))) {
+			if row[0].(string) != "x1" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
 			row, _ = util.ReadRow(outputReader)
-			if !(bytes.Equal(row[0].([]byte), []byte("x2"))) {
+			if row[0].(string) != "x2" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
 			row, _ = util.ReadRow(outputReader)
-			if !(bytes.Equal(row[0].([]byte), []byte("x3"))) {
+			if row[0].(string) != "x3" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
 		},
@@ -129,7 +129,7 @@ func TestLuaMapWithNil(t *testing.T) {
 			if row[1] != nil {
 				t.Errorf("Row no longer contains nil: %+v", row)
 			}
-			if !(bytes.Equal(row[2].([]byte), []byte("hello"))) {
+			if row[2].(string) != "hello" {
 				t.Errorf("Row no longer contains elements after nil: %+v", row[2])
 			}
 		},
@@ -149,12 +149,12 @@ func TestLuaSelect(t *testing.T) {
 		},
 		func(outputReader io.Reader) {
 			row, _ := util.ReadRow(outputReader)
-			if !(row[1].(uint64) == 1 && bytes.Equal(row[0].([]byte), []byte("x1"))) {
+			if !(row[1].(uint64) == 1 && row[0].(string) == "x1") {
 				t.Errorf("failed select results: %+v", row)
 			}
 
 			row, _ = util.ReadRow(outputReader)
-			if !(row[1].(uint64) == 2 && bytes.Equal(row[0].([]byte), []byte("x2"))) {
+			if !(row[1].(uint64) == 2 && row[0].(string) == "x2") {
 				t.Errorf("failed select results: %+v", row)
 			}
 
@@ -192,7 +192,7 @@ func testLuaScript(testName string, invokeLuaScriptFunc func(script Script),
 
 	var luaScript Script
 
-	luaScript = NewLuaScript()
+	luaScript = NewLuajitScript()
 	luaScript.Init("")
 
 	testScript(testName, luaScript, invokeLuaScriptFunc, inputFunc, outputFunc)
