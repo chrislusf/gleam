@@ -2,8 +2,6 @@ package util
 
 import (
 	"bytes"
-	"fmt"
-	"os"
 	"strings"
 )
 
