@@ -2,6 +2,8 @@ package util
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"strings"
 )
 
@@ -66,7 +68,7 @@ func Compare(a interface{}, b interface{}) (ret int) {
 			return bytes.Compare(x, y)
 		}
 		if y, y_ok := b.(string); y_ok {
-			return bytes.Compare(x, []byte(y))
+			return strings.Compare(string(x), y)
 		}
 	} else {
 		aIsFloat := isFloat(a)

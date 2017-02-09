@@ -13,7 +13,7 @@ import (
 )
 
 func TestLuaCommander(t *testing.T) {
-	NewLuaScript()
+	NewLuajitScript()
 }
 
 func TestLuaMap(t *testing.T) {

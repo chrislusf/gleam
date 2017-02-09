@@ -8,12 +8,6 @@ type LuaScript struct {
 	operations []*Operation
 }
 
-func NewLuaScript() Script {
-	return &LuaScript{
-		luaCommand: "lua",
-	}
-}
-
 func NewLuajitScript() Script {
 	return &LuaScript{
 		luaCommand: "luajit",

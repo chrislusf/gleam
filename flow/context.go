@@ -17,7 +17,6 @@ func New() (fc *FlowContext) {
 		PrevScriptType: "luajit",
 		Scripts: map[string]func() script.Script{
 			"luajit": script.NewLuajitScript,
-			"lua":    script.NewLuaScript,
 		},
 		HashCode: r.Uint32(),
 	}
