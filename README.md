@@ -5,18 +5,18 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/chrislusf/gleam)](https://goreportcard.com/report/github.com/chrislusf/gleam)
 [![codecov](https://codecov.io/gh/chrislusf/gleam/branch/master/graph/badge.svg)](https://codecov.io/gh/chrislusf/gleam)
 
-Gleam is a high performance and efficient distributed execution system, and also 
+Gleam is a high performance and efficient distributed execution system, and also
 simple, generic, flexible and easy to customize.
 
-Gleam is built in Go, and the user defined computation can be written in Go, Lua, 
+Gleam is built in Go, and the user defined computation can be written in Go, Lua,
 Unix pipe tools, or any streaming programs.
 
 It is convenient to write logic in Lua, but Lua is optional. Go is also supported with a little bit extra effort.
 
 ### High Performance
 
-* Pure Go mappers and reducers have high performance and concurrency. 
-* Optional LuaJIT also has high performance comparable to C, Java, Go. It streamingly processes data, without context switch between Go and Lua. 
+* Pure Go mappers and reducers have high performance and concurrency.
+* Optional LuaJIT also has high performance comparable to C, Java, Go. It streamingly processes data, without context switch between Go and Lua.
 * Data flows through memory, optionally to disk.
 * Multiple map reduce steps are merged together for better performance.
 
@@ -40,7 +40,7 @@ It is convenient to write logic in Lua, but Lua is optional. Go is also supporte
 Gleam code defines the flow, specifying each dataset(vertex) and computation step(edge), and build up a directed
 acyclic graph(DAG). There are multiple ways to execute the DAG.
 
-The default way is to run locally. This works in most cases. 
+The default way is to run locally. This works in most cases.
 
 Here we mostly talk about the distributed mode.
 
@@ -197,7 +197,7 @@ func main() {
 
 ```
 
-## Join two CSV files. 
+## Join two CSV files.
 
 Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" has fields "b1, b2, b3". We want to join the rows where a1 = b2. And the output format should be "a1, a4, b3".
 
@@ -216,7 +216,7 @@ func main() {
 	f := New()
 	a := f.ReadFile(csv.New("a.csv")).Select(Field(1,4)) // a1, a4
 	b := f.ReadFile(csv.New("b.csv")).Select(Field(2,3)) // b2, b3
-	
+
 	a.Join(b).Fprintf(os.Stdout, "%s,%s,%s\n").Run()  // a1, a4, b3
 
 }
@@ -226,7 +226,7 @@ func main() {
 ## Parallel Execution
 Unix Pipes are easy for sequential pipes, but limited to fan out, and even more limited to fan in.
 
-With Gleam, fan-in and fan-out parallel pipes become very easy. 
+With Gleam, fan-in and fan-out parallel pipes become very easy.
 
 This example get a list of file names, partitioned into 3 groups, and then process them in parallel.
 
@@ -268,8 +268,8 @@ func main() {
 ```
 
 # Distributed Computing
-## Setup Gleam Cluster
-Start a gleam master and serveral gleam agents
+## Setup Gleam Cluster Locally
+Start a gleam master and several gleam agents
 ```go
 // start "gleam master" on a server
 > go get github.com/chrislusf/gleam/distributed/gleam
@@ -279,6 +279,12 @@ Start a gleam master and serveral gleam agents
 // if a different server, remember to install Luajit and copy the MessagePack.lua file also.
 > gleam agent --dir=2 --port 45327 --host=127.0.0.1
 > gleam agent --dir=3 --port 45328 --host=127.0.0.1
+```
+
+## Setup Gleam Cluster on Kubernetes
+Start a gleam master and several gleam agents
+```bash
+kubectl apply -f k8s/
 ```
 
 ## Change Execution Mode.
@@ -313,7 +319,6 @@ LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more co
 
 # Status
 Gleam is just beginning. Here are a few todo items. Welcome any help!
-* Add Kubernetes support.
 * Refactor the plugin system to read external data.
 * Add schema support for each dataset.
 * Support using SQL as a flow step, similar to LINQ.
@@ -325,7 +330,7 @@ Especially Need Help Now:
 
 Please start to use it and give feedback. Help is needed. Anything is welcome. Small things count: fix documentation, adding a logo, adding docker image, blog about it, share it, etc.
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EEECLJ8QGTTPC) 
+[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=EEECLJ8QGTTPC)
 
 ## License
 

@@ -1,0 +1,32 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    service: agent
+  name: agent
+  namespace: gleam
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      service: agent
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        service: agent
+    spec:
+      containers:
+      - name: agent
+        image: chrislusf/gleam
+        resources:
+          limits:
+            memory: "2Gi"
+            cpu: "0.5"
+        args:
+          - "agent"
+          - "--memory=2048 --master=master:45326"

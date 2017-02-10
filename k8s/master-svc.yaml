@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: master
+  name: master
+  namespace: gleam
+spec:
+  ports:
+  - port: 45326
+    protocol: TCP
+  clusterIP: None
+  selector:
+    service: master
