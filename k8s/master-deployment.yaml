@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    service: master
+  name: master
+  namespace: gleam
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: master
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        service: master
+    spec:
+      containers:
+      - name: master
+        image: chrislusf/gleam
+        ports:
+        - containerPort: 45326
+          protocol: TCP
+        args:
+          - "master"
