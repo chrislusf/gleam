@@ -14,6 +14,21 @@ type pair struct {
 	data []byte
 }
 
+// Distinct sort on specific fields and pick the unique ones.
+// Required Memory: about same size as each partition.
+// example usage: Distinct(Field(1,2)) means
+// distinct on field 1 and 2.
+// TODO: optimize for low cardinality case.
+func (d *Dataset) Distinct(sortOptions ...*SortOption) *Dataset {
+	sortOption := concat(sortOptions)
+
+	ret := d.LocalSort(sortOption).LocalDistinct(sortOption)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeSortedTo(1, sortOption).LocalDistinct(sortOption)
+	}
+	return ret
+}
+
 // Sort sort on specific fields, default to the first field.
 // Required Memory: about same size as each partition.
 // example usage: Sort(Field(1,2)) means
@@ -35,6 +50,16 @@ func (d *Dataset) Top(k int, sortOptions ...*SortOption) *Dataset {
 	if len(d.Shards) > 1 {
 		ret = ret.MergeSortedTo(1, sortOption).LocalLimit(k)
 	}
+	return ret
+}
+
+func (d *Dataset) LocalDistinct(sortOptions ...*SortOption) *Dataset {
+	sortOption := concat(sortOptions)
+
+	ret, step := add1ShardTo1Step(d)
+	ret.IsLocalSorted = sortOption.orderByList
+	ret.IsPartitionedBy = d.IsPartitionedBy
+	step.SetInstruction(instruction.NewLocalDistinct(sortOption.orderByList))
 	return ret
 }
 

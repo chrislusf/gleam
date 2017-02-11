@@ -270,6 +270,11 @@ message Instruction {
 		repeated OrderBy orderBys = 1;
 	}
 	MergeSortedTo mergeSortedTo = 18;
+
+	message LocalDistinct {
+		repeated OrderBy orderBys = 1;
+	}
+	LocalDistinct localDistinct = 19;
 }
 
 message OrderBy{
