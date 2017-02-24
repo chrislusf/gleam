@@ -60,8 +60,6 @@ const (
 	CodeIncorrectScope   terror.ErrCode = 1238
 )
 
-var tidbSysVars map[string]bool
-
 // Variable errors
 var (
 	UnknownStatusVar  = terror.ClassVariable.New(CodeUnknownStatusVar, "unknown status variable")
@@ -82,12 +80,6 @@ func init() {
 	}
 	terror.ErrClassToMySQLCodes[terror.ClassVariable] = mySQLErrCodes
 
-	tidbSysVars = make(map[string]bool)
-	tidbSysVars[DistSQLScanConcurrencyVar] = true
-	tidbSysVars[DistSQLJoinConcurrencyVar] = true
-	tidbSysVars[TiDBSnapshot] = true
-	tidbSysVars[TiDBSkipConstraintCheck] = true
-	tidbSysVars[TiDBSkipDDLWait] = true
 }
 
 // we only support MySQL now
@@ -591,21 +583,7 @@ var defaultSysVars = []*SysVar{
 	{ScopeGlobal | ScopeSession, "min_examined_row_limit", "0"},
 	{ScopeGlobal, "sync_frm", "ON"},
 	{ScopeGlobal, "innodb_online_alter_log_max_size", "134217728"},
-	{ScopeSession, TiDBSnapshot, ""},
-	{ScopeGlobal | ScopeSession, DistSQLScanConcurrencyVar, "10"},
-	{ScopeGlobal | ScopeSession, DistSQLJoinConcurrencyVar, "5"},
-	{ScopeSession, TiDBSkipConstraintCheck, "0"},
-	{ScopeSession, TiDBSkipDDLWait, "0"},
 }
-
-// TiDB system variables
-const (
-	TiDBSnapshot              = "tidb_snapshot"
-	DistSQLScanConcurrencyVar = "tidb_distsql_scan_concurrency"
-	DistSQLJoinConcurrencyVar = "tidb_distsql_join_concurrency"
-	TiDBSkipConstraintCheck   = "tidb_skip_constraint_check"
-	TiDBSkipDDLWait           = "tidb_skip_ddl_wait"
-)
 
 // SetNamesVariables is the system variable names related to set names statements.
 var SetNamesVariables = []string{

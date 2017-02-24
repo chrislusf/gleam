@@ -14,13 +14,11 @@
 package variable
 
 import (
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/chrislusf/gleam/sql/mysql"
 	"github.com/chrislusf/gleam/sql/terror"
-	"github.com/juju/errors"
 )
 
 const (
@@ -77,10 +75,7 @@ func (r *RetryInfo) GetCurrAutoIncrementID() (int64, error) {
 // TransactionContext is used to store variables that has transaction scope.
 type TransactionContext struct {
 	ForUpdate     bool
-	DirtyDB       interface{}
-	Binlog        interface{}
 	InfoSchema    interface{}
-	Histroy       interface{}
 	SchemaVersion int64
 }
 
@@ -90,26 +85,15 @@ type SessionVars struct {
 	Users map[string]string
 	// system variables
 	Systems map[string]string
-	// prepared statement
-	PreparedStmts        map[uint32]interface{}
-	PreparedStmtNameToID map[string]uint32
-	// prepared statement auto increment id
-	preparedStmtID uint32
 
-	// retry information
-	RetryInfo *RetryInfo
 	// Should be reset on transaction finished.
 	TxnCtx *TransactionContext
 
 	// following variables are special for current session
-	Status       uint16
-	LastInsertID uint64
+	Status uint16
 
 	// Client capability
 	ClientCapability uint32
-
-	// Connection ID
-	ConnectionID uint64
 
 	// Current user
 	User string
@@ -122,23 +106,6 @@ type SessionVars struct {
 
 	// CommonGlobalLoaded indicates if common global variable has been loaded for this session.
 	CommonGlobalLoaded bool
-
-	// InRestrictedSQL indicates if the session is handling restricted SQL execution.
-	InRestrictedSQL bool
-
-	// SnapshotTS is used for reading history data. For simplicity, SnapshotTS only supports distsql request.
-	SnapshotTS uint64
-
-	// SnapshotInfoschema is used with SnapshotTS, when the schema version at snapshotTS less than current schema
-	// version, we load an old version schema for query.
-	SnapshotInfoschema interface{}
-
-	// SkipConstraintCheck is true when importing data.
-	SkipConstraintCheck bool
-
-	// SkipDDLWait can be set to true to skip 2 lease wait after create/drop/truncate table, create/drop database.
-	// Then if there are multiple TiDB servers, the new table may not be available for other TiDB servers.
-	SkipDDLWait bool
 
 	// GlobalAccessor is used to set and get global variables.
 	GlobalVarsAccessor GlobalVarAccessor
@@ -158,15 +125,12 @@ type SessionVars struct {
 // NewSessionVars creates a session vars object.
 func NewSessionVars() *SessionVars {
 	return &SessionVars{
-		Users:                make(map[string]string),
-		Systems:              make(map[string]string),
-		PreparedStmts:        make(map[uint32]interface{}),
-		PreparedStmtNameToID: make(map[string]uint32),
-		TxnCtx:               &TransactionContext{},
-		RetryInfo:            &RetryInfo{},
-		StrictSQLMode:        true,
-		Status:               mysql.ServerStatusAutocommit,
-		StmtCtx:              new(StatementContext),
+		Users:         make(map[string]string),
+		Systems:       make(map[string]string),
+		TxnCtx:        &TransactionContext{},
+		StrictSQLMode: true,
+		Status:        mysql.ServerStatusAutocommit,
+		StmtCtx:       new(StatementContext),
 	}
 }
 
@@ -188,12 +152,6 @@ func (s *SessionVars) GetCharsetInfo() (charset, collation string) {
 	charset = s.Systems[characterSetConnection]
 	collation = s.Systems[collationConnection]
 	return
-}
-
-// SetLastInsertID saves the last insert id to the session context.
-// TODO: we may store the result for last_insert_id sys var later.
-func (s *SessionVars) SetLastInsertID(insertID uint64) {
-	s.LastInsertID = insertID
 }
 
 // SetStatusFlag sets the session server status variable.
@@ -222,12 +180,6 @@ func (s *SessionVars) IsAutocommit() bool {
 	return s.GetStatusFlag(mysql.ServerStatusAutocommit)
 }
 
-// GetNextPreparedStmtID generates and returns the next session scope prepared statement id.
-func (s *SessionVars) GetNextPreparedStmtID() uint32 {
-	s.preparedStmtID++
-	return s.preparedStmtID
-}
-
 // special session variables.
 const (
 	SQLModeVar          = "sql_mode"
@@ -236,23 +188,6 @@ const (
 	MaxAllowedPacket    = "max_allowed_packet"
 	TimeZone            = "time_zone"
 )
-
-// GetTiDBSystemVar gets variable value for name.
-// The variable should be a TiDB specific system variable (The vars in tidbSysVars map).
-// We load the variable from session first, if not found, use local defined default variable.
-func (s *SessionVars) GetTiDBSystemVar(name string) (string, error) {
-	key := strings.ToLower(name)
-	_, ok := tidbSysVars[key]
-	if !ok {
-		return "", errors.Errorf("%s is not a TiDB specific system variable.", name)
-	}
-
-	sVal, ok := s.Systems[key]
-	if ok {
-		return sVal, nil
-	}
-	return SysVars[key].Value, nil
-}
 
 // StatementContext contains variables for a statement.
 // It should be reset before executing a statement.

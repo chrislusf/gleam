@@ -17,10 +17,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/juju/errors"
 	"github.com/chrislusf/gleam/sql/mysql"
 	"github.com/chrislusf/gleam/sql/sessionctx/variable"
 	"github.com/chrislusf/gleam/sql/util/types"
+	"github.com/juju/errors"
 )
 
 // GetSessionSystemVar gets a system variable.
@@ -94,21 +94,12 @@ func SetSessionSystemVar(vars *variable.SessionVars, name string, value types.Da
 		} else {
 			vars.StrictSQLMode = false
 		}
-	case variable.TiDBSnapshot:
-		err = setSnapshotTS(vars, sVal)
-		if err != nil {
-			return errors.Trace(err)
-		}
 	case variable.AutocommitVar:
 		isAutocommit := strings.EqualFold(sVal, "ON") || sVal == "1"
 		vars.SetStatusFlag(mysql.ServerStatusAutocommit, isAutocommit)
 		if isAutocommit {
 			vars.SetStatusFlag(mysql.ServerStatusInTrans, false)
 		}
-	case variable.TiDBSkipConstraintCheck:
-		vars.SkipConstraintCheck = (sVal == "1")
-	case variable.TiDBSkipDDLWait:
-		vars.SkipDDLWait = (sVal == "1")
 	}
 	vars.Systems[name] = sVal
 	return nil
@@ -134,20 +125,4 @@ func parseTimeZone(s string) *time.Location {
 	}
 
 	return nil
-}
-
-func setSnapshotTS(s *variable.SessionVars, sVal string) error {
-	if sVal == "" {
-		s.SnapshotTS = 0
-		return nil
-	}
-	t, err := types.ParseTime(sVal, mysql.TypeTimestamp, types.MaxFsp)
-	if err != nil {
-		return errors.Trace(err)
-	}
-	// TODO: Consider time_zone variable.
-	t1, err := t.Time.GoTime(time.Local)
-	ts := (t1.UnixNano() / int64(time.Millisecond)) << epochShiftBits
-	s.SnapshotTS = uint64(ts)
-	return errors.Trace(err)
 }
