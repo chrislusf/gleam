@@ -16,12 +16,12 @@ package expression
 import (
 	"bytes"
 	"fmt"
+	"log"
 
 	"github.com/chrislusf/gleam/sql/context"
 	"github.com/chrislusf/gleam/sql/model"
 	"github.com/chrislusf/gleam/sql/util/codec"
 	"github.com/chrislusf/gleam/sql/util/types"
-	"log"
 )
 
 // CorrelatedColumn stands for a column in a correlated sub query.
@@ -73,7 +73,6 @@ type Column struct {
 	DBName  model.CIStr
 	TblName model.CIStr
 	RetType *types.FieldType
-	ID      int64
 	// Position means the position of this column that appears in the select fields.
 	// e.g. SELECT name as id , 1 - id as id , 1 + name as id, name as id from src having id = 1;
 	// There are four ids in the same schema, so you can't identify the column through the FromID and ColName.

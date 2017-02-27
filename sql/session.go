@@ -28,7 +28,7 @@ import (
 	"github.com/chrislusf/gleam/sql/infoschema"
 	"github.com/chrislusf/gleam/sql/mysql"
 	"github.com/chrislusf/gleam/sql/parser"
-	"github.com/chrislusf/gleam/sql/plan"
+	"github.com/chrislusf/gleam/sql/resolver"
 	"github.com/chrislusf/gleam/sql/sessionctx/variable"
 	"github.com/chrislusf/gleam/sql/util/types"
 	"github.com/juju/errors"
@@ -193,7 +193,7 @@ func Compile(ctx context.Context, rawStmt ast.StmtNode) (ast.StmtNode, error) {
 	info := ctx.GetSessionVars().TxnCtx.InfoSchema.(infoschema.InfoSchema)
 
 	node := rawStmt
-	err := plan.ResolveName(node, info, ctx)
+	err := resolver.ResolveName(node, info, ctx)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
