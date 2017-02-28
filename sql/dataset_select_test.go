@@ -8,11 +8,12 @@ import (
 	"github.com/chrislusf/gleam/sql/model"
 	"github.com/chrislusf/gleam/sql/mysql"
 	"github.com/chrislusf/gleam/sql/parser"
+	"github.com/chrislusf/gleam/sql/plan"
 	"github.com/chrislusf/gleam/sql/util/types"
 )
 
 func TestSelect(t *testing.T) {
-	sql := `select * from users where age > 5`
+	sql := `select age+10 from users where age > 5`
 	p := parser.New()
 	tree, err := p.ParseOneStmt(sql, "", "")
 	if err != nil {
@@ -36,11 +37,12 @@ func TestSelect(t *testing.T) {
 	if err != nil {
 		t.Errorf("session error: %v", err)
 	}
-	tree, err = Compile(session, tree)
+	logicPlan, err := Compile(session, tree)
 	if err != nil {
 		t.Errorf("compile error: %v", err)
 	}
 
 	fmt.Printf("sql:%v\n", tree.Text())
+	fmt.Printf("plan:%v\n", plan.ToString(logicPlan))
 
 }

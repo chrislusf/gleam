@@ -28,6 +28,7 @@ import (
 	"github.com/chrislusf/gleam/sql/infoschema"
 	"github.com/chrislusf/gleam/sql/mysql"
 	"github.com/chrislusf/gleam/sql/parser"
+	"github.com/chrislusf/gleam/sql/plan"
 	"github.com/chrislusf/gleam/sql/resolver"
 	"github.com/chrislusf/gleam/sql/sessionctx/variable"
 	"github.com/chrislusf/gleam/sql/util/types"
@@ -189,7 +190,7 @@ func createSession(info infoschema.InfoSchema) (*session, error) {
 }
 
 // Compile is safe for concurrent use by multiple goroutines.
-func Compile(ctx context.Context, rawStmt ast.StmtNode) (ast.StmtNode, error) {
+func Compile(ctx context.Context, rawStmt ast.StmtNode) (plan.Plan, error) {
 	info := ctx.GetSessionVars().TxnCtx.InfoSchema.(infoschema.InfoSchema)
 
 	node := rawStmt
@@ -197,7 +198,11 @@ func Compile(ctx context.Context, rawStmt ast.StmtNode) (ast.StmtNode, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
-	return node, nil
+	p, err := plan.Optimize(ctx, node, info)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	return p, nil
 }
 
 // runStmt executes the ast.Statement and commit or rollback the current transaction.
