@@ -14,8 +14,6 @@
 package plan
 
 import (
-	"log"
-
 	"github.com/chrislusf/gleam/sql/ast"
 	"github.com/chrislusf/gleam/sql/context"
 	"github.com/chrislusf/gleam/sql/infoschema"
@@ -73,7 +71,6 @@ func doOptimize(logic LogicalPlan, ctx context.Context, allocator *idAllocator) 
 		return nil, errors.Trace(err)
 	}
 	pp := info.p
-	log.Printf("[PLAN] %s", ToString(pp))
 	return pp, nil
 }
 
