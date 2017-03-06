@@ -20,7 +20,7 @@ func (e *ProjectionExec) Schema() expression.Schema {
 }
 
 // Next implements the Executor Next interface.
-func (e *ProjectionExec) Exec(datasets ...*flow.Dataset) *flow.Dataset {
+func (e *ProjectionExec) Exec() *flow.Dataset {
 	d := e.Src.Exec()
 
 	ret := d

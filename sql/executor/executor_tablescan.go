@@ -48,7 +48,7 @@ func (e *SelectTableExec) Schema() expression.Schema {
 }
 
 // Next implements the Executor Next interface.
-func (e *SelectTableExec) Exec(datasets ...*flow.Dataset) *flow.Dataset {
+func (e *SelectTableExec) Exec() *flow.Dataset {
 
 	t := Tables[e.tableInfo.Name.String()]
 

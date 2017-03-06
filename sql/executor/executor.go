@@ -6,6 +6,6 @@ import (
 )
 
 type Executor interface {
-	Exec(...*flow.Dataset) *flow.Dataset
+	Exec() *flow.Dataset
 	Schema() expression.Schema
 }

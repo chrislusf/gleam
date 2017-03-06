@@ -21,7 +21,7 @@ func (e *UnionScanExec) Schema() expression.Schema {
 }
 
 // Next implements the Executor Next interface.
-func (e *UnionScanExec) Exec(datasets ...*flow.Dataset) *flow.Dataset {
+func (e *UnionScanExec) Exec() *flow.Dataset {
 	d := e.Src.Exec()
 
 	ret := d

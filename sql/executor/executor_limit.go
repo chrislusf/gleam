@@ -18,7 +18,7 @@ func (e *LimitExec) Schema() expression.Schema {
 }
 
 // Next implements the Executor Next interface.
-func (e *LimitExec) Exec(datasets ...*flow.Dataset) *flow.Dataset {
+func (e *LimitExec) Exec() *flow.Dataset {
 	d := e.Src.Exec()
 
 	k := int(e.Count + e.Offset)
