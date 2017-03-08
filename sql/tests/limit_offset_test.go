@@ -6,34 +6,35 @@ import (
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/sql"
 	"github.com/chrislusf/gleam/sql/executor"
 	"github.com/chrislusf/gleam/sql/mysql"
 )
 
-func TestQuery(t *testing.T) {
-	sql := `
+func TestLimitOffset(t *testing.T) {
+	sqlText := `
     select word
     from words
-    limit 105 offset 1
+    limit 2 offset 1
     `
 	f := flow.New()
 
 	ds := f.Strings([]string{
-		"thisx",
-		"is00x",
-		"a000x",
+		"this",
+		"is",
+		"a",
 		"table",
-		"thisy",
-		"is00y",
-		"a000y",
-		"tably",
+		"that",
+		"are",
+		"many",
+		"pencils",
 	}).RoundRobin(2)
 
-	RegisterTable(ds, "words", []executor.TableColumn{
+	sql.RegisterTable(ds, "words", []executor.TableColumn{
 		{"word", mysql.TypeVarchar},
 	})
 
-	out, err := Query(sql)
+	out, err := sql.Query(sqlText)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		return
