@@ -167,21 +167,28 @@ func TestLuaLimit(t *testing.T) {
 	testLuaScript(
 		"test Limit",
 		func(script Script) {
-			script.Limit(1)
+			script.Limit(1, 1)
 		},
 		func(inputWriter io.Writer) {
 			util.WriteRow(inputWriter, 1, "x1", 8)
 			util.WriteRow(inputWriter, 2, "x2", 7)
+			util.WriteRow(inputWriter, 3, "x3", 6)
+			util.WriteRow(inputWriter, 4, "x4", 21)
+			util.WriteRow(inputWriter, 5, "x5", 22)
 		},
 		func(outputReader io.Reader) {
 			// read first row
 			row, _ := util.ReadRow(outputReader)
+			fmt.Printf("row: %+v\n", row)
+			if !(row[0].(uint64) == 2 && row[1].(string) == "x2") {
+				t.Errorf("failed select results: %+v", row)
+			}
+
 			// read second row
 			row, _ = util.ReadRow(outputReader)
 			if row != nil {
 				t.Errorf("failed to take 1 row: %+v", row)
 			}
-
 		},
 	)
 }

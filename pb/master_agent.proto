@@ -275,6 +275,10 @@ message Instruction {
 		repeated OrderBy orderBys = 1;
 	}
 	LocalDistinct localDistinct = 19;
+
+	message MergeTo {}
+	MergeTo mergeTo = 20;
+
 }
 
 message OrderBy{

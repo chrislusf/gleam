@@ -23,7 +23,7 @@ type Script interface {
 	Filter(code string)
 	GroupBy(indexes []int)
 	Select(indexes []int)
-	Limit(n int)
+	Limit(n int, offset int)
 }
 
 func (c *Command) ToOsExecCommand() *exec.Cmd {

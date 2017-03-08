@@ -14,16 +14,20 @@ func TestQuery(t *testing.T) {
 	sql := `
     select word
     from words
-    limit 2
+    limit 105 offset 1
     `
 	f := flow.New()
 
 	ds := f.Strings([]string{
-		"this",
-		"is",
-		"a",
+		"thisx",
+		"is00x",
+		"a000x",
 		"table",
-	})
+		"thisy",
+		"is00y",
+		"a000y",
+		"tably",
+	}).RoundRobin(2)
 
 	RegisterTable(ds, "words", []executor.TableColumn{
 		{"word", mysql.TypeVarchar},

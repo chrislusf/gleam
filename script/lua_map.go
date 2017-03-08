@@ -98,21 +98,26 @@ func (c *LuaScript) Select(indexes []int) {
 		strings.Join(returns, ",")))
 }
 
-func (c *LuaScript) Limit(n int) {
+func (c *LuaScript) Limit(limit int, offset int) {
 	c.operations = append(c.operations, &Operation{
 		Type: "Limit",
 		Code: fmt.Sprintf(`
 
-local count = %d
+local count = %d - 0.5
+local offset = %d - 0.5
 
 while true do
   local row = readRow()
   if not row then break end
   if count > 0 then
-    count = count - 1
-    writeRow(listUnpack(row))
+    if offset > 0 then
+      offset = offset - 1
+    else
+      count = count - 1
+      writeRow(listUnpack(row))
+    end
   end
 end
-`, n),
+`, limit, offset),
 	})
 }

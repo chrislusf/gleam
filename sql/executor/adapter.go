@@ -33,14 +33,12 @@ func (a *Statement) Exec(ctx context.Context) (*flow.Dataset, error) {
 	a.startTime = time.Now()
 
 	b := newExecutorBuilder(ctx, a.InfoSchema)
-	fmt.Printf("plan:%v\n", plan.ToString(a.Plan))
 
 	exe := b.build(a.Plan)
 	if b.err != nil {
 		return nil, errors.Trace(b.err)
 	}
 
-	fmt.Printf("exe:%v\n", exe)
 	if exe == nil {
 		return nil, fmt.Errorf("Failed to build execution plan %v", plan.ToString(a.Plan))
 	}

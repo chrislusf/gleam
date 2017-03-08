@@ -1,12 +1,12 @@
 Taking adding InputSplitReader as example:
 
-1. Add these to control_message.proto
+1. Add these to master_agent.proto
 
     message InputSplitReader {
         required string inputType = 1;
     }
 
-2. Add this to control_message.proto
+2. Add this to master_agent.proto
 
     message Instruction {
         ...

@@ -48,7 +48,7 @@ func (d *Dataset) Top(k int, sortOptions ...*SortOption) *Dataset {
 
 	ret := d.LocalTop(k, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalLimit(k)
+		ret = ret.MergeSortedTo(1, sortOption).LocalLimit(k, 0)
 	}
 	return ret
 }
@@ -81,7 +81,7 @@ func (d *Dataset) LocalTop(n int, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	if isOrderByExactReverse(d.IsLocalSorted, sortOption.orderByList) {
-		return d.LocalLimit(n)
+		return d.LocalLimit(n, 0)
 	}
 
 	ret, step := add1ShardTo1Step(d)
@@ -89,36 +89,6 @@ func (d *Dataset) LocalTop(n int, sortOptions ...*SortOption) *Dataset {
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(instruction.NewLocalTop(n, sortOption.orderByList))
 	return ret
-}
-
-func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) (ret *Dataset) {
-	if len(d.Shards) == partitionCount {
-		return d
-	}
-	ret = d.FlowContext.newNextDataset(partitionCount)
-	everyN := len(d.Shards) / partitionCount
-	if len(d.Shards)%partitionCount > 0 {
-		everyN++
-	}
-
-	sortOption := concat(sortOptions)
-
-	ret.IsLocalSorted = sortOption.orderByList
-	ret.IsPartitionedBy = d.IsPartitionedBy
-	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
-	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList))
-	return ret
-}
-
-func (d *Dataset) TreeMergeSortedTo(partitionCount int, factor int, sortOptions ...*SortOption) (ret *Dataset) {
-	if len(d.Shards) > factor && len(d.Shards) > partitionCount {
-		t := d.MergeSortedTo(len(d.Shards)/factor, sortOptions...)
-		return t.TreeMergeSortedTo(partitionCount, factor, sortOptions...)
-	}
-	if len(d.Shards) > partitionCount {
-		return d.MergeSortedTo(partitionCount, sortOptions...)
-	}
-	return d
 }
 
 func isOrderByEquals(a []instruction.OrderBy, b []instruction.OrderBy) bool {

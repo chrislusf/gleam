@@ -82,12 +82,12 @@ func (d *Dataset) Select(sortOptions ...*SortOption) *Dataset {
 }
 
 // LocalLimit take the local first n rows and skip all other rows.
-func (d *Dataset) LocalLimit(n int) *Dataset {
+func (d *Dataset) LocalLimit(n int, offset int) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "Limit"
 	step.Script = d.FlowContext.createScript()
-	step.Script.Limit(n)
+	step.Script.Limit(n, offset)
 	return ret
 }
