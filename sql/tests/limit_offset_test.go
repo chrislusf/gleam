@@ -14,25 +14,26 @@ import (
 
 func TestLimitOffset(t *testing.T) {
 	sqlText := `
-    select word
+    select word, line
     from words
     limit 2 offset 1
     `
 	f := flow.New()
 
-	ds := f.Strings([]string{
-		"this",
-		"is",
-		"a",
-		"table",
-		"that",
-		"are",
-		"many",
-		"pencils",
+	ds := f.Slices([][]interface{}{
+		{"this", 1},
+		{"is", 2},
+		{"a", 3},
+		{"table", 4},
+		{"that", 5},
+		{"are", 6},
+		{"many", 7},
+		{"pencils", 6},
 	}).RoundRobin(2)
 
 	sql.RegisterTable(ds, "words", []executor.TableColumn{
 		{"word", mysql.TypeVarchar},
+		{"line", mysql.TypeLong},
 	})
 
 	out, p, err := sql.Query(sqlText)
@@ -41,7 +42,7 @@ func TestLimitOffset(t *testing.T) {
 		return
 	}
 
-	out.Fprintf(os.Stdout, "%s\n")
+	out.Fprintf(os.Stdout, "%s %d\n")
 
 	f.Run()
 

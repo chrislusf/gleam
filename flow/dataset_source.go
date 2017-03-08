@@ -180,6 +180,27 @@ func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
 	return fc.Channel(inputChannel)
 }
 
+// Slices begins a flow with an [][]interface{}
+func (fc *FlowContext) Slices(slices [][]interface{}) (ret *Dataset) {
+
+	ret = fc.newNextDataset(1)
+	step := fc.AddOneToOneStep(nil, ret)
+	step.IsOnDriverSide = true
+	step.Name = "Slices"
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+		for _, slice := range slices {
+			err := util.WriteRow(writers[0], slice...)
+			if err != nil {
+				return err
+			}
+			stats.Count++
+		}
+		return nil
+	}
+	return
+
+}
+
 // ReadFile read files according to fileType
 // The file can be on local, hdfs, s3, etc.
 func (fc *FlowContext) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
