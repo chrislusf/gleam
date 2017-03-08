@@ -8,6 +8,7 @@ import (
 	"github.com/chrislusf/gleam/sql/infoschema"
 	"github.com/chrislusf/gleam/sql/model"
 	"github.com/chrislusf/gleam/sql/parser"
+	"github.com/chrislusf/gleam/sql/plan"
 	"github.com/chrislusf/gleam/sql/util/types"
 )
 
@@ -37,23 +38,23 @@ func tableInfoList() (infos []*model.TableInfo) {
 	return infos
 }
 
-func Query(sql string) (*flow.Dataset, error) {
+func Query(sql string) (*flow.Dataset, plan.Plan, error) {
 	p := parser.New()
 	tree, err := p.ParseOneStmt(sql, "", "")
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse SQL %s: %v", sql, err)
+		return nil, nil, fmt.Errorf("Failed to parse SQL %s: %v", sql, err)
 	}
 
 	infoSchema := infoschema.NewInfoSchema("", tableInfoList())
 
 	session, err := CreateSession(infoSchema)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create session %v", err)
+		return nil, nil, fmt.Errorf("Failed to create session %v", err)
 	}
 
 	physicalPlan, err := Compile(session, tree)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get physical plan for %s: %v", sql, err)
+		return nil, nil, fmt.Errorf("Failed to get physical plan for %s: %v", sql, err)
 	}
 
 	sa := &executor.Statement{
@@ -62,6 +63,8 @@ func Query(sql string) (*flow.Dataset, error) {
 		Text:       tree.Text(),
 	}
 
-	return sa.Exec(session)
+	ds, err := sa.Exec(session)
+
+	return ds, physicalPlan, err
 
 }

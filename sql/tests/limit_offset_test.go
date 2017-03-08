@@ -9,6 +9,7 @@ import (
 	"github.com/chrislusf/gleam/sql"
 	"github.com/chrislusf/gleam/sql/executor"
 	"github.com/chrislusf/gleam/sql/mysql"
+	"github.com/chrislusf/gleam/sql/plan"
 )
 
 func TestLimitOffset(t *testing.T) {
@@ -34,7 +35,7 @@ func TestLimitOffset(t *testing.T) {
 		{"word", mysql.TypeVarchar},
 	})
 
-	out, err := sql.Query(sqlText)
+	out, p, err := sql.Query(sqlText)
 	if err != nil {
 		fmt.Printf("error: %s\n", err)
 		return
@@ -44,4 +45,5 @@ func TestLimitOffset(t *testing.T) {
 
 	f.Run()
 
+	fmt.Printf("plan: %v\n", plan.ToString(p))
 }
