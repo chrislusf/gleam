@@ -14,9 +14,13 @@ import (
 
 func TestLimitOffset(t *testing.T) {
 	sqlText := `
-    select word, line
+    select line, w
+    from
+    (
+    select line, word as w, line as l2
     from words
     limit 2 offset 1
+    ) a
     `
 	f := flow.New()
 
@@ -42,7 +46,7 @@ func TestLimitOffset(t *testing.T) {
 		return
 	}
 
-	out.Fprintf(os.Stdout, "%s %d\n")
+	out.Fprintf(os.Stdout, "%d: %s\n")
 
 	f.Run()
 
