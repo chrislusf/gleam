@@ -68,7 +68,7 @@ func (e *ProjectionExec) Exec() *flow.Dataset {
 	return ret
 }
 
-var re = regexp.MustCompile(`(\w+\.)(\w+)`)
+var re = regexp.MustCompile(`([a-z]+\w*\.)(\w+)`)
 
 func removeTableName(sqlText string) string {
 	return re.ReplaceAllString(sqlText, "$2")

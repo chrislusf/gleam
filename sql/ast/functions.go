@@ -26,11 +26,11 @@ var (
 
 // List scalar function names.
 const (
-	AndAnd     = "and"
+	AndAnd     = "_and"
 	Cast       = "cast"
 	LeftShift  = "leftshift"
 	RightShift = "rightshift"
-	OrOr       = "or"
+	OrOr       = "_or"
 	GE         = "ge"
 	LE         = "le"
 	EQ         = "eq"
@@ -45,7 +45,7 @@ const (
 	Xor        = "bitxor"
 	Div        = "div"
 	Mul        = "mul"
-	UnaryNot   = "not" // Avoid name conflict with Not in github/pingcap/check.
+	UnaryNot   = "_not" // Avoid name conflict with Not in github/pingcap/check.
 	BitNeg     = "bitneg"
 	IntDiv     = "intdiv"
 	LogicXor   = "xor"

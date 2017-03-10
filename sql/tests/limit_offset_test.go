@@ -14,7 +14,7 @@ import (
 
 func TestLimitOffset(t *testing.T) {
 	sqlText := `
-    select line, w
+    select (line+l2)/2*1.5, w
     from
     (
     select line, word as w, line as l2
@@ -34,6 +34,8 @@ func TestLimitOffset(t *testing.T) {
 		{"many", 7},
 		{"pencils", 6},
 	}).RoundRobin(2)
+
+	ds.Init(executor.Functions)
 
 	sql.RegisterTable(ds, "words", []executor.TableColumn{
 		{"word", mysql.TypeVarchar},
