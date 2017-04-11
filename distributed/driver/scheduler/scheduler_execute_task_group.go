@@ -87,8 +87,10 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 			err := withClient(allocation.Location.URL(), func(client pb.GleamAgentClient) error {
 				for _, relatedFile := range relatedFiles {
 					err := sendRelatedFile(ctx, client, fc.HashCode, relatedFile)
-					taskGroup.MarkStop(err)
-					return err
+					if err != nil {
+						taskGroup.MarkStop(err)
+						return err
+					}
 				}
 				return nil
 			})
