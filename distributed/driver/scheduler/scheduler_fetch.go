@@ -8,8 +8,6 @@ import (
 	"github.com/chrislusf/gleam/distributed/driver/scheduler/market"
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 // Requirement is TaskGroup
@@ -23,7 +21,7 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 		request.ComputeResources = append(request.ComputeResources, requiredResource)
 	}
 
-	result, err := Assign(s.Master, &request)
+	result, err := getResources(s.Master, &request)
 	if err != nil {
 		log.Printf("%s Failed to allocate: %v", s.Master, err)
 		time.Sleep(time.Millisecond * time.Duration(15000+rand.Int63n(5000)))
@@ -45,16 +43,4 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 			log.Printf("%s allocated %d executors with %d MB memory.", s.Master, len(result.Allocations), allocatedMemory)
 		}
 	}
-}
-
-func Assign(master string, request *pb.ComputeRequest) (*pb.AllocationResult, error) {
-
-	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
-	if err != nil {
-		log.Printf("fail to dial %s: %v", master, err)
-	}
-	defer grpcConection.Close()
-	client := pb.NewGleamMasterClient(grpcConection)
-
-	return client.GetResources(context.Background(), request)
 }
