@@ -52,7 +52,7 @@ const (
 	NullEQ     = "nulleq"
 	UnaryPlus  = "unaryplus"
 	UnaryMinus = "unaryminus"
-	In         = "in"
+	In         = "_in"
 	Like       = "like"
 	Case       = "case"
 	Regexp     = "regexp"

@@ -14,10 +14,15 @@ import (
 
 func TestLimitOffset(t *testing.T) {
 	sqlText := `
-    select (line+l2)/2*1.5, w
+    select
+      line div l2,
+      (line+l2)/2*1.5,
+      -- concat(cast(line as char), w ),
+      x,
+      line in (4,5)
     from
     (
-    select line, word as w, line as l2
+    select line, word as w, line as l2, word is null as x
     from words
     limit 2 offset 1
     ) a
@@ -48,7 +53,7 @@ func TestLimitOffset(t *testing.T) {
 		return
 	}
 
-	out.Fprintf(os.Stdout, "%d: %s\n")
+	out.Fprintf(os.Stdout, "%d %d: %v, %v\n")
 
 	f.Run()
 
