@@ -104,7 +104,7 @@ func sendExecutionRequest(ctx context.Context,
 			}
 			if response.GetError() != nil {
 				log.Printf("%s %v>%s", server, request.Name, string(response.GetError()))
-				executionStatus.Error = append(executionStatus.Error, response.GetError())
+				executionStatus.Error = response.GetError()
 			}
 			if response.GetOutput() != nil {
 				fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
