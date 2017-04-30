@@ -77,8 +77,10 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	var wg sync.WaitGroup
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
-		go sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
-			fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
+		go func(taskGroup *plan.TaskGroup) {
+			sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
+				fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
+		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
 
