@@ -19,7 +19,7 @@ import (
 // If cancelled, the output will be cleaned up.
 func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	fc *flow.FlowContext,
-	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
+	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
 	taskGroup *plan.TaskGroup,
 	bid float64, relatedFiles []resource.FileResource) {
@@ -100,7 +100,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 		}
 
 		fn := func() error {
-			err := s.remoteExecuteOnLocation(ctx, fc, statusTaskGroup, taskGroup, allocation, wg)
+			err := s.remoteExecuteOnLocation(ctx, fc, taskGroupStatus, taskGroup, allocation, wg)
 			taskGroup.MarkStop(err)
 			return err
 		}

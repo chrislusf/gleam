@@ -16,7 +16,7 @@ import (
 
 func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	flowContext *flow.FlowContext,
-	statusTaskGroup *pb.FlowExecutionStatus_TaskGroup,
+	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	taskGroup *plan.TaskGroup,
 	allocation *pb.Allocation, wg *sync.WaitGroup) error {
 
@@ -62,20 +62,20 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 		Name:         taskGroup.String(),
 		Resource:     allocation.Allocated,
 	}
-	statusTaskGroup.Request = request
+	taskGroupStatus.Request = request
 
-	statusExecution := &pb.FlowExecutionStatus_TaskGroup_Execution{}
-	statusTaskGroup.Executions = append(statusTaskGroup.Executions, statusExecution)
-	statusExecution.StartTime = time.Now().UnixNano()
+	executionStatus := &pb.FlowExecutionStatus_TaskGroup_Execution{}
+	taskGroupStatus.Executions = append(taskGroupStatus.Executions, executionStatus)
+	executionStatus.StartTime = time.Now().UnixNano()
 	defer func() {
-		statusExecution.StopTime = time.Now().UnixNano()
+		executionStatus.StopTime = time.Now().UnixNano()
 	}()
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
-	if err := sendExecutionRequest(ctx, statusExecution, allocation.Location.URL(), request); err != nil {
+	if err := sendExecutionRequest(ctx, executionStatus, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
-		statusExecution.Error = []byte(err.Error())
+		executionStatus.Error = []byte(err.Error())
 		return err
 	}
 

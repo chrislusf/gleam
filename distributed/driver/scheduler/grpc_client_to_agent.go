@@ -84,7 +84,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 }
 
 func sendExecutionRequest(ctx context.Context,
-	statusExecution *pb.FlowExecutionStatus_TaskGroup_Execution,
+	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	server string, request *pb.ExecutionRequest) error {
 
 	return withClient(server, func(client pb.GleamAgentClient) error {
@@ -110,8 +110,8 @@ func sendExecutionRequest(ctx context.Context,
 			}
 			if response.GetSystemTime() != 0 {
 				log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.Name, response.GetSystemTime(), response.GetUserTime())
-				statusExecution.SystemTime = response.GetSystemTime()
-				statusExecution.UserTime = response.GetUserTime()
+				executionStatus.SystemTime = response.GetSystemTime()
+				executionStatus.UserTime = response.GetUserTime()
 			}
 		}
 
