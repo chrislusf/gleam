@@ -33,10 +33,12 @@ func (s *MasterServer) GetResources(ctx context.Context, in *pb.ComputeRequest) 
 		return nil, fmt.Errorf("Failed to find existing data center: %s", dcName)
 	}
 
-	Allocations := s.Topology.findServers(dc, in.GetComputeResources())
+	allocations := s.Topology.findServers(dc, in.GetComputeResources())
+
+	log.Printf("request : %+v, allocated: %+v", in.GetComputeResources(), allocations)
 
 	return &pb.AllocationResult{
-		Allocations: Allocations,
+		Allocations: allocations,
 	}, nil
 
 }
