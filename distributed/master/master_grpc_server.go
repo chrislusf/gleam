@@ -6,16 +6,20 @@ import (
 	"log"
 
 	"github.com/chrislusf/gleam/pb"
+	"github.com/hashicorp/golang-lru"
 	"golang.org/x/net/context"
 )
 
 type MasterServer struct {
-	Topology *Topology
+	Topology    *Topology
+	statusCache *lru.Cache
 }
 
 func newMasterServer() *MasterServer {
+	c, _ := lru.New(512)
 	return &MasterServer{
-		Topology: NewTopology(),
+		Topology:    NewTopology(),
+		statusCache: c,
 	}
 }
 
@@ -72,8 +76,10 @@ func (s *MasterServer) SendHeartbeat(stream pb.GleamMaster_SendHeartbeatServer) 
 func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExecutionStatusServer) error {
 	for {
 		status, err := stream.Recv()
+		log.Printf("Received job status for %d: %v", status.GetId(), err)
+
 		if err == nil {
-			log.Printf("Got status: %v", status.String())
+			s.statusCache.Add(status.GetId(), status)
 		}
 	}
 }

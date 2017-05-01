@@ -4,7 +4,7 @@ import (
 	"html/template"
 )
 
-var StatusTpl = template.Must(template.New("status").Parse(`<!DOCTYPE html>
+var MasterStatusTpl = template.Must(template.New("master").Parse(`<!DOCTYPE html>
 <html>
   <head>
     <title>Gleam {{ .Version }}</title>

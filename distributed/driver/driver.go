@@ -3,8 +3,10 @@ package driver
 
 import (
 	"context"
+	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/driver/scheduler"
 	"github.com/chrislusf/gleam/distributed/plan"
@@ -12,6 +14,7 @@ import (
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util/on_interrupt"
+	"google.golang.org/grpc"
 )
 
 type Option struct {
@@ -83,8 +86,12 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
+	go fcd.reportStatus(ctx, fcd.Option.Master)
+
+	log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 
 	wg.Wait()
+	cancel()
 
 }
 
@@ -100,4 +107,32 @@ func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowC
 	}
 
 	wg.Wait()
+}
+
+func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string) {
+	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
+	if err != nil {
+		log.Printf("Failed to dial: %v", err)
+		return
+	}
+	defer grpcConection.Close()
+	client := pb.NewGleamMasterClient(grpcConection)
+
+	stream, err := client.SendFlowExecutionStatus(ctx)
+	if err != nil {
+		log.Printf("Failed to create stream on SendFlowExecutionStatus: %v", err)
+		return
+	}
+
+	ticker := time.NewTicker(3 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			stream.Send(fcd.status)
+			return
+		case <-ticker.C:
+			stream.Send(fcd.status)
+		}
+	}
+
 }

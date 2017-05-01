@@ -112,4 +112,6 @@ func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
 		)
 	}
 
+	fcd.status.Id = fc.HashCode
+
 }

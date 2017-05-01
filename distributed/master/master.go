@@ -3,12 +3,12 @@
 package master
 
 import (
-	"io"
 	"log"
 	"net"
 	"net/http"
 
 	"github.com/chrislusf/gleam/pb"
+	router "github.com/gorilla/mux"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -38,7 +38,10 @@ func RunMaster(listenOn string) {
 	pb.RegisterGleamMasterServer(grpcS, masterServer)
 	reflection.Register(grpcS)
 
-	httpS := &http.Server{Handler: &masterHttpHandler{mux: mux}}
+	r := router.NewRouter()
+	r.HandleFunc("/", masterServer.uiStatusHandler)
+	r.HandleFunc("/job/{id:[0-9]+}", masterServer.jobStatusHandler)
+	httpS := &http.Server{Handler: r}
 
 	go grpcS.Serve(grpcL)
 	go httpS.Serve(httpL)
@@ -47,16 +50,4 @@ func RunMaster(listenOn string) {
 		log.Fatalf("master server failed to serve: %v", err)
 	}
 
-}
-
-type masterHttpHandler struct {
-	mux map[string]func(http.ResponseWriter, *http.Request)
-}
-
-func (m *masterHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h, ok := m.mux[r.URL.String()]; ok {
-		h(w, r)
-		return
-	}
-	io.WriteString(w, "My server: "+r.URL.String())
 }

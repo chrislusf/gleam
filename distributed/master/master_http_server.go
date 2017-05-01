@@ -1,19 +1,13 @@
-// Package master collects data from agents, and manage named network
-// channels.
 package master
 
 import (
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/chrislusf/gleam/distributed/master/ui"
+	"github.com/gorilla/mux"
 )
-
-var mux map[string]func(http.ResponseWriter, *http.Request)
-
-func init() {
-	mux = make(map[string]func(http.ResponseWriter, *http.Request))
-	mux["/"] = masterServer.uiStatusHandler
-}
 
 func (ms *MasterServer) uiStatusHandler(w http.ResponseWriter, r *http.Request) {
 	infos := make(map[string]interface{})
@@ -25,5 +19,32 @@ func (ms *MasterServer) uiStatusHandler(w http.ResponseWriter, r *http.Request) 
 		"0.01",
 		ms.Topology,
 	}
-	ui.StatusTpl.Execute(w, args)
+	ui.MasterStatusTpl.Execute(w, args)
+}
+
+func (ms *MasterServer) jobStatusHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	jobId, err := strconv.ParseUint(vars["id"], 10, 32)
+	if err != nil {
+		log.Printf("Failed to parse job id %s", vars["id"])
+		return
+	}
+	status, ok := ms.statusCache.Get(uint32(jobId))
+	if !ok {
+		log.Printf("Failed to find job status for %d", jobId)
+		return
+	}
+
+	infos := make(map[string]interface{})
+	infos["Version"] = 0.01
+	args := struct {
+		Version  string
+		Topology interface{}
+		Status   interface{}
+	}{
+		"0.01",
+		ms.Topology,
+		status,
+	}
+	ui.JobStatusTpl.Execute(w, args)
 }
