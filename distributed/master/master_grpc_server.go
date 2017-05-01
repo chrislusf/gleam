@@ -80,6 +80,8 @@ func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExe
 
 		if err == nil {
 			s.statusCache.Add(status.GetId(), status)
+		} else {
+			return err
 		}
 	}
 }
