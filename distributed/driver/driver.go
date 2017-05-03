@@ -128,6 +128,7 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string) {
 	for {
 		select {
 		case <-ctx.Done():
+			fcd.status.Driver.StopTime = time.Now().Unix()
 			stream.Send(fcd.status)
 			return
 		case <-ticker.C:

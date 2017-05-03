@@ -20,19 +20,33 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
 
       <div class="row">
         <div class="col-sm-6">
-          <h2>Cluster status</h2>
+          {{ with .Status.Driver }}
+          <h2>Driver Program</h2>
           <table class="table">
             <tbody>
               <tr>
-                <th>Resource</th>
-                <td>{{ .Topology.Resource }}</td>
+                <th>User</th>
+                <td>{{ .Username }}</td>
               </tr>
               <tr>
-                <th>Allocated</th>
-                <td>{{ .Topology.Allocated }}</td>
+                <th>Host</th>
+                <td>{{ .Hostname }}</td>
+              </tr>
+              <tr>
+                <th>Executable</th>
+                <td style="max-width:150px;word-wrap:break-word;">{{ .Executable }}</td>
+              </tr>
+              <tr>
+                <th>Start</th>
+                <td>{{ .StartTime }}</td>
+              </tr>
+              <tr>
+                <th>Stop</th>
+                <td>{{ .StopTime }}</td>
               </tr>
             </tbody>
           </table>
+          {{ end }}
         </div>
 
         <div class="col-sm-6">
@@ -46,39 +60,35 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
         </div>
       </div>
 
+      {{ with .Status.TaskGroups }}
       <div class="row">
-        <h2>Topology</h2>
+        <h2>Task Group</h2>
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Data Center</th>
-              <th>Rack</th>
-              <th>Server</th>
-              <th>Port</th>
-              <th>Last Heartbeat</th>
-              <th>Resource</th>
-              <th>Allocated</th>
+              <th>Steps</th>
+              <th>Tasks</th>
+              <th>Name</th>
+              <th>Allocation</th>
+              <th>CPU</th>
+              <th>Memory</th>
             </tr>
           </thead>
           <tbody>
-          {{ range $dc_index, $dc := .Topology.DataCenters }}
-            {{ range $rack_index, $rack := $dc.Racks }}
-              {{ range $agent_index, $agent := $rack.Agents }}
+          {{ range $tg_index, $tg := . }}
             <tr>
-              <td><code>{{ $dc.Name }}</code></td>
-              <td>{{ $rack.Name }}</td>
-              <td>{{ $agent.Location.Server }}</td>
-              <td>{{ $agent.Location.Port }}</td>
-              <td>{{ $agent.LastHeartBeat }}</td>
-              <td>{{ $agent.Resource }}</td>
-              <td>{{ $agent.Allocated }}</td>
+              <td>{{ $tg.StepIds }}</td>
+              <td>{{ $tg.TaskIds }}</td>
+              <td>{{with $tg.Request}}{{.}}{{end}}</td>
+              <td>{{with $tg.Allocation}}{{.}}{{end}}</td>
+              <td>{{with $tg.Request}}{{.Resource.CpuCount}}{{end}}</td>
+              <td>{{with $tg.Request}}{{.Resource.MemoryMb}}{{end}}</td>
             </tr>
-              {{ end }}
-            {{ end }}
           {{ end }}
           </tbody>
         </table>
       </div>
+      {{ end }}
 
     </div>
   </body>

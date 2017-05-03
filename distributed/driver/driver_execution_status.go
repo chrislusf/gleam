@@ -2,6 +2,10 @@
 package driver
 
 import (
+	"os"
+	"os/user"
+	"time"
+
 	"github.com/chrislusf/gleam/distributed/plan"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
@@ -102,16 +106,30 @@ func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
 			stepIds = append(stepIds, int32(task.Step.Id))
 			taskIds = append(taskIds, int32(task.Id))
 		}
-		statusTaskGroup := &pb.FlowExecutionStatus_TaskGroup{
+		taskGroupStatus := &pb.FlowExecutionStatus_TaskGroup{
 			StepIds: stepIds,
 			TaskIds: taskIds,
 		}
 		fcd.status.TaskGroups = append(
 			fcd.status.TaskGroups,
-			statusTaskGroup,
+			taskGroupStatus,
 		)
 	}
 
 	fcd.status.Id = fc.HashCode
+
+	username := ""
+	if currentUser, err := user.Current(); err == nil {
+		username = currentUser.Username
+	}
+	hostname, _ := os.Hostname()
+	executable, _ := os.Executable()
+
+	fcd.status.Driver = &pb.FlowExecutionStatus_DriverInfo{
+		Username:   username,
+		Hostname:   hostname,
+		Executable: executable,
+		StartTime:  time.Now().Unix(),
+	}
 
 }

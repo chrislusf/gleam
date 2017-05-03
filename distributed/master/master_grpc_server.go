@@ -76,9 +76,9 @@ func (s *MasterServer) SendHeartbeat(stream pb.GleamMaster_SendHeartbeatServer) 
 func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExecutionStatusServer) error {
 	for {
 		status, err := stream.Recv()
-		log.Printf("Received job status for %d: %v", status.GetId(), err)
 
 		if err == nil {
+			log.Printf("Received job status for %d: %v", status.GetId(), err)
 			s.statusCache.Add(status.GetId(), status)
 		} else {
 			return err

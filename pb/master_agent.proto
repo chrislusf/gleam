@@ -91,6 +91,7 @@ message FlowExecutionStatus {
         repeated int32 taskIds = 2;
 
         ExecutionRequest request = 3;
+		Allocation allocation = 4;
 
         message Execution {
             int64 start_time = 1;
@@ -100,7 +101,7 @@ message FlowExecutionStatus {
             bytes error = 5;
             bytes output_hash = 6;
         }
-        repeated Execution executions = 4;
+        repeated Execution executions = 5;
     }
 
     repeated StepGroup stepGroups = 1;
@@ -111,6 +112,16 @@ message FlowExecutionStatus {
     repeated Step steps = 6;
 
     uint32 id = 7;
+
+    message DriverInfo {
+        string username = 1;
+        string hostname = 2;
+        string executable = 3;
+        string executable_hash = 4;
+        int64 start_time = 5;
+        int64 stop_time = 6;
+    }
+    DriverInfo driver = 8;
 
 }
 

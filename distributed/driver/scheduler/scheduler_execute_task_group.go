@@ -52,6 +52,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 		supply := <-pickedServerChan
 		allocation := supply.Object.(*pb.Allocation)
 		defer s.Market.ReturnSupply(supply)
+		taskGroupStatus.Allocation = allocation
 
 		if needsInputFromDriver(tasks[0]) {
 			// tell the driver to write to me
