@@ -75,7 +75,7 @@ The distributed mode has several names to explain: Master, Agent, Executor, Driv
 By leaving it in memory, the flow can have back pressure, and can support stream computation naturally.
 
 # Documentation
-* [Gleam Wiki] (https://github.com/chrislusf/gleam/wiki)
+* [Gleam Wiki](https://github.com/chrislusf/gleam/wiki)
 * [Installation](https://github.com/chrislusf/gleam/wiki/Installation)
 * [Gleam Flow API GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow)
 * [gleam-dev on Slack](https://gleam-dev.slack.com)
