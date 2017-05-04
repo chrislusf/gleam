@@ -16,11 +16,9 @@ import (
 
 var masterServer *MasterServer
 
-func init() {
-	masterServer = newMasterServer()
-}
+func RunMaster(listenOn string, logDirectory string) {
 
-func RunMaster(listenOn string) {
+	masterServer = newMasterServer(logDirectory)
 
 	listener, err := net.Listen("tcp", listenOn)
 	if err != nil {

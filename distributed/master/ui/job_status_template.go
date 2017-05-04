@@ -67,7 +67,6 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
           <thead>
             <tr>
               <th>Steps</th>
-              <th>Tasks</th>
               <th>Name</th>
               <th>IO</th>
               <th>Allocation</th>
@@ -79,20 +78,28 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
           {{ range $tg_index, $tg := . }}
             <tr>
               <td>{{ $tg.StepIds }}</td>
-              <td>{{ $tg.TaskIds }}</td>
               <td>{{with $tg.Request}}{{.Name}}{{end}}</td>
               <td>
                 {{with $tg.Request}}{{with .Instructions}}
-                <ul>
                 {{ range $inst_index, $inst := .Instructions }}
-                    {{with .InputShardLocations}}<li>Input: {{.}}</li>{{end}}
-                    {{with .OutputShardLocations}}<li>Output:{{.}}</li>{{end}}
+                    {{with .InputShardLocations}}Input: <ul>{{ range . }}<li>{{.Name}}@{{.Host}}:{{.Port}}</li>{{end}}</ul>{{end}}
+                    {{with .OutputShardLocations}}Output:<ul>{{ range . }}<li>{{.Name}}@{{.Host}}:{{.Port}}</li>{{end}}{{end}}
                 {{end}}
-                </ul>
                 {{ end }}{{ end }}
               </td>
-              <td>{{with $tg.Allocation}}{{.}}{{end}}</td>
-              <td>{{with $tg.Request}}{{.Resource.CpuCount}}{{end}}</td>
+              <td>{{with $tg.Allocation}}
+                    {{.Location.DataCenter}}-{{.Location.Rack}}-{{.Location.Server}}:{{.Location.Port}}
+                    <br/>
+                    CPU:{{.Allocated.CpuCount}} Memory:{{.Allocated.MemoryMb}}MB
+                  {{end}}</td>
+              <td><ul>{{range .Executions}}
+                   <li>
+                     Start: {{.StartTime}}<br/>
+                     Stop:  {{.StopTime}}<br/>
+                     System:{{.SystemTime}} Seconds<br/>
+                     User:{{.UserTime}} Seconds
+                   </li>
+                  {{end}}</ul></td>
               <td>{{with $tg.Request}}{{.Resource.MemoryMb}}{{end}}</td>
             </tr>
           {{ end }}

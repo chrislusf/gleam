@@ -86,12 +86,13 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
-	go fcd.reportStatus(ctx, fcd.Option.Master)
+	stopChan := make(chan bool)
+	go fcd.reportStatus(ctx, fcd.Option.Master, stopChan)
 
 	log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 
 	wg.Wait()
-	cancel()
+	stopChan <- true
 
 }
 
@@ -109,7 +110,7 @@ func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowC
 	wg.Wait()
 }
 
-func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string) {
+func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string, stopChan chan bool) {
 	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Failed to dial: %v", err)
@@ -127,9 +128,13 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string) {
 	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
-		case <-ctx.Done():
+		case <-stopChan:
 			fcd.status.Driver.StopTime = time.Now().Unix()
-			stream.Send(fcd.status)
+			if err = stream.Send(fcd.status); err == nil {
+				log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
+			} else {
+				log.Printf("Failed to update Job Status http://%s/job/%d : %v", fcd.Option.Master, fcd.status.GetId(), err)
+			}
 			return
 		case <-ticker.C:
 			stream.Send(fcd.status)

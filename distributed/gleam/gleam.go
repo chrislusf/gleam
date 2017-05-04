@@ -29,6 +29,7 @@ var (
 
 	master        = app.Command("master", "Start a master process")
 	masterAddress = master.Flag("address", "listening address host:port").Default(":45326").String()
+	masterLogDir  = master.Flag("logDirectory", "a directory to store execution logs").Default(os.TempDir()).String()
 
 	executor     = app.Command("execute", "Execute an instruction set")
 	executorNote = executor.Flag("note", "description").String()
@@ -65,7 +66,7 @@ func main() {
 
 	case master.FullCommand():
 		println("master listening on", *masterAddress)
-		m.RunMaster(*masterAddress)
+		m.RunMaster(*masterAddress, *masterLogDir)
 
 	case executor.FullCommand():
 
