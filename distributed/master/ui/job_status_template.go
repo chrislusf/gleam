@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"html/template"
+	"text/template"
 )
 
 var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
@@ -59,6 +59,8 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
           </table>
         </div>
       </div>
+
+      <p>{{.Svg}}
 
       {{ with .Status.TaskGroups }}
       <div class="row">

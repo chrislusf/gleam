@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/chrislusf/gleam/distributed/master/ui"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/gorilla/mux"
 )
 
@@ -41,10 +42,12 @@ func (ms *MasterServer) jobStatusHandler(w http.ResponseWriter, r *http.Request)
 		Version  string
 		Topology interface{}
 		Status   interface{}
+		Svg      string
 	}{
 		"0.01",
 		ms.Topology,
 		status,
+		ui.GenSvg(status.(*pb.FlowExecutionStatus)),
 	}
 	ui.JobStatusTpl.Execute(w, args)
 }
