@@ -64,7 +64,8 @@ func doFlowExecutionStatus(canvas *svg.SVG, status *pb.FlowExecutionStatus, widt
 			stepGroup := status.StepGroups[stepGroupId]
 
 			for _, parentId := range stepGroup.GetParentIds() {
-				connect(canvas, positions[parentId].output, positions[stepGroupId].input, "input")
+				connect(canvas, positions[parentId].output, positions[stepGroupId].input,
+					fmt.Sprintf("d%d", getLastStep(status, status.StepGroups[parentId]).OutputDatasetId))
 			}
 
 			positions[stepGroupId].output = doStepGroup(canvas, positions[stepGroupId].input, status, stepGroup)
@@ -124,9 +125,6 @@ func doStep(canvas *svg.SVG, input point, step *pb.FlowExecutionStatus_Step) (ou
 	return
 }
 
-func getStepInputDatasets(status *pb.FlowExecutionStatus, step *pb.FlowExecutionStatus_Step) (inputs []*pb.FlowExecutionStatus_Dataset) {
-	for _, datasetId := range step.GetInputDatasetId() {
-		inputs = append(inputs, status.GetDataset(datasetId))
-	}
-	return
+func getLastStep(status *pb.FlowExecutionStatus, stepGroup *pb.FlowExecutionStatus_StepGroup) (step *pb.FlowExecutionStatus_Step) {
+	return status.Steps[stepGroup.StepIds[len(stepGroup.StepIds)-1]]
 }
