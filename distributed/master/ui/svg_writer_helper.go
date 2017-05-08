@@ -37,7 +37,7 @@ type point struct {
 }
 
 func connect(canvas *svg.SVG, a, b point, label string) {
-	linelabel(canvas, a.x, a.y, b.x, b.y, label, "d", "", "d", "ccw", "black")
+	linelabel(canvas, a.x, a.y, b.x, b.y, label, "d", "", "d", "straight", "black")
 }
 
 // message object
@@ -162,7 +162,7 @@ func doline(canvas *svg.SVG, x1, y1, x2, y2 int, style, direction, label string)
 		labelstyle += "text-anchor:start;"
 		lx += tadjust
 	}
-	if !straight {
+	if !straight && direction != "straight" {
 		cx, cy := x1, y2 // initial control points
 		// fmt.Fprintf(os.Stderr, "%s slope = %.3f\n", label, m)
 		if upflag {

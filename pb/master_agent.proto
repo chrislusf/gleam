@@ -85,6 +85,7 @@ message FlowExecutionStatus {
     }
     message StepGroup {
         repeated int32 stepIds = 1;
+        repeated int32 parentIds = 2;
     }
     message TaskGroup {
         repeated int32 stepIds = 1;

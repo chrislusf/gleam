@@ -64,14 +64,24 @@ func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
 	}
 
 	for _, stepGroup := range fcd.stepGroups {
-		var stepIds []int32
+		var stepIds, parentIds []int32
 		for _, step := range stepGroup.Steps {
 			stepIds = append(stepIds, int32(step.Id))
+		}
+		for _, parent := range stepGroup.Parents {
+			// find the parent step group from all step groups
+			for id, stepGroup := range fcd.stepGroups {
+				// if the first step is the same
+				if parent.Steps[0].Id == stepGroup.Steps[0].Id {
+					parentIds = append(parentIds, int32(id))
+				}
+			}
 		}
 		fcd.status.StepGroups = append(
 			fcd.status.StepGroups,
 			&pb.FlowExecutionStatus_StepGroup{
-				StepIds: stepIds,
+				StepIds:   stepIds,
+				ParentIds: parentIds,
 			},
 		)
 	}

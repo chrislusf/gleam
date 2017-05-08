@@ -15,7 +15,13 @@ var (
 	Margin          = 5 * m
 	LineLength      = 5 * m
 	SmallMargin     = 4
+	VerticalGap     = 4 * m
 )
+
+type stepGroupPosition struct {
+	input  point
+	output point
+}
 
 func GenSvg(status *pb.FlowExecutionStatus) string {
 
@@ -23,47 +29,54 @@ func GenSvg(status *pb.FlowExecutionStatus) string {
 	canvas := svg.New(&svgWriter)
 
 	width := 100 * m
-	height := Margin + HightStep + LineLength // start
-	for _, stepGroup := range status.StepGroups {
-		height += len(stepGroup.GetStepIds()) * HightStep
-		height += LineLength + HightStepHeader
-	}
-	height += Margin // end
+
+	height := doFlowExecutionStatus(canvas, status, width)
+	height += Margin
+
+	svgWriter.Truncate(0)
 
 	canvas.Start(width, height)
-
-	startOutPoint := doState(canvas, point{width / 2, Margin}, "start")
-
-	stepGroupOutPoint := point{startOutPoint.x, startOutPoint.y + LineLength}
-	prevSourcePoint := startOutPoint
-
-	for _, stepGroup := range status.StepGroups {
-
-		inputDatasets := getStepInputDatasets(status, status.GetStep(stepGroup.StepIds[0]))
-
-		inputName := "input"
-		if len(inputDatasets) > 0 {
-			inputName = fmt.Sprintf("d%d", inputDatasets[0].GetId())
-		}
-
-		connect(canvas, prevSourcePoint, stepGroupOutPoint, inputName)
-
-		stepGroupOutPoint = doStepGroup(canvas, stepGroupOutPoint, status, stepGroup)
-		prevSourcePoint = stepGroupOutPoint
-
-		stepGroupOutPoint.y += LineLength
-
-	}
-
-	endInPoint := point{width / 2, prevSourcePoint.y + LineLength}
-	doState(canvas, endInPoint, "end")
-
-	//connect(canvas, startOut, endIn)
-	connect(canvas, prevSourcePoint, endInPoint, "output")
-
+	doFlowExecutionStatus(canvas, status, width)
 	canvas.End()
 
 	return svgWriter.String()
+}
+
+func doFlowExecutionStatus(canvas *svg.SVG, status *pb.FlowExecutionStatus, width int) (height int) {
+
+	positions := make([]stepGroupPosition, len(status.GetStepGroups()))
+	layerOfStepGroupIds := toStepGroupLayers(status)
+
+	height = Margin - LineLength
+
+	for layer := len(layerOfStepGroupIds) - 1; layer >= 0; layer-- {
+		stepGroupIds := layerOfStepGroupIds[layer]
+
+		// determine input points
+		for idx, stepGroupId := range stepGroupIds {
+			positions[stepGroupId].input = point{
+				width/2 + (2*idx-(len(stepGroupIds)-1))*(WidthStep+VerticalGap)/2,
+				height + LineLength,
+			}
+		}
+
+		for _, stepGroupId := range stepGroupIds {
+			stepGroup := status.StepGroups[stepGroupId]
+
+			for _, parentId := range stepGroup.GetParentIds() {
+				connect(canvas, positions[parentId].output, positions[stepGroupId].input, "input")
+			}
+
+			positions[stepGroupId].output = doStepGroup(canvas, positions[stepGroupId].input, status, stepGroup)
+
+			if positions[stepGroupId].output.y > height {
+				height = positions[stepGroupId].output.y
+			}
+
+		}
+	}
+
+	return height
 }
 
 func doState(canvas *svg.SVG, input point, state string) (output point) {
