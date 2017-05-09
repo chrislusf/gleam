@@ -30,7 +30,11 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	lastTask := tasks[len(tasks)-1]
 	if tasks[0].Step.IsOnDriverSide {
 		// these should be only one task on the driver side
-		s.localExecute(ctx, fc, lastTask, wg)
+		if err := taskGroupStatus.Track(func(exe *pb.FlowExecutionStatus_TaskGroup_Execution) error {
+			return s.localExecute(ctx, fc, lastTask, wg)
+		}); err != nil {
+			log.Fatalf("Failed to execute on driver side: %v", err)
+		}
 	} else {
 		if !needsInputFromDriver(tasks[0]) {
 			// wait until inputs are registed
@@ -52,7 +56,6 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 		supply := <-pickedServerChan
 		allocation := supply.Object.(*pb.Allocation)
 		defer s.Market.ReturnSupply(supply)
-		taskGroupStatus.Allocation = allocation
 
 		if needsInputFromDriver(tasks[0]) {
 			// tell the driver to write to me
@@ -101,7 +104,9 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 		}
 
 		fn := func() error {
-			err := s.remoteExecuteOnLocation(ctx, fc, taskGroupStatus, taskGroup, allocation, wg)
+			err := taskGroupStatus.Track(func(exeStatus *pb.FlowExecutionStatus_TaskGroup_Execution) error {
+				return s.remoteExecuteOnLocation(ctx, fc, taskGroupStatus, exeStatus, taskGroup, allocation, wg)
+			})
 			taskGroup.MarkStop(err)
 			return err
 		}

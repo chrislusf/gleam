@@ -1,5 +1,28 @@
 package pb
 
+import (
+	"time"
+)
+
+func (taskGroupStatus *FlowExecutionStatus_TaskGroup) Track(
+	execute func(*FlowExecutionStatus_TaskGroup_Execution) error) error {
+
+	executionStatus := &FlowExecutionStatus_TaskGroup_Execution{}
+	taskGroupStatus.Executions = append(taskGroupStatus.Executions, executionStatus)
+	executionStatus.StartTime = time.Now().UnixNano() / int64(time.Millisecond)
+	defer func() {
+		executionStatus.StopTime = time.Now().UnixNano() / int64(time.Millisecond)
+	}()
+
+	if err := execute(executionStatus); err != nil {
+		executionStatus.Error = []byte(err.Error())
+		return err
+	}
+
+	return nil
+
+}
+
 func (m *FlowExecutionStatus) GetDataset(datasetId int32) *FlowExecutionStatus_Dataset {
 	if m != nil {
 		for _, t := range m.Datasets {

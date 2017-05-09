@@ -2,10 +2,10 @@ package scheduler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"sync"
-	"time"
 
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/distributed/plan"
@@ -17,6 +17,7 @@ import (
 func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	flowContext *flow.FlowContext,
 	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
+	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	taskGroup *plan.TaskGroup,
 	allocation *pb.Allocation, wg *sync.WaitGroup) error {
 
@@ -63,34 +64,27 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 		Resource:     allocation.Allocated,
 	}
 	taskGroupStatus.Request = request
-
-	executionStatus := &pb.FlowExecutionStatus_TaskGroup_Execution{}
-	taskGroupStatus.Executions = append(taskGroupStatus.Executions, executionStatus)
-	executionStatus.StartTime = time.Now().UnixNano() / int64(time.Millisecond)
-	defer func() {
-		executionStatus.StopTime = time.Now().UnixNano() / int64(time.Millisecond)
-	}()
+	taskGroupStatus.Allocation = allocation
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
 	if err := sendExecutionRequest(ctx, executionStatus, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
-		executionStatus.Error = []byte(err.Error())
 		return err
 	}
 
 	return nil
 }
 
-func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
 	if task.Step.OutputDataset == nil {
-		s.localExecuteOutput(ctx, flowContext, task, wg)
+		return s.localExecuteOutput(ctx, flowContext, task, wg)
 	} else {
-		s.localExecuteSource(ctx, flowContext, task, wg)
+		return s.localExecuteSource(ctx, flowContext, task, wg)
 	}
 }
 
-func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
 
 	for _, shard := range task.OutputShards {
@@ -105,11 +99,12 @@ func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Fl
 		}(shard)
 	}
 	if err := task.Step.RunFunction(task); err != nil {
-		log.Fatalf("Failed to send source data: %v", err)
+		return fmt.Errorf("Failed to send source data: %v", err)
 	}
+	return nil
 }
 
-func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) {
+func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
 	for i, shard := range task.InputShards {
@@ -124,6 +119,7 @@ func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.Fl
 		}(shard)
 	}
 	if err := task.Step.RunFunction(task); err != nil {
-		log.Fatalf("Failed to collect output: %v", err)
+		return fmt.Errorf("Failed to collect output: %v", err)
 	}
+	return nil
 }

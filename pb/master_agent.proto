@@ -101,6 +101,7 @@ message FlowExecutionStatus {
             double user_time = 4;
             bytes error = 5;
             bytes output_hash = 6;
+
         }
         repeated Execution executions = 5;
     }

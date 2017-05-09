@@ -72,7 +72,7 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
               <th>Name</th>
               <th>IO</th>
               <th>Allocation</th>
-              <th>CPU</th>
+              <th>Execution</th>
               <th>Memory</th>
             </tr>
           </thead>
@@ -96,10 +96,7 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
                   {{end}}</td>
               <td><ul>{{range .Executions}}
                    <li>
-                     Start: {{.StartTime}}<br/>
-                     Stop:  {{.StopTime}}<br/>
-                     System:{{.SystemTime}} Seconds<br/>
-                     User:{{.UserTime}} Seconds
+                     {{.}}
                    </li>
                   {{end}}</ul></td>
               <td>{{with $tg.Request}}{{.Resource.MemoryMb}}{{end}}</td>

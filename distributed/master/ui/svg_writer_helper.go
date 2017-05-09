@@ -37,7 +37,10 @@ type point struct {
 }
 
 func connect(canvas *svg.SVG, a, b point, label string) {
-	linelabel(canvas, a.x, a.y, b.x, b.y, label, "d", "", "d", "straight", "black")
+	downLength := 2 * m
+	canvas.Line(a.x, a.y, a.x, a.y+downLength, "stroke-width:1;stroke:black;")
+	canvas.Line(a.x, a.y+downLength, b.x, a.y+downLength, "stroke-width:1;stroke:black;")
+	linelabel(canvas, b.x, a.y+downLength, b.x, b.y, label, "d", "", "d", "straight", "black")
 }
 
 // message object
