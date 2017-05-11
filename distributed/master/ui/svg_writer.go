@@ -147,7 +147,7 @@ func doStep(canvas *svg.SVG, input point, step *pb.FlowExecutionStatus_Step, has
 		color = "#ABADAF"
 	}
 
-	name := step.GetName()
+	name := fmt.Sprintf("%d.%s", step.Id, step.Name)
 	canvas.Rect(x, y, w, h, fmt.Sprintf("stroke:%s;stroke-width:1;fill:%s", "black", color))
 	canvas.Gstyle(fmt.Sprintf("font-size:%dpx", fs))
 	canvas.Text(x+w2, y+HightStep-SmallMargin/2, name, "baseline-shift:50%")
