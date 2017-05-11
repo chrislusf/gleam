@@ -34,7 +34,7 @@ func (b *LocalHashAndJoinWith) Name() string {
 
 func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes)
+		return DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes, stats)
 	}
 }
 
@@ -52,12 +52,13 @@ func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int) error {
+func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int, stats *Stats) error {
 	hashmap := make(map[string][]interface{})
 	err := util.ProcessMessage(leftReader, func(input []byte) error {
 		if keys, vals, err := genKeyBytesAndValues(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
+			stats.InputCounter++
 			hashmap[string(keys)] = vals
 		}
 		return nil
@@ -75,6 +76,7 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 		if keys, vals, err := util.DecodeRowKeysValues(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
+			stats.InputCounter++
 			keyBytes, err := util.EncodeRow(keys...)
 			if err != nil {
 				return fmt.Errorf("Failed to encoded row %+v: %v", keys, err)
@@ -83,6 +85,7 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 				row := append(keys, vals...)
 				row = append(row, mappedValues...)
 				util.WriteRow(writer, row...)
+				stats.OutputCounter++
 			}
 		}
 		return nil

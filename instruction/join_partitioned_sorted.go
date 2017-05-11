@@ -36,7 +36,7 @@ func (b *JoinPartitionedSorted) Name() string {
 
 func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoJoinPartitionedSorted(readers[0], readers[1], writers[0], b.indexes, b.isLeftOuterJoin, b.isRightOuterJoin)
+		return DoJoinPartitionedSorted(readers[0], readers[1], writers[0], b.indexes, b.isLeftOuterJoin, b.isRightOuterJoin, stats)
 	}
 }
 
@@ -57,7 +57,7 @@ func (b *JoinPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 {
 
 // Top streamingly compare and get the top n items
 func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int,
-	isLeftOuterJoin, isRightOuterJoin bool) error {
+	isLeftOuterJoin, isRightOuterJoin bool, stats *Stats) error {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
@@ -84,10 +84,12 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 					t = append(t, a.([]interface{})...)
 					t = append(t, b.([]interface{})...)
 					util.WriteRow(writer, t...)
+					stats.OutputCounter++
 				}
 			}
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			rightValuesWithSameKey, rightHasValue = <-rightChan
+			stats.InputCounter += 2
 		case x < 0:
 			if isLeftOuterJoin {
 				for _, leftValue := range leftValuesWithSameKey.Values {
@@ -95,9 +97,11 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 					t = append(t, leftValue.([]interface{})...)
 					t = addNils(t, rightValueLength)
 					util.WriteRow(writer, t...)
+					stats.OutputCounter++
 				}
 			}
 			leftValuesWithSameKey, leftHasValue = <-leftChan
+			stats.InputCounter++
 		case x > 0:
 			if isRightOuterJoin {
 				for _, rightValue := range rightValuesWithSameKey.Values {
@@ -105,9 +109,11 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 					t = addNils(t, leftValueLength)
 					t = append(t, rightValue.([]interface{})...)
 					util.WriteRow(writer, t...)
+					stats.OutputCounter++
 				}
 			}
 			rightValuesWithSameKey, rightHasValue = <-rightChan
+			stats.InputCounter++
 		}
 	}
 	if leftHasValue {
@@ -117,16 +123,19 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
 				util.WriteRow(writer, t...)
+				stats.OutputCounter++
 			}
 		}
 	}
 	for leftValuesWithSameKey = range leftChan {
+		stats.InputCounter++
 		if isLeftOuterJoin {
 			for _, leftValue := range leftValuesWithSameKey.Values {
 				t := leftValuesWithSameKey.Keys
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
 				util.WriteRow(writer, t...)
+				stats.OutputCounter++
 			}
 		}
 	}
@@ -137,16 +146,19 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
 				util.WriteRow(writer, t...)
+				stats.OutputCounter++
 			}
 		}
 	}
 	for rightValuesWithSameKey = range rightChan {
+		stats.InputCounter++
 		if isRightOuterJoin {
 			for _, rightValue := range rightValuesWithSameKey.Values {
 				t := rightValuesWithSameKey.Keys
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
 				util.WriteRow(writer, t...)
+				stats.OutputCounter++
 			}
 		}
 	}

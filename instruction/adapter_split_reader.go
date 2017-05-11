@@ -40,7 +40,7 @@ func (b *AdapterSplitReader) Name() string {
 
 func (b *AdapterSplitReader) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoAdapterSplitReader(readers[0], writers[0], b.adapterName, b.connectionId)
+		return DoAdapterSplitReader(readers[0], writers[0], b.adapterName, b.connectionId, stats)
 	}
 }
 
@@ -58,7 +58,7 @@ func (b *AdapterSplitReader) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
-func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, connectionId string) error {
+func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, connectionId string, stats *Stats) error {
 	a, found := adapter.AdapterManager.GetAdapter(adapterName)
 	if !found {
 		return fmt.Errorf("Failed to load adapter type %s", adapterName)
@@ -71,6 +71,7 @@ func DoAdapterSplitReader(reader io.Reader, writer io.Writer, adapterName, conne
 			}
 			break
 		}
+		stats.InputCounter++
 		encodedSplit := row[0].([]byte)
 
 		split := decodeSplit(encodedSplit)

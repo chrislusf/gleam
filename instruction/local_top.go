@@ -35,7 +35,7 @@ func (b *LocalTop) Name() string {
 
 func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoLocalTop(readers[0], writers[0], b.n, b.orderBys)
+		return DoLocalTop(readers[0], writers[0], b.n, b.orderBys, stats)
 	}
 }
 
@@ -54,7 +54,7 @@ func (b *LocalTop) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) error {
+func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, stats *Stats) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 
@@ -62,6 +62,7 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) e
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
+			stats.InputCounter++
 			newPair := pair{keys: keys, data: input}
 			if pq.Len() >= n {
 				if pairsLessThan(orderBys, pq.Top(), newPair) {
@@ -89,6 +90,7 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy) e
 	}
 	for i := length - 1; i >= 0; i-- {
 		util.WriteMessage(writer, itemsToReverse[i])
+		stats.OutputCounter++
 	}
 
 	return nil

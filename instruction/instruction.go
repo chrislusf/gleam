@@ -23,7 +23,8 @@ type OrderBy struct {
 }
 
 type Stats struct {
-	Count int
+	InputCounter  int64
+	OutputCounter int64
 }
 
 type Instruction interface {

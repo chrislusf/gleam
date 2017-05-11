@@ -16,23 +16,15 @@ import (
 )
 
 type ExecutorOption struct {
-	Master       *string
-	Host         *string
-	Port         *int
-	Dir          *string
-	DataCenter   *string
-	Rack         *string
-	MaxExecutor  *int
-	MemoryMB     *int64
-	CPULevel     *int
-	CleanRestart *bool
-	HashCode     *uint32
+	Host     *string
+	Port     *int
+	HashCode *uint32
 }
 
 type Executor struct {
 	Option       *ExecutorOption
-	Master       string
 	instructions *pb.InstructionSet
+	stats        []*instruction.Stats
 }
 
 func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Executor {
@@ -52,22 +44,25 @@ func (exe *Executor) ExecuteInstructionSet() error {
 
 	prevIsPipe := false
 	prevOutputChan := util.NewPiper()
-	for index, instruction := range exe.instructions.GetInstructions() {
+	for index, instr := range exe.instructions.GetInstructions() {
 		inputChan := prevOutputChan
 		outputChan := util.NewPiper()
 		wg.Add(1)
-		go func(index int, instruction *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper) {
+		stats := &instruction.Stats{}
+		exe.stats = append(exe.stats, stats)
+		go func(index int, instr *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper, stats *instruction.Stats) {
 			exe.executeInstruction(ctx, &wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
-				instruction,
+				instr,
 				index == 0,
 				index == len(exe.instructions.GetInstructions())-1,
 				int(exe.instructions.GetReaderCount()),
+				stats,
 			)
-		}(index, instruction, prevIsPipe, inputChan, outputChan)
+		}(index, instr, prevIsPipe, inputChan, outputChan, stats)
 		prevOutputChan = outputChan
-		if instruction.GetScript() != nil {
-			prevIsPipe = instruction.GetScript().GetIsPipe()
+		if instr.GetScript() != nil {
+			prevIsPipe = instr.GetScript().GetIsPipe()
 		} else {
 			prevIsPipe = false
 		}
@@ -80,6 +75,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 
 	select {
 	case <-finishedChan:
+		// fmt.Fprintf(os.Stderr, "instructions: %v, stats: %+v\n", exe.instructions.InstructionNames(), exe.stats[len(exe.stats)-1])
 	case err := <-ioErrChan:
 		if err != nil {
 			cancel()
@@ -139,7 +135,7 @@ func setupWriters(ctx context.Context, wg *sync.WaitGroup, ioErrChan chan error,
 }
 
 func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup, ioErrChan, exeErrChan chan error,
-	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int) {
+	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int, stats *instruction.Stats) {
 
 	defer wg.Done()
 
@@ -156,8 +152,6 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 
 	util.BufWrites(writers, func(writers []io.Writer) {
 		if f := instruction.InstructionRunner.GetInstructionFunction(i); f != nil {
-			//TODO use the stats
-			stats := &instruction.Stats{}
 			err := f(readers, writers, stats)
 			if err != nil {
 				// println(i.GetName(), "running error", err.Error())

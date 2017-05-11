@@ -42,7 +42,7 @@ func (b *LocalSort) Name() string {
 
 func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoLocalSort(readers[0], writers[0], b.orderBys)
+		return DoLocalSort(readers[0], writers[0], b.orderBys, stats)
 	}
 }
 
@@ -59,13 +59,14 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 	return int64(math.Max(float64(b.memoryInMB), float64(partitionSize)))
 }
 
-func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
+func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)
 	err := util.ProcessMessage(reader, func(input []byte) error {
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
+			stats.InputCounter++
 			kvs = append(kvs, pair{keys: keys, data: input})
 		}
 		return nil
@@ -85,6 +86,8 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
 		// println("sorted key", kv.(pair).keys[0].(string))
 		if err := util.WriteMessage(writer, kv.(pair).data); err != nil {
 			return fmt.Errorf("Sort>Failed to write: %v", err)
+		} else {
+			stats.OutputCounter++
 		}
 	}
 	return nil

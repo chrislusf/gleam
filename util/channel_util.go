@@ -55,13 +55,15 @@ const (
 )
 
 // setup asynchronously to merge multiple channels into one channel
-func CopyMultipleReaders(readers []io.Reader, writer io.Writer) error {
+func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64, outCounter int64, e error) {
+
 	writerChan := make(chan []byte, 16*len(readers))
 	errChan := make(chan error, len(readers))
 	for _, reader := range readers {
 		go func(reader io.Reader) {
 			err := ProcessMessage(reader, func(data []byte) error {
 				writerChan <- data
+				atomic.AddInt64(&inCounter, 1)
 				return nil
 			})
 			errChan <- err
@@ -73,17 +75,18 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) error {
 				errChan <- fmt.Errorf("WriteMessage Error: %v", err)
 				break
 			}
+			atomic.AddInt64(&outCounter, 1)
 		}
 	}()
 	for range readers {
 		err := <-errChan
 		if err != nil {
-			return err
+			return inCounter, outCounter, err
 		}
 	}
 	close(writerChan)
 
-	return nil
+	return inCounter, outCounter, nil
 }
 
 func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {

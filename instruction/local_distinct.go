@@ -33,7 +33,7 @@ func (b *LocalDistinct) Name() string {
 
 func (b *LocalDistinct) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoLocalDistinct(readers[0], writers[0], b.orderBys)
+		return DoLocalDistinct(readers[0], writers[0], b.orderBys, stats)
 	}
 }
 
@@ -50,17 +50,19 @@ func (b *LocalDistinct) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 1
 }
 
-func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy) error {
+func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	var prevKeys []interface{}
 	return util.ProcessMessage(reader, func(input []byte) error {
 		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("decode error %v: %+v", err, input)
 		} else {
+			stats.InputCounter++
 			if prevKeys == nil || util.Compare(keys, prevKeys) != 0 {
 				if err := util.WriteRow(writer, keys...); err != nil {
 					return fmt.Errorf("Sort>Failed to write: %v", err)
 				}
+				stats.OutputCounter++
 				prevKeys = keys
 			}
 		}

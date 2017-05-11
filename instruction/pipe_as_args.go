@@ -36,7 +36,7 @@ func (b *PipeAsArgs) Name() string {
 
 func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoPipeAsArgs(readers[0], writers[0], b.code)
+		return DoPipeAsArgs(readers[0], writers[0], b.code, stats)
 	}
 }
 
@@ -54,7 +54,7 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) error {
+func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *Stats) error {
 	var wg sync.WaitGroup
 
 	err := util.ProcessMessage(reader, func(input []byte) error {
@@ -62,6 +62,8 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string) error {
 		if err != nil {
 			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
 		}
+		stats.InputCounter++
+
 		// feed parts as input to the code
 		actualCode := code
 		for i := 1; i <= len(parts); i++ {

@@ -33,7 +33,7 @@ func (b *MergeSortedTo) Name() string {
 
 func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoMergeSortedTo(readers, writers[0], b.orderBys)
+		return DoMergeSortedTo(readers, writers[0], b.orderBys, stats)
 	}
 }
 
@@ -51,7 +51,7 @@ func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) error {
+func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 
 	pq := newMinQueueOfPairs(orderBys)
@@ -63,6 +63,7 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) 
 				log.Printf("Failed to decode %v: %+v", err, x)
 				return err
 			} else {
+				stats.InputCounter++
 				pq.Enqueue(pair{keys: keys, data: x}, shardId)
 			}
 		} else {
@@ -77,10 +78,13 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy) 
 		if err := util.WriteMessage(writer, t.(pair).data); err != nil {
 			return err
 		}
+		stats.OutputCounter++
+
 		if x, err := util.ReadMessage(readers[shardId]); err == nil {
 			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
 				log.Printf("Failed to decode %v: %+v", err, x)
 			} else {
+				stats.InputCounter++
 				pq.Enqueue(pair{keys: keys, data: x}, shardId)
 			}
 		} else {

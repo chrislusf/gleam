@@ -126,11 +126,12 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step.Name = "Channel"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
 		for data := range ch {
+			stats.InputCounter++
 			err := util.WriteRow(writers[0], data)
 			if err != nil {
 				return err
 			}
-			stats.Count++
+			stats.OutputCounter++
 		}
 		return nil
 	}
@@ -189,11 +190,12 @@ func (fc *FlowContext) Slices(slices [][]interface{}) (ret *Dataset) {
 	step.Name = "Slices"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
 		for _, slice := range slices {
+			stats.InputCounter++
 			err := util.WriteRow(writers[0], slice...)
 			if err != nil {
 				return err
 			}
-			stats.Count++
+			stats.OutputCounter++
 		}
 		return nil
 	}

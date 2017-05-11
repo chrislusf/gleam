@@ -32,7 +32,7 @@ func (b *CoGroupPartitionedSorted) Name() string {
 
 func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoCoGroupPartitionedSorted(readers[0], readers[1], writers[0], b.indexes)
+		return DoCoGroupPartitionedSorted(readers[0], readers[1], writers[0], b.indexes, stats)
 	}
 }
 
@@ -50,7 +50,7 @@ func (b *CoGroupPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 
 }
 
 // Top streamingly compare and get the top n items
-func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int) error {
+func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int, stats *Stats) error {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)
 
@@ -63,23 +63,33 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 		switch {
 		case x == 0:
 			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
+			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			rightValuesWithSameKey, rightHasValue = <-rightChan
+			stats.InputCounter += 2
 		case x < 0:
 			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
+			stats.InputCounter++
 		case x > 0:
 			util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+			stats.OutputCounter++
 			rightValuesWithSameKey, rightHasValue = <-rightChan
+			stats.InputCounter++
 		}
 	}
 	for leftHasValue {
 		util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+		stats.OutputCounter++
 		leftValuesWithSameKey, leftHasValue = <-leftChan
+		stats.InputCounter++
 	}
 	for rightHasValue {
 		util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+		stats.OutputCounter++
 		rightValuesWithSameKey, rightHasValue = <-rightChan
+		stats.InputCounter++
 	}
 	return nil
 }

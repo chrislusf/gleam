@@ -29,7 +29,7 @@ func (b *MergeTo) Name() string {
 
 func (b *MergeTo) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
 	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-		return DoMergeTo(readers, writers[0])
+		return DoMergeTo(readers, writers[0], stats)
 	}
 }
 
@@ -45,14 +45,16 @@ func (b *MergeTo) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoMergeTo(readers []io.Reader, writer io.Writer) error {
+func DoMergeTo(readers []io.Reader, writer io.Writer, stats *Stats) error {
 	// enqueue one item to the pq from each channel
 	for _, reader := range readers {
 		x, err := util.ReadMessage(reader)
 		for err == nil {
+			stats.InputCounter++
 			if err := util.WriteMessage(writer, x); err != nil {
 				return err
 			}
+			stats.OutputCounter++
 			x, err = util.ReadMessage(reader)
 		}
 		if err != io.EOF {
