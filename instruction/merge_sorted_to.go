@@ -31,8 +31,8 @@ func (b *MergeSortedTo) Name() string {
 	return "MergeSortedTo"
 }
 
-func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoMergeSortedTo(readers, writers[0], b.orderBys, stats)
 	}
 }
@@ -51,7 +51,7 @@ func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
+func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 
 	pq := newMinQueueOfPairs(orderBys)

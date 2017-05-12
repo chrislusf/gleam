@@ -140,6 +140,8 @@ message FlowExecutionStatus {
 service GleamAgent {
   rpc SendFileResource(stream FileResourceRequest) returns (stream FileResourceResponse) {}
   rpc Execute(ExecutionRequest) returns (stream ExecutionResponse) {}
+  // collect execution stats from "gleam execute" processes
+  rpc CollectExecutionStatistics(stream ExecutionStat) returns (Empty) {}
   rpc Delete(DeleteDatasetShardRequest) returns (DeleteDatasetShardResponse) {}
 }
 
@@ -157,10 +159,9 @@ message FileResourceResponse {
 }
 
 message ExecutionRequest {
-	InstructionSet instructions = 1;
+	InstructionSet instructionSet = 1;
 	string dir = 2;
 	ComputeResource resource = 3;
-	string name = 4;
 }
 
 message ExecutionResponse {
@@ -168,6 +169,17 @@ message ExecutionResponse {
 	bytes error = 2;
 	double system_time = 3;
 	double user_time = 4;
+}
+
+message ExecutionStat {
+	uint32 flowHashCode = 1;
+	string name = 2;
+	repeated InstructionStat stats = 3;
+}
+
+message InstructionStat {
+	int64 inputCounter = 1;
+	int64 outputCounter = 2;
 }
 
 message ControlMessage {
@@ -204,6 +216,8 @@ message InstructionSet {
 	int32 readerCount = 2;
 	uint32 flowHashCode = 3;
 	bool isProfiling = 4;
+	string agentAddress = 5;
+	string name = 6;
 }
 
 message Instruction {

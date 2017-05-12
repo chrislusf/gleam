@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/instruction"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 )
@@ -95,7 +96,7 @@ type Step struct {
 	FlowContext    *FlowContext
 	InputDatasets  []*Dataset
 	OutputDataset  *Dataset
-	Function       func([]io.Reader, []io.Writer, *instruction.Stats) error
+	Function       func([]io.Reader, []io.Writer, *pb.InstructionStat) error
 	Instruction    instruction.Instruction
 	Tasks          []*Task
 	Name           string
@@ -116,7 +117,7 @@ type Task struct {
 	InputShards  []*DatasetShard
 	InputChans   []*util.Piper // task specific input chans. InputShard may have multiple reading tasks
 	OutputShards []*DatasetShard
-	Stats        *instruction.Stats
+	Stat         *pb.InstructionStat
 }
 
 type RunLocked struct {

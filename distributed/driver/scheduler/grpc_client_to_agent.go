@@ -88,7 +88,7 @@ func sendExecutionRequest(ctx context.Context,
 	server string, request *pb.ExecutionRequest) error {
 
 	return withClient(server, func(client pb.GleamAgentClient) error {
-		log.Printf("%s %v> starting with %v MB memory...\n", server, request.Name, request.GetResource().GetMemoryMb())
+		log.Printf("%s %v> starting with %v MB memory...\n", server, request.InstructionSet.Name, request.GetResource().GetMemoryMb())
 		stream, err := client.Execute(ctx, request)
 		if err != nil {
 			log.Printf("%v.Execute(_) = _, %v", client, err)
@@ -103,14 +103,14 @@ func sendExecutionRequest(ctx context.Context,
 				break
 			}
 			if response.GetError() != nil {
-				log.Printf("%s %v>%s", server, request.Name, string(response.GetError()))
+				log.Printf("%s %v>%s", server, request.InstructionSet.Name, string(response.GetError()))
 				executionStatus.Error = response.GetError()
 			}
 			if response.GetOutput() != nil {
 				fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
 			}
 			if response.GetSystemTime() != 0 {
-				log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.Name, response.GetSystemTime(), response.GetUserTime())
+				log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.InstructionSet.Name, response.GetSystemTime(), response.GetUserTime())
 				executionStatus.SystemTime = response.GetSystemTime()
 				executionStatus.UserTime = response.GetUserTime()
 			}

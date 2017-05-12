@@ -80,9 +80,9 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
           {{ range $tg_index, $tg := . }}
             <tr>
               <td>{{ $tg.StepIds }}</td>
-              <td>{{with $tg.Request}}{{.Name}}{{end}}</td>
+              <td>{{with $tg.Request}}{{.InstructionSet.Name}}{{end}}</td>
               <td>
-                {{with $tg.Request}}{{with .Instructions}}
+                {{with $tg.Request}}{{with .InstructionSet}}
                 {{ range $inst_index, $inst := .Instructions }}
                     {{with .InputShardLocations}}Input: <ul>{{ range . }}<li>{{.Name}}@{{.Host}}:{{.Port}}</li>{{end}}</ul>{{end}}
                     {{with .OutputShardLocations}}Output:<ul>{{ range . }}<li>{{.Name}}@{{.Host}}:{{.Port}}</li>{{end}}{{end}}

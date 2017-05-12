@@ -6,13 +6,17 @@ import (
 	"io"
 	"os/exec"
 	"sync"
+
+	"github.com/chrislusf/gleam/pb"
 )
 
 // all data passing through pipe are all (size, msgpack_encoded) tuples
 // The input and output should all be this msgpack format.
 // Only the stdin and stdout of Pipe() is line based text.
-func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, name string, command *exec.Cmd,
-	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool, errWriter io.Writer) error {
+func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, stats *pb.InstructionStat,
+	name string, command *exec.Cmd,
+	reader io.Reader, writer io.Writer, prevIsPipe, isPipe bool, closeOutput bool,
+	errWriter io.Writer) error {
 
 	defer func() {
 		executeWaitGroup.Done()

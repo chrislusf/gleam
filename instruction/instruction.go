@@ -22,14 +22,9 @@ type OrderBy struct {
 	Order Order // Ascending or Descending
 }
 
-type Stats struct {
-	InputCounter  int64
-	OutputCounter int64
-}
-
 type Instruction interface {
 	Name() string
-	Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error
+	Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error
 	SerializeToCommand() *pb.Instruction
 	GetMemoryCostInMB(partitionSize int64) int64
 }
@@ -42,7 +37,7 @@ func (r *instructionRunner) Register(f func(*pb.Instruction) Instruction) {
 	r.functions = append(r.functions, f)
 }
 
-func (r *instructionRunner) GetInstructionFunction(i *pb.Instruction) func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (r *instructionRunner) GetInstructionFunction(i *pb.Instruction) func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 	for _, f := range r.functions {
 		if inst := f(i); inst != nil {
 			return inst.Function()

@@ -33,8 +33,8 @@ func (b *LocalTop) Name() string {
 	return "LocalTop"
 }
 
-func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoLocalTop(readers[0], writers[0], b.n, b.orderBys, stats)
 	}
 }
@@ -54,7 +54,7 @@ func (b *LocalTop) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, stats *Stats) error {
+func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 

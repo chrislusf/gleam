@@ -31,8 +31,8 @@ func (b *ScatterPartitions) Name() string {
 	return "ScatterPartitions"
 }
 
-func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoScatterPartitions(readers[0], writers, b.indexes, stats)
 	}
 }
@@ -50,7 +50,7 @@ func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 5
 }
 
-func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int, stats *Stats) error {
+func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	shardCount := len(writers)
 
 	return util.ProcessMessage(reader, func(data []byte) error {

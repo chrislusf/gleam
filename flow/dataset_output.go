@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/chrislusf/gleam/instruction"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -15,7 +15,7 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		errChan := make(chan error, len(readers))
 		for i, reader := range readers {
 			go func(i int, reader io.Reader) {

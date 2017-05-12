@@ -27,8 +27,8 @@ func (b *CollectPartitions) Name() string {
 	return "CollectPartitions"
 }
 
-func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoCollectPartitions(readers, writers[0], stats)
 	}
 }
@@ -44,7 +44,7 @@ func (b *CollectPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
-func DoCollectPartitions(readers []io.Reader, writer io.Writer, stats *Stats) (err error) {
+func DoCollectPartitions(readers []io.Reader, writer io.Writer, stats *pb.InstructionStat) (err error) {
 
 	if len(readers) == 1 {
 		_, err := io.Copy(writer, readers[0])

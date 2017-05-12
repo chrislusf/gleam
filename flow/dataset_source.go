@@ -9,7 +9,7 @@ import (
 
 	"github.com/chrislusf/gleam/adapter"
 	"github.com/chrislusf/gleam/filesystem"
-	"github.com/chrislusf/gleam/instruction"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -68,7 +68,7 @@ func (fc *FlowContext) Source(f func(io.Writer) error) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Source"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		errChan := make(chan error, len(writers))
 		// println("running source task...")
 		for _, writer := range writers {
@@ -124,14 +124,14 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Channel"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for data := range ch {
-			stats.InputCounter++
+			stat.InputCounter++
 			err := util.WriteRow(writers[0], data)
 			if err != nil {
 				return err
 			}
-			stats.OutputCounter++
+			stat.OutputCounter++
 		}
 		return nil
 	}
@@ -188,14 +188,14 @@ func (fc *FlowContext) Slices(slices [][]interface{}) (ret *Dataset) {
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Slices"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *instruction.Stats) error {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for _, slice := range slices {
-			stats.InputCounter++
+			stat.InputCounter++
 			err := util.WriteRow(writers[0], slice...)
 			if err != nil {
 				return err
 			}
-			stats.OutputCounter++
+			stat.OutputCounter++
 		}
 		return nil
 	}

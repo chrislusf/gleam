@@ -27,8 +27,8 @@ func (b *Broadcast) Name() string {
 	return "Broadcast"
 }
 
-func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoBroadcast(readers[0], writers, stats)
 	}
 }
@@ -44,7 +44,7 @@ func (b *Broadcast) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 1
 }
 
-func DoBroadcast(reader io.Reader, writers []io.Writer, stats *Stats) error {
+func DoBroadcast(reader io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 	return util.ProcessMessage(reader, func(data []byte) error {
 		stats.InputCounter++
 		for _, writer := range writers {

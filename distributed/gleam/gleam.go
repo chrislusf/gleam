@@ -74,13 +74,13 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to read stdin: %v", err)
 		}
-		instructions := pb.InstructionSet{}
-		if err := proto.Unmarshal(rawData, &instructions); err != nil {
+		instructionSet := pb.InstructionSet{}
+		if err := proto.Unmarshal(rawData, &instructionSet); err != nil {
 			log.Fatal("unmarshaling instructions error: ", err)
 		}
 
-		if instructions.IsProfiling {
-			f, err := os.Create(fmt.Sprintf("exe-%d-%s.pprof", instructions.GetFlowHashCode(), strings.Join(instructions.InstructionNames(), "-")))
+		if instructionSet.IsProfiling {
+			f, err := os.Create(fmt.Sprintf("exe-%d-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-")))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -88,7 +88,9 @@ func main() {
 			defer pprof.StopCPUProfile()
 		}
 
-		if err := exe.NewExecutor(nil, &instructions).ExecuteInstructionSet(); err != nil {
+		if err := exe.NewExecutor(&exe.ExecutorOption{
+			AgentAddress: instructionSet.AgentAddress,
+		}, &instructionSet).ExecuteInstructionSet(); err != nil {
 			log.Fatalf("Failed task %s: %v", *executorNote, err)
 		}
 

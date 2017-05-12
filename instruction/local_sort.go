@@ -40,8 +40,8 @@ func (b *LocalSort) Name() string {
 	return "LocalSort"
 }
 
-func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoLocalSort(readers[0], writers[0], b.orderBys, stats)
 	}
 }
@@ -59,7 +59,7 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 	return int64(math.Max(float64(b.memoryInMB), float64(partitionSize)))
 }
 
-func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
+func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)
 	err := util.ProcessMessage(reader, func(input []byte) error {

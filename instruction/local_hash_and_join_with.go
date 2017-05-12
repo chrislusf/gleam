@@ -32,8 +32,8 @@ func (b *LocalHashAndJoinWith) Name() string {
 	return "LocalHashAndJoinWith"
 }
 
-func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoLocalHashAndJoinWith(readers[0], readers[1], writers[0], b.indexes, stats)
 	}
 }
@@ -52,7 +52,7 @@ func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int, stats *Stats) error {
+func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	hashmap := make(map[string][]interface{})
 	err := util.ProcessMessage(leftReader, func(input []byte) error {
 		if keys, vals, err := genKeyBytesAndValues(input, indexes); err != nil {

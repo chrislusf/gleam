@@ -34,8 +34,8 @@ func (b *PipeAsArgs) Name() string {
 	return "PipeAsArgs"
 }
 
-func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoPipeAsArgs(readers[0], writers[0], b.code, stats)
 	}
 }
@@ -54,7 +54,7 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 // Top streamingly compare and get the top n items
-func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *Stats) error {
+func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.InstructionStat) error {
 	var wg sync.WaitGroup
 
 	err := util.ProcessMessage(reader, func(input []byte) error {
@@ -84,7 +84,10 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *Stats)
 		}
 		// write output to writer
 		wg.Add(1)
-		util.Execute(context.Background(), &wg, "PipeArgs", command.ToOsExecCommand(), nil, writer, false, true, false, os.Stderr)
+		util.Execute(context.Background(), &wg, stats,
+			"PipeArgs", command.ToOsExecCommand(),
+			nil, writer, false, true, false,
+			os.Stderr)
 		//wg.Wait()
 		return nil
 	})

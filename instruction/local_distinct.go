@@ -31,8 +31,8 @@ func (b *LocalDistinct) Name() string {
 	return "LocalDistinct"
 }
 
-func (b *LocalDistinct) Function() func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
-	return func(readers []io.Reader, writers []io.Writer, stats *Stats) error {
+func (b *LocalDistinct) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	return func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		return DoLocalDistinct(readers[0], writers[0], b.orderBys, stats)
 	}
 }
@@ -50,7 +50,7 @@ func (b *LocalDistinct) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 1
 }
 
-func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *Stats) error {
+func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	var prevKeys []interface{}
 	return util.ProcessMessage(reader, func(input []byte) error {

@@ -1,7 +1,6 @@
 package executor
 
 import (
-	//"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -16,15 +15,14 @@ import (
 )
 
 type ExecutorOption struct {
-	Host     *string
-	Port     *int
-	HashCode *uint32
+	AgentAddress string
+	HashCode     uint32
 }
 
 type Executor struct {
 	Option       *ExecutorOption
 	instructions *pb.InstructionSet
-	stats        []*instruction.Stats
+	stats        []*pb.InstructionStat
 }
 
 func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Executor {
@@ -48,9 +46,9 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		inputChan := prevOutputChan
 		outputChan := util.NewPiper()
 		wg.Add(1)
-		stats := &instruction.Stats{}
+		stats := &pb.InstructionStat{}
 		exe.stats = append(exe.stats, stats)
-		go func(index int, instr *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper, stats *instruction.Stats) {
+		go func(index int, instr *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper, stats *pb.InstructionStat) {
 			exe.executeInstruction(ctx, &wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
 				instr,
@@ -68,6 +66,8 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		}
 	}
 
+	go exe.statusHeartbeat(finishedChan)
+
 	go func() {
 		wg.Wait()
 		close(finishedChan)
@@ -75,7 +75,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 
 	select {
 	case <-finishedChan:
-		// fmt.Fprintf(os.Stderr, "instructions: %v, stats: %+v\n", exe.instructions.InstructionNames(), exe.stats[len(exe.stats)-1])
+		exe.reportStatus()
 	case err := <-ioErrChan:
 		if err != nil {
 			cancel()
@@ -135,7 +135,7 @@ func setupWriters(ctx context.Context, wg *sync.WaitGroup, ioErrChan chan error,
 }
 
 func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup, ioErrChan, exeErrChan chan error,
-	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int, stats *instruction.Stats) {
+	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int, stat *pb.InstructionStat) {
 
 	defer wg.Done()
 
@@ -152,7 +152,7 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 
 	util.BufWrites(writers, func(writers []io.Writer) {
 		if f := instruction.InstructionRunner.GetInstructionFunction(i); f != nil {
-			err := f(readers, writers, stats)
+			err := f(readers, writers, stat)
 			if err != nil {
 				// println(i.GetName(), "running error", err.Error())
 				exeErrChan <- fmt.Errorf("Failed executing function %s: %v", i.GetName(), err)
@@ -168,7 +168,7 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 				i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 			)
 			wg.Add(1)
-			err := util.Execute(ctx, wg, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
+			err := util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
 			if err != nil {
 				exeErrChan <- fmt.Errorf("Failed executing command %s: %v", i.GetName(), err)
 			}

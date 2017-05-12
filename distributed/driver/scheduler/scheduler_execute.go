@@ -56,12 +56,12 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	instructions.FlowHashCode = flowContext.HashCode
 	instructions.IsProfiling = false // enable this when profiling executors
+	instructions.Name = taskGroup.String()
 
 	request := &pb.ExecutionRequest{
-		Instructions: instructions,
-		Dir:          s.Option.Module,
-		Name:         taskGroup.String(),
-		Resource:     allocation.Allocated,
+		InstructionSet: instructions,
+		Dir:            s.Option.Module,
+		Resource:       allocation.Allocated,
 	}
 	taskGroupStatus.Request = request
 	taskGroupStatus.Allocation = allocation

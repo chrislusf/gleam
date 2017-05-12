@@ -130,7 +130,7 @@ func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 		writer := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
-		util.Execute(context.Background(), wg, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
+		util.Execute(context.Background(), wg, task.Stat, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
 	}
