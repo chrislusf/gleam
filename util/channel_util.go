@@ -8,6 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/chrislusf/gleam/pb"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -130,7 +131,7 @@ func ChannelToWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer i
 	return err
 }
 
-func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
+func LineReaderToChannel(wg *sync.WaitGroup, stat *pb.InstructionStat, name string, reader io.Reader, ch io.WriteCloser, closeOutput bool, errorOutput io.Writer) {
 	defer wg.Done()
 	if closeOutput {
 		defer ch.Close()
@@ -142,6 +143,7 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch i
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
+		stat.InputCounter++
 		// fmt.Printf("%s>line input: %s\n", name, scanner.Text())
 		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
 		var buf bytes.Buffer
@@ -156,6 +158,7 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch i
 		}
 		// fmt.Printf("%s>encoded input: %s\n", name, string(buf.Bytes()))
 		WriteMessage(w, buf.Bytes())
+		stat.OutputCounter++
 	}
 	if err := scanner.Err(); err != nil {
 		// seems the program could have ended when reading the output.
@@ -163,7 +166,7 @@ func LineReaderToChannel(wg *sync.WaitGroup, name string, reader io.Reader, ch i
 	}
 }
 
-func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
+func ChannelToLineWriter(wg *sync.WaitGroup, stat *pb.InstructionStat, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
 	defer wg.Done()
 	defer writer.Close()
 	w := bufio.NewWriterSize(writer, BUFFER_SIZE)
@@ -171,7 +174,7 @@ func ChannelToLineWriter(wg *sync.WaitGroup, name string, reader io.Reader, writ
 
 	r := bufio.NewReaderSize(reader, BUFFER_SIZE)
 
-	if err := PrintDelimited(r, w, "\t", "\n"); err != nil {
+	if err := PrintDelimited(stat, r, w, "\t", "\n"); err != nil {
 		fmt.Fprintf(errorOutput, "%s>Failed to decode bytes from channel to writer: %v\n", name, err)
 		return
 	}

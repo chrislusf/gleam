@@ -3,6 +3,8 @@ package util
 import (
 	"fmt"
 	"io"
+
+	"github.com/chrislusf/gleam/pb"
 )
 
 // TsvPrintf reads TSV lines from reader,
@@ -43,7 +45,7 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 
 // PrintDelimited Reads and formats MessagePack encoded messages
 // with delimiter and lineSeparator.
-func PrintDelimited(reader io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
+func PrintDelimited(stat *pb.InstructionStat, reader io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
 		var err error
@@ -51,6 +53,7 @@ func PrintDelimited(reader io.Reader, writer io.Writer, delimiter string, lineSp
 		if decodedObjects, err = DecodeRow(encodedBytes); err != nil {
 			return fmt.Errorf("Failed to decode byte: %v", err)
 		}
+		stat.InputCounter++
 
 		// fmt.Printf("> len=%d row:%s\n", len(decodedObjects), decodedObjects[0])
 		if err := fprintRow(writer, "\t", decodedObjects...); err != nil {
@@ -60,6 +63,7 @@ func PrintDelimited(reader io.Reader, writer io.Writer, delimiter string, lineSp
 		if _, err := writer.Write([]byte("\n")); err != nil {
 			return fmt.Errorf("Failed to write line separator: %v", err)
 		}
+		stat.OutputCounter++
 		return nil
 	})
 }

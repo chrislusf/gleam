@@ -15,7 +15,7 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	step := d.FlowContext.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
-	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
+	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		errChan := make(chan error, len(readers))
 		for i, reader := range readers {
 			go func(i int, reader io.Reader) {
@@ -45,7 +45,7 @@ func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 			_, err := io.Copy(w, reader)
 			return err
 		}
-		return util.PrintDelimited(reader, w, "\t", "\n")
+		return util.PrintDelimited(&pb.InstructionStat{}, reader, w, "\t", "\n")
 	}
 	return d.Output(fn)
 }

@@ -101,7 +101,7 @@ func main() {
 		wg.Add(1)
 		go netchan.DialWriteChannel(context.Background(), &wg, "stdin", *writerAgentAddress, *writeTopic, *writeToDisk, inChan.Reader, 1)
 		wg.Add(1)
-		go util.LineReaderToChannel(&wg, "stdin", os.Stdin, inChan.Writer, true, os.Stderr)
+		go util.LineReaderToChannel(&wg, &pb.InstructionStat{}, "stdin", os.Stdin, inChan.Writer, true, os.Stderr)
 		wg.Wait()
 
 	case reader.FullCommand():
@@ -111,7 +111,7 @@ func main() {
 		wg.Add(1)
 		go netchan.DialReadChannel(context.Background(), &wg, "stdout", *readerAgentAddress, *readTopic, *readFromDisk, outChan.Writer)
 		wg.Add(1)
-		util.ChannelToLineWriter(&wg, "stdout", outChan.Reader, os.Stdout, os.Stderr)
+		util.ChannelToLineWriter(&wg, &pb.InstructionStat{}, "stdout", outChan.Reader, os.Stdout, os.Stderr)
 		wg.Wait()
 
 	case agent.FullCommand():
