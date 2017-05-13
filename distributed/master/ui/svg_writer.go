@@ -142,9 +142,9 @@ func doStep(canvas *svg.SVG, input point, step *pb.FlowExecutionStatus_Step, has
 	fs := 14
 	w2 := 3
 
-	color := "#D7DBDD"
+	color := "#fff"
 	if hasFinished {
-		color = "#ABADAF"
+		color = "#D7DBDD"
 	}
 
 	name := fmt.Sprintf("%d.%s", step.Id, step.Name)
