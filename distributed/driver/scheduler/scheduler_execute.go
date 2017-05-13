@@ -29,9 +29,9 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	for _, arg := range os.Args[1:] {
 		args = append(args, arg)
 	}
-	instructions := plan.TranslateToInstructionSet(taskGroup)
-	firstInstruction := instructions.GetInstructions()[0]
-	lastInstruction := instructions.GetInstructions()[len(instructions.GetInstructions())-1]
+	instructionSet := plan.TranslateToInstructionSet(taskGroup)
+	firstInstruction := instructionSet.GetInstructions()[0]
+	lastInstruction := instructionSet.GetInstructions()[len(instructionSet.GetInstructions())-1]
 	firstTask := taskGroup.Tasks[0]
 	lastTask := taskGroup.Tasks[len(taskGroup.Tasks)-1]
 	var inputLocations, outputLocations []pb.DataLocation
@@ -54,12 +54,12 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	firstInstruction.SetInputLocations(inputLocations)
 	lastInstruction.SetOutputLocations(outputLocations)
 
-	instructions.FlowHashCode = flowContext.HashCode
-	instructions.IsProfiling = false // enable this when profiling executors
-	instructions.Name = taskGroup.String()
+	instructionSet.FlowHashCode = flowContext.HashCode
+	instructionSet.IsProfiling = false // enable this when profiling executors
+	instructionSet.Name = taskGroup.String()
 
 	request := &pb.ExecutionRequest{
-		InstructionSet: instructions,
+		InstructionSet: instructionSet,
 		Dir:            s.Option.Module,
 		Resource:       allocation.Allocated,
 	}

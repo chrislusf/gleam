@@ -31,21 +31,26 @@ func translateToInstruction(task *flow.Task) (ret *pb.Instruction) {
 	// if failed, try to run lua scripts
 
 	if task.Step.Instruction != nil {
-		return task.Step.Instruction.SerializeToCommand()
+		ret = task.Step.Instruction.SerializeToCommand()
+	} else {
+		// Command can come from Pipe() directly
+		// get an exec.Command
+		// println("processing step:", task.Step.Name)
+		command := task.Step.GetScriptCommand()
+
+		ret = &pb.Instruction{
+			Name: task.Step.Name,
+			Script: &pb.Instruction_Script{
+				IsPipe: (task.Step.IsPipe),
+				Path:   command.Path,
+				Args:   command.Args,
+				Env:    command.Env,
+			},
+		}
 	}
 
-	// Command can come from Pipe() directly
-	// get an exec.Command
-	// println("processing step:", task.Step.Name)
-	command := task.Step.GetScriptCommand()
+	ret.StepId = int32(task.Step.Id)
+	ret.TaskId = int32(task.Id)
 
-	return &pb.Instruction{
-		Name: task.Step.Name,
-		Script: &pb.Instruction_Script{
-			IsPipe: (task.Step.IsPipe),
-			Path:   command.Path,
-			Args:   command.Args,
-			Env:    command.Env,
-		},
-	}
+	return
 }

@@ -46,8 +46,11 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		inputChan := prevOutputChan
 		outputChan := util.NewPiper()
 		wg.Add(1)
-		stats := &pb.InstructionStat{}
-		exe.stats = append(exe.stats, stats)
+		stat := &pb.InstructionStat{
+			StepId: instr.StepId,
+			TaskId: instr.TaskId,
+		}
+		exe.stats = append(exe.stats, stat)
 		go func(index int, instr *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper, stats *pb.InstructionStat) {
 			exe.executeInstruction(ctx, &wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
@@ -55,9 +58,9 @@ func (exe *Executor) ExecuteInstructionSet() error {
 				index == 0,
 				index == len(exe.instructions.GetInstructions())-1,
 				int(exe.instructions.GetReaderCount()),
-				stats,
+				stat,
 			)
-		}(index, instr, prevIsPipe, inputChan, outputChan, stats)
+		}(index, instr, prevIsPipe, inputChan, outputChan, stat)
 		prevOutputChan = outputChan
 		if instr.GetScript() != nil {
 			prevIsPipe = instr.GetScript().GetIsPipe()

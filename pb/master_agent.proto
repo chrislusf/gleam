@@ -178,8 +178,10 @@ message ExecutionStat {
 }
 
 message InstructionStat {
-	int64 inputCounter = 1;
-	int64 outputCounter = 2;
+    int32 stepId = 1;
+    int32 taskId = 2;
+	int64 inputCounter = 3;
+	int64 outputCounter = 4;
 }
 
 message ControlMessage {
@@ -221,60 +223,62 @@ message InstructionSet {
 }
 
 message Instruction {
-	string name = 1;
-	repeated DatasetShardLocation inputShardLocations = 2;
-	repeated DatasetShardLocation OutputShardLocations = 3;
-	int32 memoryInMB = 4;
+    int32 stepId = 1;
+    int32 taskId = 2;
+	int32 memoryInMB = 3;
+	string name = 4;
+	repeated DatasetShardLocation inputShardLocations = 5;
+	repeated DatasetShardLocation OutputShardLocations = 6;
 
 	message JoinPartitionedSorted {
 		repeated int32 indexes = 1;
 		bool isLeftOuterJoin = 2;
 		bool isRightOuterJoin = 3;
 	}
-	JoinPartitionedSorted joinPartitionedSorted = 5;
+	JoinPartitionedSorted joinPartitionedSorted = 7;
 
 	message CoGroupPartitionedSorted {
 		repeated int32 indexes = 1;
 	}
-	CoGroupPartitionedSorted coGroupPartitionedSorted = 6;
+	CoGroupPartitionedSorted coGroupPartitionedSorted = 8;
 
 	message PipeAsArgs {
 		string code = 1;
 	}
-	PipeAsArgs pipeAsArgs = 7;
+	PipeAsArgs pipeAsArgs = 9;
 
 	message ScatterPartitions {
 		repeated int32 indexes = 1;
 	}
-	ScatterPartitions scatterPartitions = 8;
+	ScatterPartitions scatterPartitions = 10;
 
 	message CollectPartitions {
 	}
-	CollectPartitions collectPartitions = 9;
+	CollectPartitions collectPartitions = 11;
 
 	message InputSplitReader {
 		string inputType = 1;
 	}
-	InputSplitReader inputSplitReader = 10;
+	InputSplitReader inputSplitReader = 12;
 
 	message RoundRobin {
 	}
-	RoundRobin roundRobin = 11;
+	RoundRobin roundRobin = 13;
 
 	message LocalTop {
 		int32 n = 1;
 		repeated OrderBy orderBys = 2;
 	}
-	LocalTop localTop = 12;
+	LocalTop localTop = 14;
 
 	message Broadcast {
 	}
-	Broadcast broadcast = 13;
+	Broadcast broadcast = 15;
 
 	message LocalHashAndJoinWith {
 		repeated int32 indexes = 1;
 	}
-	LocalHashAndJoinWith localHashAndJoinWith = 14;
+	LocalHashAndJoinWith localHashAndJoinWith = 16;
 
 	message Script {
 		bool isPipe = 1;
@@ -282,31 +286,31 @@ message Instruction {
 		repeated string args = 3;
 		repeated string env = 4;
 	}
-	Script script = 15;
+	Script script = 17;
 
 	message LocalSort {
 		repeated OrderBy orderBys = 1;
 	}
-	LocalSort localSort = 16;
+	LocalSort localSort = 18;
 
 	message AdapterSplitReader {
 		string adapterName = 1;
 		string connectionId = 2;
 	}
-	AdapterSplitReader adapterSplitReader = 17;
+	AdapterSplitReader adapterSplitReader = 19;
 
 	message MergeSortedTo {
 		repeated OrderBy orderBys = 1;
 	}
-	MergeSortedTo mergeSortedTo = 18;
+	MergeSortedTo mergeSortedTo = 20;
 
 	message LocalDistinct {
 		repeated OrderBy orderBys = 1;
 	}
-	LocalDistinct localDistinct = 19;
+	LocalDistinct localDistinct = 21;
 
 	message MergeTo {}
-	MergeTo mergeTo = 20;
+	MergeTo mergeTo = 22;
 
 }
 
