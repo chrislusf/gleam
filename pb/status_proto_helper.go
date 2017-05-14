@@ -9,9 +9,9 @@ func (taskGroupStatus *FlowExecutionStatus_TaskGroup) Track(
 
 	executionStatus := &FlowExecutionStatus_TaskGroup_Execution{}
 	taskGroupStatus.Executions = append(taskGroupStatus.Executions, executionStatus)
-	executionStatus.StartTime = time.Now().UnixNano() / int64(time.Millisecond)
+	executionStatus.StartTime = time.Now().UnixNano()
 	defer func() {
-		executionStatus.StopTime = time.Now().UnixNano() / int64(time.Millisecond)
+		executionStatus.StopTime = time.Now().UnixNano()
 	}()
 
 	if err := execute(executionStatus); err != nil {

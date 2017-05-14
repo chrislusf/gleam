@@ -110,9 +110,13 @@ func sendExecutionRequest(ctx context.Context,
 				fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
 			}
 			if response.GetSystemTime() != 0 {
-				log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.InstructionSet.Name, response.GetSystemTime(), response.GetUserTime())
+				// log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.InstructionSet.Name, response.GetSystemTime(), response.GetUserTime())
 				executionStatus.SystemTime = response.GetSystemTime()
 				executionStatus.UserTime = response.GetUserTime()
+			}
+			if response.GetExecutionStat() != nil {
+				// log.Printf("received stat %s: %v", executionStatus, executionStatus.ExecutionStat)
+				executionStatus.ExecutionStat = response.GetExecutionStat()
 			}
 		}
 

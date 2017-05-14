@@ -8,11 +8,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sync"
 
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+)
+
+var (
+	statsChanMap        = make(map[string]chan *pb.ExecutionStat)
+	statsChanMapRWMutex sync.RWMutex
 )
 
 func (as *AgentServer) serveGrpc(listener net.Listener) {
@@ -81,12 +87,24 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 
 	request.InstructionSet.AgentAddress = fmt.Sprintf(":%d", *as.Option.Port)
 
-	return as.executeCommand(stream, request, dir)
+	key := fmt.Sprintf(
+		"%d-%s",
+		request.InstructionSet.FlowHashCode,
+		request.InstructionSet.Name,
+	)
+	statsChan := make(chan *pb.ExecutionStat)
+	statsChanMapRWMutex.Lock()
+	statsChanMap[key] = statsChan
+	statsChanMapRWMutex.Unlock()
+
+	return as.executeCommand(stream, request, dir, statsChan)
 
 }
 
 // Collect stat from "gleam execute" process
 func (as *AgentServer) CollectExecutionStatistics(stream pb.GleamAgent_CollectExecutionStatisticsServer) error {
+	var statsChan chan *pb.ExecutionStat
+
 	for {
 		stats, err := stream.Recv()
 		if err == io.EOF {
@@ -95,7 +113,19 @@ func (as *AgentServer) CollectExecutionStatistics(stream pb.GleamAgent_CollectEx
 		if err != nil {
 			return err
 		}
-		fmt.Printf("stats: %+v\n", stats)
+		if statsChan == nil {
+			key := fmt.Sprintf(
+				"%d-%s",
+				stats.FlowHashCode,
+				stats.Name,
+			)
+			statsChanMapRWMutex.RLock()
+			statsChan = statsChanMap[key]
+			statsChanMapRWMutex.RUnlock()
+		}
+
+		statsChan <- stats
+		// fmt.Printf("stats: %+v\n", stats)
 	}
 
 }

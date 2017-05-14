@@ -12,6 +12,9 @@ service GleamMaster {
 message ComputeRequest {
   string data_center = 1;
   repeated ComputeResource compute_resources = 2;
+  string username = 3;
+  string hostname = 4;
+  uint32 flowHashCode = 5;
 }
 
 message ComputeResource {
@@ -101,9 +104,10 @@ message FlowExecutionStatus {
             double user_time = 4;
             bytes error = 5;
             bytes output_hash = 6;
-
+		    ExecutionStat executionStat = 7;
         }
         repeated Execution executions = 5;
+		
     }
 
     repeated StepGroup stepGroups = 1;
@@ -167,8 +171,9 @@ message ExecutionRequest {
 message ExecutionResponse {
 	bytes output = 1;
 	bytes error = 2;
-	double system_time = 3;
-	double user_time = 4;
+	double systemTime = 3;
+	double userTime = 4;
+	ExecutionStat executionStat = 5;
 }
 
 message ExecutionStat {

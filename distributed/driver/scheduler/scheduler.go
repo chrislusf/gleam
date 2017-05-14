@@ -2,6 +2,8 @@
 package scheduler
 
 import (
+	"os"
+	"os/user"
 	"sync"
 	"time"
 
@@ -31,6 +33,9 @@ type RemoteExecutorStatus struct {
 }
 
 type SchedulerOption struct {
+	Username     string
+	Hostname     string
+	FlowHashcode uint32
 	DataCenter   string
 	Rack         string
 	TaskMemoryMB int
@@ -38,6 +43,11 @@ type SchedulerOption struct {
 }
 
 func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
+	if currentUser, err := user.Current(); err == nil {
+		option.Username = currentUser.Username
+	}
+	option.Hostname, _ = os.Hostname()
+
 	s := &Scheduler{
 		Master:       leader,
 		EventChan:    make(chan interface{}),

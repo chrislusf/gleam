@@ -4,7 +4,7 @@ import (
 	"text/template"
 )
 
-var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
+var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOCTYPE html>
 <html>
   <head>
     <title>Job {{ .Status.Id }}</title>
@@ -17,6 +17,8 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
           <a href="https://github.com/chrislusf/gleam">Gleam</a> <small>{{ .Version }}</small>
 	    </h1>
       </div>
+
+      {{ $start := .Status.Driver.StartTime }}
 
       <div class="row">
         <div class="col-sm-6">
@@ -38,11 +40,15 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
               </tr>
               <tr>
                 <th>Start</th>
-                <td>{{ .StartTime }}</td>
+                <td>{{ unix .StartTime }}</td>
               </tr>
               <tr>
                 <th>Stop</th>
-                <td>{{ .StopTime }}</td>
+                <td>{{ unix .StopTime }}</td>
+              </tr>
+              <tr>
+                <th>Duration</th>
+                <td>{{ duration .StopTime $start}}</td>
               </tr>
             </tbody>
           </table>
@@ -96,7 +102,15 @@ var JobStatusTpl = template.Must(template.New("job").Parse(`<!DOCTYPE html>
                   {{end}}</td>
               <td><ul>{{range .Executions}}
                    <li>
-                     {{.}}
+                     {{with .StartTime}} start: {{ duration . $start}} {{end}}
+                     {{with .StopTime}} stop: {{ duration . $start}} {{end}}
+                     {{with .ExecutionStat}}
+                     <ul>
+                       {{range .Stats}}
+                          <li>{{.StepId}}-{{.TaskId}}:{{.InputCounter}}=>{{.OutputCounter}}</li>
+                       {{end}}
+                     </ul>
+                     {{end}}
                    </li>
                   {{end}}</ul></td>
               <td>{{with $tg.Request}}{{.Resource.MemoryMb}}{{end}}</td>

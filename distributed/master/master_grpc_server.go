@@ -50,7 +50,7 @@ func (s *MasterServer) GetResources(ctx context.Context, in *pb.ComputeRequest) 
 
 	allocations := s.Topology.findServers(dc, in.GetComputeResources())
 
-	log.Printf("request : %+v, allocated: %+v", in.GetComputeResources(), allocations)
+	log.Printf("%v requests %+v, allocated %+v", in.FlowHashCode, in.GetComputeResources(), allocations)
 
 	return &pb.AllocationResult{
 		Allocations: allocations,

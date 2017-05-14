@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
@@ -17,6 +16,7 @@ func (as *AgentServer) executeCommand(
 	stream pb.GleamAgent_ExecuteServer,
 	startRequest *pb.ExecutionRequest,
 	dir string,
+	statChan chan *pb.ExecutionStat,
 ) (err error) {
 
 	ctx := stream.Context()
@@ -57,7 +57,7 @@ func (as *AgentServer) executeCommand(
 
 	go streamOutput(errChan, stream, stdout)
 	go streamError(errChan, stream, stderr)
-	go streamPulse(errChan, stopChan, stream)
+	go streamPulse(errChan, stopChan, statChan, stream)
 	defer func() { stopChan <- true }()
 
 	// send instruction set to executor
@@ -158,15 +158,19 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 	}
 }
 
-func streamPulse(errChan chan error, stopChan chan bool, stream pb.GleamAgent_ExecuteServer) error {
+func streamPulse(errChan chan error,
+	stopChan chan bool,
+	statChan chan *pb.ExecutionStat,
+	stream pb.GleamAgent_ExecuteServer) error {
 
-	tickChan := time.NewTicker(time.Minute).C
 	for {
 		select {
 		case <-stopChan:
 			return nil
-		case <-tickChan:
-			if sendErr := stream.Send(&pb.ExecutionResponse{}); sendErr != nil {
+		case stat := <-statChan:
+			if sendErr := stream.Send(&pb.ExecutionResponse{
+				ExecutionStat: stat,
+			}); sendErr != nil {
 				return fmt.Errorf("Failed to send empty response: %v\n", sendErr)
 			}
 		}

@@ -14,6 +14,9 @@ import (
 // Object is Agent's Location
 func (s *Scheduler) Fetch(demands []market.Demand) {
 	var request pb.ComputeRequest
+	request.Username = s.Option.Username
+	request.Hostname = s.Option.Hostname
+	request.FlowHashCode = s.Option.FlowHashcode
 	request.DataCenter = s.Option.DataCenter
 	for _, d := range demands {
 		taskGroup := d.Requirement.(*plan.TaskGroup)

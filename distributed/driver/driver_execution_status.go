@@ -139,7 +139,7 @@ func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
 		Username:   username,
 		Hostname:   hostname,
 		Executable: executable,
-		StartTime:  time.Now().Unix(),
+		StartTime:  time.Now().UnixNano(),
 	}
 
 }

@@ -1,9 +1,7 @@
 package executor
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/chrislusf/gleam/pb"
@@ -12,8 +10,6 @@ import (
 )
 
 func (exe *Executor) statusHeartbeat(finishedChan chan bool) {
-
-	fmt.Fprintf(os.Stderr, "instructions: %v, stats: %+v\n", exe.instructions.InstructionNames(), exe.stats[len(exe.stats)-1])
 
 	grpcConection, err := grpc.Dial(exe.Option.AgentAddress, grpc.WithInsecure())
 	if err != nil {

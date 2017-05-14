@@ -60,6 +60,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 			Rack:         fcd.Option.Rack,
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,
 			Module:       fcd.Option.Module,
+			FlowHashcode: fc.HashCode,
 		},
 	)
 
@@ -77,7 +78,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	}, nil)
 
 	// schedule to run the steps
-	var wg sync.WaitGroup
+	var wg, reportWg sync.WaitGroup
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
 		go func(taskGroup *plan.TaskGroup) {
@@ -86,13 +87,17 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
+
 	stopChan := make(chan bool)
-	go fcd.reportStatus(ctx, fcd.Option.Master, stopChan)
+	reportWg.Add(1)
+	go fcd.reportStatus(ctx, &reportWg, fcd.Option.Master, stopChan)
 
 	log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 
 	wg.Wait()
+
 	stopChan <- true
+	reportWg.Wait()
 
 }
 
@@ -110,13 +115,16 @@ func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowC
 	wg.Wait()
 }
 
-func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string, stopChan chan bool) {
+func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGroup, master string, stopChan chan bool) {
 	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Failed to dial: %v", err)
 		return
 	}
-	defer grpcConection.Close()
+	defer func() {
+		grpcConection.Close()
+		wg.Done()
+	}()
 	client := pb.NewGleamMasterClient(grpcConection)
 
 	stream, err := client.SendFlowExecutionStatus(ctx)
@@ -129,12 +137,13 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, master string, s
 	for {
 		select {
 		case <-stopChan:
-			fcd.status.Driver.StopTime = time.Now().Unix()
+			fcd.status.Driver.StopTime = time.Now().UnixNano()
 			if err = stream.Send(fcd.status); err == nil {
 				log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 			} else {
 				log.Printf("Failed to update Job Status http://%s/job/%d : %v", fcd.Option.Master, fcd.status.GetId(), err)
 			}
+			// log.Printf("Sent last status: %v", fcd.status)
 			return
 		case <-ticker.C:
 			stream.Send(fcd.status)

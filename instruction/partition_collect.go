@@ -47,7 +47,8 @@ func (b *CollectPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoCollectPartitions(readers []io.Reader, writer io.Writer, stats *pb.InstructionStat) (err error) {
 
 	if len(readers) == 1 {
-		_, err := io.Copy(writer, readers[0])
+		n, err := io.Copy(writer, readers[0])
+		stats.InputCounter, stats.OutputCounter = n, n
 		return err
 	}
 
