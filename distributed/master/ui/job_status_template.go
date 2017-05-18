@@ -42,10 +42,12 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                 <th>Start</th>
                 <td>{{ unix .StartTime }}</td>
               </tr>
+              {{ with .StopTime }}
               <tr>
                 <th>Stop</th>
-                <td>{{ unix .StopTime }}</td>
+                <td>{{ unix . }}</td>
               </tr>
+              {{ end}}
               <tr>
                 <th>Duration</th>
                 <td>{{ duration .StopTime $start}}</td>
@@ -76,10 +78,8 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
             <tr>
               <th>Steps</th>
               <th>Name</th>
-              <th>IO</th>
               <th>Allocation</th>
               <th>Execution</th>
-              <th>Memory</th>
             </tr>
           </thead>
           <tbody>
@@ -88,6 +88,11 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
               <td>{{ $tg.StepIds }}</td>
               <td>{{with $tg.Request}}{{.InstructionSet.Name}}{{end}}</td>
               <td>
+                {{with $tg.Allocation}}
+                    {{.Allocated.MemoryMb}}MB {{.Location.DataCenter}}-{{.Location.Rack}}-{{.Location.Server}}:{{.Location.Port}}
+                {{end}}
+                <br/>
+                
                 {{with $tg.Request}}{{with .InstructionSet}}
                 {{ range $inst_index, $inst := .Instructions }}
                     {{with .InputShardLocations}}Input: <ul>{{ range . }}<li>{{.Name}}@{{.Host}}:{{.Port}}</li>{{end}}</ul>{{end}}
@@ -95,11 +100,6 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                 {{end}}
                 {{ end }}{{ end }}
               </td>
-              <td>{{with $tg.Allocation}}
-                    {{.Location.DataCenter}}-{{.Location.Rack}}-{{.Location.Server}}:{{.Location.Port}}
-                    <br/>
-                    CPU:{{.Allocated.CpuCount}} Memory:{{.Allocated.MemoryMb}}MB
-                  {{end}}</td>
               <td><ul>{{range .Executions}}
                    <li>
                      {{with .StartTime}} start: {{ duration . $start}} {{end}}
@@ -113,7 +113,6 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                      {{end}}
                    </li>
                   {{end}}</ul></td>
-              <td>{{with $tg.Request}}{{.Resource.MemoryMb}}{{end}}</td>
             </tr>
           {{ end }}
           </tbody>
