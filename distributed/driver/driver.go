@@ -25,8 +25,6 @@ type Option struct {
 	TaskMemoryMB  int
 	FlowBid       float64
 	Module        string
-	Host          string
-	Port          int
 }
 
 type FlowContextDriver struct {
