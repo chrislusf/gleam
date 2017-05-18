@@ -16,7 +16,6 @@ func ExecuteWithCleanup(parentContext context.Context, onExecute func() error, o
 	select {
 	case err := <-errChan:
 		cancel()
-		onCleanup()
 		return err
 	case <-ctx.Done():
 		onCleanup()
