@@ -13,6 +13,9 @@ var (
 )
 
 func Duration(stop, start int64) string {
+	if stop == 0 {
+		stop = int64(time.Now().UnixNano())
+	}
 	d := stop - start
 	return time.Duration(d - d%1e6).String()
 }
