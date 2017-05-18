@@ -107,6 +107,9 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 			err := taskGroupStatus.Track(func(exeStatus *pb.FlowExecutionStatus_TaskGroup_Execution) error {
 				return s.remoteExecuteOnLocation(ctx, fc, taskGroupStatus, exeStatus, taskGroup, allocation, wg)
 			})
+			if err != nil {
+				log.Printf("Failed to remoteExecuteOnLocation %v: %v", allocation, err)
+			}
 			taskGroup.MarkStop(err)
 			return err
 		}
