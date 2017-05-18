@@ -92,7 +92,7 @@ func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Fl
 		shard.IncomingChan = util.NewPiper()
 		wg.Add(1)
 		go func(shard *flow.DatasetShard) {
-			// println(task.Step.Name, "writing to", shard.Name(), "at", location.URL())
+			// println(task.Step.Name, "writing to", shard.Name(), "at", location.Location.URL())
 			if err := netchan.DialWriteChannel(ctx, wg, "driver_input", location.Location.URL(), shard.Name(), shard.Dataset.GetIsOnDiskIO(), shard.IncomingChan.Reader, len(shard.ReadingTasks)); err != nil {
 				println("starting:", task.Step.Name, "output location:", location.Location.URL(), shard.Name(), "error:", err.Error())
 			}
