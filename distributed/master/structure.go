@@ -99,15 +99,15 @@ func (tp *Topology) GetDataCenters() map[string]*DataCenter {
 	return s
 }
 
-func (dc *DataCenter) GetRacks() map[string]*Rack {
+func (dc *DataCenter) GetRacks() (ret []*Rack) {
 	dc.RLock()
 	defer dc.RUnlock()
 
-	s := make(map[string]*Rack, len(dc.Racks))
-	for k, v := range dc.Racks {
-		s[k] = v
+	for _, v := range dc.Racks {
+		r := v
+		ret = append(ret, r)
 	}
-	return s
+	return
 }
 
 func (dc *DataCenter) AddRack(rack *Rack) {
@@ -131,13 +131,13 @@ func (rack *Rack) DropAgent(location *pb.Location) {
 	delete(rack.Agents, location.URL())
 }
 
-func (rack *Rack) GetAgents() map[string]*AgentInformation {
+func (rack *Rack) GetAgents() (ret []*AgentInformation) {
 	rack.RLock()
 	defer rack.RUnlock()
 
-	s := make(map[string]*AgentInformation, len(rack.Agents))
-	for k, v := range rack.Agents {
-		s[k] = v
+	for _, v := range rack.Agents {
+		a := v
+		ret = append(ret, a)
 	}
-	return s
+	return
 }

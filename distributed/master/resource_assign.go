@@ -2,6 +2,7 @@ package master
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 
 	"github.com/chrislusf/gleam/pb"
@@ -29,23 +30,23 @@ func (t *Topology) allocateDataCenter(requests []*pb.ComputeResource) (string, e
 
 func (t *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []*pb.ComputeResource) (
 	allocated []*pb.Allocation, remainingRequests []*pb.ComputeResource) {
-	var j = -1
-	for _, agent := range rack.GetAgents() {
-		if j >= len(requests) {
-			break
-		}
-		available := agent.Resource.Minus(agent.Allocated)
-		hasAllocation := true
-		for available.GreaterThanZero() && hasAllocation && j < len(requests) {
-			hasAllocation = false
 
-			j++
-			if j >= len(requests) {
-				break
+	agents := rack.GetAgents()
+	start := rand.Intn(len(agents)) - 1
+	for _, req := range requests {
+		request := req
+
+		hasAllocation := false
+		for x := 0; x < len(agents); x++ {
+			start++
+			if start == len(agents) {
+				start = 0
 			}
-			request := requests[j]
+			agent := agents[start]
 
-			// fmt.Printf("available %v, requested %v\n", available, request.ComputeResource)
+			available := agent.Resource.Minus(agent.Allocated)
+
+			// fmt.Printf("available %v, requested %v\n", available, request.GetMemoryMb())
 			if available.Covers(*request) {
 				allocated = append(allocated, &pb.Allocation{
 					Location:  &agent.Location,
@@ -57,11 +58,16 @@ func (t *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []
 				t.Allocated = t.Allocated.Plus(*request)
 				available = available.Minus(*request)
 				hasAllocation = true
-			} else {
-				remainingRequests = append(remainingRequests, request)
+				break
 			}
 		}
+
+		if !hasAllocation {
+			remainingRequests = append(remainingRequests, request)
+		}
+
 	}
+
 	return
 }
 
