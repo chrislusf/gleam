@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	//"time"
 
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
@@ -32,7 +33,6 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		log.Printf("%v.SendFileResource(_) = _, %v", client, err)
 		return err
 	}
-	defer stream.CloseSend()
 
 	err = stream.Send(fileResourceRequest)
 	if err != nil {
@@ -47,12 +47,14 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 	}
 
 	if fileResourceResponse.AlreadyExists {
+		stream.CloseSend()
 		return nil
 	}
 
 	f, err := os.Open(relatedFile.FullPath)
 	if err != nil {
 		log.Printf("OpenFile %s error: %v", relatedFile.FullPath, err)
+		stream.CloseSend()
 		return err
 	}
 
@@ -79,6 +81,11 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		}
 	}
 
+	stream.CloseSend()
+
+	// receive ack
+	stream.Recv()
+
 	return nil
 
 }
@@ -91,15 +98,19 @@ func sendExecutionRequest(ctx context.Context,
 		log.Printf("%s %v> starting with %v MB memory...\n", server, request.InstructionSet.Name, request.GetResource().GetMemoryMb())
 		stream, err := client.Execute(ctx, request)
 		if err != nil {
-			log.Printf("%v.Execute(_) = _, %v", client, err)
+			log.Printf("sendExecutionRequest.Execute: %v", err)
 			return err
 		}
+
+		// stream.CloseSend()
+
 		for {
 			response, err := stream.Recv()
 			if err == io.EOF {
 				break
 			}
 			if err != nil {
+				log.Printf("sendExecutionRequest stream receive: %v", err)
 				break
 			}
 			if response.GetError() != nil {
@@ -138,9 +149,12 @@ func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) err
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
 	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
-		return fmt.Errorf("fail to dial: %v", err)
+		return fmt.Errorf("driver dial agent: %v", err)
 	}
-	defer grpcConection.Close()
+	defer func() {
+		// time.Sleep(50 * time.Millisecond)
+		grpcConection.Close()
+	}()
 	client := pb.NewGleamAgentClient(grpcConection)
 
 	return fn(client)

@@ -58,12 +58,14 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 		return err
 	}
 	defer f.Close()
+
 	for {
 		request, err := stream.Recv()
 		if err == io.EOF {
-			return nil
+			break
 		}
 		if err != nil {
+			log.Printf("Receiving file %s error: %v", toFile, err)
 			return err
 		}
 		_, err = f.Write(request.GetContent())
@@ -72,6 +74,14 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 			return err
 		}
 	}
+
+	// ack
+	if err := stream.Send(&pb.FileResourceResponse{hasSameHash, true}); err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 // Execute executes a request and stream stdout and stderr back
@@ -143,11 +153,13 @@ func (as *AgentServer) Delete(ctx context.Context, deleteRequest *pb.DeleteDatas
 func (as *AgentServer) plusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
 	defer as.allocatedResourceLock.Unlock()
+	as.allocatedHasChanges = true
 	*as.allocatedResource = as.allocatedResource.Plus(allocated)
 }
 
 func (as *AgentServer) minusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
 	defer as.allocatedResourceLock.Unlock()
+	as.allocatedHasChanges = true
 	*as.allocatedResource = as.allocatedResource.Minus(allocated)
 }

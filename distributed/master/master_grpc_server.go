@@ -88,14 +88,19 @@ func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExe
 	for {
 		status, err := stream.Recv()
 
-		if err == nil {
-			s.statusCache.Add(status.GetId(), status)
-			if status.Driver.GetStopTime() != 0 {
-				data, _ := proto.Marshal(status)
-				ioutil.WriteFile(fmt.Sprintf("%s/f%d.log", s.logDirectory, status.GetId()), data, 0644)
-			}
-		} else {
+		if err == io.EOF {
+			return nil
+		}
+
+		if err != nil {
 			return err
+		}
+
+		s.statusCache.Add(status.GetId(), status)
+
+		if status.Driver.GetStopTime() != 0 {
+			data, _ := proto.Marshal(status)
+			ioutil.WriteFile(fmt.Sprintf("%s/f%d.log", s.logDirectory, status.GetId()), data, 0644)
 		}
 	}
 }

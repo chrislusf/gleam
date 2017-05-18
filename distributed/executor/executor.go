@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/netchan"
 	"github.com/chrislusf/gleam/instruction"
@@ -69,7 +71,10 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		}
 	}
 
-	go exe.statusHeartbeat(finishedChan)
+	var heartbeatWg sync.WaitGroup
+	heartbeatWg.Add(1)
+	go exe.statusHeartbeat(&heartbeatWg, finishedChan)
+	defer heartbeatWg.Wait()
 
 	go func() {
 		wg.Wait()
@@ -165,13 +170,23 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 
 		//TODO add errChan to scripts also?
 
+		var err error
 		// println("starting", *i.Name, "inChan", inChan, "outChan", outChan)
 		if i.GetScript() != nil {
-			command := exec.Command(
-				i.GetScript().GetPath(), i.GetScript().GetArgs()...,
-			)
-			wg.Add(1)
-			err := util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
+			for x := 0; x < 3; x++ {
+				command := exec.CommandContext(ctx,
+					i.GetScript().GetPath(), i.GetScript().GetArgs()...,
+				)
+				wg.Add(1)
+				err = util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
+				if err == nil || stat.InputCounter != 0 {
+					break
+				}
+				if err != nil {
+					log.Printf("Failed %d time to start %v %v %v:%v", (x + 1), command.Path, command.Args, command.Env, err)
+					time.Sleep(time.Duration(1) * time.Second)
+				}
+			}
 			if err != nil {
 				exeErrChan <- fmt.Errorf("Failed executing command %s: %v", i.GetName(), err)
 			}

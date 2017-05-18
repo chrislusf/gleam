@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"sync"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
@@ -20,12 +21,12 @@ func (as *AgentServer) executeCommand(
 ) (err error) {
 
 	ctx := stream.Context()
-	errChan := make(chan error, 3) // normal exit, stdout, stderr
 	stopChan := make(chan bool)
 
 	// start the command
 	executableFullFilename, _ := osext.Executable()
-	command := exec.Command(
+	command := exec.CommandContext(
+		ctx,
 		executableFullFilename,
 		"execute",
 		"--note",
@@ -55,10 +56,18 @@ func (as *AgentServer) executeCommand(
 		return err
 	}
 
-	go streamOutput(errChan, stream, stdout)
-	go streamError(errChan, stream, stderr)
-	go streamPulse(errChan, stopChan, statChan, stream)
-	defer func() { stopChan <- true }()
+	errors := make([]error, 2)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		errors[0] = streamOutput(&wg, stream, stdout)
+	}()
+	wg.Add(1)
+	go func() {
+		errors[1] = streamError(&wg, stream, stderr)
+	}()
+	wg.Add(1)
+	go streamPulse(&wg, stopChan, statChan, stream)
 
 	// send instruction set to executor
 	msgMessageBytes, err := proto.Marshal(startRequest.GetInstructionSet())
@@ -77,46 +86,42 @@ func (as *AgentServer) executeCommand(
 	}
 
 	// wait for finish
-	go func() {
-		waitErr := command.Wait()
-		if waitErr != nil {
-			log.Printf("Failed to run command %s: %v", startRequest.GetInstructionSet().GetName(), waitErr)
-		}
-		// only the command send a nil to errChan
-		errChan <- waitErr
-	}()
-
-	select {
-	case err = <-errChan:
-		if err != nil {
-			log.Printf("Error running command %s %+v: %v", command.Path, command.Args, err)
-			return err
-		}
-		return sendExitStats(stream, command)
-	case <-ctx.Done():
-		log.Printf("Cancelled command %s %+v", command.Path, command.Args)
-		if err := command.Process.Kill(); err != nil {
-			log.Printf("failed to kill: %v", err)
-		}
-		if err := command.Process.Release(); err != nil {
-			log.Printf("failed to release: %v", err)
-		}
-		return ctx.Err()
+	waitErr := command.Wait()
+	if waitErr != nil {
+		log.Printf("Failed to run command %s: %v", startRequest.GetInstructionSet().GetName(), waitErr)
 	}
+
+	stopChan <- true
+	wg.Wait()
+
+	sendExitStats(stream, command)
+
+	if waitErr != nil {
+		return waitErr
+	}
+	if errors[0] != nil {
+		return errors[0]
+	}
+	if errors[1] != nil {
+		return errors[1]
+	}
+
+	return nil
 
 }
 
-func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
+func streamOutput(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader io.Reader) error {
+
+	defer wg.Done()
 
 	buffer := make([]byte, 1024)
 	for {
 		n, err := reader.Read(buffer)
 		if err == io.EOF {
-			return
+			return nil
 		}
 		if err != nil {
-			errChan <- fmt.Errorf("Failed to read stdout: %v", err)
-			return
+			return fmt.Errorf("Failed to read stdout: %v", err)
 		}
 		if n == 0 {
 			continue
@@ -125,13 +130,14 @@ func streamOutput(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Output: buffer[0:n],
 		}); sendErr != nil {
-			errChan <- fmt.Errorf("Failed to send stdout: %v", sendErr)
-			return
+			return fmt.Errorf("Failed to send stdout: %v", sendErr)
 		}
 	}
 }
 
-func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader io.Reader) {
+func streamError(wg *sync.WaitGroup, stream pb.GleamAgent_ExecuteServer, reader io.Reader) error {
+
+	defer wg.Done()
 
 	tee := io.TeeReader(reader, os.Stderr)
 
@@ -139,11 +145,10 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 	for {
 		n, err := tee.Read(buffer)
 		if err == io.EOF {
-			break
+			return nil
 		}
 		if err != nil {
-			errChan <- fmt.Errorf("Failed to read stderr: %v", err)
-			return
+			return fmt.Errorf("Failed to read stderr: %v", err)
 		}
 		if n == 0 {
 			continue
@@ -152,16 +157,17 @@ func streamError(errChan chan error, stream pb.GleamAgent_ExecuteServer, reader 
 		if sendErr := stream.Send(&pb.ExecutionResponse{
 			Error: buffer[0:n],
 		}); sendErr != nil {
-			errChan <- fmt.Errorf("Failed to send stderr: %v", sendErr)
-			return
+			return fmt.Errorf("Failed to send stderr: %v", sendErr)
 		}
 	}
 }
 
-func streamPulse(errChan chan error,
+func streamPulse(wg *sync.WaitGroup,
 	stopChan chan bool,
 	statChan chan *pb.ExecutionStat,
 	stream pb.GleamAgent_ExecuteServer) error {
+
+	defer wg.Done()
 
 	for {
 		select {

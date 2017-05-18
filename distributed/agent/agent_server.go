@@ -37,6 +37,7 @@ type AgentServer struct {
 	Master                  string
 	computeResource         *pb.ComputeResource
 	allocatedResource       *pb.ComputeResource
+	allocatedHasChanges     bool
 	allocatedResourceLock   sync.Mutex
 	storageBackend          *LocalDatasetShardsManager
 	inMemoryChannels        *LocalDatasetShardsManagerInMemory

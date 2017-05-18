@@ -147,6 +147,7 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGro
 				log.Printf("Failed to update Job Status http://%s/job/%d : %v", fcd.Option.Master, fcd.status.GetId(), err)
 			}
 			// log.Printf("Sent last status: %v", fcd.status)
+			stream.CloseSend()
 			return
 		case <-ticker.C:
 			stream.Send(fcd.status)
