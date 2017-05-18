@@ -4,22 +4,22 @@ import (
 	"context"
 )
 
-func ExecuteOrCancel(parentContext context.Context, onExecute func() error, onCancel func()) error {
+func ExecuteWithCleanup(parentContext context.Context, onExecute func() error, onCleanup func()) error {
 	ctx, cancel := context.WithCancel(parentContext)
 
 	errChan := make(chan error)
 
 	go func() {
-		onExecute()
-		errChan <- nil
+		errChan <- onExecute()
 	}()
 
 	select {
 	case err := <-errChan:
+		cancel()
+		onCleanup()
 		return err
 	case <-ctx.Done():
-		cancel()
-		onCancel()
+		onCleanup()
 		return ctx.Err()
 	}
 

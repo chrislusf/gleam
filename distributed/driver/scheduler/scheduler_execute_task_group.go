@@ -114,7 +114,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 			return err
 		}
 
-		util.ExecuteOrCancel(
+		util.ExecuteWithCleanup(
 			ctx,
 			func() error {
 				if isRestartableTasks(tasks) {
