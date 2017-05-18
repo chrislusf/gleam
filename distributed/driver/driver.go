@@ -120,7 +120,12 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGro
 		return
 	}
 	defer func() {
-		grpcConection.Close()
+		// println("grpc closing....")
+
+		if err := grpcConection.Close(); err != nil {
+			log.Printf("grpcConection.close error: %v", err)
+		}
+
 		wg.Done()
 	}()
 	client := pb.NewGleamMasterClient(grpcConection)
