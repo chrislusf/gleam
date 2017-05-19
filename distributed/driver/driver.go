@@ -90,7 +90,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 	reportWg.Add(1)
 	go fcd.reportStatus(ctx, &reportWg, fcd.Option.Master, stopChan)
 
-	log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
+	log.Printf("Start Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 
 	wg.Wait()
 
@@ -121,7 +121,7 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGro
 	}
 	defer func() {
 		// println("grpc closing....")
-
+		time.Sleep(50 * time.Millisecond)
 		if err := grpcConection.Close(); err != nil {
 			log.Printf("grpcConection.close error: %v", err)
 		}
@@ -142,11 +142,10 @@ func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGro
 		case <-stopChan:
 			fcd.status.Driver.StopTime = time.Now().UnixNano()
 			if err = stream.Send(fcd.status); err == nil {
-				log.Printf("Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
+				log.Printf("Saved Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
 			} else {
 				log.Printf("Failed to update Job Status http://%s/job/%d : %v", fcd.Option.Master, fcd.status.GetId(), err)
 			}
-			// log.Printf("Sent last status: %v", fcd.status)
 			stream.CloseSend()
 			return
 		case <-ticker.C:
