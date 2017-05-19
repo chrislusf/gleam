@@ -1,10 +1,11 @@
 package resource
 
 import (
-	"hash/crc32"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/OneOfOne/xxhash"
 )
 
 type FileResource struct {
@@ -30,7 +31,8 @@ func GenerateFileHash(fullpath string) (*FileHash, error) {
 		return nil, err
 	}
 	defer f.Close()
-	hasher := crc32.NewIEEE()
+
+	hasher := xxhash.New32()
 	if _, err := io.Copy(hasher, f); err != nil {
 		return nil, err
 	}
