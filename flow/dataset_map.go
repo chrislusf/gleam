@@ -13,7 +13,7 @@ import (
 func (d *Dataset) Map(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Map"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.Map(code)
 	return ret
 }
@@ -39,7 +39,7 @@ func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 func (d *Dataset) ForEach(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "ForEach"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.ForEach(code)
 	return ret
 }
@@ -48,7 +48,7 @@ func (d *Dataset) ForEach(code string) *Dataset {
 func (d *Dataset) FlatMap(code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "FlatMap"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.FlatMap(code)
 	return ret
 }
@@ -60,14 +60,14 @@ func (d *Dataset) Filter(code string) *Dataset {
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "Filter"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.Filter(code)
 	return ret
 }
 
 func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
-	ret = d.FlowContext.newNextDataset(len(d.Shards))
-	step = d.FlowContext.AddOneToOneStep(d, ret)
+	ret = d.Flow.newNextDataset(len(d.Shards))
+	step = d.Flow.AddOneToOneStep(d, ret)
 	return
 }
 
@@ -76,7 +76,7 @@ func (d *Dataset) Select(sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Select"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.Select(sortOption.Indexes())
 	return ret
 }
@@ -87,7 +87,7 @@ func (d *Dataset) LocalLimit(n int, offset int) *Dataset {
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "Limit"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.Limit(n, offset)
 	return ret
 }

@@ -12,7 +12,7 @@ import (
 )
 
 type FlowRunner interface {
-	RunFlowContext(*FlowContext)
+	RunFlow(*Flow)
 }
 
 type FlowOption interface {
@@ -25,14 +25,14 @@ var (
 	local localDriver
 )
 
-func (r *localDriver) RunFlowContext(fc *FlowContext) {
+func (r *localDriver) RunFlow(fc *Flow) {
 	var wg sync.WaitGroup
 	wg.Add(1)
-	r.RunFlowContextAsync(&wg, fc)
+	r.RunFlowAsync(&wg, fc)
 	wg.Wait()
 }
 
-func (r *localDriver) RunFlowContextAsync(wg *sync.WaitGroup, fc *FlowContext) {
+func (r *localDriver) RunFlowAsync(wg *sync.WaitGroup, fc *Flow) {
 	defer wg.Done()
 
 	on_interrupt.OnInterrupt(fc.OnInterrupt, nil)

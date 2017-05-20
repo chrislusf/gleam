@@ -15,7 +15,7 @@ import (
 
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
-func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
+func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 	fn := func(writer io.Writer) error {
 		listener, err := net.Listen(network, address)
 		if err != nil {
@@ -42,7 +42,7 @@ func (fc *FlowContext) Listen(network, address string) (ret *Dataset) {
 }
 
 // ReadTsv read tab-separated lines from the reader
-func (fc *FlowContext) ReadTsv(reader io.Reader) (ret *Dataset) {
+func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
 	fn := func(writer io.Writer) error {
 		defer util.WriteEOFMessage(writer)
 
@@ -63,7 +63,7 @@ func (fc *FlowContext) ReadTsv(reader io.Reader) (ret *Dataset) {
 // Function f writes to this writer.
 // The written bytes should be MsgPack encoded []byte.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
-func (fc *FlowContext) Source(f func(io.Writer) error) (ret *Dataset) {
+func (fc *Flow) Source(f func(io.Writer) error) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
@@ -89,7 +89,7 @@ func (fc *FlowContext) Source(f func(io.Writer) error) (ret *Dataset) {
 
 // TextFile reads the file content as lines and feed into the flow.
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
-func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
+func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 	fn := func(writer io.Writer) error {
 		w := bufio.NewWriter(writer)
 		defer w.Flush()
@@ -119,7 +119,7 @@ func (fc *FlowContext) TextFile(fname string) (ret *Dataset) {
 }
 
 // Channel accepts a channel to feed into the flow.
-func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
+func (fc *Flow) Channel(ch chan interface{}) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
@@ -139,7 +139,7 @@ func (fc *FlowContext) Channel(ch chan interface{}) (ret *Dataset) {
 }
 
 // Bytes begins a flow with an [][]byte
-func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
+func (fc *Flow) Bytes(slice [][]byte) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
 	go func() {
@@ -154,7 +154,7 @@ func (fc *FlowContext) Bytes(slice [][]byte) (ret *Dataset) {
 }
 
 // Strings begins a flow with an []string
-func (fc *FlowContext) Strings(lines []string) (ret *Dataset) {
+func (fc *Flow) Strings(lines []string) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
 	go func() {
@@ -168,7 +168,7 @@ func (fc *FlowContext) Strings(lines []string) (ret *Dataset) {
 }
 
 // Ints begins a flow with an []int
-func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
+func (fc *Flow) Ints(numbers []int) (ret *Dataset) {
 	inputChannel := make(chan interface{})
 
 	go func() {
@@ -182,7 +182,7 @@ func (fc *FlowContext) Ints(numbers []int) (ret *Dataset) {
 }
 
 // Slices begins a flow with an [][]interface{}
-func (fc *FlowContext) Slices(slices [][]interface{}) (ret *Dataset) {
+func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
@@ -205,7 +205,7 @@ func (fc *FlowContext) Slices(slices [][]interface{}) (ret *Dataset) {
 
 // ReadFile read files according to fileType
 // The file can be on local, hdfs, s3, etc.
-func (fc *FlowContext) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
+func (fc *Flow) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
 	adapterType := source.AdapterName()
 	// assuming the connection id is the same as the adapter type
 	adapterConnectionId := adapterType

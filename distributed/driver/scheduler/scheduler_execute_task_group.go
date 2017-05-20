@@ -18,7 +18,7 @@ import (
 // ExecuteTaskGroup wait for inputs and execute the task group remotely.
 // If cancelled, the output will be cleaned up.
 func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
-	fc *flow.FlowContext,
+	fc *flow.Flow,
 	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
 	taskGroup *plan.TaskGroup,

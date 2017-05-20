@@ -10,10 +10,10 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func New() (fc *FlowContext) {
+func New() (fc *Flow) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	fc = &FlowContext{
+	fc = &Flow{
 		PrevScriptType: "luajit",
 		Scripts: map[string]func() script.Script{
 			"luajit": script.NewLuajitScript,
@@ -23,24 +23,24 @@ func New() (fc *FlowContext) {
 	return
 }
 
-func (fc *FlowContext) Run(options ...FlowOption) {
+func (fc *Flow) Run(options ...FlowOption) {
 	if len(options) == 0 {
-		local.RunFlowContext(fc)
+		local.RunFlow(fc)
 	} else {
 		for _, option := range options {
-			option.GetFlowRunner().RunFlowContext(fc)
+			option.GetFlowRunner().RunFlow(fc)
 		}
 	}
 }
 
-func (fc *FlowContext) newNextDataset(shardSize int) (ret *Dataset) {
+func (fc *Flow) newNextDataset(shardSize int) (ret *Dataset) {
 	ret = newDataset(fc)
 	ret.setupShard(shardSize)
 	return
 }
 
 // the tasks should run on the source dataset shard
-func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *Step) {
+func (f *Flow) AddOneToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToOneShard
 	fromStepToDataset(step, output)
@@ -66,7 +66,7 @@ func (f *FlowContext) AddOneToOneStep(input *Dataset, output *Dataset) (step *St
 }
 
 // the task should run on the destination dataset shard
-func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *Step) {
+func (f *Flow) AddAllToOneStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = AllShardToOneShard
 	fromStepToDataset(step, output)
@@ -85,7 +85,7 @@ func (f *FlowContext) AddAllToOneStep(input *Dataset, output *Dataset) (step *St
 
 // the task should run on the source dataset shard
 // input is nil for initial source dataset
-func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *Step) {
+func (f *Flow) AddOneToAllStep(input *Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToAllShard
 	fromStepToDataset(step, output)
@@ -102,7 +102,7 @@ func (f *FlowContext) AddOneToAllStep(input *Dataset, output *Dataset) (step *St
 	return
 }
 
-func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset) (step *Step) {
+func (f *Flow) AddOneToEveryNStep(input *Dataset, n int, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToEveryNShard
 	fromStepToDataset(step, output)
@@ -120,7 +120,7 @@ func (f *FlowContext) AddOneToEveryNStep(input *Dataset, n int, output *Dataset)
 	return
 }
 
-func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset) (step *Step) {
+func (f *Flow) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = LinkedNShardToOneShard
 	fromStepToDataset(step, output)
@@ -138,7 +138,7 @@ func (f *FlowContext) AddLinkedNToOneStep(input *Dataset, m int, output *Dataset
 }
 
 // All dataset should have the same number of shards.
-func (f *FlowContext) MergeDatasets1ShardTo1Step(inputs []*Dataset, output *Dataset) (step *Step) {
+func (f *Flow) MergeDatasets1ShardTo1Step(inputs []*Dataset, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = MergeTwoShardToOneShard
 	fromStepToDataset(step, output)

@@ -25,7 +25,7 @@ func (d *Dataset) LocalReduce(code string) *Dataset {
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.Name = "LocalReduce"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.Reduce(code)
 	return ret
 }
@@ -58,7 +58,7 @@ func (d *Dataset) LocalReduceBy(code string, sortOptions ...*SortOption) *Datase
 	ret, step := add1ShardTo1Step(d)
 	// TODO calculate IsLocalSorted IsPartitionedBy based on indexes
 	step.Name = "LocalReduceBy"
-	step.Script = d.FlowContext.createScript()
+	step.Script = d.Flow.createScript()
 	step.Script.ReduceBy(code, sortOption.Indexes())
 	return ret
 }

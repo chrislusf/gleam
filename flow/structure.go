@@ -58,7 +58,7 @@ type StepMetadata struct {
 	IsIdempotent  bool
 }
 
-type FlowContext struct {
+type Flow struct {
 	PrevScriptType string
 	PrevScriptPart string
 	Scripts        map[string]func() script.Script
@@ -68,7 +68,7 @@ type FlowContext struct {
 }
 
 type Dataset struct {
-	FlowContext     *FlowContext
+	Flow            *Flow
 	Id              int
 	Shards          []*DatasetShard
 	Step            *Step
@@ -93,7 +93,7 @@ type DatasetShard struct {
 
 type Step struct {
 	Id             int
-	FlowContext    *FlowContext
+	Flow           *Flow
 	InputDatasets  []*Dataset
 	OutputDataset  *Dataset
 	Function       func([]io.Reader, []io.Writer, *pb.InstructionStat) error

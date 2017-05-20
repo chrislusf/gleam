@@ -12,7 +12,7 @@ import (
 
 // Output concurrently collects outputs from previous step to the driver.
 func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
-	step := d.FlowContext.AddAllToOneStep(d, nil)
+	step := d.Flow.AddAllToOneStep(d, nil)
 	step.IsOnDriverSide = true
 	step.Name = "Output"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {

@@ -8,8 +8,8 @@ func (d *Dataset) RoundRobin(shard int) *Dataset {
 	if len(d.Shards) == shard {
 		return d
 	}
-	ret := d.FlowContext.newNextDataset(shard)
-	step := d.FlowContext.AddOneToAllStep(d, ret)
+	ret := d.Flow.newNextDataset(shard)
+	step := d.Flow.AddOneToAllStep(d, ret)
 	step.SetInstruction(instruction.NewRoundRobin())
 	return ret
 }
@@ -37,17 +37,17 @@ func (d *Dataset) Partition(shard int, sortOptions ...*SortOption) *Dataset {
 }
 
 func (d *Dataset) partition_scatter(shardCount int, indexes []int) (ret *Dataset) {
-	ret = d.FlowContext.newNextDataset(len(d.Shards) * shardCount)
+	ret = d.Flow.newNextDataset(len(d.Shards) * shardCount)
 	ret.IsPartitionedBy = indexes
-	step := d.FlowContext.AddOneToEveryNStep(d, shardCount, ret)
+	step := d.Flow.AddOneToEveryNStep(d, shardCount, ret)
 	step.SetInstruction(instruction.NewScatterPartitions(indexes))
 	return
 }
 
 func (d *Dataset) partition_collect(shardCount int, indexes []int) (ret *Dataset) {
-	ret = d.FlowContext.newNextDataset(shardCount)
+	ret = d.Flow.newNextDataset(shardCount)
 	ret.IsPartitionedBy = indexes
-	step := d.FlowContext.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
+	step := d.Flow.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.SetInstruction(instruction.NewCollectPartitions())
 	return
 }

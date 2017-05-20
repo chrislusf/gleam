@@ -15,11 +15,11 @@ func (bigger *Dataset) HashJoin(smaller *Dataset, sortOptions ...*SortOption) *D
 func (this *Dataset) LocalHashAndJoinWith(that *Dataset, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	ret := this.FlowContext.newNextDataset(len(that.Shards))
+	ret := this.Flow.newNextDataset(len(that.Shards))
 	ret.IsPartitionedBy = that.IsPartitionedBy
 	ret.IsLocalSorted = that.IsLocalSorted
 	inputs := []*Dataset{this, that}
-	step := this.FlowContext.MergeDatasets1ShardTo1Step(inputs, ret)
+	step := this.Flow.MergeDatasets1ShardTo1Step(inputs, ret)
 	step.SetInstruction(instruction.NewLocalHashAndJoinWith(sortOption.Indexes()))
 	return ret
 }
@@ -29,8 +29,8 @@ func (d *Dataset) Broadcast(shardCount int) *Dataset {
 	if shardCount == 1 && len(d.Shards) == shardCount {
 		return d
 	}
-	ret := d.FlowContext.newNextDataset(shardCount)
-	step := d.FlowContext.AddOneToAllStep(d, ret)
+	ret := d.Flow.newNextDataset(shardCount)
+	step := d.Flow.AddOneToAllStep(d, ret)
 	step.SetInstruction(instruction.NewBroadcast())
 	return ret
 }

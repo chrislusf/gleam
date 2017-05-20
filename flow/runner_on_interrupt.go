@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func (fc *FlowContext) OnInterrupt() {
+func (fc *Flow) OnInterrupt() {
 
 	fmt.Print("\n")
 	for _, step := range fc.Steps {

@@ -30,7 +30,7 @@ type StepGroup struct {
 	waitForAllTasks *sync.Cond
 }
 
-func GroupTasks(fc *flow.FlowContext) ([]*StepGroup, []*TaskGroup) {
+func GroupTasks(fc *flow.Flow) ([]*StepGroup, []*TaskGroup) {
 	stepGroups := translateToStepGroups(fc)
 	return stepGroups, translateToTaskGroups(stepGroups)
 }

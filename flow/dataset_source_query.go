@@ -11,7 +11,7 @@ import (
 
 // Query use the connection information specified via connectionId
 // and then run the query to fetch the data as input
-func (fc *FlowContext) Query(connectionId string, query adapter.AdapterQuery) (ret *Dataset) {
+func (fc *Flow) Query(connectionId string, query adapter.AdapterQuery) (ret *Dataset) {
 	ci, hasConnection := adapter.ConnectionManager.GetConnectionInfo(connectionId)
 	if !hasConnection {
 		log.Fatalf("Failed to find connection by id: %v", connectionId)

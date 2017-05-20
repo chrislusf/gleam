@@ -9,13 +9,13 @@ import (
 // Init defines or declares variables or functions for the script.
 // This piece of code is executed first, before each function that
 // invokes a script.
-func (fc *FlowContext) Init(scriptPart string) *FlowContext {
+func (fc *Flow) Init(scriptPart string) *Flow {
 	fc.PrevScriptPart = scriptPart
 	return fc
 }
 
 // Script defines the code to execute to generate the next dataset.
-func (fc *FlowContext) Script(scriptType string) *FlowContext {
+func (fc *Flow) Script(scriptType string) *Flow {
 	if _, ok := fc.Scripts[scriptType]; !ok {
 		log.Fatalf("script type %s is not registered.", scriptType)
 	}
@@ -23,7 +23,7 @@ func (fc *FlowContext) Script(scriptType string) *FlowContext {
 	return fc
 }
 
-func (fc *FlowContext) createScript() script.Script {
+func (fc *Flow) createScript() script.Script {
 	s := fc.Scripts[fc.PrevScriptType]()
 	s.Init(fc.PrevScriptPart)
 	return s

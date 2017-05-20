@@ -8,7 +8,7 @@ func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) 
 	if len(d.Shards) == partitionCount {
 		return d
 	}
-	ret = d.FlowContext.newNextDataset(partitionCount)
+	ret = d.Flow.newNextDataset(partitionCount)
 	everyN := len(d.Shards) / partitionCount
 	if len(d.Shards)%partitionCount > 0 {
 		everyN++
@@ -18,7 +18,7 @@ func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) 
 
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
+	step := d.Flow.AddLinkedNToOneStep(d, everyN, ret)
 	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList))
 	return ret
 }
@@ -38,14 +38,14 @@ func (d *Dataset) MergeTo(partitionCount int) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
-	ret = d.FlowContext.newNextDataset(partitionCount)
+	ret = d.Flow.newNextDataset(partitionCount)
 	everyN := len(d.Shards) / partitionCount
 	if len(d.Shards)%partitionCount > 0 {
 		everyN++
 	}
 
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step := d.FlowContext.AddLinkedNToOneStep(d, everyN, ret)
+	step := d.Flow.AddLinkedNToOneStep(d, everyN, ret)
 	step.SetInstruction(instruction.NewMergeTo())
 	return ret
 }

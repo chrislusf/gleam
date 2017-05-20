@@ -9,7 +9,7 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
-func (fc *FlowContext) NewStep() (step *Step) {
+func (fc *Flow) NewStep() (step *Step) {
 	step = &Step{
 		Id:     len(fc.Steps),
 		Params: make(map[string]interface{}),

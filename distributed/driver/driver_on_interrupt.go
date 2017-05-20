@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func (fcd *FlowContextDriver) printDistributedStatus(writer io.Writer) {
+func (fcd *FlowDriver) printDistributedStatus(writer io.Writer) {
 	for _, stepGroup := range fcd.stepGroups {
 		fmt.Fprint(writer, "step:")
 		for _, step := range stepGroup.Steps {

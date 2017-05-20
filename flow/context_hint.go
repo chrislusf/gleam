@@ -1,14 +1,14 @@
 package flow
 
-type FlowContextOption func(c *FlowContextConfig)
+type FlowHintOption func(c *FlowConfig)
 
-type FlowContextConfig struct {
+type FlowConfig struct {
 	OnDisk bool
 }
 
 // Hint adds hints to the flow.
-func (d *FlowContext) Hint(options ...FlowContextOption) {
-	var config FlowContextConfig
+func (d *Flow) Hint(options ...FlowHintOption) {
+	var config FlowConfig
 	for _, option := range options {
 		option(&config)
 	}

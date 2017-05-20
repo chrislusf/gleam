@@ -7,11 +7,11 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func newDataset(context *FlowContext) *Dataset {
+func newDataset(context *Flow) *Dataset {
 	d := &Dataset{
-		Id:          len(context.Datasets),
-		FlowContext: context,
-		Meta:        &DasetsetMetadata{TotalSize: -1},
+		Id:   len(context.Datasets),
+		Flow: context,
+		Meta: &DasetsetMetadata{TotalSize: -1},
 	}
 	context.Datasets = append(context.Datasets, d)
 	return d
@@ -22,21 +22,21 @@ func (d *Dataset) GetShards() []*DatasetShard {
 }
 
 func (d *Dataset) Script(scriptType string) *Dataset {
-	d.FlowContext.Script(scriptType)
+	d.Flow.Script(scriptType)
 	return d
 }
 
 func (d *Dataset) Init(scriptPart string) *Dataset {
-	d.FlowContext.Init(scriptPart)
+	d.Flow.Init(scriptPart)
 	return d
 }
 
-// Run starts the whole flow. This is a convenient method, same as *FlowContext.Run()
+// Run starts the whole flow. This is a convenient method, same as *Flow.Run()
 func (d *Dataset) Run(option ...FlowOption) {
 	if len(option) == 0 {
-		local.RunFlowContext(d.FlowContext)
+		local.RunFlow(d.Flow)
 	} else {
-		option[0].GetFlowRunner().RunFlowContext(d.FlowContext)
+		option[0].GetFlowRunner().RunFlow(d.Flow)
 	}
 }
 
@@ -63,5 +63,5 @@ func (s *DatasetShard) TimeTaken() time.Duration {
 }
 
 func (s *DatasetShard) Name() string {
-	return fmt.Sprintf("f%d-d%d-s%d", s.Dataset.FlowContext.HashCode, s.Dataset.Id, s.Id)
+	return fmt.Sprintf("f%d-d%d-s%d", s.Dataset.Flow.HashCode, s.Dataset.Id, s.Id)
 }

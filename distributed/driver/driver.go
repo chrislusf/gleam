@@ -27,7 +27,7 @@ type Option struct {
 	Module        string
 }
 
-type FlowContextDriver struct {
+type FlowDriver struct {
 	Option *Option
 
 	stepGroups []*plan.StepGroup
@@ -36,15 +36,15 @@ type FlowContextDriver struct {
 	status *pb.FlowExecutionStatus
 }
 
-func NewFlowContextDriver(option *Option) *FlowContextDriver {
-	return &FlowContextDriver{
+func NewFlowDriver(option *Option) *FlowDriver {
+	return &FlowDriver{
 		Option: option,
 		status: &pb.FlowExecutionStatus{},
 	}
 }
 
 // driver runs on local, controlling all tasks
-func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
+func (fcd *FlowDriver) RunFlow(fc *flow.Flow) {
 
 	// task fusion to minimize disk IO
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)
@@ -99,7 +99,7 @@ func (fcd *FlowContextDriver) RunFlowContext(fc *flow.FlowContext) {
 
 }
 
-func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowContext) {
+func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 	var wg sync.WaitGroup
 
 	for _, taskGroup := range fcd.taskGroups {
@@ -113,7 +113,7 @@ func (fcd *FlowContextDriver) cleanup(sched *scheduler.Scheduler, fc *flow.FlowC
 	wg.Wait()
 }
 
-func (fcd *FlowContextDriver) reportStatus(ctx context.Context, wg *sync.WaitGroup, master string, stopChan chan bool) {
+func (fcd *FlowDriver) reportStatus(ctx context.Context, wg *sync.WaitGroup, master string, stopChan chan bool) {
 	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Failed to dial: %v", err)

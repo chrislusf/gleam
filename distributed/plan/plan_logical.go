@@ -56,7 +56,7 @@ func findAncestorStepId(step *flow.Step) (int, bool) {
 }
 
 // group local steps into one step group
-func translateToStepGroups(fc *flow.FlowContext) []*StepGroup {
+func translateToStepGroups(fc *flow.Flow) []*StepGroup {
 	// use array instead of map to ensure consistent ordering
 	stepId2StepGroup := make([]*StepGroup, len(fc.Steps))
 	for _, step := range fc.Steps {

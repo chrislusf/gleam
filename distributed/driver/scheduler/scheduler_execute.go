@@ -15,7 +15,7 @@ import (
 )
 
 func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
-	flowContext *flow.FlowContext,
+	flowContext *flow.Flow,
 	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	taskGroup *plan.TaskGroup,
@@ -76,7 +76,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	return nil
 }
 
-func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
+func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.Flow, task *flow.Task, wg *sync.WaitGroup) error {
 	if task.Step.OutputDataset == nil {
 		return s.localExecuteOutput(ctx, flowContext, task, wg)
 	} else {
@@ -84,7 +84,7 @@ func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.FlowCont
 	}
 }
 
-func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
+func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Flow, task *flow.Task, wg *sync.WaitGroup) error {
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
 
 	for _, shard := range task.OutputShards {
@@ -104,7 +104,7 @@ func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Fl
 	return nil
 }
 
-func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.FlowContext, task *flow.Task, wg *sync.WaitGroup) error {
+func (s *Scheduler) localExecuteOutput(ctx context.Context, flowContext *flow.Flow, task *flow.Task, wg *sync.WaitGroup) error {
 	s.shardLocator.waitForInputDatasetShardLocations(task)
 
 	for i, shard := range task.InputShards {

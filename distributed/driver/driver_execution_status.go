@@ -11,7 +11,7 @@ import (
 	"github.com/chrislusf/gleam/pb"
 )
 
-func (fcd *FlowContextDriver) GetTaskGroupStatus(taskGroup *plan.TaskGroup) *pb.FlowExecutionStatus_TaskGroup {
+func (fcd *FlowDriver) GetTaskGroupStatus(taskGroup *plan.TaskGroup) *pb.FlowExecutionStatus_TaskGroup {
 	for _, status := range fcd.status.TaskGroups {
 		if len(taskGroup.Tasks) == len(status.TaskIds) {
 			if int32(taskGroup.Tasks[0].Id) == status.TaskIds[0] &&
@@ -23,7 +23,7 @@ func (fcd *FlowContextDriver) GetTaskGroupStatus(taskGroup *plan.TaskGroup) *pb.
 	return nil
 }
 
-func (fcd *FlowContextDriver) logExecutionPlan(fc *flow.FlowContext) {
+func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 
 	for _, step := range fc.Steps {
 		var parentIds, taskIds, inputDatasetIds []int32

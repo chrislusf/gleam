@@ -28,7 +28,7 @@ func Option() *DistributedOption {
 }
 
 func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
-	return driver.NewFlowContextDriver(&driver.Option{
+	return driver.NewFlowDriver(&driver.Option{
 		RequiredFiles: o.RequiredFiles,
 		Master:        o.Master,
 		DataCenter:    o.DataCenter,
