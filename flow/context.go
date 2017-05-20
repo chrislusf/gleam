@@ -3,6 +3,7 @@
 package flow
 
 import (
+	"context"
 	"math/rand"
 	"time"
 
@@ -24,11 +25,15 @@ func New() (fc *Flow) {
 }
 
 func (fc *Flow) Run(options ...FlowOption) {
+	fc.RunContext(context.Background(), options...)
+}
+
+func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 	if len(options) == 0 {
-		local.RunFlow(fc)
+		local.RunFlowContext(ctx, fc)
 	} else {
 		for _, option := range options {
-			option.GetFlowRunner().RunFlow(fc)
+			option.GetFlowRunner().RunFlowContext(ctx, fc)
 		}
 	}
 }

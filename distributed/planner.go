@@ -1,6 +1,7 @@
 package distributed
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/chrislusf/gleam/distributed/plan"
@@ -19,7 +20,7 @@ func (o *DistributedPlanner) GetFlowRunner() flow.FlowRunner {
 }
 
 // driver runs on local, controlling all tasks
-func (fcd *DistributedPlanner) RunFlow(fc *flow.Flow) {
+func (fcd *DistributedPlanner) RunFlowContext(ctx context.Context, fc *flow.Flow) {
 
 	stepGroups, taskGroups := plan.GroupTasks(fc)
 

@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -33,10 +34,15 @@ func (d *Dataset) Init(scriptPart string) *Dataset {
 
 // Run starts the whole flow. This is a convenient method, same as *Flow.Run()
 func (d *Dataset) Run(option ...FlowOption) {
+	d.RunContext(context.Background(), option...)
+}
+
+// Run starts the whole flow. This is a convenient method, same as *Flow.RunContext()
+func (d *Dataset) RunContext(ctx context.Context, option ...FlowOption) {
 	if len(option) == 0 {
-		local.RunFlow(d.Flow)
+		local.RunFlowContext(ctx, d.Flow)
 	} else {
-		option[0].GetFlowRunner().RunFlow(d.Flow)
+		option[0].GetFlowRunner().RunFlowContext(ctx, d.Flow)
 	}
 }
 

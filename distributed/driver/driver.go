@@ -44,7 +44,7 @@ func NewFlowDriver(option *Option) *FlowDriver {
 }
 
 // driver runs on local, controlling all tasks
-func (fcd *FlowDriver) RunFlow(fc *flow.Flow) {
+func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) {
 
 	// task fusion to minimize disk IO
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)
@@ -66,7 +66,7 @@ func (fcd *FlowDriver) RunFlow(fc *flow.Flow) {
 	// this may need more improvements
 	defer fcd.cleanup(sched, fc)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(parentCtx)
 
 	on_interrupt.OnInterrupt(func() {
 		println("interrupted ...")

@@ -12,20 +12,23 @@ import (
 )
 
 type FlowRunner interface {
-	RunFlow(*Flow)
+	RunFlowContext(context.Context, *Flow)
 }
 
 type FlowOption interface {
 	GetFlowRunner() FlowRunner
 }
 
-type localDriver struct{}
+type localDriver struct {
+	ctx context.Context
+}
 
 var (
 	local localDriver
 )
 
-func (r *localDriver) RunFlow(fc *Flow) {
+func (r *localDriver) RunFlowContext(ctx context.Context, fc *Flow) {
+	r.ctx = ctx
 	var wg sync.WaitGroup
 	wg.Add(1)
 	r.RunFlowAsync(&wg, fc)
@@ -130,7 +133,7 @@ func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 		writer := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
-		util.Execute(context.Background(), wg, task.Stat, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
+		util.Execute(r.ctx, wg, task.Stat, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
 	}
