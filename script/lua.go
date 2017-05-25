@@ -17,7 +17,7 @@ func NewLuajitScript() Script {
 func (c *LuaScript) Init(code string) {
 	c.initCode = `
 
-local mp = require "MessagePack"
+mp = require "MessagePack"
 
 -- mp.set_string 'binary'
 
@@ -28,10 +28,10 @@ function log(message)
 end
 
 -- list operations: pack and unpack a list
-local unpack = table.unpack or unpack
+unpack = table.unpack or unpack
 
 -- collect all non nil elements into a table
-local function listCollect(t)
+function listCollect(t)
   local ret = {}
   for i=1, t.n do
     if t[i] then
@@ -41,7 +41,7 @@ local function listCollect(t)
   return ret
 end
 
-local function listInsert(t, x)
+function listInsert(t, x)
   t.n = t.n + 1
   if x and type(x)=="table" and x.n then
     t[t.n] = listCollect(x)
@@ -51,13 +51,13 @@ local function listInsert(t, x)
   return t
 end
 
-local function listNew(...)
+function listNew(...)
   local t = { ... }
   t.n = select("#", ...)
   return t
 end
 
-local function listUnpack(t)
+function listUnpack(t)
   return unpack(t, 1, t.n)
 end
 
