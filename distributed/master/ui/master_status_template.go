@@ -39,9 +39,21 @@ var MasterStatusTpl = template.Must(template.New("master").Parse(`<!DOCTYPE html
           <h2>System Stats</h2>
           <table class="table table-condensed table-striped">
             <tr>
-              <th>Jobs Completed</th>
-              <td>100</td>
+              <th>Start Time</th>
+              <td>{{ .StartTime }}</td>
             </tr>
+            <tr>
+              <th>Jobs Completed</th>
+              <td><a href="/">{{.Logs.Len}}</a></td>
+            </tr>
+
+            {{ $logs := .Logs }}
+            {{ range $idx, $key := $logs.Keys }}
+            <tr>
+              <th>Job </th>
+              <td><a href="/job/{{$key}}">{{$key}}</a></td>
+            </tr>
+            {{ end }}
           </table>
         </div>
       </div>

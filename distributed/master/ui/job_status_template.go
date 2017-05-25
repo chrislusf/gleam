@@ -61,8 +61,12 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
           <h2>System Stats</h2>
           <table class="table table-condensed table-striped">
             <tr>
+              <th>Start Time</th>
+              <td>{{ .StartTime }}</td>
+            </tr>
+            <tr>
               <th>Jobs Completed</th>
-              <td>100</td>
+              <td><a href="/">{{.Logs.Len}}</a></td>
             </tr>
           </table>
         </div>

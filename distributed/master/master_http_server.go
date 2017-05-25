@@ -4,21 +4,27 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/master/ui"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/golang-lru"
 )
 
 func (ms *MasterServer) uiStatusHandler(w http.ResponseWriter, r *http.Request) {
 	infos := make(map[string]interface{})
 	infos["Version"] = 0.01
 	args := struct {
-		Version  string
-		Topology interface{}
+		Version   string
+		Topology  interface{}
+		StartTime time.Time
+		Logs      *lru.Cache
 	}{
 		"0.01",
 		ms.Topology,
+		ms.startTime,
+		ms.statusCache,
 	}
 	ui.MasterStatusTpl.Execute(w, args)
 }
@@ -39,15 +45,19 @@ func (ms *MasterServer) jobStatusHandler(w http.ResponseWriter, r *http.Request)
 	infos := make(map[string]interface{})
 	infos["Version"] = 0.01
 	args := struct {
-		Version  string
-		Topology interface{}
-		Status   interface{}
-		Svg      string
+		Version   string
+		Topology  interface{}
+		Status    interface{}
+		Svg       string
+		StartTime time.Time
+		Logs      *lru.Cache
 	}{
 		"0.01",
 		ms.Topology,
 		status,
 		ui.GenSvg(status.(*pb.FlowExecutionStatus)),
+		ms.startTime,
+		ms.statusCache,
 	}
 	ui.JobStatusTpl.Execute(w, args)
 }

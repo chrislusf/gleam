@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
@@ -19,12 +20,14 @@ type MasterServer struct {
 	Topology     *Topology
 	statusCache  *lru.Cache
 	logDirectory string
+	startTime    time.Time
 }
 
 func newMasterServer(logDirectory string) *MasterServer {
 	m := &MasterServer{
 		Topology:     NewTopology(),
 		logDirectory: logDirectory,
+		startTime:    time.Now(),
 	}
 	m.statusCache, _ = lru.NewWithEvict(512, m.onCacheEvict)
 	if strings.HasSuffix(m.logDirectory, "/") {
