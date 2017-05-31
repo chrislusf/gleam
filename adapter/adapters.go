@@ -33,13 +33,13 @@ func init() {
 		// println("Loading configuration from gleam.yaml...")
 		connections := viper.GetStringMap("connections")
 		for k, c := range connections {
-			m := c.(map[string]interface{})
+			m := c.(map[interface{}]interface{})
 			adapterName := m["adapter"].(string)
 			// println("Registering connection:", k, "adapter:", adapterName)
 			ci := RegisterConnection(k, adapterName)
 			for n, v := range m {
 				// println("  ", n, "=", v)
-				ci.Set(n, v.(string))
+				ci.Set(n.(string), v.(string))
 			}
 		}
 	}
