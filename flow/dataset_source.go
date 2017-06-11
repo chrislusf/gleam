@@ -13,6 +13,16 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
+type Sourcer interface {
+	Generate(*Flow) *Dataset
+}
+
+// Read accepts a function to read data into the flow, creating a new dataset.
+// This allows custom complicated pre-built logic for new data sources.
+func (fc *Flow) Read(s Sourcer) (ret *Dataset) {
+	return s.Generate(fc)
+}
+
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
 func (fc *Flow) Listen(network, address string) (ret *Dataset) {
