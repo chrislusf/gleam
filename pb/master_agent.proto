@@ -298,24 +298,19 @@ message Instruction {
 	}
 	LocalSort localSort = 18;
 
-	message AdapterSplitReader {
-		string adapterName = 1;
-		string connectionId = 2;
-	}
-	AdapterSplitReader adapterSplitReader = 19;
-
 	message MergeSortedTo {
 		repeated OrderBy orderBys = 1;
 	}
-	MergeSortedTo mergeSortedTo = 20;
+	MergeSortedTo mergeSortedTo = 19;
+
+	message MergeTo {}
+	MergeTo mergeTo = 22;
 
 	message LocalDistinct {
 		repeated OrderBy orderBys = 1;
 	}
 	LocalDistinct localDistinct = 21;
 
-	message MergeTo {}
-	MergeTo mergeTo = 22;
 
 }
 

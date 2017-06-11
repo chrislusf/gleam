@@ -43,7 +43,7 @@ func (s *Scheduler) Fetch(demands []market.Demand) {
 				})
 				allocatedMemory += allocation.Allocated.MemoryMb
 			}
-			log.Printf("%s allocated %d executors with %d MB memory.", s.Master, len(result.Allocations), allocatedMemory)
+			// log.Printf("%s allocated %d executors with %d MB memory.", s.Master, len(result.Allocations), allocatedMemory)
 		}
 	}
 }

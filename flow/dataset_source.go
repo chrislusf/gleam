@@ -7,7 +7,6 @@ import (
 	"log"
 	"net"
 
-	"github.com/chrislusf/gleam/adapter"
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -211,13 +210,4 @@ func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 	}
 	return
 
-}
-
-// ReadFile read files according to fileType
-// The file can be on local, hdfs, s3, etc.
-func (fc *Flow) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
-	adapterType := source.AdapterName()
-	// assuming the connection id is the same as the adapter type
-	adapterConnectionId := adapterType
-	return fc.Query(adapterConnectionId, source)
 }
