@@ -65,6 +65,8 @@ type Flow struct {
 	Steps          []*Step
 	Datasets       []*Dataset
 	HashCode       uint32
+
+	hasPureGoMapperReducer bool
 }
 
 type Dataset struct {

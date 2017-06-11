@@ -21,7 +21,11 @@ type gleamTaskOption struct {
 	KeyFields string
 }
 
-var taskOption gleamTaskOption
+var (
+	HasInitalized bool
+
+	taskOption gleamTaskOption
+)
 
 func init() {
 	flag.StringVar(&taskOption.Mapper, "gleam.mapper", "", "the generated mapper name")
@@ -64,6 +68,8 @@ func RegisterReducer(fn Reducer) ReducerId {
 // If the command line invokes the mapper or reducer, execute it and exit.
 // This function will invoke flag.Parse() first.
 func Init() {
+	HasInitalized = true
+
 	flag.Parse()
 
 	if taskOption.Mapper != "" || taskOption.Reducer != "" {

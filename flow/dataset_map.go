@@ -21,6 +21,8 @@ func (d *Dataset) Map(code string) *Dataset {
 // Mapper runs the mapper registered to the mapperId.
 // This is used to execute pure Go code.
 func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
+	d.Flow.hasPureGoMapperReducer = true
+
 	ret, step := add1ShardTo1Step(d)
 	step.Name = "Mapper"
 	step.IsPipe = false
