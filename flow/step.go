@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/script"
 )
 
@@ -51,7 +50,6 @@ func (step *Step) RunFunction(task *Task) error {
 		}
 	}()
 
-	task.Stat = &pb.InstructionStat{}
 	err := task.Step.Function(readers, writers, task.Stat)
 	if err != nil {
 		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
