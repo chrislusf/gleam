@@ -29,9 +29,10 @@ func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 	step.IsGoCode = true
 	var args []string
 	args = append(args, "./"+filepath.Base(os.Args[0]))
-	args = append(args, os.Args[1:]...)
+	// args = append(args, os.Args[1:]...) // empty string in an arg can fail the execution
 	args = append(args, "-gleam.mapper="+string(mapperId))
 	commandLine := strings.Join(args, " ")
+	// println("args:", commandLine)
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
 	return ret
 }
