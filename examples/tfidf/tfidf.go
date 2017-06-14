@@ -56,7 +56,7 @@ func main() {
         function(word, df, docId, tf)
             return word, docId, tf, df, tf*%d/df
         end
-    `, len(fileNames))).Sort(flow.Field(5)).Fprintf(os.Stdout, "%s: %s tf=%d df=%d tf-idf=%v\n")
+    `, len(fileNames))).Sort(flow.Field(5)).Printlnf("%s: %s tf=%d df=%d tf-idf=%v")
 
 	f.Run()
 

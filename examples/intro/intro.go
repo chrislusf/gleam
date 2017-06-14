@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -20,5 +18,5 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Fprintf(os.Stdout, "%s\t%d\n").Run()
+	`).Printlnf("%s\t%d").Run()
 }

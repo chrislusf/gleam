@@ -2,8 +2,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -13,5 +11,5 @@ func main() {
 		function(line)
 			return line:gmatch("%w+")
 		end
-	`).Pipe("tr 'A-Z' 'a-z'").Pipe("tee x.out").Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n").Run()
+	`).Pipe("tr 'A-Z' 'a-z'").Pipe("tee x.out").Pipe("sort").Pipe("uniq -c").Printlnf("%s").Run()
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
 	"strings"
 
 	"github.com/chrislusf/gleam/distributed"
@@ -29,7 +28,7 @@ func main() {
 		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
 		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
-		Fprintf(os.Stdout, "%s\t%d\n")
+		Printlnf("%s\t%d")
 
 	if *isDistributed {
 		println("Running in distributed mode.")

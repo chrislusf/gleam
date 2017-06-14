@@ -3,7 +3,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/flow"
@@ -33,6 +32,6 @@ func main() {
       function(k, v)
         return k .. " " .. v
       end
-    `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n").Run()
+    `).Pipe("sort -n -k 2").Printlnf("%s").Run()
 
 }

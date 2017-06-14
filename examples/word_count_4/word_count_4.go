@@ -66,6 +66,6 @@ func main() {
       function(x, y)
         return x + y
       end
-    `).Top(5, flow.OrderBy(2, true)).Fprintf(os.Stdout, "%s\t%d\n").Run()
+    `).Top(5, flow.OrderBy(2, true)).Printlnf("%s\t%d").Run()
 
 }

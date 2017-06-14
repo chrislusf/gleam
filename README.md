@@ -94,7 +94,6 @@ package main
 
 import (
 	"strings"
-	"os"
 
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
@@ -115,7 +114,7 @@ func main(){
 		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
 		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
 		Sort(flow.OrderBy(2, true)).
-		Fprintf(os.Stdout, "%s %d\n").Run()
+		Printlnf("%s %d").Run()
 }
 
 func tokenize(row []interface{}) error {
@@ -151,8 +150,6 @@ LuaJIT can greatly simplify the code. The full source code, not snippet, for wor
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -170,7 +167,7 @@ func main() {
 		function(x, y)
 			return x + y
 		end
-	`).Fprintf(os.Stdout, "%s,%d\n").Run()
+	`).Printlnf("%s,%d").Run()
 }
 
 ```
@@ -181,8 +178,6 @@ Another way to do the similar:
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -192,7 +187,7 @@ func main() {
 		function(line)
 			return line:gmatch("%w+")
 		end
-	`).Pipe("sort").Pipe("uniq -c").Fprintf(os.Stdout, "%s\n").Run()
+	`).Pipe("sort").Pipe("uniq -c").Printlnf("%s").Run()
 }
 
 ```
@@ -205,8 +200,6 @@ Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" h
 package main
 
 import (
-	"os"
-
 	. "github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/plugins/csv"
@@ -220,7 +213,7 @@ func main() {
 	a := f.Read(csv.New("a.csv")).Select(Field(1,4)) // a1, a4
 	b := f.Read(csv.New("b.csv")).Select(Field(2,3)) // b2, b3
 
-	a.Join(b).Fprintf(os.Stdout, "%s,%s,%s\n").Run()  // a1, a4, b3
+	a.Join(b).Printlnf("%s,%s,%s").Run()  // a1, a4, b3
 
 }
 
@@ -239,7 +232,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/flow"
@@ -264,7 +256,7 @@ func main() {
       function(x, y)
         return x + y
       end
-    `).Fprintf(os.Stdout, "%s\t%d").Run()
+    `).Printlnf("%s\t%d").Run()
 
 }
 

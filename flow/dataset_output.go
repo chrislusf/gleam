@@ -68,6 +68,17 @@ func (d *Dataset) Fprintlnf(writer io.Writer, format string) *Dataset {
 	return d.Fprintf(writer, format+"\n")
 }
 
+// Printf prints to os.Stdout in the specified format
+func (d *Dataset) Printf(format string) *Dataset {
+	return d.Fprintf(os.Stdout, format)
+}
+
+// Printlnf prints to os.Stdout in the specified format,
+// adding an "\n" at the end of each format
+func (d *Dataset) Printlnf(format string) *Dataset {
+	return d.Fprintf(os.Stdout, format+"\n")
+}
+
 // SaveFirstRowTo saves the first row's values into the operands.
 func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 	fn := func(reader io.Reader) error {

@@ -58,7 +58,7 @@ func gleamSortStandalone(fileName string, partition int) {
        function(line)
          return string.sub(line, 1, 10), string.sub(line, 13)
        end
-   `).Partition(partition).Sort().Fprintf(os.Stdout, "%s  %s\n").Run()
+   `).Partition(partition).Sort().Printlnf("%s  %s").Run()
 }
 
 func linuxSortDistributed(fileName string, partition int) {
@@ -71,7 +71,7 @@ func linuxSortDistributed(fileName string, partition int) {
        end
     `).Partition(partition).Pipe(`
         sort -k 1
-    `).MergeSortedTo(1).Fprintf(os.Stdout, "%s  %s\n").Run(distributed.Option())
+    `).MergeSortedTo(1).Printlnf("%s  %s").Run(distributed.Option())
 }
 
 func linuxSortStandalone(fileName string, partition int) {
@@ -84,7 +84,7 @@ func linuxSortStandalone(fileName string, partition int) {
        end
     `).Partition(partition).Pipe(`
         sort -k 1
-    `).MergeSortedTo(1).Fprintf(os.Stdout, "%s  %s\n").Run()
+    `).MergeSortedTo(1).Printlnf("%s  %s").Run()
 }
 
 func gleamSortDistributed(fileName string, size int64, partition int, isPureGoMapper, isDistributed, isInMemory bool) {
@@ -111,7 +111,7 @@ func gleamSortDistributed(fileName string, size int64, partition int, isPureGoMa
 		})
 	}
 
-	f = f.Fprintf(os.Stdout, "%s  %s\n")
+	f = f.Printlnf("%s  %s")
 
 	// f.Run(distributed.Planner())
 	// return
