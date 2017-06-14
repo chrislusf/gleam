@@ -7,11 +7,20 @@ import (
 	"log"
 	"net"
 
-	"github.com/chrislusf/gleam/adapter"
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
+
+type Sourcer interface {
+	Generate(*Flow) *Dataset
+}
+
+// Read accepts a function to read data into the flow, creating a new dataset.
+// This allows custom complicated pre-built logic for new data sources.
+func (fc *Flow) Read(s Sourcer) (ret *Dataset) {
+	return s.Generate(fc)
+}
 
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
@@ -70,7 +79,6 @@ func (fc *Flow) Source(f func(io.Writer) error) (ret *Dataset) {
 	step.Name = "Source"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		errChan := make(chan error, len(writers))
-		// println("running source task...")
 		for _, writer := range writers {
 			go func(writer io.Writer) {
 				errChan <- f(writer)
@@ -201,13 +209,4 @@ func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 	}
 	return
 
-}
-
-// ReadFile read files according to fileType
-// The file can be on local, hdfs, s3, etc.
-func (fc *Flow) ReadFile(source adapter.AdapterFileSource) (ret *Dataset) {
-	adapterType := source.AdapterName()
-	// assuming the connection id is the same as the adapter type
-	adapterConnectionId := adapterType
-	return fc.Query(adapterConnectionId, source)
 }

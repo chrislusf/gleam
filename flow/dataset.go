@@ -39,11 +39,7 @@ func (d *Dataset) Run(option ...FlowOption) {
 
 // Run starts the whole flow. This is a convenient method, same as *Flow.RunContext()
 func (d *Dataset) RunContext(ctx context.Context, option ...FlowOption) {
-	if len(option) == 0 {
-		local.RunFlowContext(ctx, d.Flow)
-	} else {
-		option[0].GetFlowRunner().RunFlowContext(ctx, d.Flow)
-	}
+	d.Flow.RunContext(ctx, option...)
 }
 
 func (d *Dataset) setupShard(n int) {

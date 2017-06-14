@@ -5,8 +5,10 @@ package flow
 import (
 	"context"
 	"math/rand"
+	"os"
 	"time"
 
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 )
@@ -29,6 +31,12 @@ func (fc *Flow) Run(options ...FlowOption) {
 }
 
 func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
+
+	if !gio.HasInitalized && fc.hasPureGoMapperReducer {
+		println("gio.Init() is required right after main() if pure go mapper or reducer is used.")
+		os.Exit(1)
+	}
+
 	if len(options) == 0 {
 		local.RunFlowContext(ctx, fc)
 	} else {

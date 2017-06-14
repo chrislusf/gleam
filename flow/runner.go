@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 )
@@ -52,6 +53,7 @@ func (r *localDriver) RunFlowAsync(wg *sync.WaitGroup, fc *Flow) {
 
 func (r *localDriver) runDataset(wg *sync.WaitGroup, d *Dataset) {
 	defer wg.Done()
+
 	d.Lock()
 	defer d.Unlock()
 	if !d.StartTime.IsZero() {
@@ -95,6 +97,13 @@ func (r *localDriver) runDatasetShard(wg *sync.WaitGroup, shard *DatasetShard) {
 func (r *localDriver) runStep(wg *sync.WaitGroup, step *Step) {
 	defer wg.Done()
 
+	step.Lock()
+	defer step.Unlock()
+	if !step.StartTime.IsZero() {
+		return
+	}
+	step.StartTime = time.Now()
+
 	for _, task := range step.Tasks {
 		wg.Add(1)
 		go func(task *Task) {
@@ -112,6 +121,7 @@ func (r *localDriver) runStep(wg *sync.WaitGroup, step *Step) {
 
 func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 	defer wg.Done()
+	task.Stat = &pb.InstructionStat{}
 
 	// try to run Function first
 	// if failed, try to run shell scripts
