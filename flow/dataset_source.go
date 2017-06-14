@@ -79,7 +79,6 @@ func (fc *Flow) Source(f func(io.Writer) error) (ret *Dataset) {
 	step.Name = "Source"
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		errChan := make(chan error, len(writers))
-		// println("running source task...")
 		for _, writer := range writers {
 			go func(writer io.Writer) {
 				errChan <- f(writer)
