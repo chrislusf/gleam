@@ -7,6 +7,7 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/gocql/gocql"
@@ -16,11 +17,13 @@ type CassandraShardInfo struct {
 	Hosts                 string
 	StartToken, StopToken string
 	PartitionKeys         []string
+	TimeoutSeconds        int
 
 	Select   string
 	Keyspace string
 	Table    string
 	Where    string
+	Limit    int
 }
 
 var (
@@ -38,13 +41,17 @@ func readShard(row []interface{}) error {
 
 func (s *CassandraShardInfo) ReadSplit() error {
 
+	// println("hosts:", s.Hosts)
+
 	cluster := gocql.NewCluster(strings.Split(s.Hosts, ",")...)
 	cluster.Keyspace = s.Keyspace
 	cluster.ProtoVersion = 4
+	cluster.Timeout = time.Duration(s.TimeoutSeconds) * time.Second
+	cluster.ConnectTimeout = time.Duration(s.TimeoutSeconds) * time.Second
 
 	session, err := cluster.CreateSession()
 	if err != nil {
-		return fmt.Errorf("Failed to create cassandra session when ReadSplit: %v", err)
+		return fmt.Errorf("ReadSplit connect to %s %s: %v", s.Hosts, s.Keyspace, err)
 	}
 	defer session.Close()
 
@@ -58,6 +65,10 @@ func (s *CassandraShardInfo) ReadSplit() error {
 
 	if s.Where != "" {
 		cql = cql + " AND " + s.Where
+	}
+
+	if s.Limit != 0 {
+		cql = fmt.Sprintf("%s LIMIT %d", cql, s.Limit)
 	}
 
 	// println("cql:", cql)

@@ -5,6 +5,7 @@ import (
 	"io"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
@@ -12,59 +13,50 @@ import (
 )
 
 type CassandraSource struct {
-	Hosts          string
-	PartitionCount int
+	hosts            string
+	Concurrency      int
+	ShardCount       int
+	LimitInEachShard int
+	TimeoutSeconds   int
 
-	Select   string
-	Keyspace string
-	Table    string
-	Where    string
-
-	cluster *gocql.ClusterConfig
+	selectClause string
+	keyspace     string
+	table        string
+	whereClause  string
 }
 
 // Generate generates data shard info,
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CassandraSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.PartitionCount).Mapper(MapperReadShard)
-}
-
-// New creates a CassandraSource.
-// format: select {selectClause} from {keyspace}.{table} where {whereClause}"
-func New(hosts string, keyspace string, selectClause, table, whereClause string, partitionCount int) *CassandraSource {
-	s := &CassandraSource{
-		Hosts:          hosts,
-		Select:         selectClause,
-		Keyspace:       keyspace,
-		Table:          table,
-		Where:          whereClause,
-		PartitionCount: partitionCount,
-	}
-	hostList := strings.Split(hosts, ",")
-	s.cluster = gocql.NewCluster(hostList...)
-	s.cluster.Keyspace = keyspace
-	s.cluster.ProtoVersion = 4
-
-	return s
+	return s.genShardInfos(f).RoundRobin(s.Concurrency).Mapper(MapperReadShard)
 }
 
 func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	return f.Source(func(writer io.Writer) error {
 
+		hostList := strings.Split(s.hosts, ",")
+		cluster := gocql.NewCluster(hostList...)
+		cluster.Keyspace = s.keyspace
+		cluster.ProtoVersion = 4
+		cluster.Timeout = time.Duration(s.TimeoutSeconds) * time.Second
+
 		// find out the partition keys
-		session, err := s.cluster.CreateSession()
+		session, err := cluster.CreateSession()
 		if err != nil {
-			return fmt.Errorf("Failed to create cassandra session when GetSplits: %v", err)
+			return fmt.Errorf("genShardInfos create session %v keyspace %v: %v", s.hosts, s.keyspace, err)
 		}
 		defer session.Close()
-		keyspaceMetadata, err := session.KeyspaceMetadata(s.Keyspace)
+
+		// println("driver Connected to", s.hosts, "keyspace", s.keyspace)
+
+		keyspaceMetadata, err := session.KeyspaceMetadata(s.keyspace)
 		if err != nil {
-			return fmt.Errorf("Can not find keyspace %s", s.Keyspace)
+			return fmt.Errorf("Can not find keyspace %s", s.keyspace)
 		}
-		t, ok := keyspaceMetadata.Tables[s.Table]
+		t, ok := keyspaceMetadata.Tables[s.table]
 		if !ok {
-			return fmt.Errorf("Can not find table %s in keyspace %s", s.Table, s.Keyspace)
+			return fmt.Errorf("Can not find table %s in keyspace %s", s.table, s.keyspace)
 		}
 		var partitionKeys []string
 		for _, column := range t.PartitionKey {
@@ -72,28 +64,31 @@ func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 		}
 
 		// divide by token range
-		if s.PartitionCount == 0 {
-			s.PartitionCount = 32
+		if s.ShardCount == 0 {
+			s.ShardCount = 32
 		}
 		var begin, end int64
 		begin = math.MinInt64
 		end = math.MaxInt64
-		delta := end/int64(s.PartitionCount) - begin/int64(s.PartitionCount)
-		for mype := int64(0); mype < int64(s.PartitionCount); mype++ {
+		delta := end/int64(s.ShardCount) - begin/int64(s.ShardCount)
+		for mype := int64(0); mype < int64(s.ShardCount); mype++ {
 			start := begin + delta*mype
 			stop := end
-			if mype < int64(s.PartitionCount)-1 {
+			if mype < int64(s.ShardCount)-1 {
 				stop = begin + delta*(mype+1)
 			}
+
 			util.WriteRow(writer, encodeShardInfo(&CassandraShardInfo{
-				Hosts:         s.Hosts,
-				Select:        s.Select,
-				Keyspace:      s.Keyspace,
-				Table:         s.Table,
-				Where:         s.Where,
-				PartitionKeys: partitionKeys,
-				StartToken:    fmt.Sprintf("%d", start),
-				StopToken:     fmt.Sprintf("%d", stop),
+				Hosts:          s.hosts,
+				Select:         s.selectClause,
+				Keyspace:       s.keyspace,
+				Table:          s.table,
+				Where:          s.whereClause,
+				Limit:          s.LimitInEachShard,
+				TimeoutSeconds: s.TimeoutSeconds,
+				PartitionKeys:  partitionKeys,
+				StartToken:     fmt.Sprintf("%d", start),
+				StopToken:      fmt.Sprintf("%d", stop),
 			}))
 		}
 
