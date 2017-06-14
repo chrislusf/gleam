@@ -314,7 +314,7 @@ LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more co
 
 # Status
 Gleam is just beginning. Here are a few todo items. Welcome any help!
-* Refactor the plugin system to read external data.
+* [Add new plugin to read external data](https://github.com/chrislusf/gleam/wiki/Add-New-Source).
 * Add schema support for each dataset.
 * Support using SQL as a flow step, similar to LINQ.
 * Add windowing functions similar to google dataflow.
