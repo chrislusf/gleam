@@ -1,7 +1,6 @@
 package distributed
 
 import (
-	"os"
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
@@ -32,7 +31,7 @@ func TestPlanning(t *testing.T) {
       function (word, leftCount, rightCount)
 	    return word, leftCount, rightCount, leftCount + rightCount
       end
-	`).Fprintf(os.Stdout, "%s\t%d + %d = %d\n")
+	`).Printlnf("%s\t%d + %d = %d")
 
 	f.Run(Planner())
 }

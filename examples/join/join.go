@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/flow"
 )
 
@@ -38,7 +36,7 @@ func join1() {
 		end
 	`).ReduceBy(`function(x,y) return x+y end`)
 
-	x.Join(y).Fprintf(os.Stdout, "join1:%s %d + %d\n")
+	x.Join(y).Printlnf("join1:%s %d + %d")
 
 	f.Run()
 
@@ -70,6 +68,6 @@ func join2() {
       function (word, leftCount1, leftCount2, rightCount)
 	    return word, leftCount1, leftCount2, rightCount, leftCount1 + leftCount2 + rightCount
       end
-	`).Fprintf(os.Stdout, "join2:%s\t%d + %d + %d = %d\n").Run()
+	`).Printlnf("join2:%s\t%d + %d + %d = %d").Run()
 
 }

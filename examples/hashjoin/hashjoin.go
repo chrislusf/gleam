@@ -1,8 +1,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 )
@@ -32,7 +30,7 @@ func main() {
         function(x,y)
             return x+y
         end
-    `).Fprintf(os.Stdout, "hash joined:%s %d\n")
+    `).Printlnf("hash joined:%s %d")
 
 	f.Run()
 

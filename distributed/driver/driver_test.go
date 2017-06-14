@@ -2,7 +2,6 @@ package driver
 
 import (
 	"log"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -33,6 +32,6 @@ func TestInstructionSet(t *testing.T) {
       function(k, v)
         return k .. " " .. v
       end
-    `).Pipe("sort -n -k 2").Fprintf(os.Stdout, "%s\n")
+    `).Pipe("sort -n -k 2").Printlnf("%s")
 
 }
