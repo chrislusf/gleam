@@ -309,8 +309,11 @@ LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more co
 # Important Features
 
 * Fault tolerant [OnDisk()](https://godoc.org/github.com/chrislusf/gleam/flow#Dataset.OnDisk).
-* Support Cassandra Fast Data Extraction.
 * Read data from Local, HDFS, or S3.
+* Data Sources
+  * [Cassandra](https://github.com/chrislusf/gleam/tree/master/plugins/cassandra), with [example](https://github.com/chrislusf/gleam/tree/master/examples/cassandra_reader)
+  * [Kafka](https://github.com/chrislusf/gleam/tree/master/plugins/kafka)
+  * Raw Socket
 
 # Status
 Gleam is just beginning. Here are a few todo items. Welcome any help!
