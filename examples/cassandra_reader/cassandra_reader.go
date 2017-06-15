@@ -10,12 +10,12 @@ import (
 
 var (
 	hosts        = flag.String("hosts", "127.0.0.1", "a list of comma separated host names")
-	keyspace     = flag.String("keyspace", "system", "the keyspace containing the table")
-	table        = flag.String("from", "local", "the table name")
-	selectClause = flag.String("select", "key,value", "a list of field names")
+	keyspace     = flag.String("keyspace", "system_schema", "the keyspace containing the table")
+	table        = flag.String("from", "tables", "the table name")
+	selectClause = flag.String("select", "keyspace_name, table_name", "a list of field names")
 	where        = flag.String("where", "", "optional where clause")
 	limit        = flag.Int("limit", 10, "the number of rows to return. 0 means unlimited.")
-	format       = flag.String("format", "key:%v value:%v", "formatted output result")
+	format       = flag.String("format", "keyspace:%v table: %v", "formatted output result")
 	timeout      = flag.Int("timeout", 30, "the number of seconds for timeout connections")
 	concurrency  = flag.Int("concurrent", 2, "the number of concurrent read processes")
 	shardCount   = flag.Int("shardCount", 4, "the number of shards to partition the data into")
