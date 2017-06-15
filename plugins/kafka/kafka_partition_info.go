@@ -1,0 +1,90 @@
+package kafka
+
+import (
+	"bytes"
+	"encoding/gob"
+	"log"
+	"time"
+
+	"github.com/Shopify/sarama"
+	"github.com/chrislusf/gleam/gio"
+)
+
+type KafkaPartitionInfo struct {
+	Brokers        []string
+	Topic          string
+	TimeoutSeconds int
+	PartitionId    int32
+}
+
+var (
+	MapperReadShard = gio.RegisterMapper(readShard)
+)
+
+func init() {
+	gob.Register(KafkaPartitionInfo{})
+}
+
+func readShard(row []interface{}) error {
+	encodedShardInfo := row[0].([]byte)
+	return decodeShardInfo(encodedShardInfo).ReadSplit()
+}
+
+func (s *KafkaPartitionInfo) ReadSplit() error {
+
+	// println("brokers:", s.Brokers)
+	config := sarama.NewConfig()
+	config.Net.DialTimeout = time.Duration(s.TimeoutSeconds) * time.Second
+	config.Net.ReadTimeout = time.Duration(s.TimeoutSeconds) * time.Second
+	config.Net.WriteTimeout = time.Duration(s.TimeoutSeconds) * time.Second
+
+	c, err := sarama.NewClient(s.Brokers, config)
+	if err != nil {
+		log.Printf("NewClient brokers %s: %v", s.Brokers, err)
+		return err
+	}
+	defer c.Close()
+
+	consumer, err := sarama.NewConsumerFromClient(c)
+	if err != nil {
+		log.Printf("NewConsumerFromClient error: %v", err)
+		return err
+	}
+	defer consumer.Close()
+
+	pc, err := consumer.ConsumePartition(s.Topic, s.PartitionId, sarama.OffsetOldest)
+	if err != nil {
+		log.Printf("Partition %d, error: %v", s.PartitionId, err)
+		return err
+	}
+	defer pc.Close()
+
+	for msg := range pc.Messages() {
+		if msg == nil {
+			continue
+		}
+		gio.Emit(msg.Value)
+	}
+
+	return nil
+
+}
+
+func decodeShardInfo(encodedShardInfo []byte) *KafkaPartitionInfo {
+	network := bytes.NewBuffer(encodedShardInfo)
+	dec := gob.NewDecoder(network)
+	var p KafkaPartitionInfo
+	if err := dec.Decode(&p); err != nil {
+		log.Fatal("decode shard info", err)
+	}
+	return &p
+}
+
+func encodeShardInfo(shardInfo *KafkaPartitionInfo) []byte {
+	var network bytes.Buffer
+	enc := gob.NewEncoder(&network)
+	if err := enc.Encode(shardInfo); err != nil {
+		log.Fatal("encode shard info:", err)
+	}
+	return network.Bytes()
+}
