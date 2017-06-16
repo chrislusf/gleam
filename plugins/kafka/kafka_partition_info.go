@@ -40,21 +40,21 @@ func (s *KafkaPartitionInfo) ReadSplit() error {
 
 	c, err := sarama.NewClient(s.Brokers, config)
 	if err != nil {
-		log.Printf("NewClient brokers %s: %v", s.Brokers, err)
+		log.Printf("Kafka NewClient brokers %s: %v", s.Brokers, err)
 		return err
 	}
 	defer c.Close()
 
 	consumer, err := sarama.NewConsumerFromClient(c)
 	if err != nil {
-		log.Printf("NewConsumerFromClient error: %v", err)
+		log.Printf("Kafka NewConsumerFromClient error: %v", err)
 		return err
 	}
 	defer consumer.Close()
 
 	pc, err := consumer.ConsumePartition(s.Topic, s.PartitionId, sarama.OffsetOldest)
 	if err != nil {
-		log.Printf("Partition %d, error: %v", s.PartitionId, err)
+		log.Printf("Kafka Partition %d, error: %v", s.PartitionId, err)
 		return err
 	}
 	defer pc.Close()
