@@ -15,7 +15,7 @@ var (
 	selectClause = flag.String("select", "keyspace_name, table_name", "a list of field names")
 	where        = flag.String("where", "", "optional where clause")
 	limit        = flag.Int("limit", 10, "the number of rows to return. 0 means unlimited.")
-	format       = flag.String("format", "keyspace:%v table: %v", "formatted output result")
+	format       = flag.String("format", "table: %s keyspace:%s", "formatted output result")
 	timeout      = flag.Int("timeout", 30, "the number of seconds for timeout connections")
 	concurrency  = flag.Int("concurrent", 2, "the number of concurrent read processes")
 	shardCount   = flag.Int("shardCount", 4, "the number of shards to partition the data into")
@@ -32,7 +32,7 @@ func main() {
 	c.LimitInEachShard = *limit
 	c.TimeoutSeconds = *timeout
 
-	f := flow.New().Read(c).Printlnf(*format)
+	f := flow.New().Read(c).Sort(flow.Field(2)).Select(flow.Field(2, 1)).Printlnf(*format)
 
 	f.Run()
 
