@@ -121,7 +121,6 @@ func (r *localDriver) runStep(wg *sync.WaitGroup, step *Step) {
 
 func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 	defer wg.Done()
-	task.Stat = &pb.InstructionStat{}
 
 	// try to run Function first
 	// if failed, try to run shell scripts
@@ -143,6 +142,7 @@ func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 		writer := task.OutputShards[0].IncomingChan.Writer
 		wg.Add(1)
 		prevIsPipe := task.InputShards[0].Dataset.Step.IsPipe
+		task.Stat = &pb.InstructionStat{}
 		util.Execute(r.ctx, wg, task.Stat, task.Step.Name, execCommand, reader, writer, prevIsPipe, task.Step.IsPipe, true, os.Stderr)
 	} else {
 		println("network type:", task.Step.NetworkType)
