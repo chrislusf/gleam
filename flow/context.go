@@ -38,7 +38,7 @@ func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 	}
 
 	if len(options) == 0 {
-		local.RunFlowContext(ctx, fc)
+		Local.RunFlowContext(ctx, fc)
 	} else {
 		for _, option := range options {
 			option.GetFlowRunner().RunFlowContext(ctx, fc)

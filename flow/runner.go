@@ -25,8 +25,16 @@ type localDriver struct {
 }
 
 var (
-	local localDriver
+	Local *localDriver
 )
+
+func init() {
+	Local = &localDriver{}
+}
+
+func (r *localDriver) GetFlowRunner() FlowRunner {
+	return r
+}
 
 func (r *localDriver) RunFlowContext(ctx context.Context, fc *Flow) {
 	r.ctx = ctx
