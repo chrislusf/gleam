@@ -8,6 +8,9 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
+// Row format
+// ts, obj1, obj2, obj3, ...
+
 // WriteRow encode and write a row of data
 func WriteRow(writer io.Writer, anyObject ...interface{}) error {
 	encoded, err := EncodeRow(anyObject...)

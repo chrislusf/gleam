@@ -53,7 +53,6 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
-// Top streamingly compare and get the top n items
 func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.InstructionStat) error {
 	var wg sync.WaitGroup
 

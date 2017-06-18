@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func xTestEncodeDecode(t *testing.T) {
+func TestEncodeDecode(t *testing.T) {
 
 	originalKey := 2349234
 

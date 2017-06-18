@@ -15,6 +15,10 @@ const (
 	MessageControlEOF = MessageControl(-1)
 )
 
+// message format:
+//   length(32bits), bytes
+//   EOF(-1)
+
 // TakeTsv Reads and processes TSV lines.
 // If count is less than 0, all lines are processed.
 func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
