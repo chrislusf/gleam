@@ -44,7 +44,6 @@ func (b *MergeTo) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 3
 }
 
-// Top streamingly compare and get the top n items
 func DoMergeTo(readers []io.Reader, writer io.Writer, stats *pb.InstructionStat) error {
 	// enqueue one item to the pq from each channel
 	for _, reader := range readers {

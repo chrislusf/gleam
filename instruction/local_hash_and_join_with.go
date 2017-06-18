@@ -51,7 +51,6 @@ func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
 	return int64(float32(partitionSize) * 1.1)
 }
 
-// Top streamingly compare and get the top n items
 func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	hashmap := make(map[string][]interface{})
 	err := util.ProcessMessage(leftReader, func(input []byte) error {

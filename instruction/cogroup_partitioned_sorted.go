@@ -49,7 +49,6 @@ func (b *CoGroupPartitionedSorted) GetMemoryCostInMB(partitionSize int64) int64 
 	return 5
 }
 
-// Top streamingly compare and get the top n items
 func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	leftChan := newChannelOfValuesWithSameKey("left", leftRawChan, indexes)
 	rightChan := newChannelOfValuesWithSameKey("right", rightRawChan, indexes)

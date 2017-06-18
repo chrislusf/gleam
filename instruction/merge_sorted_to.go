@@ -50,7 +50,6 @@ func (b *MergeSortedTo) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 20
 }
 
-// Top streamingly compare and get the top n items
 func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 

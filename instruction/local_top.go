@@ -53,7 +53,7 @@ func (b *LocalTop) GetMemoryCostInMB(partitionSize int64) int64 {
 	return 5
 }
 
-// Top streamingly compare and get the top n items
+// DoLocalTop streamingly compare and get the top n items
 func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
