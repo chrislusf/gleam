@@ -54,7 +54,7 @@ func (s *KafkaSource) genShardInfos(f *flow.Flow, partitionIds []int32) *flow.Da
 	return f.Source(func(writer io.Writer) error {
 
 		for _, pid := range partitionIds {
-			util.WriteRow(writer, encodeShardInfo(&KafkaPartitionInfo{
+			util.WriteRow(writer, util.Now(), encodeShardInfo(&KafkaPartitionInfo{
 				Brokers:        s.Brokers,
 				Topic:          s.Topic,
 				TimeoutSeconds: s.TimeoutSeconds,

@@ -63,7 +63,8 @@ func (s *KafkaPartitionInfo) ReadSplit() error {
 		if msg == nil {
 			continue
 		}
-		gio.Emit(msg.Value)
+		ts := msg.Timestamp.UnixNano() / int64(time.Millisecond)
+		gio.TsEmit(ts, msg.Value)
 	}
 
 	return nil
