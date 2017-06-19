@@ -144,7 +144,11 @@ function writeBytes(encoded)
   io.write(encoded)
 end
 
-function writeRow(ts, ...)
+function writeRow(...)
+  local ts = os.time()*1000
+  writeRowTs(ts, ...)
+end
+function writeRowTs(ts, ...)
   local width = select('#', ...)
   local encoded = mp.pack(ts)
   for i=1, width do

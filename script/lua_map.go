@@ -14,7 +14,7 @@ while true do
   local row = readRow()
   if not row then break end
 
-  writeRow(listUnpackTs(row), _map(listUnpackData(row)))
+  writeRowTs(listUnpackTs(row), _map(listUnpackData(row)))
 
 end
 `, code),
@@ -71,7 +71,7 @@ while true do
   -- assuming no nil in the returned list
   if t then
     for x in t do
-      writeRow(ts, x)
+      writeRowTs(ts, x)
     end
   end
 end
@@ -115,7 +115,7 @@ while true do
       offset = offset - 1
     else
       count = count - 1
-      writeRow(listUnpackAll(row))
+      writeRowTs(listUnpackAll(row))
     end
   end
 end

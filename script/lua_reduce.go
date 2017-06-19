@@ -24,7 +24,7 @@ if row then
       end
     end
   end
-  writeRow(lastTs, lastValue)
+  writeRowTs(lastTs, lastValue)
 end
 `, code),
 	})
@@ -63,7 +63,7 @@ local function _writeKeyValues(ts, keys, values, rowWidth)
   else
     listExtend(row, values)
   end
-  writeRow(listUnpackAll(row))
+  writeRowTs(listUnpackAll(row))
 end
 
 local _reduce = %s
@@ -138,7 +138,7 @@ local function _writeKeyValues(ts, keys, valuesList, rowWidth)
     listExtend(row, valuesList)
   end
   listInsert(row, valuesList.n)
-  writeRow(listUnpackAll(row))
+  writeRowTs(listUnpackAll(row))
 end
 
 local row = readRow()
