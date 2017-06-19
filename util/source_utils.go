@@ -20,9 +20,9 @@ func ListFiles(dir string, pattern string) (fileNames []string) {
 }
 
 func Range(from, to int) func(io.Writer) error {
-	return func(outChan io.Writer) error {
+	return func(outWriter io.Writer) error {
 		for i := from; i < to; i++ {
-			if err := WriteRow(outChan, i); err != nil {
+			if err := WriteRow(outWriter, Now(), i); err != nil {
 				return err
 			}
 		}

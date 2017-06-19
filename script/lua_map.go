@@ -14,7 +14,7 @@ while true do
   local row = readRow()
   if not row then break end
 
-  writeRow(_map(listUnpack(row)))
+  writeRow(listUnpackTs(row), _map(listUnpackData(row)))
 
 end
 `, code),
@@ -33,7 +33,7 @@ while true do
   local row = decodeRow(encodedBytes)
   if not row then break end
 
-  if _filter(listUnpack(row)) then
+  if _filter(listUnpackData(row)) then
     writeBytes(encodedBytes)
   end
 end
@@ -50,7 +50,7 @@ while true do
   local row = readRow()
   if not row then break end
 
-  _foreach(listUnpack(row))
+  _foreach(listUnpackData(row))
 end
 `, code),
 	})
@@ -66,11 +66,12 @@ while true do
   local row = readRow()
   if not row then break end
 
-  local t = _flatMap(listUnpack(row))
+  local t = _flatMap(listUnpackData(row))
+  local ts = listUnpackTs(row)
   -- assuming no nil in the returned list
   if t then
     for x in t do
-      writeRow(x)
+      writeRow(ts, x)
     end
   end
 end
@@ -114,7 +115,7 @@ while true do
       offset = offset - 1
     else
       count = count - 1
-      writeRow(listUnpack(row))
+      writeRow(listUnpackAll(row))
     end
   end
 end

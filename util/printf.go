@@ -31,7 +31,7 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
-		if decodedObjects, err = DecodeRow(encodedBytes); err != nil {
+		if _, decodedObjects, err = DecodeRow(encodedBytes); err != nil {
 			return fmt.Errorf("Failed to decode byte: %v\n", err)
 		}
 
@@ -50,7 +50,7 @@ func PrintDelimited(stat *pb.InstructionStat, reader io.Reader, writer io.Writer
 		var decodedObjects []interface{}
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
-		if decodedObjects, err = DecodeRow(encodedBytes); err != nil {
+		if _, decodedObjects, err = DecodeRow(encodedBytes); err != nil {
 			return fmt.Errorf("Failed to decode byte: %v", err)
 		}
 		stat.InputCounter++

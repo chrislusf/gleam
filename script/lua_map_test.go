@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -19,19 +20,26 @@ func TestLuaCommander(t *testing.T) {
 
 func TestLuaMap(t *testing.T) {
 
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+
 	testLuaScript(
 		"test mapper",
 		func(script Script) {
 			script.Map(`function(x,y,z) return x+1, y.."yyy", not z end`)
 		},
 		func(inputWriter io.Writer) {
-			util.WriteRow(inputWriter, 1999, "xxx", false)
+			if err := util.WriteRow(inputWriter, ts, 1999, "xxx", false); err != nil {
+				println("Failed to write row", err.Error())
+			}
 		},
 		func(outputReader io.Reader) {
-			row, err := util.ReadRow(outputReader)
+			ts1, row, err := util.ReadRow(outputReader)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "read row error: %v", err)
+				fmt.Fprintf(os.Stderr, "read map row error: %v", err)
 				return
+			}
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
 			}
 			if !(row[0].(uint64) == 2000 && (row[1].(string) == "xxxyyy") && row[2].(bool) == true) {
 				t.Errorf("failed map results: %+v", row)
@@ -43,6 +51,8 @@ func TestLuaMap(t *testing.T) {
 
 func TestLuaFilter(t *testing.T) {
 
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+
 	testLuaScript(
 		"test filter",
 		func(script Script) {
@@ -53,19 +63,22 @@ func TestLuaFilter(t *testing.T) {
 			`)
 		},
 		func(inputWriter io.Writer) {
-			util.WriteRow(inputWriter, 1999, "x1999")
-			util.WriteRow(inputWriter, -1, "x_1")
-			util.WriteRow(inputWriter, 0, "x0")
-			util.WriteRow(inputWriter, 1, "x1")
+			util.WriteRow(inputWriter, ts, 1999, "x1999")
+			util.WriteRow(inputWriter, ts, -1, "x_1")
+			util.WriteRow(inputWriter, ts, 0, "x0")
+			util.WriteRow(inputWriter, ts, 1, "x1")
 		},
 		func(outputReader io.Reader) {
-			row, _ := util.ReadRow(outputReader)
+			ts1, row, _ := util.ReadRow(outputReader)
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
+			}
 			if !(row[0].(uint64) == 1999 && bytes.Equal(row[1].([]byte), []byte("x1999"))) {
 				fmt.Printf("row: %+v\n", row)
 				t.Errorf("failed filter results: %+v", row)
 			}
 
-			row, _ = util.ReadRow(outputReader)
+			ts1, row, _ = util.ReadRow(outputReader)
 			if !(row[0].(uint64) == 1 && bytes.Equal(row[1].([]byte), []byte("x1"))) {
 				fmt.Printf("row: %+v\n", row)
 				t.Errorf("failed filter results: %+v", row)
@@ -77,6 +90,8 @@ func TestLuaFilter(t *testing.T) {
 
 func TestLuaFlatMap(t *testing.T) {
 
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+
 	testLuaScript(
 		"test FlatMap",
 		func(script Script) {
@@ -87,18 +102,21 @@ func TestLuaFlatMap(t *testing.T) {
 			`)
 		},
 		func(inputWriter io.Writer) {
-			util.WriteRow(inputWriter, "x1 x2 x3")
+			util.WriteRow(inputWriter, ts, "x1 x2 x3")
 		},
 		func(outputReader io.Reader) {
-			row, _ := util.ReadRow(outputReader)
+			ts1, row, _ := util.ReadRow(outputReader)
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
+			}
 			if row[0].(string) != "x1" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
-			row, _ = util.ReadRow(outputReader)
+			ts1, row, _ = util.ReadRow(outputReader)
 			if row[0].(string) != "x2" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
-			row, _ = util.ReadRow(outputReader)
+			ts1, row, _ = util.ReadRow(outputReader)
 			if row[0].(string) != "x3" {
 				t.Errorf("failed FlatMap results: %+v", row)
 			}
@@ -107,6 +125,8 @@ func TestLuaFlatMap(t *testing.T) {
 }
 
 func TestLuaMapWithNil(t *testing.T) {
+
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
 
 	testLuaScript(
 		"test mapper",
@@ -119,13 +139,16 @@ func TestLuaMapWithNil(t *testing.T) {
 		},
 		func(inputWriter io.Writer) {
 			// The row we write has nil on index 1:
-			util.WriteRow(inputWriter, 8888, nil, "hello")
+			util.WriteRow(inputWriter, ts, 8888, nil, "hello")
 		},
 		func(outputReader io.Reader) {
-			row, err := util.ReadRow(outputReader)
+			ts1, row, err := util.ReadRow(outputReader)
 			if err != nil {
-				t.Errorf("read row error: %v", err)
+				t.Errorf("read map nil row error: %v", err)
 				return
+			}
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
 			}
 			if row[1] != nil {
 				t.Errorf("Row no longer contains nil: %+v", row)
@@ -139,22 +162,27 @@ func TestLuaMapWithNil(t *testing.T) {
 
 func TestLuaSelect(t *testing.T) {
 
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+
 	testLuaScript(
 		"test filter",
 		func(script Script) {
 			script.Select([]int{2, 1})
 		},
 		func(inputWriter io.Writer) {
-			util.WriteRow(inputWriter, 1, "x1", 8)
-			util.WriteRow(inputWriter, 2, "x2", 7)
+			util.WriteRow(inputWriter, ts, 1, "x1", 8)
+			util.WriteRow(inputWriter, ts, 2, "x2", 7)
 		},
 		func(outputReader io.Reader) {
-			row, _ := util.ReadRow(outputReader)
+			ts1, row, _ := util.ReadRow(outputReader)
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
+			}
 			if !(row[1].(uint64) == 1 && row[0].(string) == "x1") {
 				t.Errorf("failed select results: %+v", row)
 			}
 
-			row, _ = util.ReadRow(outputReader)
+			ts1, row, _ = util.ReadRow(outputReader)
 			if !(row[1].(uint64) == 2 && row[0].(string) == "x2") {
 				t.Errorf("failed select results: %+v", row)
 			}
@@ -165,28 +193,33 @@ func TestLuaSelect(t *testing.T) {
 
 func TestLuaLimit(t *testing.T) {
 
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+
 	testLuaScript(
 		"test Limit",
 		func(script Script) {
 			script.Limit(1, 1)
 		},
 		func(inputWriter io.Writer) {
-			util.WriteRow(inputWriter, 1, "x1", 8)
-			util.WriteRow(inputWriter, 2, "x2", 7)
-			util.WriteRow(inputWriter, 3, "x3", 6)
-			util.WriteRow(inputWriter, 4, "x4", 21)
-			util.WriteRow(inputWriter, 5, "x5", 22)
+			util.WriteRow(inputWriter, ts, 1, "x1", 8)
+			util.WriteRow(inputWriter, ts, 2, "x2", 7)
+			util.WriteRow(inputWriter, ts, 3, "x3", 6)
+			util.WriteRow(inputWriter, ts, 4, "x4", 21)
+			util.WriteRow(inputWriter, ts, 5, "x5", 22)
 		},
 		func(outputReader io.Reader) {
 			// read first row
-			row, _ := util.ReadRow(outputReader)
+			ts1, row, _ := util.ReadRow(outputReader)
 			fmt.Printf("row: %+v\n", row)
+			if ts1 != ts {
+				t.Errorf("failed timestamp: %+v", row)
+			}
 			if !(row[0].(uint64) == 2 && row[1].(string) == "x2") {
 				t.Errorf("failed select results: %+v", row)
 			}
 
 			// read second row
-			row, _ = util.ReadRow(outputReader)
+			ts1, row, _ = util.ReadRow(outputReader)
 			if row != nil {
 				t.Errorf("failed to take 1 row: %+v", row)
 			}
