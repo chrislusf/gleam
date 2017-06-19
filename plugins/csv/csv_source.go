@@ -78,7 +78,7 @@ func (q *CsvSource) SetHasHeader(hasHeader bool) *CsvSource {
 func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	return f.Source(func(writer io.Writer) error {
 		if !s.hasWildcard && !filesystem.IsDir(s.Path) {
-			util.WriteRow(writer, encodeShardInfo(&CsvShardInfo{
+			util.WriteRow(writer, util.Now(), encodeShardInfo(&CsvShardInfo{
 				FileName:  s.Path,
 				HasHeader: s.HasHeader,
 			}))
@@ -89,7 +89,7 @@ func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 			}
 			for _, vf := range virtualFiles {
 				if !s.hasWildcard || s.match(vf.Location) {
-					util.WriteRow(writer, encodeShardInfo(&CsvShardInfo{
+					util.WriteRow(writer, util.Now(), encodeShardInfo(&CsvShardInfo{
 						FileName:  vf.Location,
 						HasHeader: s.HasHeader,
 					}))

@@ -35,7 +35,7 @@ func ProcessMapper(f Mapper) (err error) {
 			if err == io.EOF {
 				return nil
 			}
-			return fmt.Errorf("input row error: %v", err)
+			return fmt.Errorf("mapper input row error: %v", err)
 		}
 		err = f(row)
 		if err != nil {

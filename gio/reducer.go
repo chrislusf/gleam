@@ -22,7 +22,7 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 		if err == io.EOF {
 			return nil
 		}
-		return fmt.Errorf("input row error: %v", err)
+		return fmt.Errorf("reducer input row error: %v", err)
 	}
 
 	lastTs := ts
