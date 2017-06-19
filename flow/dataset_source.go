@@ -42,7 +42,7 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(writer, row...)
+			util.WriteRow(writer, util.Now(), row...)
 			return nil
 		})
 
@@ -60,7 +60,7 @@ func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(writer, row...)
+			util.WriteRow(writer, util.Now(), row...)
 			return nil
 		})
 
@@ -111,7 +111,7 @@ func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
-			if err := util.WriteRow(w, scanner.Bytes()); err != nil {
+			if err := util.WriteRow(w, util.Now(), scanner.Bytes()); err != nil {
 				return err
 			}
 		}
@@ -135,7 +135,7 @@ func (fc *Flow) Channel(ch chan interface{}) (ret *Dataset) {
 	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for data := range ch {
 			stat.InputCounter++
-			err := util.WriteRow(writers[0], data)
+			err := util.WriteRow(writers[0], util.Now(), data)
 			if err != nil {
 				return err
 			}
@@ -199,7 +199,7 @@ func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for _, slice := range slices {
 			stat.InputCounter++
-			err := util.WriteRow(writers[0], slice...)
+			err := util.WriteRow(writers[0], util.Now(), slice...)
 			if err != nil {
 				return err
 			}

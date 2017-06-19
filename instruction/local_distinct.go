@@ -53,17 +53,20 @@ func (b *LocalDistinct) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	var prevKeys []interface{}
+	var prevTs int64
 	return util.ProcessMessage(reader, func(input []byte) error {
-		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
+		if ts, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("decode error %v: %+v", err, input)
 		} else {
 			stats.InputCounter++
 			if prevKeys == nil || util.Compare(keys, prevKeys) != 0 {
-				if err := util.WriteRow(writer, keys...); err != nil {
+				if err := util.WriteRow(writer, prevTs, keys...); err != nil {
 					return fmt.Errorf("Sort>Failed to write: %v", err)
 				}
 				stats.OutputCounter++
-				prevKeys = keys
+				prevTs, prevKeys = ts, keys
+			} else {
+				prevTs = max(prevTs, ts)
 			}
 		}
 		return nil

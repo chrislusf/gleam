@@ -54,7 +54,7 @@ func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int, s
 	shardCount := len(writers)
 
 	return util.ProcessMessage(reader, func(data []byte) error {
-		keyObjects, err := util.DecodeRowKeys(data, indexes)
+		_, keyObjects, err := util.DecodeRowKeys(data, indexes)
 		if err != nil {
 			log.Printf("Failed to find keys on %v", indexes)
 			return err

@@ -63,7 +63,7 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *
 	var kvs []interface{}
 	indexes := getIndexesFromOrderBys(orderBys)
 	err := util.ProcessMessage(reader, func(input []byte) error {
-		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
+		if _, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
 			stats.InputCounter++

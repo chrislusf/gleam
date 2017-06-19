@@ -58,7 +58,7 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, 
 	// enqueue one item to the pq from each channel
 	for shardId, reader := range readers {
 		if x, err := util.ReadMessage(reader); err == nil {
-			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
+			if _, keys, err := util.DecodeRowKeys(x, indexes); err != nil {
 				log.Printf("Failed to decode %v: %+v", err, x)
 				return err
 			} else {
@@ -80,7 +80,7 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, 
 		stats.OutputCounter++
 
 		if x, err := util.ReadMessage(readers[shardId]); err == nil {
-			if keys, err := util.DecodeRowKeys(x, indexes); err != nil {
+			if _, keys, err := util.DecodeRowKeys(x, indexes); err != nil {
 				log.Printf("Failed to decode %v: %+v", err, x)
 			} else {
 				stats.InputCounter++

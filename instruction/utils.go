@@ -28,16 +28,17 @@ func toOrderBys(orderBys []*pb.OrderBy) (ret []OrderBy) {
 }
 
 type keyValues struct {
-	Keys   []interface{}
-	Values []interface{}
+	Timestamp int64
+	Keys      []interface{}
+	Values    []interface{}
 }
 
 func genKeyBytesAndValues(input []byte, indexes []int) (keyBytes []byte, values []interface{}, err error) {
-	keys, values, err := util.DecodeRowKeysValues(input, indexes)
+	_, keys, values, err := util.DecodeRowKeysValues(input, indexes)
 	if err != nil {
 		return nil, nil, fmt.Errorf("DecodeRowKeysValues %v: %+v", err, input)
 	}
-	keyBytes, err = util.EncodeRow(keys...)
+	keyBytes, err = util.EncodeKeys(keys...)
 	return keyBytes, values, err
 }
 
@@ -73,7 +74,7 @@ func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []
 
 		defer close(writer)
 
-		row, err := util.ReadRow(sortedChan)
+		ts, row, err := util.ReadRow(sortedChan)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Fprintf(os.Stderr, "%s join read first row error: %v\n", name, err)
@@ -87,12 +88,13 @@ func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []
 		firstRow := getKeyValues(row, indexes, keyFieldsMask)
 
 		keyValues := keyValues{
-			Keys:   firstRow.Keys,
-			Values: []interface{}{firstRow.Values},
+			Timestamp: ts,
+			Keys:      firstRow.Keys,
+			Values:    []interface{}{firstRow.Values},
 		}
 
 		for {
-			row, err = util.ReadRow(sortedChan)
+			ts, row, err = util.ReadRow(sortedChan)
 			if err != nil {
 				if err != io.EOF {
 					fmt.Fprintf(os.Stderr, "join read row error: %v", err)
@@ -109,9 +111,17 @@ func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []
 				keyValues.Keys = newRow.Keys
 				keyValues.Values = []interface{}{newRow.Values}
 			}
+			keyValues.Timestamp = max(keyValues.Timestamp, ts)
 		}
 		writer <- keyValues
 	}()
 
 	return writer
+}
+
+func max(x, y int64) int64 {
+	if x > y {
+		return x
+	}
+	return y
 }

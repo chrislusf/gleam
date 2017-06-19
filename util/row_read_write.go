@@ -51,6 +51,22 @@ func EncodeRow(ts int64, anyObject ...interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// EncodeKeys encode keys to a blob
+func EncodeKeys(anyObject ...interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := msgpack.NewEncoder(&buf)
+	for _, obj := range anyObject {
+		if objString, isString := obj.(string); isString {
+			if err := encoder.Encode([]byte(objString)); err != nil {
+				return nil, err
+			}
+		} else if err := encoder.Encode(obj); err != nil {
+			return nil, err
+		}
+	}
+	return buf.Bytes(), nil
+}
+
 // DecodeRow decodes one row of data from a blob
 func DecodeRow(encodedBytes []byte) (ts int64, objects []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
@@ -89,10 +105,9 @@ func DecodeRowKeysValues(encodedBytes []byte, indexes []int) (ts int64, keys, va
 }
 
 // DecodeRowKeys decode key fields by index[], starting from 1
-func DecodeRowKeys(encodedBytes []byte, indexes []int) (keys []interface{}, err error) {
+func DecodeRowKeys(encodedBytes []byte, indexes []int) (ts int64, keys []interface{}, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 
-	var ts int64
 	decoder.Decode(&ts)
 
 	if len(indexes) == 0 {
@@ -100,21 +115,21 @@ func DecodeRowKeys(encodedBytes []byte, indexes []int) (keys []interface{}, err 
 		if err = decoder.Decode(&key); err != nil {
 			err = fmt.Errorf("decode row key error: %s: %v\n", string(encodedBytes), err)
 		}
-		return []interface{}{key}, err
+		return ts, []interface{}{key}, err
 	}
 
 	var objects []interface{}
 	for m := max(indexes); m > 0; m-- {
 		var v interface{}
 		if err := decoder.Decode(&v); err != nil {
-			return nil, fmt.Errorf("decode row error: %s\n", string(encodedBytes))
+			return ts, nil, fmt.Errorf("decode row error: %s\n", string(encodedBytes))
 		}
 		objects = append(objects, v)
 	}
 	for _, x := range indexes {
 		keys = append(keys, objects[x-1])
 	}
-	return keys, err
+	return ts, keys, err
 
 }
 

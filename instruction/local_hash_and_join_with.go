@@ -72,18 +72,18 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 	}
 
 	err = util.ProcessMessage(rightReader, func(input []byte) error {
-		if keys, vals, err := util.DecodeRowKeysValues(input, indexes); err != nil {
+		if ts, keys, vals, err := util.DecodeRowKeysValues(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
 			stats.InputCounter++
-			keyBytes, err := util.EncodeRow(keys...)
+			keyBytes, err := util.EncodeKeys(keys...)
 			if err != nil {
 				return fmt.Errorf("Failed to encoded row %+v: %v", keys, err)
 			}
 			if mappedValues, ok := hashmap[string(keyBytes)]; ok {
 				row := append(keys, vals...)
 				row = append(row, mappedValues...)
-				util.WriteRow(writer, row...)
+				util.WriteRow(writer, ts, row...)
 				stats.OutputCounter++
 			}
 		}
