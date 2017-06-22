@@ -74,6 +74,8 @@ func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, stat *pb.Ins
 		errChan <- waitError
 	}()
 
+	// defer fmt.Printf("%s Command is finished.\n", name)
+
 	select {
 	case <-ctx.Done():
 		println("cancel process", command.Process.Pid, name, "...")
@@ -83,7 +85,5 @@ func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, stat *pb.Ins
 	case err := <-errChan:
 		return err
 	}
-
-	// fmt.Printf("%s Command is finished.\n", name)
 
 }
