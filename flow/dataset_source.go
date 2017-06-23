@@ -35,7 +35,6 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 			return fmt.Errorf("Fail to accept on %s %s: %v", network, address, err)
 		}
 		defer conn.Close()
-		defer util.WriteEOFMessage(writer)
 
 		return util.TakeTsv(conn, -1, func(message []string) error {
 			var row []interface{}
@@ -53,7 +52,6 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 // ReadTsv read tab-separated lines from the reader
 func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
 	fn := func(writer io.Writer) error {
-		defer util.WriteEOFMessage(writer)
 
 		return util.TakeTsv(reader, -1, func(message []string) error {
 			var row []interface{}
