@@ -35,14 +35,13 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 			return fmt.Errorf("Fail to accept on %s %s: %v", network, address, err)
 		}
 		defer conn.Close()
-		defer util.WriteEOFMessage(writer)
 
 		return util.TakeTsv(conn, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(writer, row...)
+			util.WriteRow(writer, util.Now(), row...)
 			return nil
 		})
 
@@ -53,14 +52,13 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 // ReadTsv read tab-separated lines from the reader
 func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
 	fn := func(writer io.Writer) error {
-		defer util.WriteEOFMessage(writer)
 
 		return util.TakeTsv(reader, -1, func(message []string) error {
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
-			util.WriteRow(writer, row...)
+			util.WriteRow(writer, util.Now(), row...)
 			return nil
 		})
 
@@ -111,7 +109,7 @@ func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
-			if err := util.WriteRow(w, scanner.Bytes()); err != nil {
+			if err := util.WriteRow(w, util.Now(), scanner.Bytes()); err != nil {
 				return err
 			}
 		}
@@ -135,7 +133,7 @@ func (fc *Flow) Channel(ch chan interface{}) (ret *Dataset) {
 	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for data := range ch {
 			stat.InputCounter++
-			err := util.WriteRow(writers[0], data)
+			err := util.WriteRow(writers[0], util.Now(), data)
 			if err != nil {
 				return err
 			}
@@ -199,7 +197,7 @@ func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 	step.Function = func(readers []io.Reader, writers []io.Writer, stat *pb.InstructionStat) error {
 		for _, slice := range slices {
 			stat.InputCounter++
-			err := util.WriteRow(writers[0], slice...)
+			err := util.WriteRow(writers[0], util.Now(), slice...)
 			if err != nil {
 				return err
 			}

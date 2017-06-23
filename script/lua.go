@@ -57,8 +57,16 @@ function listNew(...)
   return t
 end
 
-function listUnpack(t)
+function listUnpackAll(t)
   return unpack(t, 1, t.n)
+end
+
+function listUnpackData(t)
+  return unpack(t, 2, t.n)
+end
+
+function listUnpackTs(t)
+  return t[1]
 end
 
 function listExtend(x, y)
@@ -137,8 +145,12 @@ function writeBytes(encoded)
 end
 
 function writeRow(...)
+  local ts = os.time()*1000
+  writeRowTs(ts, ...)
+end
+function writeRowTs(ts, ...)
   local width = select('#', ...)
-  local encoded = ""
+  local encoded = mp.pack(ts)
   for i=1, width do
     local v = select(i, ...)
     encoded = encoded .. mp.pack(v)

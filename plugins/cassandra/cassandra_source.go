@@ -78,7 +78,7 @@ func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				stop = begin + delta*(mype+1)
 			}
 
-			util.WriteRow(writer, encodeShardInfo(&CassandraShardInfo{
+			util.WriteRow(writer, util.Now(), encodeShardInfo(&CassandraShardInfo{
 				Hosts:          s.hosts,
 				Select:         s.selectClause,
 				Keyspace:       s.keyspace,

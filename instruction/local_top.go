@@ -59,7 +59,7 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 	pq := newMinQueueOfPairs(orderBys)
 
 	err := util.ProcessMessage(reader, func(input []byte) error {
-		if keys, err := util.DecodeRowKeys(input, indexes); err != nil {
+		if _, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
 			return fmt.Errorf("%v: %+v", err, input)
 		} else {
 			stats.InputCounter++

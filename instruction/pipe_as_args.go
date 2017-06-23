@@ -57,7 +57,7 @@ func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.Ins
 	var wg sync.WaitGroup
 
 	err := util.ProcessMessage(reader, func(input []byte) error {
-		parts, err := util.DecodeRow(input)
+		_, parts, err := util.DecodeRow(input)
 		if err != nil {
 			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
 		}

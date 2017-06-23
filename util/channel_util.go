@@ -148,6 +148,7 @@ func LineReaderToChannel(wg *sync.WaitGroup, stat *pb.InstructionStat, name stri
 		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
 		var buf bytes.Buffer
 		encoder := msgpack.NewEncoder(&buf)
+		encoder.Encode(Now())
 		for _, p := range parts {
 			if err := encoder.Encode(p); err != nil {
 				if err != nil {

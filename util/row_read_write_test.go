@@ -15,9 +15,11 @@ func TestEncodeDecode(t *testing.T) {
 		"zx,mcv",
 	}
 
-	encodedRow, _ := EncodeRow(originalData...)
+	encodedRow, _ := EncodeRow(Now(), originalData...)
 
-	decodedData, _ := DecodeRow(encodedRow)
+	ts, decodedData, _ := DecodeRow(encodedRow)
+
+	println("decoded time:", ts)
 
 	if key, ok := decodedData[0].(int); ok {
 		if key != originalKey {

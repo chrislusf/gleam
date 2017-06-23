@@ -59,33 +59,34 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 
 	for leftHasValue && rightHasValue {
 		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
+		ts := max(leftValuesWithSameKey.Timestamp, rightValuesWithSameKey.Timestamp)
 		switch {
 		case x == 0:
-			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
+			util.WriteRow(writer, ts, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
 			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 			stats.InputCounter += 2
 		case x < 0:
-			util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+			util.WriteRow(writer, ts, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
 			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			stats.InputCounter++
 		case x > 0:
-			util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+			util.WriteRow(writer, ts, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
 			stats.OutputCounter++
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 			stats.InputCounter++
 		}
 	}
 	for leftHasValue {
-		util.WriteRow(writer, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+		util.WriteRow(writer, leftValuesWithSameKey.Timestamp, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
 		stats.OutputCounter++
 		leftValuesWithSameKey, leftHasValue = <-leftChan
 		stats.InputCounter++
 	}
 	for rightHasValue {
-		util.WriteRow(writer, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+		util.WriteRow(writer, rightValuesWithSameKey.Timestamp, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
 		stats.OutputCounter++
 		rightValuesWithSameKey, rightHasValue = <-rightChan
 		stats.InputCounter++

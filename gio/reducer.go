@@ -17,18 +17,19 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 	}
 
 	// get the first row
-	row, err := util.ReadRow(os.Stdin)
+	ts, row, err := util.ReadRow(os.Stdin)
 	if err != nil {
 		if err == io.EOF {
 			return nil
 		}
-		return fmt.Errorf("input row error: %v", err)
+		return fmt.Errorf("reducer input row error: %v", err)
 	}
 
+	lastTs := ts
 	lastKeys, lastValues := getKeysAndValues(row, keyFields)
 
 	for {
-		row, err = util.ReadRow(os.Stdin)
+		ts, row, err = util.ReadRow(os.Stdin)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
@@ -41,20 +42,23 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 		if x == 0 {
 			lastValues, err = reduce(f, lastValues, values)
 		} else {
-			output(lastKeys, lastValues)
+			output(lastTs, lastKeys, lastValues)
 			lastKeys, lastValues = keys, values
 		}
+		if ts > lastTs {
+			lastTs = ts
+		}
 	}
-	output(lastKeys, lastValues)
+	output(lastTs, lastKeys, lastValues)
 
 	return nil
 }
 
-func output(x, y []interface{}) error {
+func output(ts int64, x, y []interface{}) error {
 	var t []interface{}
 	t = append(t, x...)
 	t = append(t, y...)
-	return util.WriteRow(os.Stdout, t...)
+	return util.WriteRow(os.Stdout, ts, t...)
 }
 
 func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
