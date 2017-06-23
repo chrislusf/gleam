@@ -25,7 +25,10 @@ func WriteRow(writer io.Writer, ts int64, anyObject ...interface{}) error {
 func ReadRow(reader io.Reader) (ts int64, row []interface{}, err error) {
 	encodedBytes, hasErr := ReadMessage(reader)
 	if hasErr != nil {
-		return 0, nil, fmt.Errorf("ReadRow ReadMessage: %v", hasErr)
+		if hasErr != io.EOF {
+			return 0, nil, fmt.Errorf("ReadRow ReadMessage: %v", hasErr)
+		}
+		return 0, nil, io.EOF
 	}
 	if ts, row, err = DecodeRow(encodedBytes); err != nil {
 		return ts, row, fmt.Errorf("ReadRow failed to decode byte: %v", err)
