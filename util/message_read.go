@@ -7,17 +7,18 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 )
 
 type MessageControl int32
 
 const (
-	MessageControlEOF = MessageControl(-1)
+	MessageControlEOF = MessageControl(math.MinInt32)
 )
 
 // message format:
 //   length(32bits), bytes
-//   EOF(-1)
+//   EOF(math.MinInt32)
 
 // TakeTsv Reads and processes TSV lines.
 // If count is less than 0, all lines are processed.
