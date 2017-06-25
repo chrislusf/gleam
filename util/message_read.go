@@ -16,9 +16,14 @@ const (
 	MessageControlEOF = MessageControl(math.MinInt32)
 )
 
-// message format:
-//   length(32bits), bytes
-//   EOF(math.MinInt32)
+// message contains 3 kinds of data with the formats:
+//   the first 4 bytes is int32 flag
+//   if flag > 0
+//     actual data row bytes with length = flag
+//   else if flag == math.MinInt32
+//     end of partition: EOF(math.MinInt32)
+//   else
+//     meta data bytes with length = - flag
 
 // TakeTsv Reads and processes TSV lines.
 // If count is less than 0, all lines are processed.

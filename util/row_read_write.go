@@ -9,8 +9,8 @@ import (
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-// Row format
-// ts, obj1, obj2, obj3, ...
+// Row contains actual data
+// Row format: ts, obj1, obj2, obj3, ...
 
 // WriteRow encode and write a row of data
 func WriteRow(writer io.Writer, ts int64, anyObject ...interface{}) error {
