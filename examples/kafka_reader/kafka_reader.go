@@ -26,9 +26,8 @@ func main() {
 
 	brokerList := strings.Split(*brokers, ",")
 
-	k := kafka.New(brokerList, *topic)
+	k := kafka.New(brokerList, *topic, *group)
 	k.TimeoutSeconds = *timeout
-	k.Group = *group
 
 	f := flow.New().Read(k).Printlnf("%x")
 
