@@ -6,9 +6,6 @@ import (
 	"log"
 	"time"
 
-	"os"
-	"path/filepath"
-
 	"github.com/Shopify/sarama"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
@@ -29,9 +26,6 @@ func (s *KafkaSource) Generate(f *flow.Flow) *flow.Dataset {
 	if err != nil {
 		log.Printf("KafkaSource failed to fetch kafka partitions: %v", err)
 		return nil
-	}
-	if s.Group == "" {
-		s.Group = filepath.Base(os.Args[0])
 	}
 	return s.genShardInfos(f, partitionIds).RoundRobin(len(partitionIds)).Mapper(MapperReadShard)
 }

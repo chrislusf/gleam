@@ -2,7 +2,10 @@ package main
 
 import (
 	"flag"
+	"path/filepath"
 	"strings"
+
+	"os"
 
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
@@ -12,7 +15,7 @@ import (
 var (
 	brokers = flag.String("brokers", "127.0.0.1:9092", "a list of comma separated broker:port")
 	topic   = flag.String("topic", "", "the topic name")
-	group   = flag.String("group", "group", "the consumer group name")
+	group   = flag.String("group", filepath.Base(os.Args[0]), "the consumer group name")
 	timeout = flag.Int("timeout", 30, "the number of seconds for timeout connections")
 )
 
@@ -23,8 +26,9 @@ func main() {
 
 	brokerList := strings.Split(*brokers, ",")
 
-	k := kafka.New(brokerList, *group, *topic)
+	k := kafka.New(brokerList, *topic)
 	k.TimeoutSeconds = *timeout
+	k.Group = *group
 
 	f := flow.New().Read(k).Printlnf("%x")
 
