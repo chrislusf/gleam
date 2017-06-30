@@ -13,6 +13,7 @@ import (
 
 type KafkaSource struct {
 	Brokers        []string
+	Group          string
 	Topic          string
 	TimeoutSeconds int
 }
@@ -57,6 +58,7 @@ func (s *KafkaSource) genShardInfos(f *flow.Flow, partitionIds []int32) *flow.Da
 			util.WriteRow(writer, util.Now(), encodeShardInfo(&KafkaPartitionInfo{
 				Brokers:        s.Brokers,
 				Topic:          s.Topic,
+				Group:          s.Group,
 				TimeoutSeconds: s.TimeoutSeconds,
 				PartitionId:    pid,
 			}))

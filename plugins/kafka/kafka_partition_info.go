@@ -13,6 +13,7 @@ import (
 type KafkaPartitionInfo struct {
 	Brokers        []string
 	Topic          string
+	Group          string
 	TimeoutSeconds int
 	PartitionId    int32
 }
@@ -45,6 +46,20 @@ func (s *KafkaPartitionInfo) ReadSplit() error {
 	}
 	defer c.Close()
 
+	offsetManager, err := sarama.NewOffsetManagerFromClient(s.Group, c)
+	if err != nil {
+		log.Printf("Kafka NewOffsetManagerFromClient error: %v", err)
+		return err
+	}
+	defer offsetManager.Close()
+
+	partitionOffsetManager, err := offsetManager.ManagePartition(s.Topic, s.PartitionId)
+	if err != nil {
+		log.Printf("Kafka ManagePartition error: %v", err)
+		return err
+	}
+	defer partitionOffsetManager.Close()
+
 	consumer, err := sarama.NewConsumerFromClient(c)
 	if err != nil {
 		log.Printf("Kafka NewConsumerFromClient error: %v", err)
@@ -63,6 +78,8 @@ func (s *KafkaPartitionInfo) ReadSplit() error {
 		if msg == nil {
 			continue
 		}
+
+		partitionOffsetManager.MarkOffset(msg.Offset, "")
 		ts := msg.Timestamp.UnixNano() / int64(time.Millisecond)
 		gio.TsEmit(ts, msg.Value)
 	}
