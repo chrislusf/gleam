@@ -6,6 +6,9 @@ import (
 	"log"
 	"time"
 
+	"os"
+	"path/filepath"
+
 	"github.com/Shopify/sarama"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/util"
@@ -13,6 +16,7 @@ import (
 
 type KafkaSource struct {
 	Brokers        []string
+	Group          string
 	Topic          string
 	TimeoutSeconds int
 }
@@ -25,6 +29,9 @@ func (s *KafkaSource) Generate(f *flow.Flow) *flow.Dataset {
 	if err != nil {
 		log.Printf("KafkaSource failed to fetch kafka partitions: %v", err)
 		return nil
+	}
+	if s.Group == "" {
+		s.Group = filepath.Base(os.Args[0])
 	}
 	return s.genShardInfos(f, partitionIds).RoundRobin(len(partitionIds)).Mapper(MapperReadShard)
 }
@@ -57,6 +64,7 @@ func (s *KafkaSource) genShardInfos(f *flow.Flow, partitionIds []int32) *flow.Da
 			util.WriteRow(writer, util.Now(), encodeShardInfo(&KafkaPartitionInfo{
 				Brokers:        s.Brokers,
 				Topic:          s.Topic,
+				Group:          s.Group,
 				TimeoutSeconds: s.TimeoutSeconds,
 				PartitionId:    pid,
 			}))
