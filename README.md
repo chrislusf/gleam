@@ -320,7 +320,7 @@ Gleam is just beginning. Here are a few todo items. Welcome any help!
 * [Add new plugin to read external data](https://github.com/chrislusf/gleam/wiki/Add-New-Source).
 * Add schema support for each dataset.
 * Support using SQL as a flow step, similar to LINQ.
-* Add windowing functions similar to google dataflow.
+* Add windowing functions similar to Apache Beam/Flink.
 * Add dataset metadata for better caching of often re-calculated data.
 
 Especially Need Help Now:
