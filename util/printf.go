@@ -29,15 +29,16 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
+		var row Row
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
-		if _, decodedObjects, err = DecodeRow(encodedBytes); err != nil {
+		if row, err = DecodeRow(encodedBytes); err != nil {
 			return fmt.Errorf("Failed to decode byte: %v\n", err)
 		}
 
-		if len(decodedObjects) > 0 {
-			fmt.Fprintf(writer, format, decodedObjects...)
-		}
+		decodedObjects = append(decodedObjects, row.K...)
+		decodedObjects = append(decodedObjects, row.V...)
+		fmt.Fprintf(writer, format, decodedObjects...)
 
 		return nil
 	})
@@ -47,16 +48,21 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 // with delimiter and lineSeparator.
 func PrintDelimited(stat *pb.InstructionStat, reader io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
-		var decodedObjects []interface{}
+		var row Row
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
-		if _, decodedObjects, err = DecodeRow(encodedBytes); err != nil {
+		if row, err = DecodeRow(encodedBytes); err != nil {
 			return fmt.Errorf("Failed to decode byte: %v", err)
 		}
 		stat.InputCounter++
 
+		var written = 0
+
 		// fmt.Printf("> len=%d row:%s\n", len(decodedObjects), decodedObjects[0])
-		if err := fprintRow(writer, "\t", decodedObjects...); err != nil {
+		if written, err = fprintRow(writer, 0, delimiter, row.K...); err != nil {
+			return fmt.Errorf("Failed to write row: %v", err)
+		}
+		if _, err := fprintRow(writer, written, delimiter, row.V...); err != nil {
 			return fmt.Errorf("Failed to write row: %v", err)
 		}
 
@@ -68,25 +74,27 @@ func PrintDelimited(stat *pb.InstructionStat, reader io.Reader, writer io.Writer
 	})
 }
 
-func fprintRow(writer io.Writer, delimiter string, decodedObjects ...interface{}) error {
+func fprintRow(writer io.Writer, base int, delimiter string, decodedObjects ...interface{}) (written int, err error) {
 	// fmt.Printf("chan input decoded: %v\n", decodedObjects)
 	for i, obj := range decodedObjects {
-		if i != 0 {
+		if i+base != 0 {
 			if _, err := writer.Write([]byte(delimiter)); err != nil {
-				return fmt.Errorf("Failed to write tab: %v", err)
+				return written, fmt.Errorf("Failed to write tab: %v", err)
 			}
 		}
 		// only string or []byte is allowed in piping. numbers or other types need to be converted to string
 		if dat, ok := obj.(string); ok {
 			if _, err := writer.Write([]byte(dat)); err != nil {
-				return fmt.Errorf("Failed to write string: %v", err)
+				return written, fmt.Errorf("Failed to write string: %v", err)
 			}
+			written++
 		}
 		if dat, ok := obj.([]byte); ok {
 			if _, err := writer.Write(dat); err != nil {
-				return fmt.Errorf("Failed to write bytes: %v", err)
+				return written, fmt.Errorf("Failed to write bytes: %v", err)
 			}
+			written++
 		}
 	}
-	return nil
+	return written, nil
 }

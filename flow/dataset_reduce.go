@@ -64,7 +64,6 @@ func (d *Dataset) LocalReduceBy(code string, sortOptions ...*SortOption) *Datase
 }
 
 func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOption) *Dataset {
-	d.Flow.hasPureGoMapperReducer = true
 
 	sortOption := concat(sortOptions)
 

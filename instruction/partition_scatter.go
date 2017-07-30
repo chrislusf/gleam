@@ -2,7 +2,6 @@ package instruction
 
 import (
 	"io"
-	"log"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -53,18 +52,13 @@ func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	shardCount := len(writers)
 
-	return util.ProcessMessage(reader, func(data []byte) error {
-		_, keyObjects, err := util.DecodeRowKeys(data, indexes)
-		if err != nil {
-			log.Printf("Failed to find keys on %v", indexes)
-			return err
-		}
+	return util.ProcessRow(reader, indexes, func(row util.Row) error {
 		stats.InputCounter++
-		x := util.PartitionByKeys(shardCount, keyObjects)
-		if err = util.WriteMessage(writers[x], data); err == nil {
+		x := util.PartitionByKeys(shardCount, row.K)
+		if err := row.WriteTo(writers[x]); err == nil {
 			stats.OutputCounter++
 		}
-		return err
+		return nil
 	})
 
 }

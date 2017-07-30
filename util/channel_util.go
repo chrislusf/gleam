@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 
 	"github.com/chrislusf/gleam/pb"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 /*
@@ -146,19 +145,11 @@ func LineReaderToChannel(wg *sync.WaitGroup, stat *pb.InstructionStat, name stri
 		stat.InputCounter++
 		// fmt.Printf("%s>line input: %s\n", name, scanner.Text())
 		parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
-		var buf bytes.Buffer
-		encoder := msgpack.NewEncoder(&buf)
-		encoder.Encode(Now())
-		for _, p := range parts {
-			if err := encoder.Encode(p); err != nil {
-				if err != nil {
-					fmt.Fprintf(errorOutput, "%s>Failed to encode bytes from channel to writer: %v\n", name, err)
-					return
-				}
-			}
+		var slice []interface{}
+		for _, m := range parts {
+			slice = append(slice, m)
 		}
-		// fmt.Printf("%s>encoded input: %s\n", name, string(buf.Bytes()))
-		WriteMessage(w, buf.Bytes())
+		NewRow(Now(), slice...).WriteTo(w)
 		stat.OutputCounter++
 	}
 	if err := scanner.Err(); err != nil {

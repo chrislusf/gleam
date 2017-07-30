@@ -15,6 +15,7 @@ type Order int
 const (
 	Ascending  = Order(1)
 	Descending = Order(-1)
+	NoOrder    = Order(0)
 )
 
 type OrderBy struct {

@@ -99,9 +99,19 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 		}
 
 		return util.TakeMessage(reader, 1, func(encodedBytes []byte) error {
-			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
+			if row, err := util.DecodeRow(encodedBytes); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				return err
+			} else {
+				var counter int
+				for _, v := range row.K {
+					counter++
+					decodedObjects[counter] = v
+				}
+				for _, v := range row.V {
+					counter++
+					decodedObjects[counter] = v
+				}
 			}
 			return nil
 		})

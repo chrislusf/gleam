@@ -17,7 +17,7 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 	}
 
 	// get the first row
-	ts, row, err := util.ReadRow(os.Stdin)
+	row, err := util.ReadRow(os.Stdin)
 	if err != nil {
 		if err == io.EOF {
 			return nil
@@ -25,11 +25,12 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 		return fmt.Errorf("reducer input row error: %v", err)
 	}
 
-	lastTs := ts
-	lastKeys, lastValues := getKeysAndValues(row, keyFields)
+	lastTs := row.T
+	row.UseKeys(keyPositions)
+	lastKeys, lastValues := row.K, row.V
 
 	for {
-		ts, row, err = util.ReadRow(os.Stdin)
+		row, err = util.ReadRow(os.Stdin)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
@@ -37,7 +38,8 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 			break
 		}
 
-		keys, values := getKeysAndValues(row, keyFields)
+		row.UseKeys(keyPositions)
+		keys, values := row.K, row.V
 		x := util.Compare(lastKeys, keys)
 		if x == 0 {
 			lastValues, err = reduce(f, lastValues, values)
@@ -45,8 +47,8 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 			output(lastTs, lastKeys, lastValues)
 			lastKeys, lastValues = keys, values
 		}
-		if ts > lastTs {
-			lastTs = ts
+		if row.T > lastTs {
+			lastTs = row.T
 		}
 	}
 	output(lastTs, lastKeys, lastValues)
@@ -58,7 +60,7 @@ func output(ts int64, x, y []interface{}) error {
 	var t []interface{}
 	t = append(t, x...)
 	t = append(t, y...)
-	return util.WriteRow(os.Stdout, ts, t...)
+	return util.NewRow(ts, t...).WriteTo(os.Stdout)
 }
 
 func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
@@ -74,15 +76,4 @@ func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
 		return nil, err
 	}
 	return z.([]interface{}), nil
-}
-
-func getKeysAndValues(row []interface{}, keyFields []bool) (keys, values []interface{}) {
-	for i, data := range row {
-		if i < len(keyFields) && keyFields[i] {
-			keys = append(keys, data)
-		} else {
-			values = append(values, data)
-		}
-	}
-	return keys, values
 }

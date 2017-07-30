@@ -58,35 +58,50 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 	rightValuesWithSameKey, rightHasValue := <-rightChan
 
 	for leftHasValue && rightHasValue {
-		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
-		ts := max(leftValuesWithSameKey.Timestamp, rightValuesWithSameKey.Timestamp)
+		x := util.Compare(leftValuesWithSameKey.K, rightValuesWithSameKey.K)
+		ts := max(leftValuesWithSameKey.T, rightValuesWithSameKey.T)
 		switch {
 		case x == 0:
-			util.WriteRow(writer, ts, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, rightValuesWithSameKey.Values)
+			util.Row{T: ts}.AppendKey(
+				leftValuesWithSameKey.K...).AppendValue(
+				leftValuesWithSameKey.V).AppendValue(
+				rightValuesWithSameKey.V).WriteTo(writer)
 			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 			stats.InputCounter += 2
 		case x < 0:
-			util.WriteRow(writer, ts, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+			util.Row{T: ts}.AppendKey(
+				leftValuesWithSameKey.K...).AppendValue(
+				leftValuesWithSameKey.V).AppendValue(
+				[]interface{}{}).WriteTo(writer)
 			stats.OutputCounter++
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			stats.InputCounter++
 		case x > 0:
-			util.WriteRow(writer, ts, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+			util.Row{T: ts}.AppendKey(
+				leftValuesWithSameKey.K...).AppendValue(
+				[]interface{}{}).AppendValue(
+				rightValuesWithSameKey.V).WriteTo(writer)
 			stats.OutputCounter++
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 			stats.InputCounter++
 		}
 	}
 	for leftHasValue {
-		util.WriteRow(writer, leftValuesWithSameKey.Timestamp, leftValuesWithSameKey.Keys, leftValuesWithSameKey.Values, []interface{}{})
+		util.Row{T: leftValuesWithSameKey.T}.AppendKey(
+			leftValuesWithSameKey.K...).AppendValue(
+			leftValuesWithSameKey.V).AppendValue(
+			[]interface{}{}).WriteTo(writer)
 		stats.OutputCounter++
 		leftValuesWithSameKey, leftHasValue = <-leftChan
 		stats.InputCounter++
 	}
 	for rightHasValue {
-		util.WriteRow(writer, rightValuesWithSameKey.Timestamp, rightValuesWithSameKey.Keys, []interface{}{}, rightValuesWithSameKey.Values)
+		util.Row{T: rightValuesWithSameKey.T}.AppendKey(
+			rightValuesWithSameKey.K...).AppendValue(
+			[]interface{}{}).AppendValue(
+			rightValuesWithSameKey.V).WriteTo(writer)
 		stats.OutputCounter++
 		rightValuesWithSameKey, rightHasValue = <-rightChan
 		stats.InputCounter++

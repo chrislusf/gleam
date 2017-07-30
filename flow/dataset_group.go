@@ -1,5 +1,9 @@
 package flow
 
+import (
+	"github.com/chrislusf/gleam/instruction"
+)
+
 // GroupBy e.g. GroupBy(Field(1,2,3)) group data by field 1,2,3
 func (d *Dataset) GroupBy(sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
@@ -19,7 +23,6 @@ func (d *Dataset) LocalGroupBy(sortOptions ...*SortOption) *Dataset {
 	indexes := sortOption.Indexes()
 	ret.IsPartitionedBy = indexes
 	step.Name = "LocalGroupBy"
-	step.Script = d.Flow.createScript()
-	step.Script.GroupBy(indexes)
+	step.SetInstruction(instruction.NewLocalGroupBySorted(sortOption.Indexes()))
 	return ret
 }

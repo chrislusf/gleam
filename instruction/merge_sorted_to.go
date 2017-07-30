@@ -57,14 +57,10 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, 
 
 	// enqueue one item to the pq from each channel
 	for shardId, reader := range readers {
-		if x, err := util.ReadMessage(reader); err == nil {
-			if _, keys, err := util.DecodeRowKeys(x, indexes); err != nil {
-				log.Printf("Failed to decode %v: %+v", err, x)
-				return err
-			} else {
-				stats.InputCounter++
-				pq.Enqueue(pair{keys: keys, data: x}, shardId)
-			}
+		if row, err := util.ReadRow(reader); err == nil {
+			row.UseKeys(indexes)
+			stats.InputCounter++
+			pq.Enqueue(row, shardId)
 		} else {
 			if err != io.EOF {
 				log.Printf("DoMergeSortedTo failed start :%v", err)
@@ -74,21 +70,18 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, 
 	}
 	for pq.Len() > 0 {
 		t, shardId := pq.Dequeue()
-		if err := util.WriteMessage(writer, t.(pair).data); err != nil {
+		if err := t.(util.Row).WriteTo(writer); err != nil {
 			return err
 		}
 		stats.OutputCounter++
 
-		if x, err := util.ReadMessage(readers[shardId]); err == nil {
-			if _, keys, err := util.DecodeRowKeys(x, indexes); err != nil {
-				log.Printf("Failed to decode %v: %+v", err, x)
-			} else {
-				stats.InputCounter++
-				pq.Enqueue(pair{keys: keys, data: x}, shardId)
-			}
+		if row, err := util.ReadRow(readers[shardId]); err == nil {
+			row.UseKeys(indexes)
+			stats.InputCounter++
+			pq.Enqueue(row, shardId)
 		} else {
 			if err != io.EOF {
-				log.Printf("DoMergeSortedTo failed to ReadMessage :%v", err)
+				log.Printf("DoMergeSortedTo failed to ReadRow :%v", err)
 				return err
 			}
 		}

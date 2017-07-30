@@ -58,21 +58,17 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 	indexes := getIndexesFromOrderBys(orderBys)
 	pq := newMinQueueOfPairs(orderBys)
 
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		if _, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
-			return fmt.Errorf("%v: %+v", err, input)
-		} else {
-			stats.InputCounter++
-			newPair := pair{keys: keys, data: input}
-			if pq.Len() >= n {
-				if pairsLessThan(orderBys, pq.Top(), newPair) {
-					pq.Dequeue()
-					pq.Enqueue(newPair, 0)
-				}
-			} else {
-				pq.Enqueue(newPair, 0)
+	err := util.ProcessRow(reader, indexes, func(row util.Row) error {
+		stats.InputCounter++
 
+		if pq.Len() >= n {
+			if lessThan(orderBys, pq.Top().(util.Row).K, row.K) {
+				pq.Dequeue()
+				pq.Enqueue(row, 0)
 			}
+		} else {
+			pq.Enqueue(row, 0)
+
 		}
 		return nil
 	})
@@ -83,13 +79,13 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 
 	// read data out of the priority queue
 	length := pq.Len()
-	itemsToReverse := make([][]byte, length)
+	itemsToReverse := make([]util.Row, length)
 	for i := 0; i < length; i++ {
-		kv, _ := pq.Dequeue()
-		itemsToReverse[i] = kv.(pair).data
+		entry, _ := pq.Dequeue()
+		itemsToReverse[i] = entry.(util.Row)
 	}
 	for i := length - 1; i >= 0; i-- {
-		util.WriteMessage(writer, itemsToReverse[i])
+		itemsToReverse[i].WriteTo(writer)
 		stats.OutputCounter++
 	}
 
@@ -98,6 +94,7 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 
 func newMinQueueOfPairs(orderBys []OrderBy) *util.PriorityQueue {
 	return util.NewPriorityQueue(func(a, b interface{}) bool {
-		return pairsLessThan(orderBys, a, b)
+		x, y := a.(util.Row), b.(util.Row)
+		return lessThan(orderBys, x.K, y.K)
 	})
 }

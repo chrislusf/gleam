@@ -15,20 +15,24 @@ func TestEncodeDecode(t *testing.T) {
 		"zx,mcv",
 	}
 
-	encodedRow, _ := EncodeRow(Now(), originalData...)
+	originalTs := Now()
 
-	ts, decodedData, _ := DecodeRow(encodedRow)
+	encodedRow, _ := encodeRow(NewRow(originalTs, originalData...))
 
-	println("decoded time:", ts)
+	row, _ := DecodeRow(encodedRow)
 
-	if key, ok := decodedData[0].(int); ok {
+	if originalTs != row.T {
+		t.Errorf("Failed to decode ts %d => %d", originalTs, row.T)
+	}
+
+	if key, ok := row.K[0].(int); ok {
 		if key != originalKey {
 			t.Errorf("Failed to decode key %d => %d", originalKey, key)
 		}
 	}
 
-	if len(decodedData) != len(originalData) {
-		t.Errorf("Failed to decode to the same length %d => %d", len(originalData), len(decodedData))
+	if len(row.V) != len(originalData)-1 {
+		t.Errorf("Failed to decode to the same length %d => %d", len(originalData), len(row.V)-1)
 	}
 
 }

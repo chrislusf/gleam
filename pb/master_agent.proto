@@ -304,13 +304,29 @@ message Instruction {
 	MergeSortedTo mergeSortedTo = 19;
 
 	message MergeTo {}
-	MergeTo mergeTo = 22;
+	MergeTo mergeTo = 20;
 
 	message LocalDistinct {
 		repeated OrderBy orderBys = 1;
 	}
 	LocalDistinct localDistinct = 21;
 
+	message LocalLimit {
+		int32 n = 1;
+		int32 offset = 2;
+	}
+	LocalLimit localLimit = 22;
+
+	message Select {
+		repeated int32 keyIndexes = 1;
+		repeated int32 valueIndexes = 2;
+	}
+	Select select = 23;
+
+	message LocalGroupBySorted {
+		repeated int32 indexes = 1;
+	}
+	LocalGroupBySorted localGroupBySorted = 24;
 
 }
 

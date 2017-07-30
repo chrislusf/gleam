@@ -8,7 +8,6 @@ type SortOption struct {
 	orderByList []instruction.OrderBy
 }
 
-// By groups the indexes, usually start from 1, into a []int
 func Field(indexes ...int) *SortOption {
 	ret := &SortOption{}
 	for _, index := range indexes {
@@ -37,6 +36,14 @@ func OrderBy(index int, ascending bool) *SortOption {
 
 // OrderBy chains a list of sorting order by
 func (o *SortOption) By(index int, ascending bool) *SortOption {
+	order := instruction.Descending
+	if ascending {
+		order = instruction.Descending
+	}
+	o.orderByList = append(o.orderByList, instruction.OrderBy{
+		Index: index,
+		Order: order,
+	})
 	return o
 }
 

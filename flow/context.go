@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -17,10 +16,6 @@ func New() (fc *Flow) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	fc = &Flow{
-		PrevScriptType: "luajit",
-		Scripts: map[string]func() script.Script{
-			"luajit": script.NewLuajitScript,
-		},
 		HashCode: r.Uint32(),
 	}
 	return
@@ -32,7 +27,7 @@ func (fc *Flow) Run(options ...FlowOption) {
 
 func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 
-	if !gio.HasInitalized && fc.hasPureGoMapperReducer {
+	if !gio.HasInitalized {
 		println("gio.Init() is required right after main() if pure go mapper or reducer is used.")
 		os.Exit(1)
 	}

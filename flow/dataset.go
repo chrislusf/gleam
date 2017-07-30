@@ -22,16 +22,6 @@ func (d *Dataset) GetShards() []*DatasetShard {
 	return d.Shards
 }
 
-func (d *Dataset) Script(scriptType string) *Dataset {
-	d.Flow.Script(scriptType)
-	return d
-}
-
-func (d *Dataset) Init(scriptPart string) *Dataset {
-	d.Flow.Init(scriptPart)
-	return d
-}
-
 // Run starts the whole flow. This is a convenient method, same as *Flow.Run()
 func (d *Dataset) Run(option ...FlowOption) {
 	d.RunContext(context.Background(), option...)

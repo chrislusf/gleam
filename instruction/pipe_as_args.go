@@ -56,18 +56,20 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.InstructionStat) error {
 	var wg sync.WaitGroup
 
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		_, parts, err := util.DecodeRow(input)
-		if err != nil {
-			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
-		}
+	err := util.ProcessRow(reader, nil, func(row util.Row) error {
 		stats.InputCounter++
 
 		// feed parts as input to the code
+		var parts []interface{}
+		parts = append(parts, row.K...)
+		parts = append(parts, row.V...)
+
 		actualCode := code
 		for i := 1; i <= len(parts); i++ {
 			var arg string
-			if b, ok := parts[i-1].([]byte); ok {
+			if b, ok := parts[i-1].(string); ok {
+				arg = b
+			} else if b, ok := parts[i-1].([]byte); ok {
 				arg = string(b)
 			} else {
 				arg = fmt.Sprintf("%d", parts[i-1].(uint64))

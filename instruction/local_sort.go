@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/psilva261/timsort"
 )
 
 func init() {
@@ -20,11 +20,6 @@ func init() {
 		}
 		return nil
 	})
-}
-
-type pair struct {
-	keys []interface{}
-	data []byte
 }
 
 type LocalSort struct {
@@ -60,31 +55,27 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
-	var kvs []interface{}
+	var rows []util.Row
 	indexes := getIndexesFromOrderBys(orderBys)
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		if _, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
-			return fmt.Errorf("%v: %+v", err, input)
-		} else {
-			stats.InputCounter++
-			kvs = append(kvs, pair{keys: keys, data: input})
-		}
+	err := util.ProcessRow(reader, indexes, func(row util.Row) error {
+		stats.InputCounter++
+		rows = append(rows, row)
 		return nil
 	})
 	if err != nil {
 		fmt.Printf("Sort>Failed to read:%v\n", err)
 		return err
 	}
-	if len(kvs) == 0 {
+	if len(rows) == 0 {
 		return nil
 	}
-	timsort.Sort(kvs, func(a, b interface{}) bool {
-		return pairsLessThan(orderBys, a, b)
+	sort.Slice(rows, func(a, b int) bool {
+		return lessThan(orderBys, rows[a].K, rows[b].K)
 	})
 
-	for _, kv := range kvs {
+	for _, row := range rows {
 		// println("sorted key", kv.(pair).keys[0].(string))
-		if err := util.WriteMessage(writer, kv.(pair).data); err != nil {
+		if err := row.WriteTo(writer); err != nil {
 			return fmt.Errorf("Sort>Failed to write: %v", err)
 		} else {
 			stats.OutputCounter++
@@ -100,11 +91,10 @@ func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
 	return
 }
 
-func pairsLessThan(orderBys []OrderBy, a, b interface{}) bool {
-	x, y := a.(pair), b.(pair)
+func lessThan(orderBys []OrderBy, x, y []interface{}) bool {
 	for i, order := range orderBys {
 		normalOrder := order.Order >= 0
-		compared := util.Compare(x.keys[i], y.keys[i])
+		compared := util.Compare(x[i], y[i])
 		if compared < 0 {
 			return normalOrder
 		}
