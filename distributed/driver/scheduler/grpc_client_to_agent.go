@@ -91,6 +91,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 }
 
 func sendExecutionRequest(ctx context.Context,
+	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	server string, request *pb.ExecutionRequest) error {
 
@@ -126,8 +127,13 @@ func sendExecutionRequest(ctx context.Context,
 				executionStatus.UserTime = response.GetUserTime()
 			}
 			if response.GetExecutionStat() != nil {
-				// log.Printf("received stat %s: %v", executionStatus, executionStatus.ExecutionStat)
-				executionStatus.ExecutionStat = response.GetExecutionStat()
+				if executionStatus.ExecutionStat == nil {
+					executionStatus.ExecutionStat = response.GetExecutionStat()
+				} else {
+					executionStatus.ExecutionStat.Stats = append(
+						executionStatus.ExecutionStat.Stats,
+						response.GetExecutionStat().GetStats()[0])
+				}
 			}
 		}
 
