@@ -103,7 +103,7 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 		request.InstructionSet.Instructions[0].GetStepId(),
 		request.InstructionSet.Instructions[0].GetTaskId(),
 	)
-	log.Printf("stats chan key: %s", key)
+	// log.Printf("stats chan key: %s", key)
 	statsChan := make(chan *pb.ExecutionStat)
 	statsChanMapRWMutex.Lock()
 	statsChanMap[key] = statsChan
