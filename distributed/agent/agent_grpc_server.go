@@ -98,10 +98,12 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 	request.InstructionSet.AgentAddress = fmt.Sprintf(":%d", *as.Option.Port)
 
 	key := fmt.Sprintf(
-		"%d-%s",
+		"%d-%d-%d",
 		request.InstructionSet.FlowHashCode,
-		request.InstructionSet.Name,
+		request.InstructionSet.Instructions[0].GetStepId(),
+		request.InstructionSet.Instructions[0].GetTaskId(),
 	)
+	log.Printf("stats chan key: %s", key)
 	statsChan := make(chan *pb.ExecutionStat)
 	statsChanMapRWMutex.Lock()
 	statsChanMap[key] = statsChan
@@ -125,9 +127,10 @@ func (as *AgentServer) CollectExecutionStatistics(stream pb.GleamAgent_CollectEx
 		}
 		if statsChan == nil {
 			key := fmt.Sprintf(
-				"%d-%s",
+				"%d-%d-%d",
 				stats.FlowHashCode,
-				stats.Name,
+				stats.Stats[0].GetStepId(),
+				stats.Stats[0].GetTaskId(),
 			)
 			statsChanMapRWMutex.RLock()
 			statsChan = statsChanMap[key]
@@ -135,7 +138,7 @@ func (as *AgentServer) CollectExecutionStatistics(stream pb.GleamAgent_CollectEx
 		}
 
 		statsChan <- stats
-		// fmt.Printf("stats: %+v\n", stats)
+		// fmt.Printf("received stats: %+v\n", stats)
 	}
 
 }
