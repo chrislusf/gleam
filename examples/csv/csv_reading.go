@@ -1,10 +1,16 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/chrislusf/gleam/distributed"
 	. "github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/plugins/csv"
+)
+
+var (
+	isDistributed = flag.Bool("distributed", false, "run in distributed mode")
 )
 
 func main() {
@@ -21,6 +27,10 @@ func main() {
 
 	// join.Run(distributed.Planner())
 
-	join.Run(distributed.Option())
+	if *isDistributed {
+		join.Run(distributed.Option())
+	} else {
+		join.Run()
+	}
 
 }
