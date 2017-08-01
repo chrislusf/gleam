@@ -30,8 +30,8 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	lastTask := tasks[len(tasks)-1]
 	if tasks[0].Step.IsOnDriverSide {
 		// these should be only one task on the driver side
-		if err := taskGroupStatus.Track(func(exe *pb.FlowExecutionStatus_TaskGroup_Execution) error {
-			return s.localExecute(ctx, fc, lastTask, wg)
+		if err := taskGroupStatus.Track(func(exeStatus *pb.FlowExecutionStatus_TaskGroup_Execution) error {
+			return s.localExecute(ctx, fc, exeStatus, lastTask, wg)
 		}); err != nil {
 			log.Fatalf("Failed to execute on driver side: %v", err)
 		}

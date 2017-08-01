@@ -51,7 +51,9 @@ func (step *Step) RunFunction(task *Task) error {
 		}
 	}()
 
-	task.Stat = &pb.InstructionStat{}
+	if task.Stat == nil {
+		task.Stat = &pb.InstructionStat{}
+	}
 	err := task.Step.Function(readers, writers, task.Stat)
 	if err != nil {
 		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
