@@ -68,7 +68,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
-	if err := sendExecutionRequest(ctx, executionStatus, allocation.Location.URL(), request); err != nil {
+	if err := sendExecutionRequest(ctx, taskGroupStatus, executionStatus, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
 		return err
 	}
