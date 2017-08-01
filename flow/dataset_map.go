@@ -12,9 +12,9 @@ import (
 
 // Mapper runs the mapper registered to the mapperId.
 // This is used to execute pure Go code.
-func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
+func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "Mapper"
+	step.Name = name
 	step.IsPipe = false
 	step.IsGoCode = true
 	var args []string

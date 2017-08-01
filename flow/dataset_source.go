@@ -25,7 +25,7 @@ func (fc *Flow) Read(s Sourcer) (ret *Dataset) {
 // Listen receives textual inputs via a socket.
 // Multiple parameters are separated via tab.
 func (fc *Flow) Listen(network, address string) (ret *Dataset) {
-	fn := func(writer io.Writer) error {
+	fn := func(writer io.Writer, stats *pb.InstructionStat) error {
 		listener, err := net.Listen(network, address)
 		if err != nil {
 			return fmt.Errorf("Fail to listen on %s %s: %v", network, address, err)
@@ -37,47 +37,51 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 		defer conn.Close()
 
 		return util.TakeTsv(conn, -1, func(message []string) error {
+			stats.InputCounter++
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
+			stats.OutputCounter++
 			return util.NewRow(util.Now(), row...).WriteTo(writer)
 		})
 
 	}
-	return fc.Source(fn)
+	return fc.Source(address, fn)
 }
 
 // ReadTsv read tab-separated lines from the reader
 func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
-	fn := func(writer io.Writer) error {
+	fn := func(writer io.Writer, stats *pb.InstructionStat) error {
 
 		return util.TakeTsv(reader, -1, func(message []string) error {
+			stats.InputCounter++
 			var row []interface{}
 			for _, m := range message {
 				row = append(row, m)
 			}
+			stats.OutputCounter++
 			return util.NewRow(util.Now(), row...).WriteTo(writer)
 		})
 
 	}
-	return fc.Source(fn)
+	return fc.Source("tsv", fn)
 }
 
 // Source produces data feeding into the flow.
 // Function f writes to this writer.
 // The written bytes should be MsgPack encoded []byte.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
-func (fc *Flow) Source(f func(io.Writer) error) (ret *Dataset) {
+func (fc *Flow) Source(name string, f func(io.Writer, *pb.InstructionStat) error) (ret *Dataset) {
 	ret = fc.newNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
-	step.Name = "Source"
+	step.Name = name
 	step.Function = func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
 		errChan := make(chan error, len(writers))
 		for _, writer := range writers {
 			go func(writer io.Writer) {
-				errChan <- f(writer)
+				errChan <- f(writer, stats)
 			}(writer)
 		}
 		for range writers {
@@ -94,7 +98,8 @@ func (fc *Flow) Source(f func(io.Writer) error) (ret *Dataset) {
 // TextFile reads the file content as lines and feed into the flow.
 // The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
 func (fc *Flow) TextFile(fname string) (ret *Dataset) {
-	fn := func(writer io.Writer) error {
+	fn := func(writer io.Writer, stats *pb.InstructionStat) error {
+		stats.InputCounter++
 		w := bufio.NewWriter(writer)
 		defer w.Flush()
 		file, err := filesystem.Open(fname)
@@ -110,6 +115,7 @@ func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 			if err := util.NewRow(util.Now(), scanner.Bytes()).WriteTo(w); err != nil {
 				return err
 			}
+			stats.OutputCounter++
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -119,7 +125,7 @@ func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 
 		return nil
 	}
-	return fc.Source(fn)
+	return fc.Source(fname, fn)
 }
 
 // Channel accepts a channel to feed into the flow.

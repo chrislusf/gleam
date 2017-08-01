@@ -29,7 +29,7 @@ type CassandraSource struct {
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CassandraSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.Concurrency).Mapper(MapperReadShard)
+	return s.genShardInfos(f).RoundRobin(s.Concurrency).Map("Cassandra Source", MapperReadShard)
 }
 
 func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
@@ -78,7 +78,7 @@ func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				stop = begin + delta*(mype+1)
 			}
 
-			util.WriteRow(writer, util.Now(), encodeShardInfo(&CassandraShardInfo{
+			util.NewRow(util.Now(), encodeShardInfo(&CassandraShardInfo{
 				Hosts:          s.hosts,
 				Select:         s.selectClause,
 				Keyspace:       s.keyspace,
@@ -89,7 +89,7 @@ func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				PartitionKeys:  partitionKeys,
 				StartToken:     fmt.Sprintf("%d", start),
 				StopToken:      fmt.Sprintf("%d", stop),
-			}))
+			})).WriteTo(writer)
 		}
 
 		return nil

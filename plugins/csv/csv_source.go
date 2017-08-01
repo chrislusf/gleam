@@ -27,6 +27,7 @@ import (
 
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -43,7 +44,7 @@ type CsvSource struct {
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CsvSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.PartitionCount).Mapper(MapperReadShard)
+	return s.genShardInfos(f).RoundRobin(s.PartitionCount).Map("Read", MapperReadShard)
 }
 
 // New creates a CsvSource based on a file name.
@@ -76,12 +77,14 @@ func (q *CsvSource) SetHasHeader(hasHeader bool) *CsvSource {
 }
 
 func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
-	return f.Source(func(writer io.Writer) error {
+	return f.Source(s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
+		stats.InputCounter++
 		if !s.hasWildcard && !filesystem.IsDir(s.Path) {
-			util.WriteRow(writer, util.Now(), encodeShardInfo(&CsvShardInfo{
+			stats.OutputCounter++
+			util.NewRow(util.Now(), encodeShardInfo(&CsvShardInfo{
 				FileName:  s.Path,
 				HasHeader: s.HasHeader,
-			}))
+			})).WriteTo(writer)
 		} else {
 			virtualFiles, err := filesystem.List(s.folder)
 			if err != nil {
@@ -89,10 +92,11 @@ func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 			}
 			for _, vf := range virtualFiles {
 				if !s.hasWildcard || s.match(vf.Location) {
-					util.WriteRow(writer, util.Now(), encodeShardInfo(&CsvShardInfo{
+					stats.OutputCounter++
+					util.NewRow(util.Now(), encodeShardInfo(&CsvShardInfo{
 						FileName:  vf.Location,
 						HasHeader: s.HasHeader,
-					}))
+					})).WriteTo(writer)
 				}
 			}
 		}
