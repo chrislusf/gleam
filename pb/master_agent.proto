@@ -178,8 +178,7 @@ message ExecutionResponse {
 
 message ExecutionStat {
 	uint32 flowHashCode = 1;
-	string name = 2;
-	repeated InstructionStat stats = 3;
+	repeated InstructionStat stats = 2;
 }
 
 message InstructionStat {

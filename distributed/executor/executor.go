@@ -36,6 +36,7 @@ func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Execu
 }
 
 func (exe *Executor) ExecuteInstructionSet() error {
+	//TODO pass in the context
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
 	exeErrChan := make(chan error, len(exe.instructions.GetInstructions()))
@@ -56,6 +57,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 		go func(index int, instr *pb.Instruction, prevIsPipe bool, inChan, outChan *util.Piper, stats *pb.InstructionStat) {
 			exe.executeInstruction(ctx, &wg, ioErrChan, exeErrChan, inChan, outChan,
 				prevIsPipe,
+				exe.instructions,
 				instr,
 				index == 0,
 				index == len(exe.instructions.GetInstructions())-1,
@@ -142,8 +144,11 @@ func setupWriters(ctx context.Context, wg *sync.WaitGroup, ioErrChan chan error,
 	return
 }
 
-func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup, ioErrChan, exeErrChan chan error,
-	inChan, outChan *util.Piper, prevIsPipe bool, i *pb.Instruction, isFirst, isLast bool, readerCount int, stat *pb.InstructionStat) {
+func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
+	ioErrChan, exeErrChan chan error,
+	inChan, outChan *util.Piper, prevIsPipe bool,
+	is *pb.InstructionSet, i *pb.Instruction,
+	isFirst, isLast bool, readerCount int, stat *pb.InstructionStat) {
 
 	defer wg.Done()
 
@@ -171,12 +176,21 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 		//TODO add errChan to scripts also?
 
 		var err error
-		// println("starting", *i.Name, "inChan", inChan, "outChan", outChan)
+		// println("starting", i.Name, "inChan", inChan, "outChan", outChan)
+		i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
+			"%s -gleam.agent=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d",
+			i.GetScript().Args[len(i.GetScript().Args)-1],
+			is.AgentAddress,
+			is.FlowHashCode,
+			i.StepId,
+			i.TaskId,
+		)
 		if i.GetScript() != nil {
 			for x := 0; x < 3; x++ {
 				command := exec.CommandContext(ctx,
 					i.GetScript().GetPath(), i.GetScript().GetArgs()...,
 				)
+				// fmt.Fprintf(os.Stderr, "starting %d %d: %v\n", i.StepId, i.TaskId, command.Args)
 				wg.Add(1)
 				err = util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
 				if err == nil || stat.InputCounter != 0 {

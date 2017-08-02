@@ -101,7 +101,6 @@ func (s *Scheduler) localExecuteSource(ctx context.Context,
 	}
 	executionStatus.ExecutionStat = &pb.ExecutionStat{
 		FlowHashCode: flowContext.HashCode,
-		Name:         "Source",
 		Stats:        []*pb.InstructionStat{instructionStat},
 	}
 

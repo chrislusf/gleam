@@ -1,6 +1,7 @@
 package gio
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -8,7 +9,13 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func ProcessReducer(f Reducer, keyPositions []int) (err error) {
+func (runner *gleamRunner) processReducer(ctx context.Context, f Reducer, keyPositions []int) (err error) {
+	return runner.report(ctx, func() error {
+		return runner.doProcessReducer(f, keyPositions)
+	})
+}
+
+func (runner *gleamRunner) doProcessReducer(f Reducer, keyPositions []int) (err error) {
 
 	keyFields := make([]bool, len(keyPositions))
 	for _, keyPosition := range keyPositions {
@@ -24,6 +31,7 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 		}
 		return fmt.Errorf("reducer input row error: %v", err)
 	}
+	stat.Stats[0].InputCounter++
 
 	lastTs := row.T
 	row.UseKeys(keyPositions)
@@ -37,6 +45,7 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 			}
 			break
 		}
+		stat.Stats[0].InputCounter++
 
 		row.UseKeys(keyPositions)
 		keys, values := row.K, row.V
@@ -57,6 +66,7 @@ func ProcessReducer(f Reducer, keyPositions []int) (err error) {
 }
 
 func output(ts int64, x, y []interface{}) error {
+	stat.Stats[0].OutputCounter++
 	var t []interface{}
 	t = append(t, x...)
 	t = append(t, y...)

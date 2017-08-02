@@ -130,9 +130,9 @@ func sendExecutionRequest(ctx context.Context,
 				if executionStatus.ExecutionStat == nil {
 					executionStatus.ExecutionStat = response.GetExecutionStat()
 				} else {
-					executionStatus.ExecutionStat.Stats = append(
+					executionStatus.ExecutionStat.Stats = mergeStats(
 						executionStatus.ExecutionStat.Stats,
-						response.GetExecutionStat().GetStats()[0])
+						response.GetExecutionStat().GetStats())
 				}
 			}
 		}
@@ -140,6 +140,40 @@ func sendExecutionRequest(ctx context.Context,
 		return err
 
 	})
+}
+
+// merge existing stats with incoming stats
+func mergeStats(a, b []*pb.InstructionStat) (ret []*pb.InstructionStat) {
+	var nonOverlapping []*pb.InstructionStat
+	for _, ai := range a {
+		var found bool
+		for _, bi := range b {
+			if ai.StepId == bi.StepId {
+				found = true
+				if ai.InputCounter > bi.InputCounter {
+					ret = append(ret, ai)
+				} else {
+					ret = append(ret, bi)
+				}
+			}
+		}
+		if !found {
+			nonOverlapping = append(nonOverlapping, ai)
+		}
+	}
+	for _, bi := range b {
+		var found bool
+		for _, ai := range a {
+			if ai.StepId == bi.StepId {
+				found = true
+			}
+		}
+		if !found {
+			nonOverlapping = append(nonOverlapping, bi)
+		}
+	}
+	ret = append(ret, nonOverlapping...)
+	return ret
 }
 
 func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) error {

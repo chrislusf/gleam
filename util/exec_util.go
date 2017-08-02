@@ -57,7 +57,7 @@ func Execute(ctx context.Context, executeWaitGroup *sync.WaitGroup, stat *pb.Ins
 
 	command.Stderr = errWriter
 
-	// println(name, "starting...")
+	// println(name, "starting...", strings.Join(command.Args, ","))
 
 	if startError := command.Start(); startError != nil {
 		return fmt.Errorf("Start error %v: %v\n", startError, command)

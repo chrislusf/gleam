@@ -1,4 +1,4 @@
-package executor
+package gio
 
 import (
 	"fmt"
@@ -11,11 +11,11 @@ import (
 	"google.golang.org/grpc"
 )
 
-func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool) {
+func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool) {
 
 	defer wg.Done()
 
-	withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	withClient(runner.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
 			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
@@ -23,15 +23,12 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 		}
 
 		tickChan := time.Tick(1 * time.Second)
-		stat := &pb.ExecutionStat{
-			FlowHashCode: exe.instructions.FlowHashCode,
-			Stats:        exe.stats,
-		}
+
 		for {
 			select {
 			case <-tickChan:
 				if err := stream.Send(stat); err != nil {
-					log.Printf("%v.Send(%v) = %v", stream, exe.stats, err)
+					log.Printf("%v.Send(%v) = %v", stream, stat, err)
 					return nil
 				}
 			case <-finishedChan:
@@ -44,9 +41,9 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 
 }
 
-func (exe *Executor) reportStatus() {
+func (runner *gleamRunner) reportStatus() {
 
-	withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	withClient(runner.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
 			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
@@ -54,15 +51,12 @@ func (exe *Executor) reportStatus() {
 		}
 		// defer stream.CloseSend()
 
-		stat := &pb.ExecutionStat{
-			FlowHashCode: exe.instructions.FlowHashCode,
-			Stats:        exe.stats,
-		}
-
 		if err := stream.Send(stat); err != nil {
-			log.Printf("%v.Send(%v) = %v", stream, exe.stats, err)
+			log.Printf("%v.Send(%v) = %v", stream, stat, err)
 			return nil
 		}
+
+		println(fmt.Sprintf("%v", stat))
 
 		return nil
 	})
@@ -70,6 +64,10 @@ func (exe *Executor) reportStatus() {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
+	if server == "" {
+		return nil
+	}
+
 	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("executor dial agent: %v", err)

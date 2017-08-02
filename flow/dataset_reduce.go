@@ -42,6 +42,7 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.reducer="+string(reducerId))
 	args = append(args, "-gleam.keyFields="+strings.Join(keyPositions, ","))
+
 	commandLine := strings.Join(args, " ")
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
