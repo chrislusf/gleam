@@ -9,27 +9,6 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-var (
-	rowTimeStamp int64
-)
-
-// Emit encode and write a row of data to os.Stdout
-func Emit(anyObject ...interface{}) error {
-	stat.Stats[0].OutputCounter++
-	if rowTimeStamp == 0 {
-		return util.NewRow(util.Now(), anyObject...).WriteTo(os.Stdout)
-	}
-	return util.NewRow(rowTimeStamp, anyObject...).WriteTo(os.Stdout)
-
-}
-
-// TsEmit encode and write a row of data to os.Stdout
-// with ts in milliseconds epoch time
-func TsEmit(ts int64, anyObject ...interface{}) error {
-	stat.Stats[0].OutputCounter++
-	return util.NewRow(ts, anyObject...).WriteTo(os.Stdout)
-}
-
 func (runner *gleamRunner) processMapper(ctx context.Context, f Mapper) (err error) {
 	return runner.report(ctx, func() error {
 		return runner.doProcessMapper(ctx, f)

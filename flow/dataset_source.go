@@ -112,7 +112,7 @@ func (fc *Flow) TextFile(fname string) (ret *Dataset) {
 
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
-			if err := util.NewRow(util.Now(), scanner.Bytes()).WriteTo(w); err != nil {
+			if err := util.NewRow(util.Now(), string(scanner.Bytes())).WriteTo(w); err != nil {
 				return err
 			}
 			stats.OutputCounter++

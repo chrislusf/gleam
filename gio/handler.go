@@ -36,7 +36,7 @@ var (
 	HasInitalized bool
 
 	taskOption gleamTaskOption
-	stat       = &pb.ExecutionStat{}
+	stat       = &pb.ExecutionStat{} // TsEmit() needs this global value
 )
 
 func init() {

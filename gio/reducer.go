@@ -66,11 +66,10 @@ func (runner *gleamRunner) doProcessReducer(f Reducer, keyPositions []int) (err 
 }
 
 func output(ts int64, x, y []interface{}) error {
-	stat.Stats[0].OutputCounter++
 	var t []interface{}
 	t = append(t, x...)
 	t = append(t, y...)
-	return util.NewRow(ts, t...).WriteTo(os.Stdout)
+	return TsEmit(ts, t...)
 }
 
 func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {

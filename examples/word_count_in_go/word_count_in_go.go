@@ -24,20 +24,17 @@ func main() {
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
 	f := flow.New().TextFile("/etc/passwd").
-		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
-		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
-		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
-		Sort(flow.OrderBy(2, true)).
+		Map("tokenize", MapperTokenizer). // invoke the registered "tokenize" mapper function.
+		Map("addOne", MapperAddOne).      // invoke the registered "addOne" mapper function.
+		ReduceBy("sum", ReducerSum).      // invoke the registered "sum" reducer function.
+		Sort("sortBySum", flow.OrderBy(2, true)).
 		Printlnf("%s\t%d")
 
 	if *isDistributed {
-		println("Running in distributed mode.")
 		f.Run(distributed.Option())
 	} else if *isDockerCluster {
-		println("Running in docker cluster.")
 		f.Run(distributed.Option().SetMaster("master:45326"))
 	} else {
-		println("Running in standalone mode.")
 		f.Run()
 	}
 
@@ -45,7 +42,7 @@ func main() {
 
 func tokenize(row []interface{}) error {
 
-	line := string(row[0].([]byte))
+	line := row[0].(string)
 
 	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
 		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
@@ -57,7 +54,7 @@ func tokenize(row []interface{}) error {
 }
 
 func addOne(row []interface{}) error {
-	word := string(row[0].([]byte))
+	word := row[0].(string)
 
 	gio.Emit(word, 1)
 
@@ -65,5 +62,5 @@ func addOne(row []interface{}) error {
 }
 
 func sum(x, y interface{}) (interface{}, error) {
-	return x.(uint64) + y.(uint64), nil
+	return gio.ToInt64(x) + gio.ToInt64(y), nil
 }

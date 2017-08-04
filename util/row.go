@@ -39,14 +39,14 @@ func (row Row) UseKeys(indexes []int) (err error) {
 		}
 		used[x-1] = true
 	}
-	for i, _ := range row.K {
+	for i, k := range row.K {
 		if !used[i] {
-			values = append(values, row.K[i-1])
+			values = append(values, k)
 		}
 	}
-	for i, _ := range row.V {
+	for i, v := range row.V {
 		if !used[i+kLen] {
-			values = append(values, row.V[i])
+			values = append(values, v)
 		}
 	}
 	row.K, row.V = keys, values
