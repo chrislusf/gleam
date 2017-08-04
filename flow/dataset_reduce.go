@@ -15,9 +15,9 @@ import (
 func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, sortOptions ...*SortOption) (ret *Dataset) {
 	sortOption := concat(sortOptions)
 
-	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".localReduce", reducerId, sortOption)
+	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduce", reducerId, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".localReduce2", reducerId, sortOption)
+		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduce2", reducerId, sortOption)
 	}
 	return ret
 }
