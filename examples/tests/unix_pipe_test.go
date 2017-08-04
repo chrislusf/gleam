@@ -16,9 +16,10 @@ func TestPipePerformance(t *testing.T) {
 }
 
 func testUnixPipeThroughput() {
-	out := flow.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).PipeAsArgs("cat $1")
+	out := flow.New().Strings([]string{"/Users/chris/Downloads/txt/en/ep-08-*.txt"}).
+		PipeAsArgs("catEach", "cat $1")
 	for i := 0; i < 30; i++ {
-		out = out.Pipe("cat")
+		out = out.Pipe(fmt.Sprintf("cat%d", i), "cat")
 	}
 	out.Fprintf(ioutil.Discard, "%s\n")
 }
@@ -26,9 +27,9 @@ func testUnixPipeThroughput() {
 func testUnixPipeAsArgs() {
 	// PipeAsArgs has 4ms cost to startup a process
 	startTime := time.Now()
-	flow.New().Source(
-		util.Range(0, 100),
-	).PipeAsArgs("echo foo bar $1").Fprintf(ioutil.Discard, "%s\n")
+	flow.New().Source("[0,100)", util.Range(0, 100)).
+		PipeAsArgs("echo", "echo foo bar $1").
+		Fprintf(ioutil.Discard, "%s\n")
 
 	fmt.Printf("gleam pipe time diff: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
