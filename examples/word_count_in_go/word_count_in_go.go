@@ -42,7 +42,7 @@ func main() {
 
 func tokenize(row []interface{}) error {
 
-	line := row[0].(string)
+	line := gio.ToString(row[0])
 
 	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
 		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
@@ -54,7 +54,7 @@ func tokenize(row []interface{}) error {
 }
 
 func addOne(row []interface{}) error {
-	word := row[0].(string)
+	word := gio.ToString(row[0])
 
 	gio.Emit(word, 1)
 

@@ -33,3 +33,23 @@ func ToInt64(val interface{}) int64 {
 	}
 	return 0
 }
+
+func ToString(val interface{}) string {
+	if v, ok := val.(string); ok {
+		return v
+	}
+	if v, ok := val.([]byte); ok {
+		return string(v)
+	}
+	return ""
+}
+
+func ToBytes(val interface{}) []byte {
+	if v, ok := val.(string); ok {
+		return []byte(v)
+	}
+	if v, ok := val.([]byte); ok {
+		return v
+	}
+	return nil
+}
