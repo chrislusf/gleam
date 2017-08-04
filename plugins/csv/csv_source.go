@@ -46,7 +46,7 @@ type CsvSource struct {
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CsvSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".ReadShard", MapperReadShard)
+	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".Read", MapperReadShard)
 }
 
 // New creates a CsvSource based on a file name.

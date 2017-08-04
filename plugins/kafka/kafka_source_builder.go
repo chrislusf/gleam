@@ -10,6 +10,8 @@ func New(brokers []string, topic, group string) *KafkaSource {
 		Topic:          topic,
 		Group:          group,
 		TimeoutSeconds: 16,
+
+		prefix: topic,
 	}
 }
 

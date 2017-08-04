@@ -8,6 +8,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
 
@@ -16,6 +17,8 @@ type KafkaSource struct {
 	Group          string
 	Topic          string
 	TimeoutSeconds int
+
+	prefix string
 }
 
 // Generate generates data shard info,
@@ -27,7 +30,9 @@ func (s *KafkaSource) Generate(f *flow.Flow) *flow.Dataset {
 		log.Printf("KafkaSource failed to fetch kafka partitions: %v", err)
 		return nil
 	}
-	return s.genShardInfos(f, partitionIds).RoundRobin(len(partitionIds)).Mapper(MapperReadShard)
+	return s.genShardInfos(f, partitionIds).
+		RoundRobin(s.prefix, len(partitionIds)).
+		Map(s.prefix+".Read", MapperReadShard)
 }
 
 func (s *KafkaSource) fetchPartitionIds() ([]int32, error) {
@@ -52,16 +57,19 @@ func (s *KafkaSource) fetchPartitionIds() ([]int32, error) {
 }
 
 func (s *KafkaSource) genShardInfos(f *flow.Flow, partitionIds []int32) *flow.Dataset {
-	return f.Source(func(writer io.Writer) error {
+	return f.Source(s.prefix+".list", func(writer io.Writer, stats *pb.InstructionStat) error {
+
+		stats.InputCounter++
 
 		for _, pid := range partitionIds {
-			util.WriteRow(writer, util.Now(), encodeShardInfo(&KafkaPartitionInfo{
+			stats.OutputCounter++
+			util.NewRow(util.Now(), encodeShardInfo(&KafkaPartitionInfo{
 				Brokers:        s.Brokers,
 				Topic:          s.Topic,
 				Group:          s.Group,
 				TimeoutSeconds: s.TimeoutSeconds,
 				PartitionId:    pid,
-			}))
+			})).WriteTo(writer)
 		}
 
 		return nil

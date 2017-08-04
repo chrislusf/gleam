@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/gocql/gocql"
 )
@@ -19,6 +20,8 @@ type CassandraSource struct {
 	LimitInEachShard int
 	TimeoutSeconds   int
 
+	prefix string
+
 	selectClause string
 	keyspace     string
 	table        string
@@ -29,11 +32,11 @@ type CassandraSource struct {
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CassandraSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.Concurrency).Map("Cassandra Source", MapperReadShard)
+	return s.genShardInfos(f).RoundRobin(s.prefix, s.Concurrency).Map(s.prefix+".Read", MapperReadShard)
 }
 
 func (s *CassandraSource) genShardInfos(f *flow.Flow) *flow.Dataset {
-	return f.Source(func(writer io.Writer) error {
+	return f.Source(s.prefix+".list", func(writer io.Writer, stats *pb.InstructionStat) error {
 
 		hostList := strings.Split(s.hosts, ",")
 		cluster := gocql.NewCluster(hostList...)
