@@ -55,8 +55,7 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	var rows []util.Row
-	indexes := getIndexesFromOrderBys(orderBys)
-	err := util.ProcessRow(reader, indexes, func(row util.Row) error {
+	err := util.ProcessRow(reader, nil, func(row util.Row) error {
 		stats.InputCounter++
 		rows = append(rows, row)
 		return nil
@@ -69,7 +68,7 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *
 		return nil
 	}
 	sort.Slice(rows, func(a, b int) bool {
-		return lessThan(orderBys, rows[a].K, rows[b].K)
+		return lessThan(orderBys, rows[a], rows[b])
 	})
 
 	for _, row := range rows {
@@ -90,10 +89,17 @@ func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
 	return
 }
 
-func lessThan(orderBys []OrderBy, x, y []interface{}) bool {
-	for i, order := range orderBys {
+func lessThan(orderBys []OrderBy, x, y util.Row) bool {
+	var a, b interface{}
+	klen := len(x.K)
+	for _, order := range orderBys {
+		if order.Index <= klen {
+			a, b = x.K[order.Index-1], y.K[order.Index-1]
+		} else {
+			a, b = x.V[order.Index-1-klen], y.V[order.Index-1-klen]
+		}
 		normalOrder := order.Order >= 0
-		compared := util.Compare(x[i], y[i])
+		compared := util.Compare(a, b)
 		if compared < 0 {
 			return normalOrder
 		}

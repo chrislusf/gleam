@@ -54,14 +54,14 @@ func (b *LocalTop) GetMemoryCostInMB(partitionSize int64) int64 {
 
 // DoLocalTop streamingly compare and get the top n items
 func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, stats *pb.InstructionStat) error {
-	indexes := getIndexesFromOrderBys(orderBys)
+
 	pq := newMinQueueOfPairs(orderBys)
 
-	err := util.ProcessRow(reader, indexes, func(row util.Row) error {
+	err := util.ProcessRow(reader, nil, func(row util.Row) error {
 		stats.InputCounter++
 
 		if pq.Len() >= n {
-			if lessThan(orderBys, pq.Top().(util.Row).K, row.K) {
+			if lessThan(orderBys, pq.Top().(util.Row), row) {
 				pq.Dequeue()
 				pq.Enqueue(row, 0)
 			}
@@ -94,6 +94,6 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 func newMinQueueOfPairs(orderBys []OrderBy) *util.PriorityQueue {
 	return util.NewPriorityQueue(func(a, b interface{}) bool {
 		x, y := a.(util.Row), b.(util.Row)
-		return lessThan(orderBys, x.K, y.K)
+		return lessThan(orderBys, x, y)
 	})
 }

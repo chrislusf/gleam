@@ -80,14 +80,11 @@ func (d *Dataset) LocalSort(name string, sortOptions ...*SortOption) *Dataset {
 func (d *Dataset) LocalTop(name string, n int, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	if isOrderByExactReverse(d.IsLocalSorted, sortOption.orderByList) {
-		return d.LocalLimit(name, n, 0)
-	}
-
 	ret, step := add1ShardTo1Step(d)
-	ret.IsLocalSorted = sortOption.orderByList
+	ret.IsLocalSorted = getReverseOrderBy(sortOption.orderByList)
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(name, instruction.NewLocalTop(n, sortOption.orderByList))
+	step.SetInstruction(name, instruction.NewLocalTop(n, ret.IsLocalSorted))
+
 	return ret
 }
 
@@ -103,16 +100,15 @@ func isOrderByEquals(a []instruction.OrderBy, b []instruction.OrderBy) bool {
 	return true
 }
 
-func isOrderByExactReverse(a []instruction.OrderBy, b []instruction.OrderBy) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v.Index != b[i].Index || v.Order == b[i].Order {
-			return false
+func getReverseOrderBy(a []instruction.OrderBy) (reversed []instruction.OrderBy) {
+	for _, v := range a {
+		if v.Order == instruction.Ascending {
+			reversed = append(reversed, instruction.OrderBy{v.Index, instruction.Descending})
+		} else {
+			reversed = append(reversed, instruction.OrderBy{v.Index, instruction.Ascending})
 		}
 	}
-	return true
+	return reversed
 }
 
 func getOrderBysFromIndexes(indexes []int) (orderBys []instruction.OrderBy) {

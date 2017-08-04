@@ -2,18 +2,15 @@ package main
 
 import (
 	"flag"
-	"strings"
 
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/gio/mapper"
+	"github.com/chrislusf/gleam/gio/reducer"
 )
 
 var (
-	MapperTokenizer = gio.RegisterMapper(tokenize)
-	MapperAddOne    = gio.RegisterMapper(addOne)
-	ReducerSum      = gio.RegisterReducer(sum)
-
 	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 	isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
 )
@@ -24,10 +21,11 @@ func main() {
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
 	f := flow.New().TextFile("/etc/passwd").
-		Map("tokenize", MapperTokenizer). // invoke the registered "tokenize" mapper function.
-		Map("addOne", MapperAddOne).      // invoke the registered "addOne" mapper function.
-		ReduceBy("sum", ReducerSum).      // invoke the registered "sum" reducer function.
+		Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
+		Map("addOne", mapper.AppendOne).  // invoke the registered "addOne" mapper function.
+		ReduceBy("sum", reducer.Sum).     // invoke the registered "sum" reducer function.
 		Sort("sortBySum", flow.OrderBy(2, true)).
+		Top("top5", 5, flow.OrderBy(2, false)).
 		Printlnf("%s\t%d")
 
 	if *isDistributed {
@@ -38,29 +36,4 @@ func main() {
 		f.Run()
 	}
 
-}
-
-func tokenize(row []interface{}) error {
-
-	line := gio.ToString(row[0])
-
-	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
-		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
-	}) {
-		gio.Emit(s)
-	}
-
-	return nil
-}
-
-func addOne(row []interface{}) error {
-	word := gio.ToString(row[0])
-
-	gio.Emit(word, 1)
-
-	return nil
-}
-
-func sum(x, y interface{}) (interface{}, error) {
-	return gio.ToInt64(x) + gio.ToInt64(y), nil
 }
