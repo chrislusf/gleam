@@ -27,8 +27,8 @@ func NewMergeSortedTo(orderBys []OrderBy) *MergeSortedTo {
 	return &MergeSortedTo{orderBys}
 }
 
-func (b *MergeSortedTo) Name() string {
-	return "MergeSortedTo"
+func (b *MergeSortedTo) Name(prefix string) string {
+	return prefix + ".MergeSortedTo"
 }
 
 func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -39,7 +39,6 @@ func (b *MergeSortedTo) Function() func(readers []io.Reader, writers []io.Writer
 
 func (b *MergeSortedTo) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		MergeSortedTo: &pb.Instruction_MergeSortedTo{
 			OrderBys: getOrderBys(b.orderBys),
 		},

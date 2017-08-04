@@ -5,39 +5,39 @@ import (
 )
 
 // Join joins two datasets by the key.
-func (d *Dataset) Join(other *Dataset, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) Join(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	return d.DoJoin(other, false, false, sortOption)
+	return d.DoJoin(name, other, false, false, sortOption)
 }
 
-func (d *Dataset) LeftOuterJoin(other *Dataset, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LeftOuterJoin(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	return d.DoJoin(other, true, false, sortOption)
+	return d.DoJoin(name, other, true, false, sortOption)
 }
 
-func (d *Dataset) RightOuterJoin(other *Dataset, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) RightOuterJoin(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	return d.DoJoin(other, false, true, sortOption)
+	return d.DoJoin(name, other, false, true, sortOption)
 }
 
-func (d *Dataset) DoJoin(other *Dataset, leftOuter, rightOuter bool, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) DoJoin(name string, other *Dataset, leftOuter, rightOuter bool, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	sorted_d := d.Partition(len(d.Shards), sortOption).LocalSort(sortOption)
+	sorted_d := d.Partition(name, len(d.Shards), sortOption).LocalSort(name, sortOption)
 	var sorted_other *Dataset
 	if d == other {
 		sorted_other = sorted_d
 	} else {
-		sorted_other = other.Partition(len(d.Shards), sortOption).LocalSort(sortOption)
+		sorted_other = other.Partition(name, len(d.Shards), sortOption).LocalSort(name, sortOption)
 	}
-	return sorted_d.JoinPartitionedSorted(sorted_other, sortOption, leftOuter, rightOuter)
+	return sorted_d.JoinPartitionedSorted(name, sorted_other, sortOption, leftOuter, rightOuter)
 }
 
 // JoinPartitionedSorted Join multiple datasets that are sharded by the same key, and locally sorted within the shard
-func (this *Dataset) JoinPartitionedSorted(that *Dataset, sortOption *SortOption,
+func (this *Dataset) JoinPartitionedSorted(name string, that *Dataset, sortOption *SortOption,
 	isLeftOuterJoin, isRightOuterJoin bool) *Dataset {
 	ret := this.Flow.newNextDataset(len(this.Shards))
 	ret.IsPartitionedBy = that.IsPartitionedBy
@@ -45,6 +45,6 @@ func (this *Dataset) JoinPartitionedSorted(that *Dataset, sortOption *SortOption
 
 	inputs := []*Dataset{this, that}
 	step := this.Flow.MergeDatasets1ShardTo1Step(inputs, ret)
-	step.SetInstruction(instruction.NewJoinPartitionedSorted(isLeftOuterJoin, isRightOuterJoin, sortOption.Indexes()))
+	step.SetInstruction(name, instruction.NewJoinPartitionedSorted(isLeftOuterJoin, isRightOuterJoin, sortOption.Indexes()))
 	return ret
 }

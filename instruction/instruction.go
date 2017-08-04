@@ -24,7 +24,7 @@ type OrderBy struct {
 }
 
 type Instruction interface {
-	Name() string
+	Name(string) string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error
 	SerializeToCommand() *pb.Instruction
 	GetMemoryCostInMB(partitionSize int64) int64

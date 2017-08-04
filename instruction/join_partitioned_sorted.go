@@ -30,8 +30,8 @@ func NewJoinPartitionedSorted(isLeftOuterJoin bool, isRightOuterJoin bool, index
 	return &JoinPartitionedSorted{isLeftOuterJoin, isRightOuterJoin, indexes}
 }
 
-func (b *JoinPartitionedSorted) Name() string {
-	return "JoinPartitionedSorted"
+func (b *JoinPartitionedSorted) Name(prefix string) string {
+	return prefix + ".JoinPartitionedSorted"
 }
 
 func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -42,7 +42,6 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 
 func (b *JoinPartitionedSorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		JoinPartitionedSorted: &pb.Instruction_JoinPartitionedSorted{
 			IsLeftOuterJoin:  (b.isLeftOuterJoin),
 			IsRightOuterJoin: (b.isRightOuterJoin),

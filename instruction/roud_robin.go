@@ -23,8 +23,8 @@ func NewRoundRobin() *RoundRobin {
 	return &RoundRobin{}
 }
 
-func (b *RoundRobin) Name() string {
-	return "RoundRobin"
+func (b *RoundRobin) Name(prefix string) string {
+	return prefix + ".RoundRobin"
 }
 
 func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -35,7 +35,6 @@ func (b *RoundRobin) Function() func(readers []io.Reader, writers []io.Writer, s
 
 func (b *RoundRobin) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name:       b.Name(),
 		RoundRobin: &pb.Instruction_RoundRobin{},
 	}
 }

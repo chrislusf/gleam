@@ -28,8 +28,8 @@ func NewLocalHashAndJoinWith(indexes []int) *LocalHashAndJoinWith {
 	return &LocalHashAndJoinWith{indexes}
 }
 
-func (b *LocalHashAndJoinWith) Name() string {
-	return "LocalHashAndJoinWith"
+func (b *LocalHashAndJoinWith) Name(prefix string) string {
+	return prefix + ".LocalHashAndJoinWith"
 }
 
 func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -40,7 +40,6 @@ func (b *LocalHashAndJoinWith) Function() func(readers []io.Reader, writers []io
 
 func (b *LocalHashAndJoinWith) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalHashAndJoinWith: &pb.Instruction_LocalHashAndJoinWith{
 			Indexes: getIndexes(b.indexes),
 		},

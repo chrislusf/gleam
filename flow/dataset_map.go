@@ -34,21 +34,27 @@ func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 }
 
 // Select selects multiple fields into the next dataset. The index starts from 1.
-func (d *Dataset) Select(sortOptions ...*SortOption) *Dataset {
+// The first one is the key
+func (d *Dataset) Select(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "Select"
 	indexes := sortOption.Indexes()
-	step.SetInstruction(instruction.NewSelect([]int{indexes[0]}, indexes[1:]))
+	step.SetInstruction(name, instruction.NewSelect([]int{indexes[0]}, indexes[1:]))
+	return ret
+}
+
+// Select selects multiple fields into the next dataset. The index starts from 1.
+func (d *Dataset) SelectKV(name string, keys, values *SortOption) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.SetInstruction(name, instruction.NewSelect(keys.Indexes(), values.Indexes()))
 	return ret
 }
 
 // LocalLimit take the local first n rows and skip all other rows.
-func (d *Dataset) LocalLimit(n int, offset int) *Dataset {
+func (d *Dataset) LocalLimit(name string, n int, offset int) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.Name = "Limit"
-	step.SetInstruction(instruction.NewLocalLimit(n, offset))
+	step.SetInstruction(name, instruction.NewLocalLimit(n, offset))
 	return ret
 }

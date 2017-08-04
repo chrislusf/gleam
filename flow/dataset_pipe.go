@@ -8,9 +8,9 @@ import (
 // Pipe runs the code as an external program, which processes the
 // tab-separated input from the program's stdin, and outout to
 // stdout also in tab-separated lines.
-func (d *Dataset) Pipe(code string) *Dataset {
+func (d *Dataset) Pipe(name, code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "Pipe"
+	step.Name = name
 	step.IsPipe = true
 	step.Command = script.NewShellScript().Pipe(code).GetCommand()
 	return ret
@@ -22,9 +22,9 @@ func (d *Dataset) Pipe(code string) *Dataset {
 //
 // Watch for performance impact since it starts one Os process
 // for each line of input.
-func (d *Dataset) PipeAsArgs(code string) *Dataset {
+func (d *Dataset) PipeAsArgs(name, code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.IsPipe = true
-	step.SetInstruction(instruction.NewPipeAsArgs(code))
+	step.SetInstruction(name, instruction.NewPipeAsArgs(code))
 	return ret
 }

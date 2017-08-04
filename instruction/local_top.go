@@ -29,8 +29,8 @@ func NewLocalTop(n int, orderBys []OrderBy) *LocalTop {
 	return &LocalTop{n, orderBys}
 }
 
-func (b *LocalTop) Name() string {
-	return "LocalTop"
+func (b *LocalTop) Name(prefix string) string {
+	return prefix + ".LocalTop"
 }
 
 func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -41,7 +41,6 @@ func (b *LocalTop) Function() func(readers []io.Reader, writers []io.Writer, sta
 
 func (b *LocalTop) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalTop: &pb.Instruction_LocalTop{
 			N:        int32(b.n),
 			OrderBys: getOrderBys(b.orderBys),

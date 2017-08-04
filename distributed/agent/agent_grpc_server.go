@@ -109,6 +109,12 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 	statsChanMap[key] = statsChan
 	statsChanMapRWMutex.Unlock()
 
+	defer func() {
+		statsChanMapRWMutex.Lock()
+		delete(statsChanMap, key)
+		statsChanMapRWMutex.Unlock()
+	}()
+
 	return as.executeCommand(stream, request, dir, statsChan)
 
 }

@@ -38,13 +38,15 @@ type CsvSource struct {
 	Path           string
 	HasHeader      bool
 	PartitionCount int
+
+	prefix string
 }
 
 // Generate generates data shard info,
 // partitions them via round robin,
 // and reads each shard on each executor
 func (s *CsvSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.PartitionCount).Map("Read", MapperReadShard)
+	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".ReadShard", MapperReadShard)
 }
 
 // New creates a CsvSource based on a file name.
@@ -52,6 +54,7 @@ func (s *CsvSource) Generate(f *flow.Flow) *flow.Dataset {
 func New(fileOrPattern string, partitionCount int) *CsvSource {
 	s := &CsvSource{
 		PartitionCount: partitionCount,
+		prefix:         "CsvSource",
 	}
 
 	if strings.ContainsAny(fileOrPattern, "/\\") {
@@ -77,7 +80,7 @@ func (q *CsvSource) SetHasHeader(hasHeader bool) *CsvSource {
 }
 
 func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
-	return f.Source(s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
+	return f.Source(s.prefix+"."+s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
 		stats.InputCounter++
 		if !s.hasWildcard && !filesystem.IsDir(s.Path) {
 			stats.OutputCounter++

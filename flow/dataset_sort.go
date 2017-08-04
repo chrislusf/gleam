@@ -19,12 +19,12 @@ type pair struct {
 // example usage: Distinct(Field(1,2)) means
 // distinct on field 1 and 2.
 // TODO: optimize for low cardinality case.
-func (d *Dataset) Distinct(sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) Distinct(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	ret := d.LocalSort(sortOption).LocalDistinct(sortOption)
+	ret := d.LocalSort(name, sortOption).LocalDistinct(name, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalDistinct(sortOption)
+		ret = ret.MergeSortedTo(name, 1, sortOption).LocalDistinct(name, sortOption)
 	}
 	return ret
 }
@@ -33,37 +33,37 @@ func (d *Dataset) Distinct(sortOptions ...*SortOption) *Dataset {
 // Required Memory: about same size as each partition.
 // example usage: Sort(Field(1,2)) means
 // sorting on field 1 and 2.
-func (d *Dataset) Sort(sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) Sort(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	ret := d.LocalSort(sortOption)
-	ret = ret.TreeMergeSortedTo(1, 10, sortOption)
+	ret := d.LocalSort(name, sortOption)
+	ret = ret.TreeMergeSortedTo(name, 1, 10, sortOption)
 	return ret
 }
 
 // Top streams through total n items, picking reverse ordered k items with O(n*log(k)) complexity.
 // Required Memory: about same size as n items in memory
-func (d *Dataset) Top(k int, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) Top(name string, k int, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	ret := d.LocalTop(k, sortOption)
+	ret := d.LocalTop(name, k, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalLimit(k, 0)
+		ret = ret.MergeSortedTo(name, 1, sortOption).LocalLimit(name, k, 0)
 	}
 	return ret
 }
 
-func (d *Dataset) LocalDistinct(sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LocalDistinct(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalDistinct(sortOption.orderByList))
+	step.SetInstruction(name, instruction.NewLocalDistinct(sortOption.orderByList))
 	return ret
 }
 
-func (d *Dataset) LocalSort(sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LocalSort(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	if isOrderByEquals(d.IsLocalSorted, sortOption.orderByList) {
@@ -73,21 +73,21 @@ func (d *Dataset) LocalSort(sortOptions ...*SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3))
+	step.SetInstruction(name, instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3))
 	return ret
 }
 
-func (d *Dataset) LocalTop(n int, sortOptions ...*SortOption) *Dataset {
+func (d *Dataset) LocalTop(name string, n int, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
 	if isOrderByExactReverse(d.IsLocalSorted, sortOption.orderByList) {
-		return d.LocalLimit(n, 0)
+		return d.LocalLimit(name, n, 0)
 	}
 
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.SetInstruction(instruction.NewLocalTop(n, sortOption.orderByList))
+	step.SetInstruction(name, instruction.NewLocalTop(n, sortOption.orderByList))
 	return ret
 }
 

@@ -28,8 +28,8 @@ func NewLocalLimit(n int, offset int) *LocalLimit {
 	return &LocalLimit{n, offset}
 }
 
-func (b *LocalLimit) Name() string {
-	return "LocalLimit"
+func (b *LocalLimit) Name(prefix string) string {
+	return prefix + ".LocalLimit"
 }
 
 func (b *LocalLimit) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -40,7 +40,6 @@ func (b *LocalLimit) Function() func(readers []io.Reader, writers []io.Writer, s
 
 func (b *LocalLimit) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalLimit: &pb.Instruction_LocalLimit{
 			N:      int32(b.n),
 			Offset: int32(b.offset),

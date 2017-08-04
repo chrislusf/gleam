@@ -68,7 +68,7 @@ func (t *TaskGroup) AddParent(parent *TaskGroup) *TaskGroup {
 func (t *TaskGroup) String() string {
 	var steps []string
 	for _, task := range t.Tasks {
-		steps = append(steps, fmt.Sprintf("%s.%d", task.Step.Name, task.Id))
+		steps = append(steps, fmt.Sprintf("%d:%d", task.Step.Id, task.Id))
 	}
 	return strings.Join(steps, "-")
 }

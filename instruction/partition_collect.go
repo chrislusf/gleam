@@ -23,8 +23,8 @@ func NewCollectPartitions() *CollectPartitions {
 	return &CollectPartitions{}
 }
 
-func (b *CollectPartitions) Name() string {
-	return "CollectPartitions"
+func (b *CollectPartitions) Name(prefix string) string {
+	return prefix + ".CollectPartitions"
 }
 
 func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -35,7 +35,6 @@ func (b *CollectPartitions) Function() func(readers []io.Reader, writers []io.Wr
 
 func (b *CollectPartitions) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name:              b.Name(),
 		CollectPartitions: &pb.Instruction_CollectPartitions{},
 	}
 }

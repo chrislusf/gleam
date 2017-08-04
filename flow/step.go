@@ -25,8 +25,8 @@ func (step *Step) NewTask() (task *Task) {
 	return
 }
 
-func (step *Step) SetInstruction(ins instruction.Instruction) {
-	step.Name = ins.Name()
+func (step *Step) SetInstruction(prefix string, ins instruction.Instruction) {
+	step.Name = ins.Name(prefix)
 	step.Function = ins.Function()
 	step.Instruction = ins
 }

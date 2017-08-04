@@ -26,8 +26,8 @@ func NewScatterPartitions(indexes []int) *ScatterPartitions {
 	return &ScatterPartitions{indexes}
 }
 
-func (b *ScatterPartitions) Name() string {
-	return "ScatterPartitions"
+func (b *ScatterPartitions) Name(prefix string) string {
+	return prefix + ".ScatterPartitions"
 }
 
 func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -38,7 +38,6 @@ func (b *ScatterPartitions) Function() func(readers []io.Reader, writers []io.Wr
 
 func (b *ScatterPartitions) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		ScatterPartitions: &pb.Instruction_ScatterPartitions{
 			Indexes: getIndexes(b.indexes),
 		},

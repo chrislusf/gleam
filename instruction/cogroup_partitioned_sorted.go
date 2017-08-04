@@ -26,8 +26,8 @@ func NewCoGroupPartitionedSorted(indexes []int) *CoGroupPartitionedSorted {
 	return &CoGroupPartitionedSorted{indexes}
 }
 
-func (b *CoGroupPartitionedSorted) Name() string {
-	return "CoGroupPartitionedSorted"
+func (b *CoGroupPartitionedSorted) Name(prefix string) string {
+	return prefix + ".CoGroupPartitionedSorted"
 }
 
 func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -38,7 +38,6 @@ func (b *CoGroupPartitionedSorted) Function() func(readers []io.Reader, writers 
 
 func (b *CoGroupPartitionedSorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		CoGroupPartitionedSorted: &pb.Instruction_CoGroupPartitionedSorted{
 			Indexes: getIndexes(b.indexes),
 		},

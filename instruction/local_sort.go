@@ -31,8 +31,8 @@ func NewLocalSort(orderBys []OrderBy, memoryInMB int) *LocalSort {
 	return &LocalSort{orderBys, memoryInMB}
 }
 
-func (b *LocalSort) Name() string {
-	return "LocalSort"
+func (b *LocalSort) Name(prefix string) string {
+	return prefix + ".LocalSort"
 }
 
 func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -43,7 +43,6 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 
 func (b *LocalSort) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalSort: &pb.Instruction_LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},

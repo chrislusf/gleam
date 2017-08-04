@@ -230,9 +230,14 @@ message Instruction {
     int32 stepId = 1;
     int32 taskId = 2;
 	int32 memoryInMB = 3;
-	string name = 4;
-	repeated DatasetShardLocation inputShardLocations = 5;
-	repeated DatasetShardLocation OutputShardLocations = 6;
+	repeated DatasetShardLocation inputShardLocations = 4;
+	repeated DatasetShardLocation OutputShardLocations = 5;
+
+	message Select {
+		repeated int32 keyIndexes = 1;
+		repeated int32 valueIndexes = 2;
+	}
+	Select select = 6;
 
 	message JoinPartitionedSorted {
 		repeated int32 indexes = 1;
@@ -316,16 +321,10 @@ message Instruction {
 	}
 	LocalLimit localLimit = 22;
 
-	message Select {
-		repeated int32 keyIndexes = 1;
-		repeated int32 valueIndexes = 2;
-	}
-	Select select = 23;
-
 	message LocalGroupBySorted {
 		repeated int32 indexes = 1;
 	}
-	LocalGroupBySorted localGroupBySorted = 24;
+	LocalGroupBySorted localGroupBySorted = 23;
 
 }
 

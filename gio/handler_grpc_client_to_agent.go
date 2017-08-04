@@ -56,8 +56,6 @@ func (runner *gleamRunner) reportStatus() {
 			return nil
 		}
 
-		println(fmt.Sprintf("%v", stat))
-
 		return nil
 	})
 

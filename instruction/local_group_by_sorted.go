@@ -27,8 +27,8 @@ func NewLocalGroupBySorted(indexes []int) *LocalGroupBySorted {
 	return &LocalGroupBySorted{indexes}
 }
 
-func (b *LocalGroupBySorted) Name() string {
-	return "LocalGroupBySorted"
+func (b *LocalGroupBySorted) Name(prefix string) string {
+	return prefix + ".LocalGroupBySorted"
 }
 
 func (b *LocalGroupBySorted) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -39,7 +39,6 @@ func (b *LocalGroupBySorted) Function() func(readers []io.Reader, writers []io.W
 
 func (b *LocalGroupBySorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalGroupBySorted: &pb.Instruction_LocalGroupBySorted{
 			Indexes: getIndexes(b.indexes),
 		},

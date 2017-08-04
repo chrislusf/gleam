@@ -2,6 +2,8 @@ package instruction
 
 import (
 	"io"
+	"strconv"
+	"strings"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -28,8 +30,8 @@ func NewSelect(keyIndexes, valueIndexes []int) *Select {
 	return &Select{keyIndexes, valueIndexes}
 }
 
-func (b *Select) Name() string {
-	return "Select"
+func (b *Select) Name(prefix string) string {
+	return "Select k:" + joinInts(b.keyIndexes, ",") + " v:" + joinInts(b.valueIndexes, ",")
 }
 
 func (b *Select) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -40,7 +42,6 @@ func (b *Select) Function() func(readers []io.Reader, writers []io.Writer, stats
 
 func (b *Select) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		Select: &pb.Instruction_Select{
 			KeyIndexes:   getIndexes(b.keyIndexes),
 			ValueIndexes: getIndexes(b.valueIndexes),
@@ -82,4 +83,13 @@ func DoSelect(reader io.Reader, writer io.Writer, keyIndexes, valueIndexes []int
 		return nil
 	})
 
+}
+
+func joinInts(a []int, sep string) string {
+	b := make([]string, len(a))
+	for i, v := range a {
+		b[i] = strconv.Itoa(v)
+	}
+
+	return strings.Join(b, sep)
 }

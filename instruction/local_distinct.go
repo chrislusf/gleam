@@ -27,8 +27,8 @@ func NewLocalDistinct(orderBys []OrderBy) *LocalDistinct {
 	return &LocalDistinct{orderBys}
 }
 
-func (b *LocalDistinct) Name() string {
-	return "LocalDistinct"
+func (b *LocalDistinct) Name(prefix string) string {
+	return prefix + ".LocalDistinct"
 }
 
 func (b *LocalDistinct) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -39,7 +39,6 @@ func (b *LocalDistinct) Function() func(readers []io.Reader, writers []io.Writer
 
 func (b *LocalDistinct) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalDistinct: &pb.Instruction_LocalDistinct{
 			OrderBys: getOrderBys(b.orderBys),
 		},

@@ -30,8 +30,8 @@ func NewPipeAsArgs(code string) *PipeAsArgs {
 	return &PipeAsArgs{code}
 }
 
-func (b *PipeAsArgs) Name() string {
-	return "PipeAsArgs"
+func (b *PipeAsArgs) Name(prefix string) string {
+	return prefix + ".PipeAsArgs"
 }
 
 func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -42,7 +42,6 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 
 func (b *PipeAsArgs) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		PipeAsArgs: &pb.Instruction_PipeAsArgs{
 			Code: b.code,
 		},
