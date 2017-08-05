@@ -118,3 +118,29 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 	}
 	return d.Output(fn)
 }
+
+func (d *Dataset) OutputRow(f func(util.Row) error) *Dataset {
+	fn := func(reader io.Reader) error {
+		if d.Step.IsPipe {
+			return util.TakeTsv(reader, -1, func(args []string) error {
+				var objects []interface{}
+				for _, arg := range args {
+					objects = append(objects, arg)
+				}
+				row := util.NewRow(util.Now(), objects...)
+				return f(row)
+			})
+		}
+
+		return util.TakeMessage(reader, -1, func(encodedBytes []byte) error {
+			if row, err := util.DecodeRow(encodedBytes); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
+				return err
+			} else {
+				return f(row)
+			}
+			return nil
+		})
+	}
+	return d.Output(fn)
+}

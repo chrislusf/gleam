@@ -3,38 +3,28 @@ package main
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/gio/mapper"
 	"github.com/chrislusf/gleam/util"
 )
 
 func main() {
 
-	flow.New().TextFile("/etc/passwd").FlatMap(`
-		function(line)
-			return line:gmatch("%w+")
-		end
-	`).Map(`
-		function(word)
-			return word, 1
-		end
-	`).ReduceBy(`
-		function(x, y)
-			return x + y
-		end
-	`).Output(func(inChan io.Reader) error {
-		var word string
-		var count int
-		util.ProcessMessage(inChan, func(bytes []byte) error {
-			if err := util.DecodeRowTo(bytes, &word, &count); err != nil {
-				fmt.Printf("decode error: %v", err)
-				return err
-			}
-			fmt.Printf("%s\t%d\n", word, count)
+	gio.Init()
+
+	flow.New().TextFile("/etc/passwd").
+		Map("tokenize", mapper.Tokenize).
+		Pipe("lowercase", "tr 'A-Z' 'a-z'").
+		Pipe("write", "tee x.out").
+		Pipe("sort", "sort").
+		Pipe("uniq", "uniq -c").
+		OutputRow(func(row util.Row) error {
+
+			fmt.Printf("%s\n", gio.ToString(row.K[0]))
+
 			return nil
-		})
-		return nil
-	}).Run()
+		}).Run()
 
 }
