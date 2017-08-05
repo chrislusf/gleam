@@ -80,7 +80,11 @@ func main() {
 		}
 
 		if instructionSet.IsProfiling {
-			f, err := os.Create(fmt.Sprintf("exe-%d-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-")))
+			// profiling the gleam executor
+			profilingFile := fmt.Sprintf("exe%d-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-"))
+			pwd, _ := os.Getwd()
+			println("saving exe pprof to", pwd+"/"+profilingFile)
+			f, err := os.Create(profilingFile)
 			if err != nil {
 				log.Fatal(err)
 			}

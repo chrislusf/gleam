@@ -55,7 +55,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	lastInstruction.SetOutputLocations(outputLocations)
 
 	instructionSet.FlowHashCode = flowContext.HashCode
-	instructionSet.IsProfiling = false // enable this when profiling executors
+	instructionSet.IsProfiling = s.Option.IsProfiling
 	instructionSet.Name = taskGroup.String()
 
 	request := &pb.ExecutionRequest{

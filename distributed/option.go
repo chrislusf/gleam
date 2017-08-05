@@ -16,6 +16,7 @@ type DistributedOption struct {
 	TaskMemoryMB  int
 	FlowBid       float64
 	Module        string
+	IsProfiling   bool
 }
 
 func Option() *DistributedOption {
@@ -36,6 +37,7 @@ func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
 		TaskMemoryMB:  o.TaskMemoryMB,
 		FlowBid:       o.FlowBid,
 		Module:        o.Module,
+		IsProfiling:   o.IsProfiling,
 	})
 }
 
@@ -46,6 +48,11 @@ func (o *DistributedOption) SetDataCenter(dataCenter string) *DistributedOption 
 
 func (o *DistributedOption) SetMaster(master string) *DistributedOption {
 	o.Master = master
+	return o
+}
+
+func (o *DistributedOption) SetProfiling(isProfiling bool) *DistributedOption {
+	o.IsProfiling = isProfiling
 	return o
 }
 

@@ -40,6 +40,7 @@ type SchedulerOption struct {
 	Rack         string
 	TaskMemoryMB int
 	Module       string
+	IsProfiling  bool
 }
 
 func NewScheduler(leader string, option *SchedulerOption) *Scheduler {

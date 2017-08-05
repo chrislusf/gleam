@@ -178,13 +178,17 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 		var err error
 		// println("starting", i.Name, "inChan", inChan, "outChan", outChan)
 		i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
-			"%s -gleam.agent=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d",
+			"%s -gleam.agent=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
 			i.GetScript().Args[len(i.GetScript().Args)-1],
 			is.AgentAddress,
 			is.FlowHashCode,
 			i.StepId,
 			i.TaskId,
+			is.IsProfiling,
 		)
+
+		// println("args:", i.GetScript().Args[len(i.GetScript().Args)-1])
+
 		if i.GetScript() != nil {
 			for x := 0; x < 3; x++ {
 				command := exec.CommandContext(ctx,

@@ -25,6 +25,7 @@ type Option struct {
 	TaskMemoryMB  int
 	FlowBid       float64
 	Module        string
+	IsProfiling   bool
 }
 
 type FlowDriver struct {
@@ -59,6 +60,7 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,
 			Module:       fcd.Option.Module,
 			FlowHashcode: fc.HashCode,
+			IsProfiling:  fcd.Option.IsProfiling,
 		},
 	)
 

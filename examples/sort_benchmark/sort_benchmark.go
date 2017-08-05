@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"os"
-	"runtime/pprof"
 
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
@@ -14,7 +12,6 @@ var (
 	size          = flag.Int("size", 0, "0 for small, 1 for 1GB, 2 for 10GB")
 	isDistributed = flag.Bool("distributed", false, "distributed mode or not")
 	isInMemory    = flag.Bool("inMemory", true, "distributed mode but only through memory")
-	profFile      = flag.String("pprof", "", "profiling file output name")
 
 	mapperId = gio.RegisterMapper(splitLine)
 )
@@ -22,12 +19,6 @@ var (
 func main() {
 	flag.Parse()
 	gio.Init()
-
-	if *profFile != "" {
-		f, _ := os.Create(*profFile)
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
 
 	bigFile := *size
 
@@ -98,7 +89,7 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
 	f = f.Printlnf("%s  %s")
 
 	if isDistributed {
-		f.Run(distributed.Option())
+		f.Run(distributed.Option().SetProfiling(true))
 	} else {
 		f.Run()
 	}
