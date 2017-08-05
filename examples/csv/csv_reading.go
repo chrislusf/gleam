@@ -6,7 +6,7 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	. "github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/plugins/csv"
+	"github.com/chrislusf/gleam/plugins/file"
 )
 
 var (
@@ -19,9 +19,9 @@ func main() {
 
 	f := New()
 
-	a := f.Read(csv.New("a?.csv", 3).SetHasHeader(true)).Select("select", Field(1, 2, 3)).Hint(TotalSize(17))
+	a := f.Read(file.Csv("a?.csv", 3).SetHasHeader(true)).Select("select", Field(1, 2, 3)).Hint(TotalSize(17))
 
-	b := f.Read(csv.New("b*.csv", 3)).SelectKV("select", Field(1), Field(4, 5)).Hint(PartitionSize(13))
+	b := f.Read(file.Csv("b*.csv", 3)).SelectKV("select", Field(1), Field(4, 5)).Hint(PartitionSize(13))
 
 	join := a.RightOuterJoin("a outer join b", b).Printlnf("%s : %s %s, %s %s")
 

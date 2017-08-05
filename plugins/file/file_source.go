@@ -1,22 +1,4 @@
-/*
-This serves as an example on how to implement a plugin to read external data.
-
-Usually a data set consists of many data shards.
-
-So an input plugin has 3 steps:
-1) generate a list of shard info. this runs on driver.
-2) send each piece of shard info to an remote executor
-3) Each executor fetch external data according to the shard info.
-   Each shard info is processed by a mapper.
-
-The shard info should be serializable/deserializable.
-Usually just need to use gob to serialize and deserialize it.
-
-Since the mapper to process shard info is in Go, the call to "gio.Init()"
-is required.
-
-*/
-package csv
+package file
 
 import (
 	"fmt"
@@ -31,13 +13,14 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-type CsvSource struct {
+type FileSource struct {
 	folder         string
 	fileBaseName   string
 	hasWildcard    bool
 	Path           string
 	HasHeader      bool
 	PartitionCount int
+	FileType       string
 
 	prefix string
 }
@@ -45,16 +28,23 @@ type CsvSource struct {
 // Generate generates data shard info,
 // partitions them via round robin,
 // and reads each shard on each executor
-func (s *CsvSource) Generate(f *flow.Flow) *flow.Dataset {
-	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".Read", MapperReadShard)
+func (s *FileSource) Generate(f *flow.Flow) *flow.Dataset {
+	return s.genShardInfos(f).RoundRobin(s.prefix, s.PartitionCount).Map(s.prefix+".Read", registeredMapperReadShard)
 }
 
-// New creates a CsvSource based on a file name.
+// SetHasHeader sets whether the data contains header
+func (q *FileSource) SetHasHeader(hasHeader bool) *FileSource {
+	q.HasHeader = hasHeader
+	return q
+}
+
+// New creates a FileSource based on a file name.
 // The base file name can have "*", "?" pattern denoting a list of file names.
-func New(fileOrPattern string, partitionCount int) *CsvSource {
-	s := &CsvSource{
+func newFileSource(fileType, fileOrPattern string, partitionCount int) *FileSource {
+	s := &FileSource{
 		PartitionCount: partitionCount,
-		prefix:         "CsvSource",
+		FileType:       fileType,
+		prefix:         "File",
 	}
 
 	if strings.ContainsAny(fileOrPattern, "/\\") {
@@ -73,19 +63,14 @@ func New(fileOrPattern string, partitionCount int) *CsvSource {
 	return s
 }
 
-// SetHasHeader sets whether the data contains header
-func (q *CsvSource) SetHasHeader(hasHeader bool) *CsvSource {
-	q.HasHeader = hasHeader
-	return q
-}
-
-func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
+func (s *FileSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	return f.Source(s.prefix+"."+s.fileBaseName, func(writer io.Writer, stats *pb.InstructionStat) error {
 		stats.InputCounter++
 		if !s.hasWildcard && !filesystem.IsDir(s.Path) {
 			stats.OutputCounter++
-			util.NewRow(util.Now(), encodeShardInfo(&CsvShardInfo{
+			util.NewRow(util.Now(), encodeShardInfo(&FileShardInfo{
 				FileName:  s.Path,
+				FileType:  s.FileType,
 				HasHeader: s.HasHeader,
 			})).WriteTo(writer)
 		} else {
@@ -96,8 +81,9 @@ func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 			for _, vf := range virtualFiles {
 				if !s.hasWildcard || s.match(vf.Location) {
 					stats.OutputCounter++
-					util.NewRow(util.Now(), encodeShardInfo(&CsvShardInfo{
+					util.NewRow(util.Now(), encodeShardInfo(&FileShardInfo{
 						FileName:  vf.Location,
+						FileType:  s.FileType,
 						HasHeader: s.HasHeader,
 					})).WriteTo(writer)
 				}
@@ -107,7 +93,7 @@ func (s *CsvSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 	})
 }
 
-func (s *CsvSource) match(fullPath string) bool {
+func (s *FileSource) match(fullPath string) bool {
 	baseName := filepath.Base(fullPath)
 	match, _ := filepath.Match(s.fileBaseName, baseName)
 	return match

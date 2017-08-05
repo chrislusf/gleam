@@ -202,7 +202,7 @@ package main
 import (
 	. "github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/plugins/csv"
+	"github.com/chrislusf/gleam/plugins/file"
 )
 
 func main() {
@@ -210,8 +210,8 @@ func main() {
 	gio.Init()
 
 	f := New()
-	a := f.Read(csv.New("a.csv")).Select(Field(1,4)) // a1, a4
-	b := f.Read(csv.New("b.csv")).Select(Field(2,3)) // b2, b3
+	a := f.Read(file.Csv("a.csv")).Select(Field(1,4)) // a1, a4
+	b := f.Read(file.Csv("b.csv")).Select(Field(2,3)) // b2, b3
 
 	a.Join(b).Printlnf("%s,%s,%s").Run()  // a1, a4, b3
 

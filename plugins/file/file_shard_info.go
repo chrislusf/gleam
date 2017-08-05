@@ -1,27 +1,29 @@
-package csv
+package file
 
 import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/gio"
 )
 
-type CsvShardInfo struct {
+type FileShardInfo struct {
 	Config    map[string]string
 	FileName  string
+	FileType  string
 	HasHeader bool
 }
 
 var (
-	MapperReadShard = gio.RegisterMapper(readShard)
+	registeredMapperReadShard = gio.RegisterMapper(readShard)
 )
 
 func init() {
-	gob.Register(CsvShardInfo{})
+	gob.Register(FileShardInfo{})
 }
 
 func readShard(row []interface{}) error {
@@ -29,7 +31,7 @@ func readShard(row []interface{}) error {
 	return decodeShardInfo(encodedShardInfo).ReadSplit()
 }
 
-func (ds *CsvShardInfo) ReadSplit() error {
+func (ds *FileShardInfo) ReadSplit() error {
 
 	// println("opening file", ds.FileName)
 	fr, err := filesystem.Open(ds.FileName)
@@ -38,7 +40,10 @@ func (ds *CsvShardInfo) ReadSplit() error {
 	}
 	defer fr.Close()
 
-	reader := NewReader(fr)
+	reader, err := ds.NewReader(fr)
+	if err != nil {
+		return fmt.Errorf("Failed to read file %s: %v", ds.FileName, err)
+	}
 	if ds.HasHeader {
 		reader.Read()
 	}
@@ -48,27 +53,23 @@ func (ds *CsvShardInfo) ReadSplit() error {
 		if err != nil {
 			break
 		}
-		var oneRow []interface{}
-		for _, field := range row {
-			oneRow = append(oneRow, field)
-		}
-		gio.Emit(oneRow...)
+		row.WriteTo(os.Stdout)
 	}
 
 	return err
 }
 
-func decodeShardInfo(encodedShardInfo []byte) *CsvShardInfo {
+func decodeShardInfo(encodedShardInfo []byte) *FileShardInfo {
 	network := bytes.NewBuffer(encodedShardInfo)
 	dec := gob.NewDecoder(network)
-	var p CsvShardInfo
+	var p FileShardInfo
 	if err := dec.Decode(&p); err != nil {
 		log.Fatal("decode shard info", err)
 	}
 	return &p
 }
 
-func encodeShardInfo(shardInfo *CsvShardInfo) []byte {
+func encodeShardInfo(shardInfo *FileShardInfo) []byte {
 	var network bytes.Buffer
 	enc := gob.NewEncoder(&network)
 	if err := enc.Encode(shardInfo); err != nil {
