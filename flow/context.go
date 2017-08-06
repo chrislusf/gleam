@@ -43,7 +43,7 @@ func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 
 func (fc *Flow) newNextDataset(shardSize int) (ret *Dataset) {
 	ret = newDataset(fc)
-	ret.setupShard(shardSize)
+	setupDatasetShard(ret, shardSize)
 	return
 }
 
@@ -181,6 +181,17 @@ func fromDatasetToStep(input *Dataset, step *Step) {
 	}
 	step.InputDatasets = append(step.InputDatasets, input)
 	input.ReadingSteps = append(input.ReadingSteps, step)
+}
+
+func setupDatasetShard(d *Dataset, n int) {
+	for i := 0; i < n; i++ {
+		ds := &DatasetShard{
+			Id:           i,
+			Dataset:      d,
+			IncomingChan: util.NewPiper(),
+		}
+		d.Shards = append(d.Shards, ds)
+	}
 }
 
 func fromDatasetShardToTask(shard *DatasetShard, task *Task) {

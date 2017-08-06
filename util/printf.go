@@ -29,7 +29,7 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
-		var row Row
+		var row *Row
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
 		if row, err = DecodeRow(encodedBytes); err != nil {
@@ -48,7 +48,7 @@ func Fprintf(reader io.Reader, writer io.Writer, format string) error {
 // with delimiter and lineSeparator.
 func PrintDelimited(stat *pb.InstructionStat, reader io.Reader, writer io.Writer, delimiter string, lineSperator string) error {
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
-		var row Row
+		var row *Row
 		var err error
 		// fmt.Printf("chan input encoded: %s\n", string(encodedBytes))
 		if row, err = DecodeRow(encodedBytes); err != nil {

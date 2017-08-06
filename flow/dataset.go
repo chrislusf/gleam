@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/chrislusf/gleam/util"
 )
 
 func newDataset(context *Flow) *Dataset {
@@ -30,17 +28,6 @@ func (d *Dataset) Run(option ...FlowOption) {
 // Run starts the whole flow. This is a convenient method, same as *Flow.RunContext()
 func (d *Dataset) RunContext(ctx context.Context, option ...FlowOption) {
 	d.Flow.RunContext(ctx, option...)
-}
-
-func (d *Dataset) setupShard(n int) {
-	for i := 0; i < n; i++ {
-		ds := &DatasetShard{
-			Id:           i,
-			Dataset:      d,
-			IncomingChan: util.NewPiper(),
-		}
-		d.Shards = append(d.Shards, ds)
-	}
 }
 
 func (s *DatasetShard) Closed() bool {

@@ -53,7 +53,7 @@ func DoLocalGroupBySorted(reader io.Reader, writer io.Writer,
 	indexes []int, stats *pb.InstructionStat) error {
 
 	var prev util.Row
-	err := util.ProcessRow(reader, indexes, func(row util.Row) error {
+	err := util.ProcessRow(reader, indexes, func(row *util.Row) error {
 		// write prev row if key is different
 		stats.InputCounter++
 

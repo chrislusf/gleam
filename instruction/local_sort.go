@@ -54,8 +54,8 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
-	var rows []util.Row
-	err := util.ProcessRow(reader, nil, func(row util.Row) error {
+	var rows []*util.Row
+	err := util.ProcessRow(reader, nil, func(row *util.Row) error {
 		stats.InputCounter++
 		rows = append(rows, row)
 		return nil
@@ -89,7 +89,7 @@ func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
 	return
 }
 
-func lessThan(orderBys []OrderBy, x, y util.Row) bool {
+func lessThan(orderBys []OrderBy, x, y *util.Row) bool {
 	var a, b interface{}
 	klen := len(x.K)
 	for _, order := range orderBys {

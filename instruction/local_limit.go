@@ -54,7 +54,7 @@ func (b *LocalLimit) GetMemoryCostInMB(partitionSize int64) int64 {
 // DoLocalLimit streamingly get the n items starting from offset
 func DoLocalLimit(reader io.Reader, writer io.Writer, n int, offset int, stats *pb.InstructionStat) error {
 
-	return util.ProcessRow(reader, nil, func(row util.Row) error {
+	return util.ProcessRow(reader, nil, func(row *util.Row) error {
 		stats.InputCounter++
 
 		if offset > 0 {

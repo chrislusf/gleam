@@ -9,7 +9,7 @@ import (
 )
 
 type FileReader interface {
-	Read() (row util.Row, err error)
+	Read() (row *util.Row, err error)
 	ReadHeader() (fieldNames []string, err error)
 }
 

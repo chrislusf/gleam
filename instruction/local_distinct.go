@@ -52,7 +52,7 @@ func (b *LocalDistinct) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoLocalDistinct(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
 	indexes := getIndexesFromOrderBys(orderBys)
 	var prevKeys []interface{}
-	return util.ProcessRow(reader, indexes, func(row util.Row) error {
+	return util.ProcessRow(reader, indexes, func(row *util.Row) error {
 		// write the row if key is different
 		stats.InputCounter++
 		if prevKeys == nil || util.Compare(row.K, prevKeys) != 0 {

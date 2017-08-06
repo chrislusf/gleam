@@ -19,7 +19,7 @@ func New(reader io.Reader) *CsvFileReader {
 func (r *CsvFileReader) ReadHeader() (fieldNames []string, err error) {
 	return r.csvReader.Read()
 }
-func (r *CsvFileReader) Read() (row util.Row, err error) {
+func (r *CsvFileReader) Read() (row *util.Row, err error) {
 	var record []string
 	var objects []interface{}
 	record, err = r.csvReader.Read()

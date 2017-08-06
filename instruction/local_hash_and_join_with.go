@@ -51,8 +51,8 @@ func (b *LocalHashAndJoinWith) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer, indexes []int, stats *pb.InstructionStat) error {
-	hashmap := make(map[string]util.Row)
-	err := util.ProcessRow(leftReader, indexes, func(row util.Row) error {
+	hashmap := make(map[string]*util.Row)
+	err := util.ProcessRow(leftReader, indexes, func(row *util.Row) error {
 		// write the row if key is different
 		stats.InputCounter++
 		keyBytes, _ := util.EncodeKeys(row.K...)
@@ -68,7 +68,7 @@ func DoLocalHashAndJoinWith(leftReader, rightReader io.Reader, writer io.Writer,
 		return nil
 	}
 
-	err = util.ProcessRow(rightReader, indexes, func(row util.Row) error {
+	err = util.ProcessRow(rightReader, indexes, func(row *util.Row) error {
 		// write the row if key is different
 		stats.InputCounter++
 		keyBytes, err := util.EncodeKeys(row.K...)

@@ -61,7 +61,7 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 		ts := max(leftValuesWithSameKey.T, rightValuesWithSameKey.T)
 		switch {
 		case x == 0:
-			util.Row{T: ts}.AppendKey(
+			util.NewRow(ts).AppendKey(
 				leftValuesWithSameKey.K...).AppendValue(
 				leftValuesWithSameKey.V).AppendValue(
 				rightValuesWithSameKey.V).WriteTo(writer)
@@ -70,7 +70,7 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 			rightValuesWithSameKey, rightHasValue = <-rightChan
 			stats.InputCounter += 2
 		case x < 0:
-			util.Row{T: ts}.AppendKey(
+			util.NewRow(ts).AppendKey(
 				leftValuesWithSameKey.K...).AppendValue(
 				leftValuesWithSameKey.V).AppendValue(
 				[]interface{}{}).WriteTo(writer)
@@ -78,7 +78,7 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 			leftValuesWithSameKey, leftHasValue = <-leftChan
 			stats.InputCounter++
 		case x > 0:
-			util.Row{T: ts}.AppendKey(
+			util.NewRow(ts).AppendKey(
 				leftValuesWithSameKey.K...).AppendValue(
 				[]interface{}{}).AppendValue(
 				rightValuesWithSameKey.V).WriteTo(writer)
@@ -88,7 +88,7 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 		}
 	}
 	for leftHasValue {
-		util.Row{T: leftValuesWithSameKey.T}.AppendKey(
+		util.NewRow(leftValuesWithSameKey.T).AppendKey(
 			leftValuesWithSameKey.K...).AppendValue(
 			leftValuesWithSameKey.V).AppendValue(
 			[]interface{}{}).WriteTo(writer)
@@ -97,7 +97,7 @@ func DoCoGroupPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.W
 		stats.InputCounter++
 	}
 	for rightHasValue {
-		util.Row{T: rightValuesWithSameKey.T}.AppendKey(
+		util.NewRow(rightValuesWithSameKey.T).AppendKey(
 			rightValuesWithSameKey.K...).AppendValue(
 			[]interface{}{}).AppendValue(
 			rightValuesWithSameKey.V).WriteTo(writer)

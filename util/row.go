@@ -6,25 +6,29 @@ type Row struct {
 	T int64
 }
 
-func NewRow(timestamp int64, objects ...interface{}) Row {
-	return Row{
+func NewRow(timestamp int64, objects ...interface{}) *Row {
+	r := &Row{
 		T: timestamp,
-	}.AppendKey(objects[0]).AppendValue(objects[1:]...)
+	}
+	if len(objects) > 0 {
+		r.AppendKey(objects[0]).AppendValue(objects[1:]...)
+	}
+	return r
 }
 
-func (row Row) AppendKey(objects ...interface{}) Row {
+func (row *Row) AppendKey(objects ...interface{}) *Row {
 	row.K = append(row.K, objects...)
 	return row
 }
 
-func (row Row) AppendValue(objects ...interface{}) Row {
+func (row *Row) AppendValue(objects ...interface{}) *Row {
 	row.V = append(row.V, objects...)
 	return row
 }
 
 // UseKeys use the indexes[] specified fields as key fields
 // and the rest of fields as value fields
-func (row Row) UseKeys(indexes []int) (err error) {
+func (row *Row) UseKeys(indexes []int) (err error) {
 	if indexes == nil {
 		return nil
 	}

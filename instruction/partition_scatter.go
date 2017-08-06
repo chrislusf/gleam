@@ -51,7 +51,7 @@ func (b *ScatterPartitions) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoScatterPartitions(reader io.Reader, writers []io.Writer, indexes []int, stats *pb.InstructionStat) error {
 	shardCount := len(writers)
 
-	return util.ProcessRow(reader, indexes, func(row util.Row) error {
+	return util.ProcessRow(reader, indexes, func(row *util.Row) error {
 		stats.InputCounter++
 		x := util.PartitionByKeys(shardCount, row.K)
 		if err := row.WriteTo(writers[x]); err == nil {

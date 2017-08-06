@@ -26,12 +26,12 @@ func (d *Dataset) RightOuterJoin(name string, other *Dataset, sortOptions ...*So
 func (d *Dataset) DoJoin(name string, other *Dataset, leftOuter, rightOuter bool, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 
-	sorted_d := d.Partition(name, len(d.Shards), sortOption).LocalSort(name, sortOption)
+	sorted_d := d.Partition(name+".left", len(d.Shards), sortOption).LocalSort(name+".left", sortOption)
 	var sorted_other *Dataset
 	if d == other {
 		sorted_other = sorted_d
 	} else {
-		sorted_other = other.Partition(name, len(d.Shards), sortOption).LocalSort(name, sortOption)
+		sorted_other = other.Partition(name+".right", len(d.Shards), sortOption).LocalSort(name+".right", sortOption)
 	}
 	return sorted_d.JoinPartitionedSorted(name, sorted_other, sortOption, leftOuter, rightOuter)
 }

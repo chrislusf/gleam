@@ -16,11 +16,12 @@ func main() {
 
 	flow.New().TextFile("/etc/passwd").
 		Map("tokenize", mapper.Tokenize).
+		Partition("partition", 2).
 		Pipe("lowercase", "tr 'A-Z' 'a-z'").
 		Pipe("write", "tee x.out").
 		Pipe("sort", "sort").
 		Pipe("uniq", "uniq -c").
-		OutputRow(func(row util.Row) error {
+		OutputRow(func(row *util.Row) error {
 
 			fmt.Printf("%s\n", gio.ToString(row.K[0]))
 

@@ -56,7 +56,7 @@ func (b *Select) GetMemoryCostInMB(partitionSize int64) int64 {
 // DoSelect projects the fields
 func DoSelect(reader io.Reader, writer io.Writer, keyIndexes, valueIndexes []int, stats *pb.InstructionStat) error {
 
-	return util.ProcessRow(reader, nil, func(row util.Row) error {
+	return util.ProcessRow(reader, nil, func(row *util.Row) error {
 		stats.InputCounter++
 
 		var keys, values []interface{}

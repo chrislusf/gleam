@@ -79,7 +79,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 			// left and right cartician join
 			for _, a := range leftValuesWithSameKey.V {
 				for _, b := range rightValuesWithSameKey.V {
-					util.Row{T: ts}.AppendKey(
+					util.NewRow(ts).AppendKey(
 						leftValuesWithSameKey.K...).AppendValue(
 						a.([]interface{})...).AppendValue(
 						b.([]interface{})...).WriteTo(writer)
@@ -95,7 +95,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 					var t []interface{}
 					t = append(t, leftValue.([]interface{})...)
 					t = addNils(t, rightValueLength)
-					util.Row{T: ts}.AppendKey(
+					util.NewRow(ts).AppendKey(
 						leftValuesWithSameKey.K...).AppendValue(
 						t...).WriteTo(writer)
 					stats.OutputCounter++
@@ -109,7 +109,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 					var t []interface{}
 					t = addNils(t, leftValueLength)
 					t = append(t, rightValue.([]interface{})...)
-					util.Row{T: ts}.AppendKey(
+					util.NewRow(ts).AppendKey(
 						rightValuesWithSameKey.K...).AppendValue(
 						t...).WriteTo(writer)
 					stats.OutputCounter++
@@ -125,7 +125,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				var t []interface{}
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
-				util.Row{T: leftValuesWithSameKey.T}.AppendKey(
+				util.NewRow(leftValuesWithSameKey.T).AppendKey(
 					leftValuesWithSameKey.K...).AppendValue(
 					t...).WriteTo(writer)
 				stats.OutputCounter++
@@ -139,7 +139,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				var t []interface{}
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
-				util.Row{T: leftValuesWithSameKey.T}.AppendKey(
+				util.NewRow(leftValuesWithSameKey.T).AppendKey(
 					leftValuesWithSameKey.K...).AppendValue(
 					t...).WriteTo(writer)
 				stats.OutputCounter++
@@ -152,7 +152,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				var t []interface{}
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
-				util.Row{T: rightValuesWithSameKey.T}.AppendKey(
+				util.NewRow(rightValuesWithSameKey.T).AppendKey(
 					rightValuesWithSameKey.K...).AppendValue(
 					t...).WriteTo(writer)
 				stats.OutputCounter++
@@ -166,7 +166,7 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 				var t []interface{}
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
-				util.Row{T: rightValuesWithSameKey.T}.AppendKey(
+				util.NewRow(rightValuesWithSameKey.T).AppendKey(
 					rightValuesWithSameKey.K...).AppendValue(
 					t...).WriteTo(writer)
 				stats.OutputCounter++

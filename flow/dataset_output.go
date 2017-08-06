@@ -119,7 +119,7 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 	return d.Output(fn)
 }
 
-func (d *Dataset) OutputRow(f func(util.Row) error) *Dataset {
+func (d *Dataset) OutputRow(f func(*util.Row) error) *Dataset {
 	fn := func(reader io.Reader) error {
 		if d.Step.IsPipe {
 			return util.TakeTsv(reader, -1, func(args []string) error {

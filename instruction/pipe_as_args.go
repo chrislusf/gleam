@@ -55,7 +55,7 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.InstructionStat) error {
 	var wg sync.WaitGroup
 
-	err := util.ProcessRow(reader, nil, func(row util.Row) error {
+	err := util.ProcessRow(reader, nil, func(row *util.Row) error {
 		stats.InputCounter++
 
 		// feed parts as input to the code

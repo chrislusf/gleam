@@ -18,7 +18,7 @@ func (row Row) WriteTo(writer io.Writer) (err error) {
 }
 
 // ReadRow read and decode one row of data
-func ReadRow(reader io.Reader) (row Row, err error) {
+func ReadRow(reader io.Reader) (row *Row, err error) {
 	encodedBytes, hasErr := ReadMessage(reader)
 	if hasErr != nil {
 		if hasErr != io.EOF {
@@ -56,7 +56,7 @@ func EncodeKeys(anyObject ...interface{}) ([]byte, error) {
 }
 
 // DecodeRow decodes one row of data from a blob
-func DecodeRow(encodedBytes []byte) (row Row, err error) {
+func DecodeRow(encodedBytes []byte) (row *Row, err error) {
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 
 	if err = decoder.Decode(&row); err != nil {
@@ -67,7 +67,7 @@ func DecodeRow(encodedBytes []byte) (row Row, err error) {
 }
 
 // ProcessRow Reads and processes rows until EOF
-func ProcessRow(reader io.Reader, indexes []int, f func(Row) error) (err error) {
+func ProcessRow(reader io.Reader, indexes []int, f func(*Row) error) (err error) {
 	return ProcessMessage(reader, func(input []byte) error {
 		// read the row
 		row, err := DecodeRow(input)
