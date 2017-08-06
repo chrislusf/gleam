@@ -3,7 +3,7 @@ package file
 import (
 	"fmt"
 	"io"
-	"os"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -41,24 +41,28 @@ func (q *FileSource) SetHasHeader(hasHeader bool) *FileSource {
 // New creates a FileSource based on a file name.
 // The base file name can have "*", "?" pattern denoting a list of file names.
 func newFileSource(fileType, fileOrPattern string, partitionCount int) *FileSource {
+
 	s := &FileSource{
 		PartitionCount: partitionCount,
 		FileType:       fileType,
 		prefix:         "File",
 	}
 
-	if strings.ContainsAny(fileOrPattern, "/\\") {
-		s.folder = filepath.Dir(fileOrPattern)
-		s.fileBaseName = filepath.Base(fileOrPattern)
-		s.Path = fileOrPattern
-	} else {
-		s.folder, _ = os.Getwd()
-		s.fileBaseName = fileOrPattern
-		s.Path = filepath.Join(s.folder, s.fileBaseName)
+	var err error
+	fileOrPattern, err = filepath.Abs(fileOrPattern)
+	if err != nil {
+		log.Fatalf("file \"%s\" not found: %v")
 	}
+
+	s.folder = filepath.Dir(fileOrPattern)
+	s.fileBaseName = filepath.Base(fileOrPattern)
+	s.Path = fileOrPattern
+
 	if strings.ContainsAny(s.fileBaseName, "*?") {
 		s.hasWildcard = true
 	}
+
+	// fmt.Printf("file source: %+v\n", s)
 
 	return s
 }
