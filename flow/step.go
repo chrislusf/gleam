@@ -43,20 +43,18 @@ func (step *Step) RunFunction(task *Task) error {
 		writers = append(writers, shard.IncomingChan.Writer)
 	}
 
-	defer func() {
-		for _, writer := range writers {
-			if c, ok := writer.(io.Closer); ok {
-				c.Close()
-			}
-		}
-	}()
-
 	if task.Stat == nil {
 		task.Stat = &pb.InstructionStat{}
 	}
 	err := task.Step.Function(readers, writers, task.Stat)
 	if err != nil {
 		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
+	}
+
+	for _, writer := range writers {
+		if c, ok := writer.(io.Closer); ok {
+			c.Close()
+		}
 	}
 	return err
 }
