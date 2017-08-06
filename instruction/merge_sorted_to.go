@@ -69,7 +69,7 @@ func DoMergeSortedTo(readers []io.Reader, writer io.Writer, orderBys []OrderBy, 
 	}
 	for pq.Len() > 0 {
 		t, shardId := pq.Dequeue()
-		if err := t.(util.Row).WriteTo(writer); err != nil {
+		if err := t.(*util.Row).WriteTo(writer); err != nil {
 			return err
 		}
 		stats.OutputCounter++

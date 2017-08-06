@@ -78,10 +78,10 @@ func DoLocalTop(reader io.Reader, writer io.Writer, n int, orderBys []OrderBy, s
 
 	// read data out of the priority queue
 	length := pq.Len()
-	itemsToReverse := make([]util.Row, length)
+	itemsToReverse := make([]*util.Row, length)
 	for i := 0; i < length; i++ {
 		entry, _ := pq.Dequeue()
-		itemsToReverse[i] = entry.(util.Row)
+		itemsToReverse[i] = entry.(*util.Row)
 	}
 	for i := length - 1; i >= 0; i-- {
 		itemsToReverse[i].WriteTo(writer)
