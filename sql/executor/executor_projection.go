@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -55,15 +54,18 @@ func (e *ProjectionExec) Exec() *flow.Dataset {
 		return d
 	}
 
-	sqlText := fmt.Sprintf(`
-        function(%s)
-          return %s
-        end
-    `, inputParams, outputParams)
+	/*
+			sqlText := fmt.Sprintf(`
+		        function(%s)
+		          return %s
+		        end
+		    `, inputParams, outputParams)
+	*/
 
 	// println(sqlText)
 
-	ret := d.Map(sqlText)
+	// ret := d.Map("map", sqlText)
+	ret := d
 
 	return ret
 }

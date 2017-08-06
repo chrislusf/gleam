@@ -68,7 +68,3 @@ func Query(sql string) (*flow.Dataset, plan.Plan, error) {
 	return ds, physicalPlan, err
 
 }
-
-func InitFunction(ds *flow.Dataset) {
-	ds.Init(executor.Functions)
-}
