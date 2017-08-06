@@ -58,9 +58,15 @@ const (
 func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64, outCounter int64, e error) {
 
 	writerChan := make(chan []byte, 16*len(readers))
+
 	errChan := make(chan error, len(readers))
+	defer close(errChan)
+
+	var wg sync.WaitGroup
 	for _, reader := range readers {
+		wg.Add(1)
 		go func(reader io.Reader) {
+			defer wg.Done()
 			err := ProcessMessage(reader, func(data []byte) error {
 				writerChan <- data
 				atomic.AddInt64(&inCounter, 1)
@@ -69,7 +75,9 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64
 			errChan <- err
 		}(reader)
 	}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for data := range writerChan {
 			if err := WriteMessage(writer, data); err != nil {
 				errChan <- fmt.Errorf("WriteMessage Error: %v", err)
@@ -78,13 +86,16 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64
 			atomic.AddInt64(&outCounter, 1)
 		}
 	}()
+
 	for range readers {
 		err := <-errChan
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return inCounter, outCounter, err
 		}
 	}
 	close(writerChan)
+
+	wg.Wait()
 
 	return inCounter, outCounter, nil
 }
