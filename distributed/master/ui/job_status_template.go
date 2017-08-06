@@ -23,7 +23,7 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
       <div class="row">
         <div class="col-sm-6">
           {{ with .Status.Driver }}
-          <h2>Driver Program</h2>
+          <h2>{{ .Name }}</h2>
           <table class="table">
             <tbody>
               <tr>

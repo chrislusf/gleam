@@ -59,6 +59,7 @@ type StepMetadata struct {
 }
 
 type Flow struct {
+	Name     string
 	Steps    []*Step
 	Datasets []*Dataset
 	HashCode uint32

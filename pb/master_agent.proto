@@ -126,6 +126,7 @@ message FlowExecutionStatus {
         string executable_hash = 4;
         int64 start_time = 5;
         int64 stop_time = 6;
+		string name = 7;
     }
     DriverInfo driver = 8;
 

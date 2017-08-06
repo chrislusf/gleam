@@ -34,7 +34,7 @@ func main() {
 	c.LimitInEachShard = *LimitInEachShard
 	c.TimeoutSeconds = *timeout
 
-	f := flow.New().Read(c).Sort(flow.Field(2)).Select(flow.Field(2, 1)).Printlnf(*format)
+	f := flow.New("Cassandra Export").Read(c).Sort(flow.Field(2)).Select(flow.Field(2, 1)).Printlnf(*format)
 
 	if *isDistributed {
 		f.Run(distributed.Option())

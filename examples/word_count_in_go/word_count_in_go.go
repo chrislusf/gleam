@@ -20,7 +20,7 @@ func main() {
 	flag.Parse() // optional, since gio.Init() will call this also.
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
-	f := flow.New().TextFile("/etc/passwd").
+	f := flow.New("top5 words in passwd").TextFile("/etc/passwd").
 		Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
 		Map("addOne", mapper.AppendOne).  // invoke the registered "addOne" mapper function.
 		ReduceBy("sum", reducer.Sum).     // invoke the registered "sum" reducer function.

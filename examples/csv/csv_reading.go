@@ -17,13 +17,13 @@ func main() {
 
 	gio.Init()
 
-	f := New()
+	f := New("join two csv files")
 
 	a := f.Read(file.Csv("a?.csv", 3).SetHasHeader(true)).Select("select", Field(1, 2, 3)).Hint(TotalSize(17))
 
 	b := f.Read(file.Csv("b*.csv", 3)).SelectKV("select", Field(1), Field(4, 5)).Hint(PartitionSize(13))
 
-	join := a.RightOuterJoin("a outer join b", b).Printlnf("%s : %s %s, %s %s")
+	join := a.RightOuterJoin("join", b).Printlnf("%s : %s %s, %s %s")
 
 	// join.Run(distributed.Planner())
 

@@ -14,7 +14,7 @@ func main() {
 
 	gio.Init()
 
-	flow.New().TextFile("/etc/passwd").
+	flow.New("word count by unix pipes").TextFile("/etc/passwd").
 		Map("tokenize", mapper.Tokenize).
 		Partition("partition", 2).
 		Pipe("lowercase", "tr 'A-Z' 'a-z'").

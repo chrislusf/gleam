@@ -1,11 +1,18 @@
 package main
 
 import (
+	"flag"
+
+	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/gio/mapper"
 	"github.com/chrislusf/gleam/gio/reducer"
 	"github.com/chrislusf/gleam/plugins/file"
+)
+
+var (
+	isDistributed = flag.Bool("distributed", false, "run in distributed mode")
 )
 
 func main() {
@@ -14,11 +21,13 @@ func main() {
 
 	join1()
 
+	hashjoin()
+
 }
 
 func join1() {
 
-	f := flow.New()
+	f := flow.New("common words count")
 
 	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
 		Map("tokenize", mapper.Tokenize).
@@ -30,8 +39,40 @@ func join1() {
 		Map("addOne", mapper.AppendOne).
 		ReduceBy("sum", reducer.Sum)
 
-	a.Join("shared words", b).Printlnf("%s\t%d\t%d")
+	join := a.Join("shared words", b).Printlnf("%s\t%d\t%d")
 
-	f.Run()
+	println("========== joining result=============")
+
+	if *isDistributed {
+		join.Run(distributed.Option())
+	} else {
+		join.Run()
+	}
+
+}
+
+func hashjoin() {
+
+	f := flow.New("hash join")
+
+	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
+		Map("tokenize", mapper.Tokenize).
+		Map("addOne", mapper.AppendOne).
+		ReduceBy("sum", reducer.Sum)
+
+	b := f.Strings([]string{
+		"func",
+		"return",
+	})
+
+	a.Join("hash join", b).Printlnf("%s\t%d")
+
+	println("==========hash joining result=============")
+
+	if *isDistributed {
+		f.Run(distributed.Option())
+	} else {
+		f.Run()
+	}
 
 }

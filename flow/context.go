@@ -12,10 +12,11 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func New() (fc *Flow) {
+func New(name string) (fc *Flow) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	fc = &Flow{
+		Name:     name,
 		HashCode: r.Uint32(),
 	}
 	return

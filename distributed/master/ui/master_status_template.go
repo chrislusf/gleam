@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"html/template"
+	"text/template"
 )
 
-var MasterStatusTpl = template.Must(template.New("master").Parse(`<!DOCTYPE html>
+var MasterStatusTpl = template.Must(template.New("master").Funcs(funcMap).Parse(`<!DOCTYPE html>
 <html>
   <head>
     <title>Gleam {{ .Version }}</title>
@@ -46,14 +46,6 @@ var MasterStatusTpl = template.Must(template.New("master").Parse(`<!DOCTYPE html
               <th>Jobs Completed</th>
               <td><a href="/">{{.Logs.Len}}</a></td>
             </tr>
-
-            {{ $logs := .Logs }}
-            {{ range $idx, $key := $logs.Keys }}
-            <tr>
-              <th>Job </th>
-              <td><a href="/job/{{$key}}">{{$key}}</a></td>
-            </tr>
-            {{ end }}
           </table>
         </div>
       </div>
@@ -88,6 +80,34 @@ var MasterStatusTpl = template.Must(template.New("master").Parse(`<!DOCTYPE html
               {{ end }}
             {{ end }}
           {{ end }}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="row">
+        <h2>Jobs</h2>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Name</th>
+              <th>Driver</th>
+              <th>User</th>
+              <th>Host</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{ range $idx, $stat := $.Stats }}
+            <tr>
+              <td><a href="/job/{{$stat.Id}}">{{ $stat.Id }}</a></td>
+              <td>{{ $stat.Driver.Name }}</td>
+              <td>{{ $stat.Driver.Executable }}</td>
+              <td>{{ $stat.Driver.Username }}</td>
+              <td>{{ $stat.Driver.Hostname }}</td>
+              <td>{{ duration $stat.Driver.StopTime $stat.Driver.StartTime }}</td>
+            </tr>
+            {{ end }}
           </tbody>
         </table>
       </div>
