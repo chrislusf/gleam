@@ -34,6 +34,16 @@ func ToInt64(val interface{}) int64 {
 	return 0
 }
 
+func ToFloat64(val interface{}) float64 {
+	if v, ok := val.(float64); ok {
+		return v
+	}
+	if v, ok := val.(float32); ok {
+		return float64(v)
+	}
+	return float64(ToInt64(val))
+}
+
 func ToString(val interface{}) string {
 	if v, ok := val.(string); ok {
 		return v
