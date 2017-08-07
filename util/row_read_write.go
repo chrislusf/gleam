@@ -56,10 +56,12 @@ func EncodeKeys(anyObject ...interface{}) ([]byte, error) {
 }
 
 // DecodeRow decodes one row of data from a blob
-func DecodeRow(encodedBytes []byte) (row *Row, err error) {
+func DecodeRow(encodedBytes []byte) (*Row, error) {
+	row := &Row{}
 	decoder := msgpack.NewDecoder(bytes.NewReader(encodedBytes))
 
-	if err = decoder.Decode(&row); err != nil {
+	err := decoder.Decode(row)
+	if err != nil {
 		err = fmt.Errorf("decode row error %v: %s\n", err, string(encodedBytes))
 	}
 
