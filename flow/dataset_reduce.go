@@ -10,14 +10,25 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
-// ReducerBy runs the reducer registered to the reducerId.
-// This is used to execute pure Go code.
-func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, sortOptions ...*SortOption) (ret *Dataset) {
-	sortOption := concat(sortOptions)
+// ReduceBy runs the reducer registered to the reducerId,
+// combining rows with the same key fields into one row
+func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields ...*SortOption) (ret *Dataset) {
+	sortOption := concat(keyFields)
 
 	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduce", reducerId, sortOption)
 	if len(d.Shards) > 1 {
 		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduce2", reducerId, sortOption)
+	}
+	return ret
+}
+
+// Reduce runs the reducer registered to the reducerId,
+// combining all rows into one row
+func (d *Dataset) Reduce(name string, reducerId gio.ReducerId) (ret *Dataset) {
+
+	ret = d.LocalReduceBy(name+".LocalReduce", reducerId)
+	if len(d.Shards) > 1 {
+		ret = ret.MergeTo(name, 1).LocalReduceBy(name+".LocalReduce2", reducerId)
 	}
 	return ret
 }
@@ -36,12 +47,16 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 	for _, keyPosition := range sortOption.Indexes() {
 		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
 	}
+	keyFields := "0" // combine all rows directly
+	if len(keyPositions) > 1 {
+		keyFields = strings.Join(keyPositions, ",")
+	}
 
 	var args []string
 	args = append(args, "./"+filepath.Base(os.Args[0]))
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.reducer="+string(reducerId))
-	args = append(args, "-gleam.keyFields="+strings.Join(keyPositions, ","))
+	args = append(args, "-gleam.keyFields="+keyFields)
 
 	commandLine := strings.Join(args, " ")
 

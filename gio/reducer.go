@@ -11,17 +11,52 @@ import (
 
 func (runner *gleamRunner) processReducer(ctx context.Context, f Reducer, keyPositions []int) (err error) {
 	return runner.report(ctx, func() error {
-		return runner.doProcessReducer(f, keyPositions)
+		if len(keyPositions) == 1 && keyPositions[0] == 0 {
+			return runner.doProcessReducer(f)
+		}
+		return runner.doProcessReducerByKeys(f, keyPositions)
 	})
 }
 
-func (runner *gleamRunner) doProcessReducer(f Reducer, keyPositions []int) (err error) {
-
-	keyFields := make([]bool, len(keyPositions))
-	for _, keyPosition := range keyPositions {
-		// change from 1-base to 0-base
-		keyFields[keyPosition-1] = true
+func (runner *gleamRunner) doProcessReducer(f Reducer) (err error) {
+	// get the first row
+	row, err := util.ReadRow(os.Stdin)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return fmt.Errorf("reducer input row error: %v", err)
 	}
+	stat.Stats[0].InputCounter++
+
+	lastTs := row.T
+	lastKeys := row.K
+
+	for {
+		row, err = util.ReadRow(os.Stdin)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
+			}
+			break
+		}
+		stat.Stats[0].InputCounter++
+
+		keys := row.K
+		lastKeys, err = reduce(f, lastKeys, keys)
+		if row.T > lastTs {
+			lastTs = row.T
+		}
+	}
+
+	// fmt.Fprintf(os.Stderr, "lastKeys:%v\n", lastKeys)
+
+	TsEmit(lastTs, lastKeys...)
+
+	return nil
+}
+
+func (runner *gleamRunner) doProcessReducerByKeys(f Reducer, keyPositions []int) (err error) {
 
 	// get the first row
 	row, err := util.ReadRow(os.Stdin)
@@ -53,23 +88,16 @@ func (runner *gleamRunner) doProcessReducer(f Reducer, keyPositions []int) (err 
 		if x == 0 {
 			lastValues, err = reduce(f, lastValues, values)
 		} else {
-			output(lastTs, lastKeys, lastValues)
+			TsEmitKV(lastTs, lastKeys, lastValues)
 			lastKeys, lastValues = keys, values
 		}
 		if row.T > lastTs {
 			lastTs = row.T
 		}
 	}
-	output(lastTs, lastKeys, lastValues)
+	TsEmitKV(lastTs, lastKeys, lastValues)
 
 	return nil
-}
-
-func output(ts int64, x, y []interface{}) error {
-	var t []interface{}
-	t = append(t, x...)
-	t = append(t, y...)
-	return TsEmit(ts, t...)
 }
 
 func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
