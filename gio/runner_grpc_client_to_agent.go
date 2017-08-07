@@ -15,7 +15,7 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 
 	defer wg.Done()
 
-	withClient(runner.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
 			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
@@ -43,7 +43,7 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 
 func (runner *gleamRunner) reportStatus() {
 
-	withClient(runner.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
 			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
@@ -61,7 +61,7 @@ func (runner *gleamRunner) reportStatus() {
 
 }
 
-func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
+func withClient(server string, fn func(client pb.GleamExecutorClient) error) error {
 	if server == "" {
 		return nil
 	}
@@ -74,7 +74,7 @@ func withClient(server string, fn func(client pb.GleamAgentClient) error) error 
 		time.Sleep(50 * time.Millisecond)
 		grpcConection.Close()
 	}()
-	client := pb.NewGleamAgentClient(grpcConection)
+	client := pb.NewGleamExecutorClient(grpcConection)
 
 	return fn(client)
 }

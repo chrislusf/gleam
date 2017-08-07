@@ -15,14 +15,14 @@ type Mapper func([]interface{}) error
 type Reducer func(x, y interface{}) (interface{}, error)
 
 type gleamTaskOption struct {
-	Mapper       string
-	Reducer      string
-	KeyFields    string
-	AgentAddress string
-	HashCode     uint
-	StepId       int
-	TaskId       int
-	IsProfiling  bool
+	Mapper          string
+	Reducer         string
+	KeyFields       string
+	ExecutorAddress string
+	HashCode        uint
+	StepId          int
+	TaskId          int
+	IsProfiling     bool
 }
 
 type gleamRunner struct {
@@ -40,7 +40,7 @@ func init() {
 	flag.StringVar(&taskOption.Mapper, "gleam.mapper", "", "the generated mapper name")
 	flag.StringVar(&taskOption.Reducer, "gleam.reducer", "", "the generated reducer name")
 	flag.StringVar(&taskOption.KeyFields, "gleam.keyFields", "", "the 1-based key fields")
-	flag.StringVar(&taskOption.AgentAddress, "gleam.agent", "", "agent address")
+	flag.StringVar(&taskOption.ExecutorAddress, "gleam.executor", "", "executor address")
 	flag.UintVar(&taskOption.HashCode, "flow.hashcode", 0, "flow hashcode")
 	flag.IntVar(&taskOption.StepId, "flow.stepId", -1, "flow step id")
 	flag.IntVar(&taskOption.TaskId, "flow.taskId", -1, "flow task id")

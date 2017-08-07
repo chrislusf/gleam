@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"sync"
@@ -25,6 +26,7 @@ type Executor struct {
 	Option       *ExecutorOption
 	instructions *pb.InstructionSet
 	stats        []*pb.InstructionStat
+	grpcAddress  string
 }
 
 func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Executor {
@@ -36,6 +38,15 @@ func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Execu
 }
 
 func (exe *Executor) ExecuteInstructionSet() error {
+
+	// start a listener for stats
+	listener, err := net.Listen("tcp", ":0")
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	exe.grpcAddress = listener.Addr().String()
+	go exe.serveGrpc(listener)
+
 	//TODO pass in the context
 	ctx, cancel := context.WithCancel(context.Background())
 	var wg sync.WaitGroup
@@ -178,9 +189,9 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 		var err error
 		// println("starting", i.Name, "inChan", inChan, "outChan", outChan)
 		i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
-			"%s -gleam.agent=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
+			"%s -gleam.executor=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
 			i.GetScript().Args[len(i.GetScript().Args)-1],
-			is.AgentAddress,
+			exe.grpcAddress,
 			is.FlowHashCode,
 			i.StepId,
 			i.TaskId,

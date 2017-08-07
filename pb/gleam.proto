@@ -141,6 +141,9 @@ message FlowExecutionStatus {
 //////////////////////////////////////////////////
 //////////////////////////////////////////////////
 
+service GleamExecutor {
+  rpc CollectExecutionStatistics(stream ExecutionStat) returns (Empty) {}
+}
 
 service GleamAgent {
   rpc SendFileResource(stream FileResourceRequest) returns (stream FileResourceResponse) {}
