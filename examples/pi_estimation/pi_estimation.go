@@ -21,7 +21,7 @@ var (
 	monteCarloMapperId = gio.RegisterMapper(monteCarloMapper)
 	sumReducerId       = gio.RegisterReducer(sumReducer)
 
-	times  = 1024 * 1024 * 16
+	times  = 1024 * 1024 * 256
 	factor = 1024 * 1024
 )
 
