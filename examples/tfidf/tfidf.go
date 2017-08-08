@@ -1,18 +1,34 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/gio/mapper"
+	"github.com/chrislusf/gleam/gio/reducer"
+	"github.com/chrislusf/gleam/util"
+)
+
+var (
+	registeredReadConent = gio.RegisterMapper(readContent)
+	registeredTfIdf      = gio.RegisterMapper(tfidf)
+	isDistributed        = flag.Bool("distributed", false, "run in distributed or not")
 )
 
 func main() {
 
+	gio.Init()
+	flag.Parse()
+
 	fileNames := []string{}
-	filepath.Walk("../..", func(path string, f os.FileInfo, err error) error {
+	filepath.Walk("..", func(path string, f os.FileInfo, err error) error {
 		if strings.HasSuffix(path, ".go") {
 			fullPath, _ := filepath.Abs(path)
 			fileNames = append(fileNames, fullPath)
@@ -20,44 +36,70 @@ func main() {
 		return nil
 	})
 
-	f := flow.New()
-	word2doc := f.Strings(fileNames).Partition(7).Map(`
-        function(fileName)
-            local f = io.open(fileName, "rb")
-            local content = f:read("*all")
-            f:close()
-            return content, fileName
-        end
-    `).Map(`
-        function(content, docId)
-            for word in string.gmatch(content, "%w+") do
-                writeRow(word, docId, 1)
-            end
-        end
-    `)
+	f := flow.New("tfidf")
+	word_doc_one := f.Strings(fileNames).
+		Partition("partition", 7).
+		Map("read content", registeredReadConent)
 
-	termFreq := word2doc.ReduceBy(`
-        function(x, y)
-            return x + y
-        end
-    `, flow.Field(1, 2))
+	termFreq :=
+		word_doc_one.ReduceBy("word_doc_tf", reducer.Sum, flow.Field(1, 2))
 
-	docFreq := termFreq.Map(`
-        function(word, docId, count)
-            return word, 1
-        end
-    `).ReduceBy(`
-        function(x, y)
-            return x + y
-        end
-    `)
+	docFreq := termFreq.
+		Select("word doc freq", flow.Field(1)).
+		Map("appendOne", mapper.AppendOne).
+		ReduceBy("df", reducer.Sum, flow.Field(1))
 
-	docFreq.Join(termFreq).Map(fmt.Sprintf(`
-        function(word, df, docId, tf)
-            return word, docId, tf, df, tf*%d/df
-        end
-    `, len(fileNames))).Sort(flow.Field(5)).Printlnf("%s: %s tf=%d df=%d tf-idf=%v")
+	docFreq.Join("joinByWord!WrongHere!", termFreq, flow.Field(1)).
+		Map("tfidf", registeredTfIdf).
+		Sort("sort by tf/df", flow.Field(5)).
+		OutputRow(func(row *util.Row) error {
+			fmt.Printf("%s: %s tf=%d df=%d tf-idf=%f\n",
+				row.K[0],
+				row.V[0],
+				row.V[1],
+				row.V[2],
+				gio.ToFloat64(row.V[3])/float64(len(fileNames)),
+			)
+			return nil
+		})
 
-	f.Run()
+	if *isDistributed {
+		f.Run(distributed.Option())
+	} else {
+		f.Run()
+	}
 
+}
+
+func readContent(x []interface{}) error {
+
+	filepath := gio.ToString(x[0])
+
+	f, err := os.Open(filepath)
+	if err != nil {
+		println("error reading file:", filepath)
+		return err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		gio.Emit(scanner.Text(), filepath, 1)
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintln(os.Stderr, "reading input:", err)
+	}
+	return nil
+}
+
+func tfidf(x []interface{}) error {
+	fmt.Fprintf(os.Stderr, "tfidf input: %v", x)
+	word := gio.ToString(x[0])
+	df := gio.ToInt64(x[1])
+	doc := gio.ToString(x[2])
+	tf := gio.ToInt64(x[3])
+
+	gio.Emit(word, doc, tf, df, tf/df)
+	return nil
 }
