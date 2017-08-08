@@ -15,9 +15,11 @@ import (
 func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields ...*SortOption) (ret *Dataset) {
 	sortOption := concat(keyFields)
 
-	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduce", reducerId, sortOption)
+	name = name + ".ReduceBy"
+
+	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduceBy", reducerId, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduce2", reducerId, sortOption)
+		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduceBy2", reducerId, sortOption)
 	}
 	return ret
 }
@@ -25,6 +27,8 @@ func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields ...*S
 // Reduce runs the reducer registered to the reducerId,
 // combining all rows into one row
 func (d *Dataset) Reduce(name string, reducerId gio.ReducerId) (ret *Dataset) {
+
+	name = name + ".Reduce"
 
 	ret = d.LocalReduceBy(name+".LocalReduce", reducerId)
 	if len(d.Shards) > 1 {
@@ -48,7 +52,7 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
 	}
 	keyFields := "0" // combine all rows directly
-	if len(keyPositions) > 1 {
+	if len(keyPositions) > 0 {
 		keyFields = strings.Join(keyPositions, ",")
 	}
 
