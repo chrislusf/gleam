@@ -13,7 +13,7 @@ var (
 	isDistributed = flag.Bool("distributed", false, "distributed mode or not")
 	isInMemory    = flag.Bool("inMemory", true, "distributed mode but only through memory")
 
-	mapperId = gio.RegisterMapper(splitLine)
+	splitter = gio.RegisterMapper(splitLine)
 )
 
 func main() {
@@ -40,19 +40,10 @@ func main() {
 
 }
 
-func gleamSortStandalone(fileName string, partition int) {
-
-	flow.New().TextFile(fileName).
-		Map("split", mapperId).
-		Partition("partition", partition).
-		Sort("sort").
-		Printlnf("%s  %s").Run()
-}
-
 func linuxSortDistributed(fileName string, partition int) {
 
-	flow.New().TextFile(fileName).
-		Map("split", mapperId).
+	flow.New("linuxSort").TextFile(fileName).
+		Map("split", splitter).
 		Partition("partition", partition).
 		Pipe("linuxSort", `sort -k 1`).
 		MergeSortedTo("merge", 1).
@@ -62,8 +53,8 @@ func linuxSortDistributed(fileName string, partition int) {
 
 func linuxSortStandalone(fileName string, partition int) {
 
-	flow.New().TextFile(fileName).
-		Map("split", mapperId).
+	flow.New("linuxSort").TextFile(fileName).
+		Map("split", splitter).
 		Partition("partition", partition).
 		Pipe("linuxSort", `sort -k 1`).
 		MergeSortedTo("merge", 1).
@@ -74,9 +65,9 @@ func linuxSortStandalone(fileName string, partition int) {
 
 func gleamSortDistributed(fileName string, size int64, partition int, isDistributed, isInMemory bool) {
 
-	f := flow.New().TextFile(fileName).
+	f := flow.New("gleamSort").TextFile(fileName).
 		Hint(flow.TotalSize(size)).
-		Map("split", mapperId)
+		Map("split", splitter)
 
 	if isInMemory {
 		f = f.Partition("partition", partition).Sort("sort")
