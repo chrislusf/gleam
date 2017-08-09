@@ -49,7 +49,7 @@ func main() {
 		Map("appendOne", mapper.AppendOne).
 		ReduceBy("df", reducer.Sum, flow.Field(1))
 
-	docFreq.Join("joinByWord!WrongHere!", termFreq, flow.Field(1)).
+	docFreq.Join("byWord", termFreq, flow.Field(1)).
 		Map("tfidf", registeredTfIdf).
 		Sort("sort by tf/df", flow.Field(5)).
 		OutputRow(func(row *util.Row) error {
