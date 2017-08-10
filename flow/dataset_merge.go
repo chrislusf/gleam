@@ -4,7 +4,7 @@ import (
 	"github.com/chrislusf/gleam/instruction"
 )
 
-func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) (ret *Dataset) {
+func (d *Dataset) MergeSortedTo(name string, partitionCount int, sortOptions ...*SortOption) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
@@ -19,22 +19,22 @@ func (d *Dataset) MergeSortedTo(partitionCount int, sortOptions ...*SortOption) 
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step := d.Flow.AddLinkedNToOneStep(d, everyN, ret)
-	step.SetInstruction(instruction.NewMergeSortedTo(sortOption.orderByList))
+	step.SetInstruction(name, instruction.NewMergeSortedTo(sortOption.orderByList))
 	return ret
 }
 
-func (d *Dataset) TreeMergeSortedTo(partitionCount int, factor int, sortOptions ...*SortOption) (ret *Dataset) {
+func (d *Dataset) TreeMergeSortedTo(name string, partitionCount int, factor int, sortOptions ...*SortOption) (ret *Dataset) {
 	if len(d.Shards) > factor && len(d.Shards) > partitionCount {
-		t := d.MergeSortedTo(len(d.Shards)/factor, sortOptions...)
-		return t.TreeMergeSortedTo(partitionCount, factor, sortOptions...)
+		t := d.MergeSortedTo(name, len(d.Shards)/factor, sortOptions...)
+		return t.TreeMergeSortedTo(name, partitionCount, factor, sortOptions...)
 	}
 	if len(d.Shards) > partitionCount {
-		return d.MergeSortedTo(partitionCount, sortOptions...)
+		return d.MergeSortedTo(name, partitionCount, sortOptions...)
 	}
 	return d
 }
 
-func (d *Dataset) MergeTo(partitionCount int) (ret *Dataset) {
+func (d *Dataset) MergeTo(name string, partitionCount int) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
@@ -46,6 +46,6 @@ func (d *Dataset) MergeTo(partitionCount int) (ret *Dataset) {
 
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step := d.Flow.AddLinkedNToOneStep(d, everyN, ret)
-	step.SetInstruction(instruction.NewMergeTo())
+	step.SetInstruction(name, instruction.NewMergeTo())
 	return ret
 }

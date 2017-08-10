@@ -30,8 +30,8 @@ func NewJoinPartitionedSorted(isLeftOuterJoin bool, isRightOuterJoin bool, index
 	return &JoinPartitionedSorted{isLeftOuterJoin, isRightOuterJoin, indexes}
 }
 
-func (b *JoinPartitionedSorted) Name() string {
-	return "JoinPartitionedSorted"
+func (b *JoinPartitionedSorted) Name(prefix string) string {
+	return prefix + ".JoinPartitionedSorted"
 }
 
 func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -42,7 +42,6 @@ func (b *JoinPartitionedSorted) Function() func(readers []io.Reader, writers []i
 
 func (b *JoinPartitionedSorted) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		JoinPartitionedSorted: &pb.Instruction_JoinPartitionedSorted{
 			IsLeftOuterJoin:  (b.isLeftOuterJoin),
 			IsRightOuterJoin: (b.isRightOuterJoin),
@@ -66,24 +65,24 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 
 	var leftValueLength, rightValueLength int
 	if leftHasValue {
-		leftValueLength = len(leftValuesWithSameKey.Values[0].([]interface{}))
+		leftValueLength = len(leftValuesWithSameKey.V[0].([]interface{}))
 	}
 	if rightHasValue {
-		rightValueLength = len(rightValuesWithSameKey.Values[0].([]interface{}))
+		rightValueLength = len(rightValuesWithSameKey.V[0].([]interface{}))
 	}
 
 	for leftHasValue && rightHasValue {
-		x := util.Compare(leftValuesWithSameKey.Keys, rightValuesWithSameKey.Keys)
-		ts := max(leftValuesWithSameKey.Timestamp, rightValuesWithSameKey.Timestamp)
+		x := util.Compare(leftValuesWithSameKey.K, rightValuesWithSameKey.K)
+		ts := max(leftValuesWithSameKey.T, rightValuesWithSameKey.T)
 		switch {
 		case x == 0:
 			// left and right cartician join
-			for _, a := range leftValuesWithSameKey.Values {
-				for _, b := range rightValuesWithSameKey.Values {
-					t := leftValuesWithSameKey.Keys
-					t = append(t, a.([]interface{})...)
-					t = append(t, b.([]interface{})...)
-					util.WriteRow(writer, ts, t...)
+			for _, a := range leftValuesWithSameKey.V {
+				for _, b := range rightValuesWithSameKey.V {
+					util.NewRow(ts).AppendKey(
+						leftValuesWithSameKey.K...).AppendValue(
+						a.([]interface{})...).AppendValue(
+						b.([]interface{})...).WriteTo(writer)
 					stats.OutputCounter++
 				}
 			}
@@ -92,11 +91,13 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 			stats.InputCounter += 2
 		case x < 0:
 			if isLeftOuterJoin {
-				for _, leftValue := range leftValuesWithSameKey.Values {
-					t := leftValuesWithSameKey.Keys
+				for _, leftValue := range leftValuesWithSameKey.V {
+					var t []interface{}
 					t = append(t, leftValue.([]interface{})...)
 					t = addNils(t, rightValueLength)
-					util.WriteRow(writer, ts, t...)
+					util.NewRow(ts).AppendKey(
+						leftValuesWithSameKey.K...).AppendValue(
+						t...).WriteTo(writer)
 					stats.OutputCounter++
 				}
 			}
@@ -104,11 +105,13 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 			stats.InputCounter++
 		case x > 0:
 			if isRightOuterJoin {
-				for _, rightValue := range rightValuesWithSameKey.Values {
-					t := rightValuesWithSameKey.Keys
+				for _, rightValue := range rightValuesWithSameKey.V {
+					var t []interface{}
 					t = addNils(t, leftValueLength)
 					t = append(t, rightValue.([]interface{})...)
-					util.WriteRow(writer, ts, t...)
+					util.NewRow(ts).AppendKey(
+						rightValuesWithSameKey.K...).AppendValue(
+						t...).WriteTo(writer)
 					stats.OutputCounter++
 				}
 			}
@@ -118,11 +121,13 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 	}
 	if leftHasValue {
 		if isLeftOuterJoin {
-			for _, leftValue := range leftValuesWithSameKey.Values {
-				t := leftValuesWithSameKey.Keys
+			for _, leftValue := range leftValuesWithSameKey.V {
+				var t []interface{}
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
-				util.WriteRow(writer, leftValuesWithSameKey.Timestamp, t...)
+				util.NewRow(leftValuesWithSameKey.T).AppendKey(
+					leftValuesWithSameKey.K...).AppendValue(
+					t...).WriteTo(writer)
 				stats.OutputCounter++
 			}
 		}
@@ -130,22 +135,26 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 	for leftValuesWithSameKey = range leftChan {
 		stats.InputCounter++
 		if isLeftOuterJoin {
-			for _, leftValue := range leftValuesWithSameKey.Values {
-				t := leftValuesWithSameKey.Keys
+			for _, leftValue := range leftValuesWithSameKey.V {
+				var t []interface{}
 				t = append(t, leftValue.([]interface{})...)
 				t = addNils(t, rightValueLength)
-				util.WriteRow(writer, leftValuesWithSameKey.Timestamp, t...)
+				util.NewRow(leftValuesWithSameKey.T).AppendKey(
+					leftValuesWithSameKey.K...).AppendValue(
+					t...).WriteTo(writer)
 				stats.OutputCounter++
 			}
 		}
 	}
 	if rightHasValue {
 		if isRightOuterJoin {
-			for _, rightValue := range rightValuesWithSameKey.Values {
-				t := rightValuesWithSameKey.Keys
+			for _, rightValue := range rightValuesWithSameKey.V {
+				var t []interface{}
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
-				util.WriteRow(writer, rightValuesWithSameKey.Timestamp, t...)
+				util.NewRow(rightValuesWithSameKey.T).AppendKey(
+					rightValuesWithSameKey.K...).AppendValue(
+					t...).WriteTo(writer)
 				stats.OutputCounter++
 			}
 		}
@@ -153,11 +162,13 @@ func DoJoinPartitionedSorted(leftRawChan, rightRawChan io.Reader, writer io.Writ
 	for rightValuesWithSameKey = range rightChan {
 		stats.InputCounter++
 		if isRightOuterJoin {
-			for _, rightValue := range rightValuesWithSameKey.Values {
-				t := rightValuesWithSameKey.Keys
+			for _, rightValue := range rightValuesWithSameKey.V {
+				var t []interface{}
 				t = addNils(t, leftValueLength)
 				t = append(t, rightValue.([]interface{})...)
-				util.WriteRow(writer, rightValuesWithSameKey.Timestamp, t...)
+				util.NewRow(rightValuesWithSameKey.T).AppendKey(
+					rightValuesWithSameKey.K...).AppendValue(
+					t...).WriteTo(writer)
 				stats.OutputCounter++
 			}
 		}

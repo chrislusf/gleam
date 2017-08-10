@@ -25,8 +25,8 @@ func (step *Step) NewTask() (task *Task) {
 	return
 }
 
-func (step *Step) SetInstruction(ins instruction.Instruction) {
-	step.Name = ins.Name()
+func (step *Step) SetInstruction(prefix string, ins instruction.Instruction) {
+	step.Name = ins.Name(prefix)
 	step.Function = ins.Function()
 	step.Instruction = ins
 }
@@ -43,18 +43,18 @@ func (step *Step) RunFunction(task *Task) error {
 		writers = append(writers, shard.IncomingChan.Writer)
 	}
 
-	defer func() {
-		for _, writer := range writers {
-			if c, ok := writer.(io.Closer); ok {
-				c.Close()
-			}
-		}
-	}()
-
-	task.Stat = &pb.InstructionStat{}
+	if task.Stat == nil {
+		task.Stat = &pb.InstructionStat{}
+	}
 	err := task.Step.Function(readers, writers, task.Stat)
 	if err != nil {
 		log.Printf("Failed to run task %s-%d: %v\n", task.Step.Name, task.Id, err)
+	}
+
+	for _, writer := range writers {
+		if c, ok := writer.(io.Closer); ok {
+			c.Close()
+		}
 	}
 	return err
 }

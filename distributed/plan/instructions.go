@@ -39,7 +39,6 @@ func translateToInstruction(task *flow.Task) (ret *pb.Instruction) {
 		command := task.Step.GetScriptCommand()
 
 		ret = &pb.Instruction{
-			Name: task.Step.Name,
 			Script: &pb.Instruction_Script{
 				IsPipe: (task.Step.IsPipe),
 				Path:   command.Path,

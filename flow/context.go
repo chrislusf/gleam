@@ -9,18 +9,14 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/gio"
-	"github.com/chrislusf/gleam/script"
 	"github.com/chrislusf/gleam/util"
 )
 
-func New() (fc *Flow) {
+func New(name string) (fc *Flow) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	fc = &Flow{
-		PrevScriptType: "luajit",
-		Scripts: map[string]func() script.Script{
-			"luajit": script.NewLuajitScript,
-		},
+		Name:     name,
 		HashCode: r.Uint32(),
 	}
 	return
@@ -32,7 +28,7 @@ func (fc *Flow) Run(options ...FlowOption) {
 
 func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 
-	if !gio.HasInitalized && fc.hasPureGoMapperReducer {
+	if !gio.HasInitalized {
 		println("gio.Init() is required right after main() if pure go mapper or reducer is used.")
 		os.Exit(1)
 	}
@@ -48,7 +44,7 @@ func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 
 func (fc *Flow) newNextDataset(shardSize int) (ret *Dataset) {
 	ret = newDataset(fc)
-	ret.setupShard(shardSize)
+	setupDatasetShard(ret, shardSize)
 	return
 }
 
@@ -186,6 +182,17 @@ func fromDatasetToStep(input *Dataset, step *Step) {
 	}
 	step.InputDatasets = append(step.InputDatasets, input)
 	input.ReadingSteps = append(input.ReadingSteps, step)
+}
+
+func setupDatasetShard(d *Dataset, n int) {
+	for i := 0; i < n; i++ {
+		ds := &DatasetShard{
+			Id:           i,
+			Dataset:      d,
+			IncomingChan: util.NewPiper(),
+		}
+		d.Shards = append(d.Shards, ds)
+	}
 }
 
 func fromDatasetShardToTask(shard *DatasetShard, task *Task) {

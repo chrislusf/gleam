@@ -140,6 +140,7 @@ func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 		Hostname:   hostname,
 		Executable: executable,
 		StartTime:  time.Now().UnixNano(),
+		Name:       fc.Name,
 	}
 
 }

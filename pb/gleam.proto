@@ -1,0 +1,356 @@
+syntax = "proto3";
+
+package pb;
+
+service GleamMaster {
+  rpc GetResources(ComputeRequest) returns (AllocationResult) {}
+  rpc SendHeartbeat(stream Heartbeat) returns (Empty) {}
+  rpc SendFlowExecutionStatus(stream FlowExecutionStatus) returns (Empty) {}
+}
+
+//////////////////////////////////////////////////
+message ComputeRequest {
+  string data_center = 1;
+  repeated ComputeResource compute_resources = 2;
+  string username = 3;
+  string hostname = 4;
+  uint32 flowHashCode = 5;
+}
+
+message ComputeResource {
+  int32 cpu_count = 1;
+  int32 cpu_level = 2;
+  int32 gpu_count = 3;
+  int32 gpu_level = 4;
+  int64 memory_mb = 5;
+  int64 disk_mb = 6;
+}
+
+message DataResource {
+  Location location = 1;
+  int64 size = 2;
+}
+
+message Location {
+  string data_center = 1;
+  string rack = 2;
+  string server = 3;
+  int32 port = 4;
+}
+
+message Allocation {
+  Location location = 1;
+  ComputeResource allocated = 2;
+}
+
+message AllocationResult {
+	repeated Allocation allocations = 1;
+}
+
+//////////////////////////////////////////////////
+message Heartbeat {
+  Location location = 1;
+  ComputeResource resource = 2;
+  ComputeResource allocated = 3;
+}
+message Empty {}
+
+//////////////////////////////////////////////////
+message DataLocation {
+  string name = 1;
+  Location location = 2;
+  bool onDisk = 3;
+}
+
+//////////////////////////////////////////////////
+message FlowExecutionStatus {
+
+    message Task {
+        int32 stepId = 1;
+        int32 id = 2; // unique when combined with stepId
+    }
+    message Step {
+        int32 id = 1;
+        string name = 2;
+        repeated int32 parentIds = 3;
+        repeated int32 taskIds = 4;
+        repeated int32 inputDatasetId = 5;
+        int32 outputDatasetId = 6;
+    }
+    message Dataset {
+        int32 id = 1;
+        int32 stepId = 2;
+        repeated int32 readingStepIds = 3;
+    }
+    message DatasetShard {
+        int32 datasetId = 1;
+        int32 id = 2; // unique when combined with datasetId
+    }
+    message StepGroup {
+        repeated int32 stepIds = 1;
+        repeated int32 parentIds = 2;
+    }
+    message TaskGroup {
+        repeated int32 stepIds = 1;
+        repeated int32 taskIds = 2;
+
+        ExecutionRequest request = 3;
+		Allocation allocation = 4;
+
+        message Execution {
+            int64 start_time = 1;
+            int64 stop_time = 2;
+            double system_time = 3;
+            double user_time = 4;
+            bytes error = 5;
+            bytes output_hash = 6;
+		    ExecutionStat executionStat = 7;
+        }
+        repeated Execution executions = 5;
+		
+    }
+
+    repeated StepGroup stepGroups = 1;
+    repeated TaskGroup taskGroups = 2;
+    repeated Dataset datasets = 3;
+    repeated DatasetShard datasetShards = 4;
+    repeated Task tasks = 5;
+    repeated Step steps = 6;
+
+    uint32 id = 7;
+
+    message DriverInfo {
+        string username = 1;
+        string hostname = 2;
+        string executable = 3;
+        string executable_hash = 4;
+        int64 start_time = 5;
+        int64 stop_time = 6;
+		string name = 7;
+    }
+    DriverInfo driver = 8;
+
+}
+
+
+
+
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+
+service GleamExecutor {
+  rpc CollectExecutionStatistics(stream ExecutionStat) returns (Empty) {}
+}
+
+service GleamAgent {
+  rpc SendFileResource(stream FileResourceRequest) returns (stream FileResourceResponse) {}
+  rpc Execute(ExecutionRequest) returns (stream ExecutionResponse) {}
+  // collect execution stats from "gleam execute" processes
+  rpc CollectExecutionStatistics(stream ExecutionStat) returns (Empty) {}
+  rpc Delete(DeleteDatasetShardRequest) returns (DeleteDatasetShardResponse) {}
+}
+
+message FileResourceRequest {
+	string name = 1;
+	string dir = 2;
+	uint32 hash = 3;
+	uint32 flowHashCode = 4;
+	bytes content = 5;
+}
+
+message FileResourceResponse {
+	bool alreadyExists = 1;
+	bool ok = 2;
+}
+
+message ExecutionRequest {
+	InstructionSet instructionSet = 1;
+	string dir = 2;
+	ComputeResource resource = 3;
+}
+
+message ExecutionResponse {
+	bytes output = 1;
+	bytes error = 2;
+	double systemTime = 3;
+	double userTime = 4;
+	ExecutionStat executionStat = 5;
+}
+
+message ExecutionStat {
+	uint32 flowHashCode = 1;
+	repeated InstructionStat stats = 2;
+}
+
+message InstructionStat {
+    int32 stepId = 1;
+    int32 taskId = 2;
+	int64 inputCounter = 3;
+	int64 outputCounter = 4;
+}
+
+message ControlMessage {
+	bool isOnDiskIO = 1;
+	ReadRequest readRequest = 2;
+	WriteRequest writeRequest = 3;
+}
+
+message DeleteDatasetShardRequest {
+	string name = 1;
+}
+
+message DeleteDatasetShardResponse {
+	string error = 1;
+}
+
+message WriteRequest {
+	string channelName = 1;
+	string writerName = 2;
+	int32 readerCount = 3;
+}
+
+message ReadRequest {
+	string channelName = 1;
+	string readerName = 2;
+}
+
+///////////////////////////////////
+// Distributed Instructions
+///////////////////////////////////
+
+message InstructionSet {
+	repeated Instruction instructions = 1;
+	int32 readerCount = 2;
+	uint32 flowHashCode = 3;
+	bool isProfiling = 4;
+	string agentAddress = 5;
+	string name = 6;
+}
+
+message Instruction {
+    int32 stepId = 1;
+    int32 taskId = 2;
+	int32 memoryInMB = 3;
+	repeated DatasetShardLocation inputShardLocations = 4;
+	repeated DatasetShardLocation OutputShardLocations = 5;
+
+	message Select {
+		repeated int32 keyIndexes = 1;
+		repeated int32 valueIndexes = 2;
+	}
+	Select select = 6;
+
+	message JoinPartitionedSorted {
+		repeated int32 indexes = 1;
+		bool isLeftOuterJoin = 2;
+		bool isRightOuterJoin = 3;
+	}
+	JoinPartitionedSorted joinPartitionedSorted = 7;
+
+	message CoGroupPartitionedSorted {
+		repeated int32 indexes = 1;
+	}
+	CoGroupPartitionedSorted coGroupPartitionedSorted = 8;
+
+	message PipeAsArgs {
+		string code = 1;
+	}
+	PipeAsArgs pipeAsArgs = 9;
+
+	message ScatterPartitions {
+		repeated int32 indexes = 1;
+	}
+	ScatterPartitions scatterPartitions = 10;
+
+	message CollectPartitions {
+	}
+	CollectPartitions collectPartitions = 11;
+
+	message InputSplitReader {
+		string inputType = 1;
+	}
+	InputSplitReader inputSplitReader = 12;
+
+	message RoundRobin {
+	}
+	RoundRobin roundRobin = 13;
+
+	message LocalTop {
+		int32 n = 1;
+		repeated OrderBy orderBys = 2;
+	}
+	LocalTop localTop = 14;
+
+	message Broadcast {
+	}
+	Broadcast broadcast = 15;
+
+	message LocalHashAndJoinWith {
+		repeated int32 indexes = 1;
+	}
+	LocalHashAndJoinWith localHashAndJoinWith = 16;
+
+	message Script {
+		bool isPipe = 1;
+		string path = 2;
+		repeated string args = 3;
+		repeated string env = 4;
+	}
+	Script script = 17;
+
+	message LocalSort {
+		repeated OrderBy orderBys = 1;
+	}
+	LocalSort localSort = 18;
+
+	message MergeSortedTo {
+		repeated OrderBy orderBys = 1;
+	}
+	MergeSortedTo mergeSortedTo = 19;
+
+	message MergeTo {}
+	MergeTo mergeTo = 20;
+
+	message LocalDistinct {
+		repeated OrderBy orderBys = 1;
+	}
+	LocalDistinct localDistinct = 21;
+
+	message LocalLimit {
+		int32 n = 1;
+		int32 offset = 2;
+	}
+	LocalLimit localLimit = 22;
+
+	message LocalGroupBySorted {
+		repeated int32 indexes = 1;
+	}
+	LocalGroupBySorted localGroupBySorted = 23;
+
+}
+
+message OrderBy{
+	int32 index = 1;
+	int32 order = 2;
+}
+
+///////////////////////////////////
+// Distributed Computing
+///////////////////////////////////
+
+message DatasetShard {
+	string FlowName = 1;
+	int32 DatasetId = 2;
+	int32 DatasetShardId = 3;
+	uint32 FlowHashCode = 4; //uint32 must be optional
+}
+
+message DatasetShardLocation {
+	string Name = 1;
+	string Host = 2;
+	int32 Port = 3;
+	bool onDisk = 4;
+}

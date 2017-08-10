@@ -23,7 +23,7 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
       <div class="row">
         <div class="col-sm-6">
           {{ with .Status.Driver }}
-          <h2>Driver Program</h2>
+          <h2>{{ .Name }}</h2>
           <table class="table">
             <tbody>
               <tr>
@@ -72,7 +72,32 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
         </div>
       </div>
 
-      <p>{{.Svg}}
+      <div class="row">
+        <div class="col-sm-6">
+          <p>{{.Svg}}</p>
+        </div>
+        <div class="col-sm-6">
+          {{ with .Status.Steps }}
+            <h2>Steps</h2>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Name</th>
+                </tr>
+              </thead>
+              <tbody>
+              {{ range $step_index, $step := . }}
+                <tr>
+                  <td>{{ $step.Id }}</td>
+                  <td>{{ $step.Name }}</td>
+                </tr>
+              {{ end }}
+              </tbody>
+            </table>
+          {{ end }}
+        </div>
+      </div>
 
       {{ with .Status.TaskGroups }}
       <div class="row">
@@ -81,7 +106,6 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
           <thead>
             <tr>
               <th>Steps</th>
-              <th>Name</th>
               <th>Allocation</th>
               <th>Execution</th>
             </tr>
@@ -90,7 +114,6 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
           {{ range $tg_index, $tg := . }}
             <tr>
               <td>{{ $tg.StepIds }}</td>
-              <td>{{with $tg.Request}}{{.InstructionSet.Name}}{{end}}</td>
               <td>
                 {{with $tg.Allocation}}
                     {{.Allocated.MemoryMb}}MB {{.Location.DataCenter}}-{{.Location.Rack}}-{{.Location.Server}}:{{.Location.Port}}
@@ -111,7 +134,7 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                      {{with .ExecutionStat}}
                      <ul>
                        {{range .Stats}}
-                          <li>{{.StepId}}-{{.TaskId}}:{{.InputCounter}}=>{{.OutputCounter}}</li>
+                          <li>{{.StepId}}:{{.TaskId}} {{.InputCounter}}=>{{.OutputCounter}}</li>
                        {{end}}
                      </ul>
                      {{end}}

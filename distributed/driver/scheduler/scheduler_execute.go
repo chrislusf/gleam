@@ -55,7 +55,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	lastInstruction.SetOutputLocations(outputLocations)
 
 	instructionSet.FlowHashCode = flowContext.HashCode
-	instructionSet.IsProfiling = false // enable this when profiling executors
+	instructionSet.IsProfiling = s.Option.IsProfiling
 	instructionSet.Name = taskGroup.String()
 
 	request := &pb.ExecutionRequest{
@@ -68,7 +68,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	// println("RequestId:", taskGroup.RequestId, instructions.FlowHashCode)
 
-	if err := sendExecutionRequest(ctx, executionStatus, allocation.Location.URL(), request); err != nil {
+	if err := sendExecutionRequest(ctx, taskGroupStatus, executionStatus, allocation.Location.URL(), request); err != nil {
 		log.Printf("remote execution error: %v", err)
 		return err
 	}
@@ -76,16 +76,33 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 	return nil
 }
 
-func (s *Scheduler) localExecute(ctx context.Context, flowContext *flow.Flow, task *flow.Task, wg *sync.WaitGroup) error {
+func (s *Scheduler) localExecute(ctx context.Context,
+	flowContext *flow.Flow,
+	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
+	task *flow.Task,
+	wg *sync.WaitGroup) error {
 	if task.Step.OutputDataset == nil {
 		return s.localExecuteOutput(ctx, flowContext, task, wg)
 	} else {
-		return s.localExecuteSource(ctx, flowContext, task, wg)
+		return s.localExecuteSource(ctx, flowContext, executionStatus, task, wg)
 	}
 }
 
-func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Flow, task *flow.Task, wg *sync.WaitGroup) error {
+func (s *Scheduler) localExecuteSource(ctx context.Context,
+	flowContext *flow.Flow,
+	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
+	task *flow.Task,
+	wg *sync.WaitGroup) error {
 	s.shardLocator.waitForOutputDatasetShardLocations(task)
+
+	instructionStat := &pb.InstructionStat{
+		StepId: int32(task.Step.Id),
+		TaskId: int32(task.Id),
+	}
+	executionStatus.ExecutionStat = &pb.ExecutionStat{
+		FlowHashCode: flowContext.HashCode,
+		Stats:        []*pb.InstructionStat{instructionStat},
+	}
 
 	for _, shard := range task.OutputShards {
 		location, _ := s.getShardLocation(shard)
@@ -98,6 +115,7 @@ func (s *Scheduler) localExecuteSource(ctx context.Context, flowContext *flow.Fl
 			}
 		}(shard)
 	}
+	task.Stat = instructionStat
 	if err := task.Step.RunFunction(task); err != nil {
 		return fmt.Errorf("Failed to send source data: %v", err)
 	}

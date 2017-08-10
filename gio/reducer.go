@@ -1,6 +1,7 @@
 package gio
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -8,57 +9,95 @@ import (
 	"github.com/chrislusf/gleam/util"
 )
 
-func ProcessReducer(f Reducer, keyPositions []int) (err error) {
+func (runner *gleamRunner) processReducer(ctx context.Context, f Reducer, keyPositions []int) (err error) {
+	return runner.report(ctx, func() error {
+		if len(keyPositions) == 1 && keyPositions[0] == 0 {
+			return runner.doProcessReducer(f)
+		}
+		return runner.doProcessReducerByKeys(f, keyPositions)
+	})
+}
 
-	keyFields := make([]bool, len(keyPositions))
-	for _, keyPosition := range keyPositions {
-		// change from 1-base to 0-base
-		keyFields[keyPosition-1] = true
-	}
-
+func (runner *gleamRunner) doProcessReducer(f Reducer) (err error) {
 	// get the first row
-	ts, row, err := util.ReadRow(os.Stdin)
+	row, err := util.ReadRow(os.Stdin)
 	if err != nil {
 		if err == io.EOF {
 			return nil
 		}
 		return fmt.Errorf("reducer input row error: %v", err)
 	}
+	stat.Stats[0].InputCounter++
 
-	lastTs := ts
-	lastKeys, lastValues := getKeysAndValues(row, keyFields)
+	lastTs := row.T
+	lastKeys := row.K
 
 	for {
-		ts, row, err = util.ReadRow(os.Stdin)
+		row, err = util.ReadRow(os.Stdin)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
 			}
 			break
 		}
+		stat.Stats[0].InputCounter++
 
-		keys, values := getKeysAndValues(row, keyFields)
-		x := util.Compare(lastKeys, keys)
-		if x == 0 {
-			lastValues, err = reduce(f, lastValues, values)
-		} else {
-			output(lastTs, lastKeys, lastValues)
-			lastKeys, lastValues = keys, values
-		}
-		if ts > lastTs {
-			lastTs = ts
+		keys := row.K
+		lastKeys, err = reduce(f, lastKeys, keys)
+		if row.T > lastTs {
+			lastTs = row.T
 		}
 	}
-	output(lastTs, lastKeys, lastValues)
+
+	// fmt.Fprintf(os.Stderr, "lastKeys:%v\n", lastKeys)
+
+	TsEmit(lastTs, lastKeys...)
 
 	return nil
 }
 
-func output(ts int64, x, y []interface{}) error {
-	var t []interface{}
-	t = append(t, x...)
-	t = append(t, y...)
-	return util.WriteRow(os.Stdout, ts, t...)
+func (runner *gleamRunner) doProcessReducerByKeys(f Reducer, keyPositions []int) (err error) {
+
+	// get the first row
+	row, err := util.ReadRow(os.Stdin)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return fmt.Errorf("reducer input row error: %v", err)
+	}
+	stat.Stats[0].InputCounter++
+
+	lastTs := row.T
+	row.UseKeys(keyPositions)
+	lastKeys, lastValues := row.K, row.V
+
+	for {
+		row, err = util.ReadRow(os.Stdin)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Fprintf(os.Stderr, "join read row error: %v", err)
+			}
+			break
+		}
+		stat.Stats[0].InputCounter++
+
+		row.UseKeys(keyPositions)
+		keys, values := row.K, row.V
+		x := util.Compare(lastKeys, keys)
+		if x == 0 {
+			lastValues, err = reduce(f, lastValues, values)
+		} else {
+			TsEmitKV(lastTs, lastKeys, lastValues)
+			lastKeys, lastValues = keys, values
+		}
+		if row.T > lastTs {
+			lastTs = row.T
+		}
+	}
+	TsEmitKV(lastTs, lastKeys, lastValues)
+
+	return nil
 }
 
 func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
@@ -74,15 +113,4 @@ func reduce(f Reducer, x, y []interface{}) ([]interface{}, error) {
 		return nil, err
 	}
 	return z.([]interface{}), nil
-}
-
-func getKeysAndValues(row []interface{}, keyFields []bool) (keys, values []interface{}) {
-	for i, data := range row {
-		if i < len(keyFields) && keyFields[i] {
-			keys = append(keys, data)
-		} else {
-			values = append(values, data)
-		}
-	}
-	return keys, values
 }

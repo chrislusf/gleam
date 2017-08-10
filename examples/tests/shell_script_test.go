@@ -17,7 +17,10 @@ func TestCallingShellScripts(t *testing.T) {
 		"asdfadfasaf",
 	}
 
-	flow.New().Strings(data).Pipe("grep -v asdf").Pipe("awk {print}").Fprintf(os.Stdout, "calling shell> %s\n")
+	flow.New("callShell").Strings(data).
+		Pipe("filter", "grep -v asdf").
+		Pipe("print", "awk {print}").
+		Fprintf(os.Stdout, "calling shell> %s\n")
 
 }
 
@@ -31,6 +34,8 @@ func TestOutputObjects(t *testing.T) {
 		"asdfadfasaf",
 	}
 
-	flow.New().Strings(data).Pipe("sort").Fprintf(os.Stdout, "shell> %s\n")
+	flow.New("stringOutput").Strings(data).
+		Pipe("sort", "sort").
+		Fprintf(os.Stdout, "shell> %s\n")
 
 }

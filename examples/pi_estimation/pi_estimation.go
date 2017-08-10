@@ -21,13 +21,14 @@ var (
 	monteCarloMapperId = gio.RegisterMapper(monteCarloMapper)
 	sumReducerId       = gio.RegisterReducer(sumReducer)
 
-	times  = 1024 * 1024 * 80
+	times  = 1024 * 1024 * 256
 	factor = 1024 * 1024
 )
 
 func main() {
-	flag.Parse()
+
 	gio.Init()
+	flag.Parse()
 
 	f, _ := os.Create("p.prof")
 	pprof.StartCPUProfile(f)
@@ -37,58 +38,22 @@ func main() {
 	testPureGoGleam("distributed parallel 7", false)
 	testPureGoGleam("local mode parallel 7", true)
 
-	testGleam("distributed parallel 7", false)
-	testGleam("local mode parallel 7", true)
-
 	testDirectGo()
-	testLuajit()
 
 	// this is not fair since many optimization is not applied
 	testLocalFlow()
 }
 
-func testGleam(name string, isLocal bool) {
-	var count int64
-	startTime := time.Now()
-	f := flow.New().Init(`
-      function sum(x, y)
-        return x + y
-      end
-    `).Source(util.Range(0, times/factor)).Partition(7).Map(fmt.Sprintf(`
-      function(n)
-	    local count = 0
-	    for i=1,%d,1 do
-          local x, y = math.random(), math.random()
-          if x*x+y*y < 1 then
-            count = count + 1
-          end
-		end
-		-- log("count = "..count)
-		return count
-      end
-    `, factor)).Reduce("sum").SaveFirstRowTo(&count)
-
-	if isLocal {
-		f.Run()
-	} else {
-		f.Run(distributed.Option().SetMaster(*master))
-	}
-
-	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
-	fmt.Printf("gleam %s time cost: %s\n", name, time.Now().Sub(startTime))
-	fmt.Println()
-}
-
 func testPureGoGleam(name string, isLocal bool) {
 	var count int64
+
 	startTime := time.Now()
-	f := flow.New().Init(`
-      function sum(x, y)
-        return x + y
-      end
-    `).Source(util.Range(0, times/factor)).Partition(7).
-		Mapper(monteCarloMapperId).
-		Reduce("sum").SaveFirstRowTo(&count)
+	f := flow.New("pi estimation").
+		Source("iteration times", util.Range(0, times/factor)).
+		Partition("partition", 7).
+		Map("monte carlo", monteCarloMapperId).
+		ReduceBy("sum", sumReducerId).
+		SaveFirstRowTo(&count)
 
 	if isLocal {
 		f.Run()
@@ -103,36 +68,17 @@ func testPureGoGleam(name string, isLocal bool) {
 func testDirectGo() {
 	startTime := time.Now()
 
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
 	var count int
 	for i := 0; i < times; i++ {
-		x, y := rand.Float64(), rand.Float64()
+		x, y := r.Float64(), r.Float64()
 		if x*x+y*y < 1 {
 			count++
 		}
 	}
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("direct pure go time cost: %s\n", time.Now().Sub(startTime))
-	fmt.Println()
-}
-
-func testLuajit() {
-	var count int64
-	startTime := time.Now()
-	flow.New().Source(util.Range(0, 1)).Map(fmt.Sprintf(`
-      function(n)
-	    local count = 0
-	    for i=1,%d,1 do
-          local x, y = math.random(), math.random()
-          if x*x+y*y < 1 then
-            count = count + 1
-          end
-		end
-		return count
-      end
-    `, times)).SaveFirstRowTo(&count).Run()
-
-	fmt.Printf("count=%d pi = %f\n", count, 4.0*float64(count)/float64(times))
-	fmt.Printf("luajit local time cost: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 
@@ -146,9 +92,11 @@ func testLocalFlow() {
 		close(ch)
 	}()
 	glow.New().Channel(ch).Partition(7).Map(func(t int) int {
+		r := rand.New(rand.NewSource(time.Now().Unix()))
+
 		count := 0
 		for i := 0; i < factor; i++ {
-			x, y := rand.Float32(), rand.Float32()
+			x, y := r.Float32(), r.Float32()
 			if x*x+y*y < 1 {
 				count++
 			}
@@ -165,9 +113,11 @@ func testLocalFlow() {
 }
 
 func monteCarloMapper(row []interface{}) error {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
 	var count int
 	for i := 0; i < factor; i++ {
-		x, y := rand.Float32(), rand.Float32()
+		x, y := r.Float32(), r.Float32()
 		if x*x+y*y < 1 {
 			count++
 		}

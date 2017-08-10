@@ -29,7 +29,7 @@ func main() {
 	k := kafka.New(brokerList, *topic, *group)
 	k.TimeoutSeconds = *timeout
 
-	f := flow.New().Read(k).Printlnf("%x")
+	f := flow.New("kafka " + *topic).Read(k).Printlnf("%x")
 
 	f.Run()
 

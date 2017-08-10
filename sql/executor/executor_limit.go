@@ -23,10 +23,10 @@ func (e *LimitExec) Exec() *flow.Dataset {
 
 	k := int(e.Count + e.Offset)
 
-	ret := d.LocalLimit(k, 0)
+	ret := d.LocalLimit("limit", k, 0)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeTo(1)
+		ret = ret.MergeTo("merge", 1)
 	}
-	ret = ret.LocalLimit(int(e.Count), int(e.Offset))
+	ret = ret.LocalLimit("limit", int(e.Count), int(e.Offset))
 	return ret
 }

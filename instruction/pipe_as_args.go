@@ -30,8 +30,8 @@ func NewPipeAsArgs(code string) *PipeAsArgs {
 	return &PipeAsArgs{code}
 }
 
-func (b *PipeAsArgs) Name() string {
-	return "PipeAsArgs"
+func (b *PipeAsArgs) Name(prefix string) string {
+	return prefix + ".PipeAsArgs"
 }
 
 func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -42,7 +42,6 @@ func (b *PipeAsArgs) Function() func(readers []io.Reader, writers []io.Writer, s
 
 func (b *PipeAsArgs) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		PipeAsArgs: &pb.Instruction_PipeAsArgs{
 			Code: b.code,
 		},
@@ -56,18 +55,20 @@ func (b *PipeAsArgs) GetMemoryCostInMB(partitionSize int64) int64 {
 func DoPipeAsArgs(reader io.Reader, writer io.Writer, code string, stats *pb.InstructionStat) error {
 	var wg sync.WaitGroup
 
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		_, parts, err := util.DecodeRow(input)
-		if err != nil {
-			return fmt.Errorf("Failed to read input data %v: %+v\n", err, input)
-		}
+	err := util.ProcessRow(reader, nil, func(row *util.Row) error {
 		stats.InputCounter++
 
 		// feed parts as input to the code
+		var parts []interface{}
+		parts = append(parts, row.K...)
+		parts = append(parts, row.V...)
+
 		actualCode := code
 		for i := 1; i <= len(parts); i++ {
 			var arg string
-			if b, ok := parts[i-1].([]byte); ok {
+			if b, ok := parts[i-1].(string); ok {
+				arg = b
+			} else if b, ok := parts[i-1].([]byte); ok {
 				arg = string(b)
 			} else {
 				arg = fmt.Sprintf("%d", parts[i-1].(uint64))

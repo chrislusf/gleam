@@ -6,25 +6,15 @@ import (
 	"strings"
 
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/script"
 )
 
-// Map operates on each row, and the returned results are passed to next dataset.
-func (d *Dataset) Map(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	step.Name = "Map"
-	step.Script = d.Flow.createScript()
-	step.Script.Map(code)
-	return ret
-}
-
 // Mapper runs the mapper registered to the mapperId.
 // This is used to execute pure Go code.
-func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
-	d.Flow.hasPureGoMapperReducer = true
-
+func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "Mapper"
+	step.Name = name
 	step.IsPipe = false
 	step.IsGoCode = true
 	var args []string
@@ -37,37 +27,6 @@ func (d *Dataset) Mapper(mapperId gio.MapperId) *Dataset {
 	return ret
 }
 
-// ForEach operates on each row, but the results are not collected.
-// This is used to create some side effects.
-func (d *Dataset) ForEach(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	step.Name = "ForEach"
-	step.Script = d.Flow.createScript()
-	step.Script.ForEach(code)
-	return ret
-}
-
-// FlatMap translates each row into multiple rows.
-func (d *Dataset) FlatMap(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	step.Name = "FlatMap"
-	step.Script = d.Flow.createScript()
-	step.Script.FlatMap(code)
-	return ret
-}
-
-// Filter conditionally filter some rows into the next dataset.
-// The code should be a function just returning a boolean result.
-func (d *Dataset) Filter(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	ret.IsLocalSorted = d.IsLocalSorted
-	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.Name = "Filter"
-	step.Script = d.Flow.createScript()
-	step.Script.Filter(code)
-	return ret
-}
-
 func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 	ret = d.Flow.newNextDataset(len(d.Shards))
 	step = d.Flow.AddOneToOneStep(d, ret)
@@ -75,22 +34,27 @@ func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 }
 
 // Select selects multiple fields into the next dataset. The index starts from 1.
-func (d *Dataset) Select(sortOptions ...*SortOption) *Dataset {
+// The first one is the key
+func (d *Dataset) Select(name string, sortOptions ...*SortOption) *Dataset {
 	sortOption := concat(sortOptions)
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "Select"
-	step.Script = d.Flow.createScript()
-	step.Script.Select(sortOption.Indexes())
+	indexes := sortOption.Indexes()
+	step.SetInstruction(name, instruction.NewSelect([]int{indexes[0]}, indexes[1:]))
+	return ret
+}
+
+// Select selects multiple fields into the next dataset. The index starts from 1.
+func (d *Dataset) SelectKV(name string, keys, values *SortOption) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.SetInstruction(name, instruction.NewSelect(keys.Indexes(), values.Indexes()))
 	return ret
 }
 
 // LocalLimit take the local first n rows and skip all other rows.
-func (d *Dataset) LocalLimit(n int, offset int) *Dataset {
+func (d *Dataset) LocalLimit(name string, n int, offset int) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.Name = "Limit"
-	step.Script = d.Flow.createScript()
-	step.Script.Limit(n, offset)
+	step.SetInstruction(name, instruction.NewLocalLimit(n, offset))
 	return ret
 }

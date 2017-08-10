@@ -12,6 +12,7 @@ func Hosts(hosts string) *CassandraSource {
 		selectClause: "*",
 		ShardCount:   32,
 		Concurrency:  4,
+		prefix:       "cassandra",
 	}
 }
 

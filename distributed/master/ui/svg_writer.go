@@ -81,8 +81,11 @@ func doFlowExecutionStatus(canvas *svg.SVG, status *pb.FlowExecutionStatus, widt
 					positions[stepGroupId].input.x + (2*idx-(len(stepGroup.ParentIds)-1))*10*m/2,
 					positions[stepGroupId].input.y,
 				}
+				lastStepId := getLastStepId(status, status.StepGroups[parentId])
+				outputDatasetId := status.Steps[lastStepId].OutputDatasetId
+				outputDatasetSize := collectStepOutputDatasetSize(status, lastStepId)
 				connect(canvas, positions[parentId].output, acceptor,
-					fmt.Sprintf("d%d", getLastStep(status, status.StepGroups[parentId]).OutputDatasetId))
+					fmt.Sprintf("d%d %d", outputDatasetId, outputDatasetSize))
 			}
 
 			positions[stepGroupId].output = doStepGroup(canvas, positions[stepGroupId].input, status, stepGroup)
@@ -156,8 +159,8 @@ func doStep(canvas *svg.SVG, input point, step *pb.FlowExecutionStatus_Step, has
 	return
 }
 
-func getLastStep(status *pb.FlowExecutionStatus, stepGroup *pb.FlowExecutionStatus_StepGroup) (step *pb.FlowExecutionStatus_Step) {
-	return status.Steps[stepGroup.StepIds[len(stepGroup.StepIds)-1]]
+func getLastStepId(status *pb.FlowExecutionStatus, stepGroup *pb.FlowExecutionStatus_StepGroup) int32 {
+	return stepGroup.StepIds[len(stepGroup.StepIds)-1]
 }
 
 func isStepGroupFinished(status *pb.FlowExecutionStatus, stepGroup *pb.FlowExecutionStatus_StepGroup) bool {
@@ -176,4 +179,21 @@ func isStepGroupFinished(status *pb.FlowExecutionStatus, stepGroup *pb.FlowExecu
 		}
 	}
 	return isFinished
+}
+
+// may be more efficient to map stepId=>size
+func collectStepOutputDatasetSize(status *pb.FlowExecutionStatus, stepId int32) (counter int64) {
+	for _, tg := range status.TaskGroups {
+		for _, execution := range tg.Executions {
+			if execution.ExecutionStat == nil {
+				continue
+			}
+			for _, stat := range execution.ExecutionStat.Stats {
+				if stat.StepId == stepId {
+					counter += stat.OutputCounter
+				}
+			}
+		}
+	}
+	return counter
 }

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/sql"
 	"github.com/chrislusf/gleam/sql/executor"
 	"github.com/chrislusf/gleam/sql/mysql"
@@ -13,6 +14,8 @@ import (
 )
 
 func TestLimitOffset(t *testing.T) {
+	gio.Init()
+
 	sqlText := `
     select
       line div l2,
@@ -27,7 +30,7 @@ func TestLimitOffset(t *testing.T) {
     limit 2 offset 1
     ) a
     `
-	f := flow.New()
+	f := flow.New("testLimit")
 
 	ds := f.Slices([][]interface{}{
 		{"this", 1},
@@ -38,9 +41,7 @@ func TestLimitOffset(t *testing.T) {
 		{"are", 6},
 		{"many", 7},
 		{"pencils", 6},
-	}).RoundRobin(2)
-
-	ds.Init(executor.Functions)
+	}).RoundRobin("rr", 2)
 
 	sql.RegisterTable(ds, "words", []executor.TableColumn{
 		{"word", mysql.TypeVarchar},

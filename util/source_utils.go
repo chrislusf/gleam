@@ -4,6 +4,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+
+	"github.com/chrislusf/gleam/pb"
 )
 
 func ListFiles(dir string, pattern string) (fileNames []string) {
@@ -19,12 +21,13 @@ func ListFiles(dir string, pattern string) (fileNames []string) {
 	return
 }
 
-func Range(from, to int) func(io.Writer) error {
-	return func(outWriter io.Writer) error {
+func Range(from, to int) func(io.Writer, *pb.InstructionStat) error {
+	return func(outWriter io.Writer, stat *pb.InstructionStat) error {
 		for i := from; i < to; i++ {
-			if err := WriteRow(outWriter, Now(), i); err != nil {
+			if err := NewRow(Now(), i).WriteTo(outWriter); err != nil {
 				return err
 			}
+			stat.OutputCounter++
 		}
 		return nil
 	}

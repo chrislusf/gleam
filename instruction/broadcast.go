@@ -23,8 +23,8 @@ func NewBroadcast() *Broadcast {
 	return &Broadcast{}
 }
 
-func (b *Broadcast) Name() string {
-	return "Broadcast"
+func (b *Broadcast) Name(prefix string) string {
+	return prefix + ".Broadcast"
 }
 
 func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -35,7 +35,6 @@ func (b *Broadcast) Function() func(readers []io.Reader, writers []io.Writer, st
 
 func (b *Broadcast) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name:      b.Name(),
 		Broadcast: &pb.Instruction_Broadcast{},
 	}
 }

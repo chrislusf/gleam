@@ -1,73 +1,78 @@
 package main
 
 import (
+	"flag"
+
+	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/gio/mapper"
+	"github.com/chrislusf/gleam/gio/reducer"
+	"github.com/chrislusf/gleam/plugins/file"
+)
+
+var (
+	isDistributed = flag.Bool("distributed", false, "run in distributed mode")
 )
 
 func main() {
 
+	gio.Init()
+
 	join1()
-	join2()
+
+	hashjoin()
 
 }
 
 func join1() {
 
-	f := flow.New().Init(`
-	function splitter(line)
-        return line:gmatch("%w+")
-    end
-	`)
+	f := flow.New("common words count")
 
-	words := f.TextFile(
-		"../../flow/dataset_map.go",
-	).FlatMap("splitter")
+	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
+		Map("tokenize", mapper.Tokenize).
+		Map("addOne", mapper.AppendOne).
+		ReduceBy("sum", reducer.Sum)
 
-	x := words.Map(`
-		function(word)
-            --log("word x:"..word)
-			return word, 1
-		end
-	`).ReduceBy(`function(x,y) return x+y end`)
-	y := words.Map(`
-		function(word)
-            --log("word y:"..word)
-			return word, 2
-		end
-	`).ReduceBy(`function(x,y) return x+y end`)
+	b := f.Read(file.Txt("../../flow/dataset_reduce.go", 1)).
+		Map("tokenize", mapper.Tokenize).
+		Map("addOne", mapper.AppendOne).
+		ReduceBy("sum", reducer.Sum)
 
-	x.Join(y).Printlnf("join1:%s %d + %d")
+	join := a.Join("shared words", b).Printlnf("%s\t%d\t%d")
 
-	f.Run()
+	println("========== joining result=============")
+
+	if *isDistributed {
+		join.Run(distributed.Option())
+	} else {
+		join.Run()
+	}
 
 }
 
-func join2() {
+func hashjoin() {
 
-	f := flow.New().Init(`
-	function splitter(line)
-        return line:gmatch("%w+")
-    end
-    function parseUniqDashC(line)
-      line = line:gsub("^%s*", "")
-      index = string.find(line, " ")
-      return line:sub(index+1), tonumber(line:sub(1,index-1))
-    end
-	`)
+	f := flow.New("hash join")
 
-	left := f.TextFile(
-		"../../flow/dataset_map.go",
-	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
+		Map("tokenize", mapper.Tokenize).
+		Map("addOne", mapper.AppendOne).
+		ReduceBy("sum", reducer.Sum)
 
-	right := f.TextFile(
-		"../../flow/dataset_output.go",
-	).FlatMap("splitter").Pipe("sort").Pipe("uniq -c").Map("parseUniqDashC")
+	b := f.Strings([]string{
+		"func",
+		"return",
+	})
 
-	// test self join, and common join
-	left.Join(left).Join(right).Map(`
-      function (word, leftCount1, leftCount2, rightCount)
-	    return word, leftCount1, leftCount2, rightCount, leftCount1 + leftCount2 + rightCount
-      end
-	`).Printlnf("join2:%s\t%d + %d + %d = %d").Run()
+	a.Join("hash join", b).Printlnf("%s\t%d")
+
+	println("==========hash joining result=============")
+
+	if *isDistributed {
+		f.Run(distributed.Option())
+	} else {
+		f.Run()
+	}
 
 }

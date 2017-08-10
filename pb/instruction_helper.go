@@ -14,7 +14,7 @@ func (m *DatasetShardLocation) Address() string {
 
 func (m *InstructionSet) InstructionNames() (stepNames []string) {
 	for _, ins := range m.GetInstructions() {
-		stepNames = append(stepNames, ins.GetName())
+		stepNames = append(stepNames, fmt.Sprintf("%d:%d", ins.StepId, ins.TaskId))
 	}
 	return
 }
@@ -39,4 +39,8 @@ func (i *Instruction) SetOutputLocations(locations []DataLocation) {
 			OnDisk: loc.OnDisk,
 		})
 	}
+}
+
+func (i *Instruction) GetName() string {
+	return fmt.Sprintf("%d:%d", i.StepId, i.TaskId)
 }

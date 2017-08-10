@@ -25,7 +25,6 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 		tickChan := time.Tick(1 * time.Second)
 		stat := &pb.ExecutionStat{
 			FlowHashCode: exe.instructions.FlowHashCode,
-			Name:         exe.instructions.Name,
 			Stats:        exe.stats,
 		}
 		for {
@@ -57,7 +56,6 @@ func (exe *Executor) reportStatus() {
 
 		stat := &pb.ExecutionStat{
 			FlowHashCode: exe.instructions.FlowHashCode,
-			Name:         exe.instructions.Name,
 			Stats:        exe.stats,
 		}
 

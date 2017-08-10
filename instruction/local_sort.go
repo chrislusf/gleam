@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
-	"github.com/psilva261/timsort"
 )
 
 func init() {
@@ -22,11 +22,6 @@ func init() {
 	})
 }
 
-type pair struct {
-	keys []interface{}
-	data []byte
-}
-
 type LocalSort struct {
 	orderBys   []OrderBy
 	memoryInMB int
@@ -36,8 +31,8 @@ func NewLocalSort(orderBys []OrderBy, memoryInMB int) *LocalSort {
 	return &LocalSort{orderBys, memoryInMB}
 }
 
-func (b *LocalSort) Name() string {
-	return "LocalSort"
+func (b *LocalSort) Name(prefix string) string {
+	return prefix + ".LocalSort"
 }
 
 func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -48,7 +43,6 @@ func (b *LocalSort) Function() func(readers []io.Reader, writers []io.Writer, st
 
 func (b *LocalSort) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name: b.Name(),
 		LocalSort: &pb.Instruction_LocalSort{
 			OrderBys: getOrderBys(b.orderBys),
 		},
@@ -60,31 +54,26 @@ func (b *LocalSort) GetMemoryCostInMB(partitionSize int64) int64 {
 }
 
 func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *pb.InstructionStat) error {
-	var kvs []interface{}
-	indexes := getIndexesFromOrderBys(orderBys)
-	err := util.ProcessMessage(reader, func(input []byte) error {
-		if _, keys, err := util.DecodeRowKeys(input, indexes); err != nil {
-			return fmt.Errorf("%v: %+v", err, input)
-		} else {
-			stats.InputCounter++
-			kvs = append(kvs, pair{keys: keys, data: input})
-		}
+	var rows []*util.Row
+	err := util.ProcessRow(reader, nil, func(row *util.Row) error {
+		stats.InputCounter++
+		rows = append(rows, row)
 		return nil
 	})
 	if err != nil {
 		fmt.Printf("Sort>Failed to read:%v\n", err)
 		return err
 	}
-	if len(kvs) == 0 {
+	if len(rows) == 0 {
 		return nil
 	}
-	timsort.Sort(kvs, func(a, b interface{}) bool {
-		return pairsLessThan(orderBys, a, b)
+	sort.Slice(rows, func(a, b int) bool {
+		return lessThan(orderBys, rows[a], rows[b])
 	})
 
-	for _, kv := range kvs {
+	for _, row := range rows {
 		// println("sorted key", kv.(pair).keys[0].(string))
-		if err := util.WriteMessage(writer, kv.(pair).data); err != nil {
+		if err := row.WriteTo(writer); err != nil {
 			return fmt.Errorf("Sort>Failed to write: %v", err)
 		} else {
 			stats.OutputCounter++
@@ -100,11 +89,17 @@ func getIndexesFromOrderBys(orderBys []OrderBy) (indexes []int) {
 	return
 }
 
-func pairsLessThan(orderBys []OrderBy, a, b interface{}) bool {
-	x, y := a.(pair), b.(pair)
-	for i, order := range orderBys {
+func lessThan(orderBys []OrderBy, x, y *util.Row) bool {
+	var a, b interface{}
+	klen := len(x.K)
+	for _, order := range orderBys {
+		if order.Index <= klen {
+			a, b = x.K[order.Index-1], y.K[order.Index-1]
+		} else {
+			a, b = x.V[order.Index-1-klen], y.V[order.Index-1-klen]
+		}
 		normalOrder := order.Order >= 0
-		compared := util.Compare(x.keys[i], y.keys[i])
+		compared := util.Compare(a, b)
 		if compared < 0 {
 			return normalOrder
 		}

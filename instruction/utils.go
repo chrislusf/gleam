@@ -27,54 +27,15 @@ func toOrderBys(orderBys []*pb.OrderBy) (ret []OrderBy) {
 	return ret
 }
 
-type keyValues struct {
-	Timestamp int64
-	Keys      []interface{}
-	Values    []interface{}
-}
-
-func genKeyBytesAndValues(input []byte, indexes []int) (keyBytes []byte, values []interface{}, err error) {
-	_, keys, values, err := util.DecodeRowKeysValues(input, indexes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("DecodeRowKeysValues %v: %+v", err, input)
-	}
-	keyBytes, err = util.EncodeKeys(keys...)
-	return keyBytes, values, err
-}
-
-func getKeyValues(row []interface{}, indexes []int, mask []bool) keyValues {
-	var keys, values []interface{}
-	for _, x := range indexes {
-		keys = append(keys, row[x-1])
-	}
-	for i := 0; i < len(row); i++ {
-		if !mask[i] {
-			values = append(values, row[i])
-		}
-	}
-	return keyValues{
-		Keys:   keys,
-		Values: values,
-	}
-}
-
-func genKeyFieldsMask(n int, indexes []int) []bool {
-	mask := make([]bool, n)
-	for _, x := range indexes {
-		mask[x-1] = true
-	}
-	return mask
-}
-
 // create a channel to aggregate values of the same key
 // automatically close original sorted channel
-func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []int) chan keyValues {
-	writer := make(chan keyValues, 1024)
+func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []int) chan util.Row {
+	writer := make(chan util.Row, 1024)
 	go func() {
 
 		defer close(writer)
 
-		ts, row, err := util.ReadRow(sortedChan)
+		firstRow, err := util.ReadRow(sortedChan)
 		if err != nil {
 			if err != io.EOF {
 				fmt.Fprintf(os.Stderr, "%s join read first row error: %v\n", name, err)
@@ -83,37 +44,34 @@ func newChannelOfValuesWithSameKey(name string, sortedChan io.Reader, indexes []
 		}
 		// fmt.Printf("%s join read len=%d, row: %s\n", name, len(row), row[0])
 
-		keyFieldsMask := genKeyFieldsMask(len(row), indexes)
+		firstRow.UseKeys(indexes)
 
-		firstRow := getKeyValues(row, indexes, keyFieldsMask)
-
-		keyValues := keyValues{
-			Timestamp: ts,
-			Keys:      firstRow.Keys,
-			Values:    []interface{}{firstRow.Values},
+		row := util.Row{
+			T: firstRow.T,
+			K: firstRow.K,
+			V: []interface{}{firstRow.V},
 		}
 
 		for {
-			ts, row, err = util.ReadRow(sortedChan)
+			newRow, err := util.ReadRow(sortedChan)
 			if err != nil {
 				if err != io.EOF {
 					fmt.Fprintf(os.Stderr, "join read row error: %v", err)
 				}
 				break
 			}
-			// fmt.Printf("%s join read len=%d, row: %s\n", name, len(row), row[0])
-			newRow := getKeyValues(row, indexes, keyFieldsMask)
-			x := util.Compare(keyValues.Keys, newRow.Keys)
+			newRow.UseKeys(indexes)
+			x := util.Compare(row.K, newRow.K)
 			if x == 0 {
-				keyValues.Values = append(keyValues.Values, newRow.Values)
+				row.V = append(row.V, newRow.V)
 			} else {
-				writer <- keyValues
-				keyValues.Keys = newRow.Keys
-				keyValues.Values = []interface{}{newRow.Values}
+				writer <- row
+				row.K = newRow.K
+				row.V = []interface{}{newRow.V}
 			}
-			keyValues.Timestamp = max(keyValues.Timestamp, ts)
+			row.T = max(row.T, newRow.T)
 		}
-		writer <- keyValues
+		writer <- row
 	}()
 
 	return writer

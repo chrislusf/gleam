@@ -15,6 +15,7 @@ type Order int
 const (
 	Ascending  = Order(1)
 	Descending = Order(-1)
+	NoOrder    = Order(0)
 )
 
 type OrderBy struct {
@@ -23,7 +24,7 @@ type OrderBy struct {
 }
 
 type Instruction interface {
-	Name() string
+	Name(string) string
 	Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error
 	SerializeToCommand() *pb.Instruction
 	GetMemoryCostInMB(partitionSize int64) int64

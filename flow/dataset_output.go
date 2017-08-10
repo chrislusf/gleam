@@ -2,10 +2,13 @@ package flow
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 
+	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
@@ -99,12 +102,96 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 		}
 
 		return util.TakeMessage(reader, 1, func(encodedBytes []byte) error {
-			if err := util.DecodeRowTo(encodedBytes, decodedObjects...); err != nil {
+			if row, err := util.DecodeRow(encodedBytes); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				return err
+			} else {
+				var counter int
+				for _, v := range row.K {
+					if err := setValueTo(v, decodedObjects[counter]); err != nil {
+						return err
+					}
+					counter++
+				}
+				for _, v := range row.V {
+					if err := setValueTo(v, decodedObjects[counter]); err != nil {
+						return err
+					}
+					counter++
+				}
 			}
 			return nil
 		})
 	}
 	return d.Output(fn)
+}
+
+func (d *Dataset) OutputRow(f func(*util.Row) error) *Dataset {
+	fn := func(reader io.Reader) error {
+		if d.Step.IsPipe {
+			return util.TakeTsv(reader, -1, func(args []string) error {
+				var objects []interface{}
+				for _, arg := range args {
+					objects = append(objects, arg)
+				}
+				row := util.NewRow(util.Now(), objects...)
+				return f(row)
+			})
+		}
+
+		return util.TakeMessage(reader, -1, func(encodedBytes []byte) error {
+			if row, err := util.DecodeRow(encodedBytes); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
+				return err
+			} else {
+				return f(row)
+			}
+			return nil
+		})
+	}
+	return d.Output(fn)
+}
+
+func setValueTo(src, dst interface{}) error {
+	switch v := dst.(type) {
+	case *string:
+		*v = gio.ToString(src)
+	case *[]byte:
+		*v = src.([]byte)
+	case *int:
+		*v = int(gio.ToInt64(src))
+	case *int8:
+		*v = int8(gio.ToInt64(src))
+	case *int16:
+		*v = int16(gio.ToInt64(src))
+	case *int32:
+		*v = int32(gio.ToInt64(src))
+	case *int64:
+		*v = gio.ToInt64(src)
+	case *uint:
+		*v = uint(gio.ToInt64(src))
+	case *uint8:
+		*v = uint8(gio.ToInt64(src))
+	case *uint16:
+		*v = uint16(gio.ToInt64(src))
+	case *uint32:
+		*v = uint32(gio.ToInt64(src))
+	case *uint64:
+		*v = uint64(gio.ToInt64(src))
+	case *bool:
+		*v = src.(bool)
+	case *float32:
+		*v = float32(gio.ToFloat64(src))
+	case *float64:
+		*v = gio.ToFloat64(src)
+	}
+
+	v := reflect.ValueOf(dst)
+	if !v.IsValid() {
+		return errors.New("setValueTo nil")
+	}
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("setValueTo to nonsettable %T", dst)
+	}
+	return nil
 }

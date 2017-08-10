@@ -91,6 +91,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 }
 
 func sendExecutionRequest(ctx context.Context,
+	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	server string, request *pb.ExecutionRequest) error {
 
@@ -126,14 +127,53 @@ func sendExecutionRequest(ctx context.Context,
 				executionStatus.UserTime = response.GetUserTime()
 			}
 			if response.GetExecutionStat() != nil {
-				// log.Printf("received stat %s: %v", executionStatus, executionStatus.ExecutionStat)
-				executionStatus.ExecutionStat = response.GetExecutionStat()
+				if executionStatus.ExecutionStat == nil {
+					executionStatus.ExecutionStat = response.GetExecutionStat()
+				} else {
+					executionStatus.ExecutionStat.Stats = mergeStats(
+						executionStatus.ExecutionStat.Stats,
+						response.GetExecutionStat().GetStats())
+				}
 			}
 		}
 
 		return err
 
 	})
+}
+
+// merge existing stats with incoming stats
+func mergeStats(a, b []*pb.InstructionStat) (ret []*pb.InstructionStat) {
+	var nonOverlapping []*pb.InstructionStat
+	for _, ai := range a {
+		var found bool
+		for _, bi := range b {
+			if ai.StepId == bi.StepId {
+				found = true
+				if ai.InputCounter > bi.InputCounter {
+					ret = append(ret, ai)
+				} else {
+					ret = append(ret, bi)
+				}
+			}
+		}
+		if !found {
+			nonOverlapping = append(nonOverlapping, ai)
+		}
+	}
+	for _, bi := range b {
+		var found bool
+		for _, ai := range a {
+			if ai.StepId == bi.StepId {
+				found = true
+			}
+		}
+		if !found {
+			nonOverlapping = append(nonOverlapping, bi)
+		}
+	}
+	ret = append(ret, nonOverlapping...)
+	return ret
 }
 
 func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) error {

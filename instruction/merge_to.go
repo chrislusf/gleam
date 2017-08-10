@@ -23,8 +23,8 @@ func NewMergeTo() *MergeTo {
 	return &MergeTo{}
 }
 
-func (b *MergeTo) Name() string {
-	return "MergeTo"
+func (b *MergeTo) Name(prefix string) string {
+	return prefix + ".MergeTo"
 }
 
 func (b *MergeTo) Function() func(readers []io.Reader, writers []io.Writer, stats *pb.InstructionStat) error {
@@ -35,7 +35,6 @@ func (b *MergeTo) Function() func(readers []io.Reader, writers []io.Writer, stat
 
 func (b *MergeTo) SerializeToCommand() *pb.Instruction {
 	return &pb.Instruction{
-		Name:    b.Name(),
 		MergeTo: &pb.Instruction_MergeTo{},
 	}
 }

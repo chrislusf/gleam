@@ -10,66 +10,39 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
-func (d *Dataset) Reduce(code string) (ret *Dataset) {
-	ret = d.LocalReduce(code)
+// ReduceBy runs the reducer registered to the reducerId,
+// combining rows with the same key fields into one row
+func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields ...*SortOption) (ret *Dataset) {
+	sortOption := concat(keyFields)
+
+	name = name + ".ReduceBy"
+
+	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduceBy", reducerId, sortOption)
 	if len(d.Shards) > 1 {
-		sortOption := Field(1)
-		ret = ret.MergeSortedTo(1, sortOption).LocalReduce(code)
-		ret.IsLocalSorted = sortOption.orderByList
+		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduceBy2", reducerId, sortOption)
 	}
 	return ret
 }
 
-func (d *Dataset) LocalReduce(code string) *Dataset {
-	ret, step := add1ShardTo1Step(d)
-	ret.IsLocalSorted = d.IsLocalSorted
-	ret.IsPartitionedBy = d.IsPartitionedBy
-	step.Name = "LocalReduce"
-	step.Script = d.Flow.createScript()
-	step.Script.Reduce(code)
-	return ret
-}
+// Reduce runs the reducer registered to the reducerId,
+// combining all rows into one row
+func (d *Dataset) Reduce(name string, reducerId gio.ReducerId) (ret *Dataset) {
 
-func (d *Dataset) ReduceBy(code string, sortOptions ...*SortOption) (ret *Dataset) {
-	sortOption := concat(sortOptions)
+	name = name + ".Reduce"
 
-	ret = d.LocalSort(sortOption).LocalReduceBy(code, sortOption)
+	ret = d.LocalReduceBy(name+".LocalReduce", reducerId)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalReduceBy(code, sortOption)
+		ret = ret.MergeTo(name, 1).LocalReduceBy(name+".LocalReduce2", reducerId)
 	}
 	return ret
 }
 
-// ReducerBy runs the reducer registered to the reducerId.
-// This is used to execute pure Go code.
-func (d *Dataset) ReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOption) (ret *Dataset) {
-	sortOption := concat(sortOptions)
-
-	ret = d.LocalSort(sortOption).LocalReducerBy(reducerId, sortOption)
-	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(1, sortOption).LocalReducerBy(reducerId, sortOption)
-	}
-	return ret
-}
-
-func (d *Dataset) LocalReduceBy(code string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
-	ret, step := add1ShardTo1Step(d)
-	// TODO calculate IsLocalSorted IsPartitionedBy based on indexes
-	step.Name = "LocalReduceBy"
-	step.Script = d.Flow.createScript()
-	step.Script.ReduceBy(code, sortOption.Indexes())
-	return ret
-}
-
-func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOption) *Dataset {
-	d.Flow.hasPureGoMapperReducer = true
+func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOptions ...*SortOption) *Dataset {
 
 	sortOption := concat(sortOptions)
 
 	ret, step := add1ShardTo1Step(d)
-	step.Name = "LocalReducerBy"
+	step.Name = name
 	step.IsPipe = false
 	step.IsGoCode = true
 
@@ -78,12 +51,17 @@ func (d *Dataset) LocalReducerBy(reducerId gio.ReducerId, sortOptions ...*SortOp
 	for _, keyPosition := range sortOption.Indexes() {
 		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
 	}
+	keyFields := "0" // combine all rows directly
+	if len(keyPositions) > 0 {
+		keyFields = strings.Join(keyPositions, ",")
+	}
 
 	var args []string
 	args = append(args, "./"+filepath.Base(os.Args[0]))
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.reducer="+string(reducerId))
-	args = append(args, "-gleam.keyFields="+strings.Join(keyPositions, ","))
+	args = append(args, "-gleam.keyFields="+keyFields)
+
 	commandLine := strings.Join(args, " ")
 
 	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()

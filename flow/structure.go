@@ -59,14 +59,10 @@ type StepMetadata struct {
 }
 
 type Flow struct {
-	PrevScriptType string
-	PrevScriptPart string
-	Scripts        map[string]func() script.Script
-	Steps          []*Step
-	Datasets       []*Dataset
-	HashCode       uint32
-
-	hasPureGoMapperReducer bool
+	Name     string
+	Steps    []*Step
+	Datasets []*Dataset
+	HashCode uint32
 }
 
 type Dataset struct {
