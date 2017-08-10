@@ -8,22 +8,19 @@
 Gleam is a high performance and efficient distributed execution system, and also
 simple, generic, flexible and easy to customize.
 
-Gleam is built in Go, and the user defined computation can be written in Go, Lua,
+Gleam is built in Go, and the user defined computation can be written in Go, 
 Unix pipe tools, or any streaming programs.
-
-It is convenient to write logic in Lua, but Lua is optional. Go is also supported with a little bit extra effort.
 
 ### High Performance
 
 * Pure Go mappers and reducers have high performance and concurrency.
-* Optional LuaJIT also has high performance comparable to C, Java, Go. It streamingly processes data, without context switch between Go and Lua.
 * Data flows through memory, optionally to disk.
 * Multiple map reduce steps are merged together for better performance.
 
 
 ### Memory Efficient
 
-* Gleam does not have the common GC problem that plagued other languages. Each executor is run in a separated OS process. The memory is managed by the OS. One machine can host many more executors.
+* Gleam does not have the common GC problem that plagued other languages. Each executor runs in a separated OS process. The memory is managed by the OS. One machine can host many more executors.
 * Gleam master and agent servers are memory efficient, consuming about 10 MB memory.
 * Gleam tries to automatically adjust the required memory size based on data size hints, avoiding the try-and-error manual memory tuning effort.
 
@@ -33,8 +30,6 @@ It is convenient to write logic in Lua, but Lua is optional. Go is also supporte
 
 ### Easy to Customize
 * The Go code is much simpler to read than Scala, Java, C++.
-* Optional LuaJIT FFI library can easily invoke any C functions, for even more performance or use any existing C libraries.
-* (future) Write SQL with UDF written in Lua.
 
 # One Flow, Multiple ways to execute
 Gleam code defines the flow, specifying each dataset(vertex) and computation step(edge), and build up a directed
@@ -84,7 +79,7 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 
 ## Word Count
 
-#### Word Count by Pure Go
+#### Word Count
 
 Basically, you need to register the Go functions first.
 It will return a mapper or reducer function id, which we can pass it to the flow.
@@ -93,32 +88,46 @@ It will return a mapper or reducer function id, which we can pass it to the flow
 package main
 
 import (
+	"flag"
 	"strings"
 
+	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/plugins/file"
 )
 
 var (
-	MapperTokenizer = gio.RegisterMapper(tokenize)
-	MapperAddOne    = gio.RegisterMapper(addOne)
-	ReducerSum      = gio.RegisterReducer(sum)
+	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
+	Tokenize  = gio.RegisterMapper(tokenize)
+	AppendOne = gio.RegisterMapper(appendOne)
+	Sum = gio.RegisterReducer(sum)
 )
 
-func main(){
+func main() {
 
-	gio.Init() // required for pure go map reduce, place it right after main() starts
+	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
+	flag.Parse() // optional, since gio.Init() will call this also.
 
-	flow.New().TextFile("/etc/passwd").
-		Mapper(MapperTokenizer). // invoke the registered "tokenize" mapper function.
-		Mapper(MapperAddOne).    // invoke the registered "addOne" mapper function.
-		ReducerBy(ReducerSum).   // invoke the registered "sum" reducer function.
-		Sort(flow.OrderBy(2, true)).
-		Printlnf("%s %d").Run()
+	f := flow.New("top5 words in passwd").
+		Read(file.Txt("/etc/passwd", 2)).  // read a txt file and partitioned to 2 shards
+		Map("tokenize", Tokenize).    // invoke the registered "tokenize" mapper function.
+		Map("appendOne", AppendOne).  // invoke the registered "appendOne" mapper function.
+		ReduceBy("sum", Sum).         // invoke the registered "sum" reducer function.
+		Sort("sortBySum", flow.OrderBy(2, true)).
+		Top("top5", 5, flow.OrderBy(2, false)).
+		Printlnf("%s\t%d")
+
+	if *isDistributed {
+		f.Run(distributed.Option())
+	} else {
+		f.Run()
+	}
+
 }
 
 func tokenize(row []interface{}) error {
-	line := string(row[0].([]byte))
+	line := gio.ToString(row[0])
 	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
 		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
 	}) {
@@ -127,74 +136,73 @@ func tokenize(row []interface{}) error {
 	return nil
 }
 
-func addOne(row []interface{}) error {
-	word := string(row[0].([]byte))
-	gio.Emit(word, 1)
+func appendOne(row []interface{}) error {
+	row = append(row, 1)
+	gio.Emit(row...)
 	return nil
 }
 
 func sum(x, y interface{}) (interface{}, error) {
-	return x.(uint64) + y.(uint64), nil
+	return gio.ToInt64(x) + gio.ToInt64(y), nil
 }
 
 ```
 
-A more blown up example is here.
+Now you can execute the binary directly or with "-distributed" option to run in distributed mode.
+The distributed mode would need a simple setup described later.
+
+A bit more blown up example is here, using the predefined mapper or reducer:
 https://github.com/chrislusf/gleam/blob/master/examples/word_count_in_go/word_count_in_go.go
 
 
-#### Word Count by LuaJIT
-
-LuaJIT can greatly simplify the code. The full source code, not snippet, for word count:
-```go
-package main
-
-import (
-	"github.com/chrislusf/gleam/flow"
-)
-
-func main() {
-
-	flow.New().TextFile("/etc/passwd").FlatMap(`
-		function(line)
-			return line:gmatch("%w+")
-		end
-	`).Map(`
-		function(word)
-			return word, 1
-		end
-	`).ReduceBy(`
-		function(x, y)
-			return x + y
-		end
-	`).Printlnf("%s,%d").Run()
-}
-
-```
-
 #### Word Count by Unix Pipe Tools
-Another way to do the similar:
+Here is another way to do the similar by unix pipe tools.
+
+Unix Pipes are easy for sequential pipes, but limited to fan out, and even more limited to fan in.
+
+With Gleam, fan-in and fan-out parallel pipes become very easy.
+
 ```go
 package main
 
 import (
+	"fmt"
+
 	"github.com/chrislusf/gleam/flow"
+	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/gio/mapper"
+	"github.com/chrislusf/gleam/plugins/file"
+	"github.com/chrislusf/gleam/util"
 )
 
 func main() {
 
-	flow.New().TextFile("/etc/passwd").FlatMap(`
-		function(line)
-			return line:gmatch("%w+")
-		end
-	`).Pipe("sort").Pipe("uniq -c").Printlnf("%s").Run()
-}
+	gio.Init()
 
+	flow.New("word count by unix pipes").
+		Read(file.Txt("/etc/passwd", 2)).
+		Map("tokenize", mapper.Tokenize).
+		Pipe("lowercase", "tr 'A-Z' 'a-z'").
+		Pipe("sort", "sort").
+		Pipe("uniq", "uniq -c").
+		OutputRow(func(row *util.Row) error {
+
+			fmt.Printf("%s\n", gio.ToString(row.K[0]))
+
+			return nil
+		}).Run()
+
+}
 ```
+
+This example used OutputRow() to process the output row directly.
 
 ## Join two CSV files.
 
-Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" and file "b.csv" has fields "b1, b2, b3". We want to join the rows where a1 = b2. And the output format should be "a1, a4, b3".
+Assume there are file "a.csv" has fields "a1, a2, a3, a4, a5" 
+and file "b.csv" has fields "b1, b2, b3". 
+We want to join the rows where a1 = b2. 
+And the output format should be "a1, a4, b3".
 
 ```go
 package main
@@ -209,54 +217,11 @@ func main() {
 
 	gio.Init()
 
-	f := New()
-	a := f.Read(file.Csv("a.csv")).Select(Field(1,4)) // a1, a4
-	b := f.Read(file.Csv("b.csv")).Select(Field(2,3)) // b2, b3
+	f := New("join a.csv and b.csv by a1=b2")
+	a := f.Read(file.Csv("a.csv", 1)).Select("select", Field(1,4)) // a1, a4
+	b := f.Read(file.Csv("b.csv", 1)).Select("select", Field(2,3)) // b2, b3
 
-	a.Join(b).Printlnf("%s,%s,%s").Run()  // a1, a4, b3
-
-}
-
-```
-
-## Parallel Execution
-Unix Pipes are easy for sequential pipes, but limited to fan out, and even more limited to fan in.
-
-With Gleam, fan-in and fan-out parallel pipes become very easy.
-
-This example get a list of file names, partitioned into 3 groups, and then process them in parallel.
-
-```go
-// word_count.go
-package main
-
-import (
-	"log"
-	"path/filepath"
-
-	"github.com/chrislusf/gleam/flow"
-)
-
-func main() {
-
-	fileNames, err := filepath.Glob("/Users/chris/Downloads/txt/en/ep-08-*.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	flow.New().Strings(fileNames).Partition(3).PipeAsArgs("cat $1").FlatMap(`
-      function(line)
-        return line:gmatch("%w+")
-      end
-    `).Map(`
-      function(word)
-        return word, 1
-      end
-    `).ReduceBy(`
-      function(x, y)
-        return x + y
-      end
-    `).Printlnf("%s\t%d").Run()
+	a.Join("joinByKey", b).Printlnf("%s,%s,%s").Run()  // a1, a4, b3
 
 }
 
@@ -284,27 +249,20 @@ kubectl apply -f k8s/
 
 ## Change Execution Mode.
 
-After the flow is defined, the Run() function can be executed in different ways: local mode, distributed mode, or planner mode.
+After the flow is defined, the Run() function can be executed in local mode or distributed mode.
 
 ```go
-  f := flow.New()
+  f := flow.New("")
   ...
-  // local mode
+  // 1. local mode
   f.Run()
 
-  // distributed mode
+  // 2. distributed mode
   import "github.com/chrislusf/gleam/distributed"
   f.Run(distributed.Option())
   f.Run(distributed.Option().SetMaster("master_ip:45326"))
 
-  // distributed planner mode to print out logic plan
-  import "github.com/chrislusf/gleam/distributed"
-  f.Run(distributed.Planner())
-
 ```
-# Write Mapper Reducer in Go
-
-LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more complicated, but not much. Gleam allows us to write a simple Go code with mapper or reducer logic, and automatically send it over to Gleam agents to execute. See https://github.com/chrislusf/gleam/wiki/Write-Mapper-Reducer-in-Go
 
 # Important Features
 
@@ -318,9 +276,9 @@ LuaJIT is easy, but sometimes we really need to write in Go. It is a bit more co
 # Status
 Gleam is just beginning. Here are a few todo items. Welcome any help!
 * [Add new plugin to read external data](https://github.com/chrislusf/gleam/wiki/Add-New-Source).
+* Add windowing functions similar to Apache Beam/Flink. (in progress)
 * Add schema support for each dataset.
 * Support using SQL as a flow step, similar to LINQ.
-* Add windowing functions similar to Apache Beam/Flink.
 * Add dataset metadata for better caching of often re-calculated data.
 
 Especially Need Help Now:
