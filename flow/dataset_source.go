@@ -1,13 +1,10 @@
 package flow
 
 import (
-	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"net"
 
-	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 )
@@ -50,24 +47,6 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 	return fc.Source(address, fn)
 }
 
-// ReadTsv read tab-separated lines from the reader
-func (fc *Flow) ReadTsv(reader io.Reader) (ret *Dataset) {
-	fn := func(writer io.Writer, stats *pb.InstructionStat) error {
-
-		return util.TakeTsv(reader, -1, func(message []string) error {
-			stats.InputCounter++
-			var row []interface{}
-			for _, m := range message {
-				row = append(row, m)
-			}
-			stats.OutputCounter++
-			return util.NewRow(util.Now(), row...).WriteTo(writer)
-		})
-
-	}
-	return fc.Source("tsv", fn)
-}
-
 // Source produces data feeding into the flow.
 // Function f writes to this writer.
 // The written bytes should be MsgPack encoded []byte.
@@ -93,39 +72,6 @@ func (fc *Flow) Source(name string, f func(io.Writer, *pb.InstructionStat) error
 		return nil
 	}
 	return
-}
-
-// TextFile reads the file content as lines and feed into the flow.
-// The file can be a local file or hdfs://namenode:port/path/to/hdfs/file
-func (fc *Flow) TextFile(fname string) (ret *Dataset) {
-	fn := func(writer io.Writer, stats *pb.InstructionStat) error {
-		stats.InputCounter++
-		w := bufio.NewWriter(writer)
-		defer w.Flush()
-		file, err := filesystem.Open(fname)
-		if err != nil {
-			return fmt.Errorf("Can not open file %s: %v", fname, err)
-		}
-		defer file.Close()
-
-		reader := bufio.NewReader(file)
-
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			if err := util.NewRow(util.Now(), string(scanner.Bytes())).WriteTo(w); err != nil {
-				return err
-			}
-			stats.OutputCounter++
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Printf("Scan file %s: %v", fname, err)
-			return err
-		}
-
-		return nil
-	}
-	return fc.Source(fname, fn)
 }
 
 // Channel accepts a channel to feed into the flow.

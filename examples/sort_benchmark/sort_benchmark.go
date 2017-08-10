@@ -6,6 +6,7 @@ import (
 	"github.com/chrislusf/gleam/distributed"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/gio"
+	"github.com/chrislusf/gleam/plugins/file"
 )
 
 var (
@@ -42,9 +43,8 @@ func main() {
 
 func linuxSortDistributed(fileName string, partition int) {
 
-	flow.New("linuxSort").TextFile(fileName).
+	flow.New("linuxSort").Read(file.Txt(fileName, partition)).
 		Map("split", splitter).
-		Partition("partition", partition).
 		Pipe("linuxSort", `sort -k 1`).
 		MergeSortedTo("merge", 1).
 		Printlnf("%s  %s").
@@ -53,9 +53,8 @@ func linuxSortDistributed(fileName string, partition int) {
 
 func linuxSortStandalone(fileName string, partition int) {
 
-	flow.New("linuxSort").TextFile(fileName).
+	flow.New("linuxSort").Read(file.Txt(fileName, partition)).
 		Map("split", splitter).
-		Partition("partition", partition).
 		Pipe("linuxSort", `sort -k 1`).
 		MergeSortedTo("merge", 1).
 		Printlnf("%s  %s").
@@ -65,7 +64,7 @@ func linuxSortStandalone(fileName string, partition int) {
 
 func gleamSortDistributed(fileName string, size int64, partition int, isDistributed, isInMemory bool) {
 
-	f := flow.New("gleamSort").TextFile(fileName).
+	f := flow.New("gleamSort").Read(file.Txt(fileName, partition)).
 		Hint(flow.TotalSize(size)).
 		Map("split", splitter)
 

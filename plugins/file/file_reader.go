@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/chrislusf/gleam/plugins/file/csv"
+	"github.com/chrislusf/gleam/plugins/file/tsv"
 	"github.com/chrislusf/gleam/plugins/file/txt"
 	"github.com/chrislusf/gleam/util"
 )
@@ -20,6 +21,9 @@ func Csv(fileOrPattern string, partitionCount int) *FileSource {
 func Txt(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("txt", fileOrPattern, partitionCount)
 }
+func Tsv(fileOrPattern string, partitionCount int) *FileSource {
+	return newFileSource("tsv", fileOrPattern, partitionCount)
+}
 
 func (ds *FileShardInfo) NewReader(reader io.Reader) (FileReader, error) {
 	switch ds.FileType {
@@ -27,6 +31,8 @@ func (ds *FileShardInfo) NewReader(reader io.Reader) (FileReader, error) {
 		return csv.New(reader), nil
 	case "txt":
 		return txt.New(reader), nil
+	case "tsv":
+		return tsv.New(reader), nil
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }
