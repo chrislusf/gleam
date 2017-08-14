@@ -16,7 +16,7 @@ func (fs *LocalFileSystem) Accept(fl *FileLocation) bool {
 
 func (fs *LocalFileSystem) Open(fl *FileLocation) (VirtualFile, error) {
 	osFile, err := os.Open(fl.Location)
-	return osFile, err
+	return &VirtualFileLocal{osFile}, err
 }
 
 func (fs *LocalFileSystem) List(fl *FileLocation) (fileLocations []*FileLocation, err error) {
@@ -50,4 +50,16 @@ func (fs *LocalFileSystem) IsDir(fl *FileLocation) bool {
 		return false
 	}
 	return false
+}
+
+type VirtualFileLocal struct {
+	*os.File
+}
+
+func (vf *VirtualFileLocal) Size() int64 {
+	fileInfo, err := vf.File.Stat()
+	if err != nil {
+		return 0
+	}
+	return fileInfo.Size()
 }

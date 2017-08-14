@@ -2,9 +2,10 @@ package file
 
 import (
 	"fmt"
-	"io"
 
+	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/plugins/file/csv"
+	"github.com/chrislusf/gleam/plugins/file/orc"
 	"github.com/chrislusf/gleam/plugins/file/tsv"
 	"github.com/chrislusf/gleam/plugins/file/txt"
 	"github.com/chrislusf/gleam/util"
@@ -24,15 +25,20 @@ func Txt(fileOrPattern string, partitionCount int) *FileSource {
 func Tsv(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("tsv", fileOrPattern, partitionCount)
 }
+func Orc(fileOrPattern string, partitionCount int) *FileSource {
+	return newFileSource("orc", fileOrPattern, partitionCount)
+}
 
-func (ds *FileShardInfo) NewReader(reader io.Reader) (FileReader, error) {
+func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error) {
 	switch ds.FileType {
 	case "csv":
-		return csv.New(reader), nil
+		return csv.New(vf), nil
 	case "txt":
-		return txt.New(reader), nil
+		return txt.New(vf), nil
 	case "tsv":
-		return tsv.New(reader), nil
+		return tsv.New(vf), nil
+	case "orc":
+		return orc.New(vf)
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }

@@ -18,8 +18,9 @@ type FileLocation struct {
 }
 
 type VirtualFile interface {
-	// io.ReaderAt
+	io.ReaderAt
 	io.ReadCloser
+	Size() int64
 }
 
 type VirtualFileSystem interface {

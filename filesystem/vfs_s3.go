@@ -2,6 +2,9 @@ package filesystem
 
 import (
 	"fmt"
+	"io"
+	"math/rand"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -49,7 +52,7 @@ func (fs *S3FileSystem) Open(fl *FileLocation) (VirtualFile, error) {
 		return nil, err
 	}
 
-	return resp.Body, err
+	return newVirtualFileS3(resp.Body)
 }
 
 func (fs *S3FileSystem) List(fl *FileLocation) (fileLocations []*FileLocation, err error) {
@@ -68,4 +71,34 @@ func splitS3LocationToParts(location string) (bucketName, objectKey string, err 
 
 	parts := strings.SplitN(location[len(s3Prefix):], "/", 2)
 	return parts[0], parts[1], nil
+}
+
+type VirtualFileS3 struct {
+	*os.File
+	filename string
+	size     int64
+}
+
+func newVirtualFileS3(readerCloser io.ReadCloser) (*VirtualFileS3, error) {
+	filename := fmt.Sprintf("%s/s3_%d", os.TempDir(), rand.Uint32())
+	outFile, err := os.Create(filename)
+	if err != nil {
+		return nil, err
+	}
+	size, err := io.Copy(outFile, readerCloser)
+	readerCloser.Close()
+
+	outFile.Seek(0, 0)
+
+	return &VirtualFileS3{outFile, filename, size}, err
+
+}
+
+func (vf *VirtualFileS3) Size() int64 {
+	return vf.size
+}
+
+func (vf *VirtualFileS3) Close() error {
+	vf.File.Close()
+	return os.Remove(vf.filename)
 }
