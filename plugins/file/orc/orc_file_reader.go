@@ -11,6 +11,7 @@ type OrcFileReader struct {
 	cursor *orc.Cursor
 }
 
+// TODO push down column projection
 func New(reader orc.SizedReaderAt) (*OrcFileReader, error) {
 	t, err := orc.NewReader(reader)
 	if err != nil {
