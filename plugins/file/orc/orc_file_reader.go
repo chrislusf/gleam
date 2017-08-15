@@ -7,8 +7,9 @@ import (
 )
 
 type OrcFileReader struct {
-	reader *orc.Reader
-	cursor *orc.Cursor
+	reader     *orc.Reader
+	cursor     *orc.Cursor
+	fieldNames []string
 }
 
 // TODO push down column projection
@@ -17,17 +18,19 @@ func New(reader orc.SizedReaderAt) (*OrcFileReader, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := t.Select(t.Schema().Columns()...)
 	return &OrcFileReader{
-		reader: t,
-		cursor: c,
+		reader:     t,
+		fieldNames: t.Schema().Columns(),
 	}, nil
 }
 
 func (r *OrcFileReader) ReadHeader() (fieldNames []string, err error) {
-	return nil, nil
+	return r.fieldNames, nil
 }
 func (r *OrcFileReader) Read() (row *util.Row, err error) {
+	if r.cursor == nil {
+		r.cursor = r.reader.Select(r.fieldNames...)
+	}
 	// Iterate over each row in the stripe.
 	if r.cursor.Next() || r.cursor.Stripes() && r.cursor.Next() {
 		if err := r.cursor.Err(); err != nil {
