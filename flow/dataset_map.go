@@ -37,8 +37,7 @@ func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
 
 // Select selects multiple fields into the next dataset. The index starts from 1.
 // The first one is the key
-func (d *Dataset) Select(name string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
+func (d *Dataset) Select(name string, sortOption *SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	indexes := sortOption.Indexes()
 	step.SetInstruction(name, instruction.NewSelect([]int{indexes[0]}, indexes[1:]))

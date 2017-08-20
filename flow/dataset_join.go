@@ -5,27 +5,33 @@ import (
 )
 
 // Join joins two datasets by the key.
-func (d *Dataset) Join(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) Join(name string, other *Dataset, sortOption *SortOption) *Dataset {
 	return d.DoJoin(name, other, false, false, sortOption)
 }
 
-func (d *Dataset) LeftOuterJoin(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
+// TODO use actual key fields instead of Field(1)
 
+func (d *Dataset) JoinByKey(name string, other *Dataset) *Dataset {
+	return d.DoJoin(name, other, false, false, Field(1))
+}
+
+func (d *Dataset) LeftOuterJoin(name string, other *Dataset, sortOption *SortOption) *Dataset {
 	return d.DoJoin(name, other, true, false, sortOption)
 }
 
-func (d *Dataset) RightOuterJoin(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
+func (d *Dataset) LeftOuterJoinByKey(name string, other *Dataset) *Dataset {
+	return d.DoJoin(name, other, true, false, Field(1))
+}
 
+func (d *Dataset) RightOuterJoin(name string, other *Dataset, sortOption *SortOption) *Dataset {
 	return d.DoJoin(name, other, false, true, sortOption)
 }
 
-func (d *Dataset) DoJoin(name string, other *Dataset, leftOuter, rightOuter bool, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
+func (d *Dataset) RightOuterJoinByKey(name string, other *Dataset) *Dataset {
+	return d.DoJoin(name, other, false, true, Field(1))
+}
 
+func (d *Dataset) DoJoin(name string, other *Dataset, leftOuter, rightOuter bool, sortOption *SortOption) *Dataset {
 	sorted_d := d.Partition(name+".left", len(d.Shards), sortOption).LocalSort(name+".left", sortOption)
 	var sorted_other *Dataset
 	if d == other {

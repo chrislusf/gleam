@@ -279,7 +279,6 @@ Gleam is just beginning. Here are a few todo items. Welcome any help!
 * Add windowing functions similar to Apache Beam/Flink. (in progress)
 * Add schema support for each dataset.
 * Support using SQL as a flow step, similar to LINQ.
-* Add windowing functions similar to Apache Beam/Flink.
 * Add dataset metadata for better caching of often re-calculated data.
 
 Especially Need Help Now:

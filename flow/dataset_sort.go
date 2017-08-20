@@ -19,12 +19,10 @@ type pair struct {
 // example usage: Distinct(Field(1,2)) means
 // distinct on field 1 and 2.
 // TODO: optimize for low cardinality case.
-func (d *Dataset) Distinct(name string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) Distinct(name string, sortOption *SortOption) *Dataset {
 	ret := d.LocalSort(name, sortOption).LocalDistinct(name, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(name, 1, sortOption).LocalDistinct(name, sortOption)
+		ret = ret.MergeSortedTo(name, 1).LocalDistinct(name, sortOption)
 	}
 	return ret
 }
@@ -33,29 +31,27 @@ func (d *Dataset) Distinct(name string, sortOptions ...*SortOption) *Dataset {
 // Required Memory: about same size as each partition.
 // example usage: Sort(Field(1,2)) means
 // sorting on field 1 and 2.
-func (d *Dataset) Sort(name string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) Sort(name string, sortOption *SortOption) *Dataset {
 	ret := d.LocalSort(name, sortOption)
-	ret = ret.TreeMergeSortedTo(name, 1, 10, sortOption)
+	ret = ret.TreeMergeSortedTo(name, 1, 10)
 	return ret
+}
+
+func (d *Dataset) SortByKey(name string) *Dataset {
+	return d.Sort(name, Field(1))
 }
 
 // Top streams through total n items, picking reverse ordered k items with O(n*log(k)) complexity.
 // Required Memory: about same size as n items in memory
-func (d *Dataset) Top(name string, k int, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) Top(name string, k int, sortOption *SortOption) *Dataset {
 	ret := d.LocalTop(name, k, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(name, 1, sortOption).LocalLimit(name, k, 0)
+		ret = ret.MergeSortedTo(name, 1).LocalLimit(name, k, 0)
 	}
 	return ret
 }
 
-func (d *Dataset) LocalDistinct(name string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) LocalDistinct(name string, sortOption *SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
@@ -63,9 +59,7 @@ func (d *Dataset) LocalDistinct(name string, sortOptions ...*SortOption) *Datase
 	return ret
 }
 
-func (d *Dataset) LocalSort(name string, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) LocalSort(name string, sortOption *SortOption) *Dataset {
 	if isOrderByEquals(d.IsLocalSorted, sortOption.orderByList) {
 		return d
 	}
@@ -77,9 +71,7 @@ func (d *Dataset) LocalSort(name string, sortOptions ...*SortOption) *Dataset {
 	return ret
 }
 
-func (d *Dataset) LocalTop(name string, n int, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
-
+func (d *Dataset) LocalTop(name string, n int, sortOption *SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	ret.IsLocalSorted = getReverseOrderBy(sortOption.orderByList)
 	ret.IsPartitionedBy = d.IsPartitionedBy
@@ -109,11 +101,4 @@ func getReverseOrderBy(a []instruction.OrderBy) (reversed []instruction.OrderBy)
 		}
 	}
 	return reversed
-}
-
-func getOrderBysFromIndexes(indexes []int) (orderBys []instruction.OrderBy) {
-	for _, i := range indexes {
-		orderBys = append(orderBys, instruction.OrderBy{i, instruction.Ascending})
-	}
-	return
 }

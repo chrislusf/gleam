@@ -38,7 +38,7 @@ func main() {
 
 	f := flow.New("tfidf")
 	word_doc_one := f.Strings(fileNames).
-		Partition("partition", 7).
+		PartitionByKey("partition", 7).
 		Map("read content", registeredReadConent)
 
 	termFreq :=

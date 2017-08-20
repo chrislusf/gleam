@@ -23,7 +23,7 @@ func main() {
 
 	b := f.Read(file.Csv("b*.csv", 3)).SelectKV("select", Field(1), Field(4, 5)).Hint(PartitionSize(13))
 
-	join := a.RightOuterJoin("join", b).Printlnf("%s : %s %s, %s %s")
+	join := a.RightOuterJoinByKey("join", b).Printlnf("%s : %s %s, %s %s")
 
 	// join.Run(distributed.Planner())
 

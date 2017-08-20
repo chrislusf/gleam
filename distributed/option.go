@@ -20,12 +20,12 @@ type DistributedOption struct {
 }
 
 func Option() *DistributedOption {
-	return (&DistributedOption{
+	return &DistributedOption{
 		Master:       "localhost:45326",
 		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
-	})
+	}
 }
 
 func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {

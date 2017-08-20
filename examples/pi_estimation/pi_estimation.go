@@ -13,6 +13,8 @@ import (
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/util"
 	glow "github.com/chrislusf/glow/flow"
+	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -21,7 +23,7 @@ var (
 	monteCarloMapperId = gio.RegisterMapper(monteCarloMapper)
 	sumReducerId       = gio.RegisterReducer(sumReducer)
 
-	times  = 1024 * 1024 * 256
+	times  = 1024 * 1024 * 2560
 	factor = 1024 * 1024
 )
 
@@ -40,6 +42,8 @@ func main() {
 
 	testDirectGo()
 
+	testDirectGoConcurrent()
+
 	// this is not fair since many optimization is not applied
 	testLocalFlow()
 }
@@ -50,15 +54,15 @@ func testPureGoGleam(name string, isLocal bool) {
 	startTime := time.Now()
 	f := flow.New("pi estimation").
 		Source("iteration times", util.Range(0, times/factor)).
-		Partition("partition", 7).
+		PartitionByKey("partition", 7).
 		Map("monte carlo", monteCarloMapperId).
-		ReduceBy("sum", sumReducerId).
+		Reduce("sum", sumReducerId).
 		SaveFirstRowTo(&count)
 
 	if isLocal {
 		f.Run()
 	} else {
-		f.Run(distributed.Option().SetMaster(*master))
+		f.Run(distributed.Option().SetMaster(*master).SetProfiling(true))
 	}
 
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
@@ -79,6 +83,40 @@ func testDirectGo() {
 	}
 	fmt.Printf("pi = %f\n", 4.0*float64(count)/float64(times))
 	fmt.Printf("direct pure go time cost: %s\n", time.Now().Sub(startTime))
+	fmt.Println()
+}
+
+func testDirectGoConcurrent() {
+	startTime := time.Now()
+
+	var wg sync.WaitGroup
+
+	var finalCount int64
+
+	for i := 0; i < 7; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+
+			var count int64
+			for i := 0; i < times/7; i++ {
+				x, y := r.Float64(), r.Float64()
+				if x*x+y*y < 1 {
+					count++
+				}
+			}
+
+			atomic.AddInt64(&finalCount, count)
+
+		}()
+	}
+
+	wg.Wait()
+
+	fmt.Printf("pi = %f\n", 4.0*float64(finalCount)/float64(times))
+	fmt.Printf("concurrent pure go time cost: %s\n", time.Now().Sub(startTime))
 	fmt.Println()
 }
 

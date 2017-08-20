@@ -69,10 +69,10 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
 		Map("split", splitter)
 
 	if isInMemory {
-		f = f.Partition("partition", partition).Sort("sort")
+		f = f.PartitionByKey("partition", partition).SortByKey("sort")
 	} else {
 		f = f.OnDisk(func(d *flow.Dataset) *flow.Dataset {
-			return d.Partition("partition", partition).Sort("sort")
+			return d.PartitionByKey("partition", partition).SortByKey("sort")
 		})
 	}
 

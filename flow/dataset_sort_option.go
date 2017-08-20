@@ -55,14 +55,3 @@ func (o *SortOption) Indexes() []int {
 	}
 	return ret
 }
-
-func concat(sortOptions []*SortOption) *SortOption {
-	if len(sortOptions) == 0 {
-		return Field(1)
-	}
-	ret := &SortOption{}
-	for _, sortOption := range sortOptions {
-		ret.orderByList = append(ret.orderByList, sortOption.orderByList...)
-	}
-	return ret
-}

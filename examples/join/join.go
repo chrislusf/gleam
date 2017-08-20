@@ -39,7 +39,7 @@ func join1() {
 		Map("addOne", mapper.AppendOne).
 		ReduceByKey("sum", reducer.Sum)
 
-	join := a.Join("shared words", b).Printlnf("%s\t%d\t%d")
+	join := a.JoinByKey("shared words", b).Printlnf("%s\t%d\t%d")
 
 	println("========== joining result=============")
 
@@ -65,7 +65,7 @@ func hashjoin() {
 		"return",
 	})
 
-	a.Join("hash join", b).Printlnf("%s\t%d")
+	a.JoinByKey("hash join", b).Printlnf("%s\t%d")
 
 	println("==========hash joining result=============")
 

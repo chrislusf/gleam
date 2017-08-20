@@ -7,8 +7,7 @@ import (
 // CoGroup joins two datasets by the key,
 // Each result row becomes this format:
 //   (key, []left_rows, []right_rows)
-func (d *Dataset) CoGroup(name string, other *Dataset, sortOptions ...*SortOption) *Dataset {
-	sortOption := concat(sortOptions)
+func (d *Dataset) CoGroup(name string, other *Dataset, sortOption *SortOption) *Dataset {
 	sorted_d := d.Partition(name, len(d.Shards), sortOption).LocalSort(name, sortOption)
 	if d == other {
 		// this should not happen, but just in case

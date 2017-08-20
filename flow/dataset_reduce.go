@@ -23,7 +23,7 @@ func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields *Sort
 
 	ret = d.LocalSort(name, sortOption).LocalReduceBy(name+".LocalReduceBy", reducerId, sortOption)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeSortedTo(name, 1, sortOption).LocalReduceBy(name+".LocalReduceBy2", reducerId, sortOption)
+		ret = ret.MergeSortedTo(name, 1).LocalReduceBy(name+".LocalReduceBy2", reducerId, sortOption)
 	}
 	return ret
 }
