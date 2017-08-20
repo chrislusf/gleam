@@ -13,6 +13,7 @@ type OrcFileReader struct {
 	fieldNames []string
 }
 
+// TODO predicate pushdown
 // TODO push down column projection
 func New(reader orc.SizedReaderAt) (*OrcFileReader, error) {
 	t, err := orc.NewReader(reader)
