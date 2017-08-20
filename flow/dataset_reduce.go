@@ -9,10 +9,15 @@ import (
 	"github.com/chrislusf/gleam/script"
 )
 
-// ReduceBy runs the reducer registered to the reducerId,
+// ReduceByKey runs the reducer registered to the reducerId,
 // combining rows with the same key fields into one row
-func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields ...*SortOption) (ret *Dataset) {
-	sortOption := concat(keyFields)
+func (d *Dataset) ReduceByKey(name string, reducerId gio.ReducerId) (ret *Dataset) {
+	sortOption := Field(1)
+	return d.ReduceBy(name, reducerId, sortOption)
+}
+
+func (d *Dataset) ReduceBy(name string, reducerId gio.ReducerId, keyFields *SortOption) (ret *Dataset) {
+	sortOption := keyFields
 
 	name = name + ".ReduceBy"
 
@@ -29,16 +34,14 @@ func (d *Dataset) Reduce(name string, reducerId gio.ReducerId) (ret *Dataset) {
 
 	name = name + ".Reduce"
 
-	ret = d.LocalReduceBy(name+".LocalReduce", reducerId)
+	ret = d.LocalReduceBy(name+".LocalReduce", reducerId, nil)
 	if len(d.Shards) > 1 {
-		ret = ret.MergeTo(name, 1).LocalReduceBy(name+".LocalReduce2", reducerId)
+		ret = ret.MergeTo(name, 1).LocalReduceBy(name+".LocalReduce2", reducerId, nil)
 	}
 	return ret
 }
 
-func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOptions ...*SortOption) *Dataset {
-
-	sortOption := concat(sortOptions)
+func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption *SortOption) *Dataset {
 
 	ret, step := add1ShardTo1Step(d)
 	step.Name = name
@@ -47,8 +50,10 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 
 	// add key indexes for reducer command line option
 	keyPositions := []string{}
-	for _, keyPosition := range sortOption.Indexes() {
-		keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
+	if sortOption != nil {
+		for _, keyPosition := range sortOption.Indexes() {
+			keyPositions = append(keyPositions, strconv.Itoa(keyPosition))
+		}
 	}
 	keyFields := "0" // combine all rows directly
 	if len(keyPositions) > 0 {
