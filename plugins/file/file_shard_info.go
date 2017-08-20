@@ -16,6 +16,7 @@ type FileShardInfo struct {
 	FileName  string
 	FileType  string
 	HasHeader bool
+	Fields    []string
 }
 
 var (

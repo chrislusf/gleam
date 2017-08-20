@@ -20,8 +20,8 @@ func main() {
 	gio.Init()
 
 	f := New("reading orc files").
-		Read(file.Orc(*fileNames, 3)).
-		Select("select", Field(1, 2)).
+		Read(file.Orc(*fileNames, 3).
+			Select("string1", "int1")). // push down the field selection to orc file
 		Printlnf("%v : %v")
 
 	if *isDistributed {

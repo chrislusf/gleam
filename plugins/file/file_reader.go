@@ -38,7 +38,11 @@ func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error
 	case "tsv":
 		return tsv.New(vf), nil
 	case "orc":
-		return orc.New(vf)
+		if reader, err := orc.New(vf); err == nil {
+			return reader.Select(ds.Fields), nil
+		} else {
+			return nil, err
+		}
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }

@@ -21,6 +21,7 @@ type FileSource struct {
 	HasHeader      bool
 	PartitionCount int
 	FileType       string
+	Fields         []string
 
 	prefix string
 }
@@ -35,6 +36,13 @@ func (s *FileSource) Generate(f *flow.Flow) *flow.Dataset {
 // SetHasHeader sets whether the data contains header
 func (q *FileSource) SetHasHeader(hasHeader bool) *FileSource {
 	q.HasHeader = hasHeader
+	return q
+}
+
+// TODO adjust FileSource api to denote which data source can support columnar reads
+// Select selects fields that can be pushed down to data sources supporting columnar reads
+func (q *FileSource) Select(fields ...string) *FileSource {
+	q.Fields = fields
 	return q
 }
 
@@ -76,6 +84,7 @@ func (s *FileSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 				FileName:  s.Path,
 				FileType:  s.FileType,
 				HasHeader: s.HasHeader,
+				Fields:    s.Fields,
 			})).WriteTo(writer)
 		} else {
 			virtualFiles, err := filesystem.List(s.folder)
@@ -89,6 +98,7 @@ func (s *FileSource) genShardInfos(f *flow.Flow) *flow.Dataset {
 						FileName:  vf.Location,
 						FileType:  s.FileType,
 						HasHeader: s.HasHeader,
+						Fields:    s.Fields,
 					})).WriteTo(writer)
 				}
 			}

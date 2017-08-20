@@ -14,7 +14,6 @@ type OrcFileReader struct {
 }
 
 // TODO predicate pushdown
-// TODO push down column projection
 func New(reader orc.SizedReaderAt) (*OrcFileReader, error) {
 	t, err := orc.NewReader(reader)
 	if err != nil {
@@ -24,6 +23,12 @@ func New(reader orc.SizedReaderAt) (*OrcFileReader, error) {
 		reader:     t,
 		fieldNames: t.Schema().Columns(),
 	}, nil
+}
+func (r *OrcFileReader) Select(fields []string) *OrcFileReader {
+	if fields != nil {
+		r.fieldNames = fields
+	}
+	return r
 }
 
 func (r *OrcFileReader) ReadHeader() (fieldNames []string, err error) {
