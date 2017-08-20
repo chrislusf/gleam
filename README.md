@@ -271,6 +271,9 @@ After the flow is defined, the Run() function can be executed in local mode or d
 * Data Sources
   * [Cassandra](https://github.com/chrislusf/gleam/tree/master/plugins/cassandra), with [example](https://github.com/chrislusf/gleam/tree/master/examples/cassandra_reader)
   * [Kafka](https://github.com/chrislusf/gleam/tree/master/plugins/kafka)
+  * [ORC files](https://github.com/chrislusf/gleam/tree/master/plugins/file/orc)
+  * [CSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/csv)
+  * [TXT files](https://github.com/chrislusf/gleam/tree/master/plugins/file/txt)
   * Raw Socket
 
 # Status
