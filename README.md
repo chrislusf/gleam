@@ -273,6 +273,7 @@ After the flow is defined, the Run() function can be executed in local mode or d
   * [Kafka](https://github.com/chrislusf/gleam/tree/master/plugins/kafka)
   * [ORC files](https://github.com/chrislusf/gleam/tree/master/plugins/file/orc)
   * [CSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/csv)
+  * [TSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/tsv)
   * [TXT files](https://github.com/chrislusf/gleam/tree/master/plugins/file/txt)
   * Raw Socket
 
