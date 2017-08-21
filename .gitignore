@@ -1,16 +1,4 @@
 
-examples/word_count/word_count
-
 .DS_Store
 
-examples/word_count/word_count
-
-.idea/gleam.iml
-
-.idea/go.imports.xml
-
-.idea/modules.xml
-
-.idea/vcs.xml
-
-.idea/workspace.xml
+.idea/*
