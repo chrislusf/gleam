@@ -236,7 +236,6 @@ Start a gleam master and several gleam agents
 > gleam master --address=":45326"
 
 // start up "gleam agent" on some different servers or ports
-// if a different server, remember to install Luajit and copy the MessagePack.lua file also.
 > gleam agent --dir=2 --port 45327 --host=127.0.0.1
 > gleam agent --dir=3 --port 45328 --host=127.0.0.1
 ```
