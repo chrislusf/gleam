@@ -15,11 +15,10 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 
 	defer wg.Done()
 
-	withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	err := withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
-			return nil
+			return fmt.Errorf("executor collect stats from %v : %v", exe.Option.AgentAddress, err)
 		}
 
 		tickChan := time.Tick(1 * time.Second)
@@ -31,8 +30,7 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 			select {
 			case <-tickChan:
 				if err := stream.Send(stat); err != nil {
-					log.Printf("%v.Send(%v) = %v", stream, exe.stats, err)
-					return nil
+					return fmt.Errorf("executor Send(%v): %v", exe.stats, err)
 				}
 			case <-finishedChan:
 				stream.CloseSend()
@@ -42,15 +40,18 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 
 	})
 
+	if err != nil {
+		log.Printf("executor heartbeat to %v: %v", exe.Option.AgentAddress, err)
+	}
+
 }
 
 func (exe *Executor) reportStatus() {
 
-	withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
+	err := withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
-			return nil
+			return fmt.Errorf("executor collect stats to %v : %v", exe.Option.AgentAddress, err)
 		}
 		// defer stream.CloseSend()
 
@@ -60,12 +61,15 @@ func (exe *Executor) reportStatus() {
 		}
 
 		if err := stream.Send(stat); err != nil {
-			log.Printf("%v.Send(%v) = %v", stream, exe.stats, err)
-			return nil
+			return fmt.Errorf("%v.Send(%v) = %v", stream, exe.stats, err)
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		log.Printf("executor reportStatus to %v: %v", exe.Option.AgentAddress, err)
+	}
 
 }
 
