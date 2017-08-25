@@ -95,7 +95,7 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 	as.plusAllocated(allocated)
 	defer as.minusAllocated(allocated)
 
-	request.InstructionSet.AgentAddress = fmt.Sprintf(":%d", *as.Option.Port)
+	request.InstructionSet.AgentAddress = fmt.Sprintf("%s:%d", *as.Option.Host, *as.Option.Port)
 
 	key := fmt.Sprintf(
 		"%d-%d-%d",
