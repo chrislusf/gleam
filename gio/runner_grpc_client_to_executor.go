@@ -18,7 +18,7 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 	err := withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			return fmt.Errorf("runner collect stats from %v: %v", runner.Option.ExecutorAddress, err)
+			return fmt.Errorf("runner => executor %v: %v", runner.Option.ExecutorAddress, err)
 		}
 
 		tickChan := time.Tick(1 * time.Second)
@@ -48,8 +48,7 @@ func (runner *gleamRunner) reportStatus() {
 	err := withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			log.Printf("%v.CollectExecutionStatistics(_) = _, %v", client, err)
-			return nil
+			return fmt.Errorf("runner => executor %v: %v", runner.Option.ExecutorAddress, err)
 		}
 		// defer stream.CloseSend()
 

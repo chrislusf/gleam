@@ -18,7 +18,7 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 	err := withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			return fmt.Errorf("executor collect stats from %v : %v", exe.Option.AgentAddress, err)
+			return fmt.Errorf("executor => agent %v : %v", exe.Option.AgentAddress, err)
 		}
 
 		tickChan := time.Tick(1 * time.Second)
@@ -41,7 +41,7 @@ func (exe *Executor) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool)
 	})
 
 	if err != nil {
-		log.Printf("executor heartbeat to %v: %v", exe.Option.AgentAddress, err)
+		log.Printf("executor heartbeat to agent %v: %v", exe.Option.AgentAddress, err)
 	}
 
 }
@@ -51,7 +51,7 @@ func (exe *Executor) reportStatus() {
 	err := withClient(exe.Option.AgentAddress, func(client pb.GleamAgentClient) error {
 		stream, err := client.CollectExecutionStatistics(context.Background())
 		if err != nil {
-			return fmt.Errorf("executor collect stats to %v : %v", exe.Option.AgentAddress, err)
+			return fmt.Errorf("executor => agent %v : %v", exe.Option.AgentAddress, err)
 		}
 		// defer stream.CloseSend()
 
