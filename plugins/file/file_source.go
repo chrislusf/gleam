@@ -53,7 +53,7 @@ func newFileSource(fileType, fileOrPattern string, partitionCount int) *FileSour
 	s := &FileSource{
 		PartitionCount: partitionCount,
 		FileType:       fileType,
-		prefix:         "File",
+		prefix:         fileType,
 	}
 
 	var err error
