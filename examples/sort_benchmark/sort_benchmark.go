@@ -13,6 +13,7 @@ var (
 	size          = flag.Int("size", 0, "0 for small, 1 for 1GB, 2 for 10GB")
 	isDistributed = flag.Bool("distributed", false, "distributed mode or not")
 	isInMemory    = flag.Bool("inMemory", true, "distributed mode but only through memory")
+	isProfiling   = flag.Bool("isProfiling", false, "profiling the flow")
 
 	splitter = gio.RegisterMapper(splitLine)
 )
@@ -79,7 +80,7 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
 	f = f.Printlnf("%s  %s")
 
 	if isDistributed {
-		f.Run(distributed.Option().SetProfiling(true))
+		f.Run(distributed.Option().SetProfiling(*isProfiling))
 	} else {
 		f.Run()
 	}
