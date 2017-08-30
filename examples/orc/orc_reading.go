@@ -11,9 +11,14 @@ import (
 
 var (
 	isDistributed = flag.Bool("distributed", false, "run in distributed mode")
-	showSchema    = flag.Bool("showSchema", false, "print out the columns")
 	fileNames     = flag.String("files", "T*.orc", "the list of orc files")
+
+	absId = gio.RegisterMapper(absolute)
 )
+
+func init() {
+
+}
 
 func main() {
 
@@ -21,7 +26,9 @@ func main() {
 
 	f := New("reading orc files").
 		Read(file.Orc(*fileNames, 3).
-			Select("string1", "int1")). // push down the field selection to orc file
+		Select("string1", "int1")). // push down the field selection to orc file
+		Map("adjust integer", absId).
+		Select("reverse", Field(2, 1)).
 		Printlnf("%v : %v")
 
 	if *isDistributed {
@@ -30,4 +37,13 @@ func main() {
 		f.Run()
 	}
 
+}
+
+func absolute(row []interface{}) error {
+	a, b := gio.ToString(row[0]), gio.ToInt64(row[1])
+	if b < 0 {
+		b = -b
+	}
+	gio.Emit(a, b)
+	return nil
 }
