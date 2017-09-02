@@ -2,18 +2,9 @@ package agent
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"net"
-	"os"
-	"path"
-	"path/filepath"
 	"sync"
 
-	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
 )
 
 var (

@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sync"
 
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
