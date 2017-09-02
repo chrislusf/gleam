@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"log"
+	"time"
 
 	"github.com/chrislusf/gleam/pb"
 	"golang.org/x/net/context"
@@ -14,7 +15,11 @@ func getResources(master string, request *pb.ComputeRequest) (*pb.AllocationResu
 	if err != nil {
 		log.Printf("fail to dial %s: %v", master, err)
 	}
-	defer grpcConection.Close()
+	defer func() {
+		time.Sleep(50 * time.Millisecond)
+		grpcConection.Close()
+	}()
+
 	client := pb.NewGleamMasterClient(grpcConection)
 
 	return client.GetResources(context.Background(), request)

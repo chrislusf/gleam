@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	//"time"
+	"time"
 
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
@@ -202,7 +202,7 @@ func withClient(server string, fn func(client pb.GleamAgentClient) error) error 
 		return fmt.Errorf("driver dial agent: %v", err)
 	}
 	defer func() {
-		// time.Sleep(50 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 		grpcConection.Close()
 	}()
 	client := pb.NewGleamAgentClient(grpcConection)
