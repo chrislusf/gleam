@@ -70,7 +70,7 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 		}
 		_, err = f.Write(request.GetContent())
 		if err != nil {
-			log.Printf("Write file error: ", err)
+			log.Printf("Write file error: %v", err)
 			return err
 		}
 	}
@@ -82,6 +82,16 @@ func (as *AgentServer) SendFileResource(stream pb.GleamAgent_SendFileResourceSer
 
 	return nil
 
+}
+
+// Cleanup remove all files related to a particular flow
+func (as *AgentServer) Cleanup(ctx context.Context, cleanupRequest *pb.CleanupRequest) (*pb.CleanupResponse, error) {
+
+	log.Println("cleaning up", cleanupRequest.GetFlowHashCode())
+	dir := path.Join(*as.Option.Dir, fmt.Sprintf("%d", cleanupRequest.GetFlowHashCode()))
+	os.RemoveAll(dir)
+
+	return &pb.CleanupResponse{}, nil
 }
 
 // Execute executes a request and stream stdout and stderr back

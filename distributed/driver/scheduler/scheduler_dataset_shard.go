@@ -12,7 +12,7 @@ func (s *Scheduler) DeleteOutout(taskGroup *plan.TaskGroup) {
 	var wg sync.WaitGroup
 	tasks := taskGroup.Tasks
 	for _, shard := range tasks[len(tasks)-1].OutputShards {
-		location, _ := s.getShardLocation(shard)
+		location, _ := s.GetShardLocation(shard)
 		if location.Location == nil {
 			continue
 		}
@@ -57,7 +57,7 @@ func isRestartableTasks(tasks []*flow.Task) bool {
 	return true
 }
 
-func (s *Scheduler) getShardLocation(shard *flow.DatasetShard) (pb.DataLocation, bool) {
+func (s *Scheduler) GetShardLocation(shard *flow.DatasetShard) (pb.DataLocation, bool) {
 	location, found := s.shardLocator.GetShardLocation(shard.Name())
 	return location, found
 }

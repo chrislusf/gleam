@@ -186,6 +186,16 @@ func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) err
 	})
 }
 
+func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
+	return withClient(server, func(client pb.GleamAgentClient) error {
+		_, err := client.Cleanup(context.Background(), request)
+		if err != nil {
+			log.Printf("%v.Delete(_) = _, %v", client, err)
+		}
+		return err
+	})
+}
+
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
 	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {

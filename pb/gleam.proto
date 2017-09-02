@@ -151,6 +151,7 @@ service GleamAgent {
   // collect execution stats from "gleam execute" processes
   rpc CollectExecutionStatistics(stream ExecutionStat) returns (Empty) {}
   rpc Delete(DeleteDatasetShardRequest) returns (DeleteDatasetShardResponse) {}
+  rpc Cleanup(CleanupRequest) returns (CleanupResponse) {}
 }
 
 message FileResourceRequest {
@@ -203,6 +204,14 @@ message DeleteDatasetShardRequest {
 }
 
 message DeleteDatasetShardResponse {
+	string error = 1;
+}
+
+message CleanupRequest {
+	uint32 flowHashCode = 1;
+}
+
+message CleanupResponse {
 	string error = 1;
 }
 

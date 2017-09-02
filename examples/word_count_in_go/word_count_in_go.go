@@ -25,7 +25,7 @@ func main() {
 		Read(file.Txt("/etc/passwd", 1)).
 		Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
 		Map("addOne", mapper.AppendOne).  // invoke the registered "addOne" mapper function.
-		ReduceByKey("sum", reducer.Sum). // invoke the registered "sum" reducer function.
+		ReduceByKey("sum", reducer.Sum).  // invoke the registered "sum" reducer function.
 		Sort("sortBySum", flow.OrderBy(2, true)).
 		Top("top5", 5, flow.OrderBy(2, false)).
 		Printlnf("%s\t%d")

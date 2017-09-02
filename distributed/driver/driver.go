@@ -51,7 +51,7 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	fcd.stepGroups, fcd.taskGroups = plan.GroupTasks(fc)
 	fcd.logExecutionPlan(fc)
 
-	// create thes cheduler
+	// create the scheduler
 	sched := scheduler.NewScheduler(
 		fcd.Option.Master,
 		&scheduler.SchedulerOption{
@@ -110,6 +110,30 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 			defer wg.Done()
 			sched.DeleteOutout(taskGroup)
 		}(taskGroup)
+	}
+
+	touchedAgents := make(map[string]bool)
+	for _, taskGroup := range fcd.taskGroups {
+		tasks := taskGroup.Tasks
+		for _, shard := range tasks[len(tasks)-1].OutputShards {
+			location, _ := sched.GetShardLocation(shard)
+			if location.Location == nil {
+				continue
+			}
+			touchedAgents[location.Location.URL()] = true
+		}
+	}
+
+	for url, _ := range touchedAgents {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			if err := scheduler.SendCleanupRequest(url, &pb.CleanupRequest{
+				FlowHashCode: fc.HashCode,
+			}); err != nil {
+				println("Purging dataset error:", err.Error())
+			}
+		}(url)
 	}
 
 	wg.Wait()

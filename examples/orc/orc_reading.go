@@ -26,7 +26,7 @@ func main() {
 
 	f := New("reading orc files").
 		Read(file.Orc(*fileNames, 3).
-		Select("string1", "int1")). // push down the field selection to orc file
+			Select("string1", "int1")). // push down the field selection to orc file
 		Map("adjust integer", absId).
 		Select("reverse", Field(2, 1)).
 		Printlnf("%v : %v")
