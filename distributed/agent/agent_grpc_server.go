@@ -16,11 +16,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	statsChanMap        = make(map[string]chan *pb.ExecutionStat)
-	statsChanMapRWMutex sync.RWMutex
-)
-
 func (as *AgentServer) serveGrpc(listener net.Listener) {
 	grpcServer := grpc.NewServer()
 	pb.RegisterGleamAgentServer(grpcServer, as)
@@ -107,23 +102,9 @@ func (as *AgentServer) Execute(request *pb.ExecutionRequest, stream pb.GleamAgen
 
 	request.InstructionSet.AgentAddress = fmt.Sprintf("%s:%d", *as.Option.Host, *as.Option.Port)
 
-	key := fmt.Sprintf(
-		"%d-%d-%d",
-		request.InstructionSet.FlowHashCode,
-		request.InstructionSet.Instructions[0].GetStepId(),
-		request.InstructionSet.Instructions[0].GetTaskId(),
-	)
-	// log.Printf("stats chan key: %s", key)
-	statsChan := make(chan *pb.ExecutionStat)
-	statsChanMapRWMutex.Lock()
-	statsChanMap[key] = statsChan
-	statsChanMapRWMutex.Unlock()
+	statsChan := createStatsChanByInstructionSet(request.InstructionSet)
 
-	defer func() {
-		statsChanMapRWMutex.Lock()
-		delete(statsChanMap, key)
-		statsChanMapRWMutex.Unlock()
-	}()
+	defer deleteStatsChanByInstructionSet(request.InstructionSet)
 
 	return as.executeCommand(stream, request, dir, statsChan)
 
@@ -142,15 +123,7 @@ func (as *AgentServer) CollectExecutionStatistics(stream pb.GleamAgent_CollectEx
 			return err
 		}
 		if statsChan == nil {
-			key := fmt.Sprintf(
-				"%d-%d-%d",
-				stats.FlowHashCode,
-				stats.Stats[0].GetStepId(),
-				stats.Stats[0].GetTaskId(),
-			)
-			statsChanMapRWMutex.RLock()
-			statsChan = statsChanMap[key]
-			statsChanMapRWMutex.RUnlock()
+			statsChan = getStatsChan(stats.FlowHashCode, stats.Stats[0].GetStepId(), stats.Stats[0].GetTaskId())
 		}
 
 		statsChan <- stats
