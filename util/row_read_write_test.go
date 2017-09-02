@@ -17,7 +17,7 @@ func TestEncodeDecode(t *testing.T) {
 
 	originalTs := Now()
 
-	encodedRow, _ := encodeRow(NewRow(originalTs, originalData...))
+	encodedRow, _ := encodeRow(*NewRow(originalTs, originalData...))
 
 	row, _ := DecodeRow(encodedRow)
 
