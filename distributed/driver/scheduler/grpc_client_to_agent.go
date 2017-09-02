@@ -76,7 +76,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		}
 		err = stream.Send(fileResource)
 		if err != nil {
-			log.Printf("%v.SendFileResource(_) = _, %v", client, err)
+			log.Printf("%v.Send file %s: %v", client, fileResource.Name, err)
 			return err
 		}
 	}
