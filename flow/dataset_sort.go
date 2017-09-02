@@ -2,11 +2,6 @@ package flow
 
 import (
 	"github.com/chrislusf/gleam/instruction"
-	"github.com/ugorji/go/codec"
-)
-
-var (
-	msgpackHandler codec.MsgpackHandle
 )
 
 type pair struct {
