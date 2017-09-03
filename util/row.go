@@ -1,9 +1,10 @@
+//go:generate greenpack -fast-strings -o row_codec.go
 package util
 
 type Row struct {
-	K []interface{}
-	V []interface{}
-	T int64
+	K []interface{} `msg:"K"`
+	V []interface{} `msg:"V"`
+	T int64         `msg:"T"`
 }
 
 func NewRow(timestamp int64, objects ...interface{}) *Row {

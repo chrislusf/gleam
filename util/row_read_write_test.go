@@ -19,6 +19,8 @@ func TestEncodeDecode(t *testing.T) {
 
 	encodedRow, _ := encodeRow(*NewRow(originalTs, originalData...))
 
+	t.Logf("encoded: %x", encodedRow)
+
 	row, _ := DecodeRow(encodedRow)
 
 	if originalTs != row.T {
