@@ -42,12 +42,12 @@ func main() {
 		Map("read content", registeredReadConent)
 
 	termFreq :=
-		word_doc_one.ReduceBy("word_doc_tf", reducer.Sum, flow.Field(1, 2))
+		word_doc_one.ReduceBy("word_doc_tf", reducer.SumInt64, flow.Field(1, 2))
 
 	docFreq := termFreq.
 		Select("word doc freq", flow.Field(1)).
 		Map("appendOne", mapper.AppendOne).
-		ReduceBy("df", reducer.Sum, flow.Field(1))
+		ReduceBy("df", reducer.SumInt64, flow.Field(1))
 
 	docFreq.Join("byWord", termFreq, flow.Field(1)).
 		Map("tfidf", registeredTfIdf).
@@ -58,7 +58,7 @@ func main() {
 				row.V[0],
 				row.V[1],
 				row.V[2],
-				gio.ToFloat64(row.V[3])/float64(len(fileNames)),
+				row.V[3].(float32)/float32(len(fileNames)),
 			)
 			return nil
 		})
@@ -94,12 +94,12 @@ func readContent(x []interface{}) error {
 }
 
 func tfidf(x []interface{}) error {
-	fmt.Fprintf(os.Stderr, "tfidf input: %v", x)
+	fmt.Fprintf(os.Stderr, "tfidf input: %v\n", x)
 	word := gio.ToString(x[0])
 	df := gio.ToInt64(x[1])
 	doc := gio.ToString(x[2])
 	tf := gio.ToInt64(x[3])
 
-	gio.Emit(word, doc, tf, df, tf/df)
+	gio.Emit(word, doc, tf, df, float32(tf)/float32(df))
 	return nil
 }

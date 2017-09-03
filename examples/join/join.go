@@ -32,12 +32,12 @@ func join1() {
 	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
 		Map("tokenize", mapper.Tokenize).
 		Map("addOne", mapper.AppendOne).
-		ReduceByKey("sum", reducer.Sum)
+		ReduceByKey("sum", reducer.SumInt64)
 
 	b := f.Read(file.Txt("../../flow/dataset_reduce.go", 1)).
 		Map("tokenize", mapper.Tokenize).
 		Map("addOne", mapper.AppendOne).
-		ReduceByKey("sum", reducer.Sum)
+		ReduceByKey("sum", reducer.SumInt64)
 
 	join := a.JoinByKey("shared words", b).Printlnf("%s\t%d\t%d")
 
@@ -58,7 +58,7 @@ func hashjoin() {
 	a := f.Read(file.Txt("../../flow/dataset_map.go", 1)).
 		Map("tokenize", mapper.Tokenize).
 		Map("addOne", mapper.AppendOne).
-		ReduceByKey("sum", reducer.Sum)
+		ReduceByKey("sum", reducer.SumInt64)
 
 	b := f.Strings([]string{
 		"func",
