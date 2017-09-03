@@ -112,6 +112,8 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 		}(taskGroup)
 	}
 
+	wg.Wait()
+
 	touchedAgents := make(map[string]bool)
 	for _, taskGroup := range fcd.taskGroups {
 		tasks := taskGroup.Tasks

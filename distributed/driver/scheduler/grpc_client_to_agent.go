@@ -111,7 +111,7 @@ func sendExecutionRequest(ctx context.Context,
 				break
 			}
 			if err != nil {
-				log.Printf("sendExecutionRequest stream receive: %v", err)
+				log.Printf("sendExecutionRequest %v stream from %s: %v", request.GetInstructionSet().GetName(), server, err)
 				break
 			}
 			if response.GetError() != nil {
