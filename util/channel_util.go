@@ -100,15 +100,6 @@ func CopyMultipleReaders(readers []io.Reader, writer io.Writer) (inCounter int64
 	return inCounter, outCounter, nil
 }
 
-func LinkChannel(wg *sync.WaitGroup, inChan, outChan chan []byte) {
-	wg.Add(1)
-	defer wg.Done()
-	for bytes := range inChan {
-		outChan <- bytes
-	}
-	close(outChan)
-}
-
 func ReaderToChannel(wg *sync.WaitGroup, name string, reader io.ReadCloser, writer io.WriteCloser, closeOutput bool, errorOutput io.Writer) error {
 	defer wg.Done()
 	defer reader.Close()
