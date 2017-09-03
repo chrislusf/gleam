@@ -114,6 +114,11 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 
 	wg.Wait()
 
+	if fcd.Option.IsProfiling {
+		// TODO send the pprof files back to driver
+		return
+	}
+
 	touchedAgents := make(map[string]bool)
 	for _, taskGroup := range fcd.taskGroups {
 		tasks := taskGroup.Tasks
