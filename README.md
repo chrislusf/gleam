@@ -50,7 +50,7 @@ The distributed mode has several names to explain: Master, Agent, Executor, Driv
 
 * The Master is one single server that collects resource information from Agents.
 * It stores transient resource information and can be restarted.
-* When the Driver program starts, it asks the Master for available Exeutors on Agents.
+* When the Driver program starts, it asks the Master for available Executors on Agents.
 
 ### Gleam Agent
 
