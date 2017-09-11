@@ -82,7 +82,7 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 #### Word Count
 
 Basically, you need to register the Go functions first.
-It will return a mapper or reducer function id, which we can passed to the flow.
+It will return a mapper or reducer function id, which we can pass it to the flow.
 
 ```go
 package main
