@@ -1,4 +1,4 @@
-// lua.go defines how an Lua script should be executed on agents.
+// shell.go defines how an Shell script should be executed on agents.
 package script
 
 type Operation struct {
