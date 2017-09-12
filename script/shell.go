@@ -1,4 +1,4 @@
-// shell.go defines how an Shell script should be executed on agents.
+// shell.go defines how a Shell script should be executed on agents.
 package script
 
 type Operation struct {
