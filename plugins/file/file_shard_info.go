@@ -46,7 +46,7 @@ func (ds *FileShardInfo) ReadSplit() error {
 		return fmt.Errorf("Failed to read file %s: %v", ds.FileName, err)
 	}
 	if ds.HasHeader {
-		reader.Read()
+		reader.ReadHeader()
 	}
 
 	for {
