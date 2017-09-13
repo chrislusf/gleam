@@ -9,7 +9,7 @@ import (
 
 // TsvPrintf reads TSV lines from reader,
 // and formats according to a format specifier and writes to writer.
-func TsvPrintf(reader io.Reader, writer io.Writer, format string) error {
+func TsvPrintf(writer io.Writer, reader io.Reader, format string) error {
 	return TakeTsv(reader, -1, func(args []string) error {
 		var objects []interface{}
 		for _, arg := range args {
@@ -25,7 +25,7 @@ func TsvPrintf(reader io.Reader, writer io.Writer, format string) error {
 
 // Fprintf reads MessagePack encoded messages from reader,
 // and formats according to a format specifier and writes to writer.
-func Fprintf(reader io.Reader, writer io.Writer, format string) error {
+func Fprintf(writer io.Writer, reader io.Reader, format string) error {
 
 	return ProcessMessage(reader, func(encodedBytes []byte) error {
 		var decodedObjects []interface{}
