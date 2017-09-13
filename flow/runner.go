@@ -132,7 +132,6 @@ func (r *localDriver) runTask(wg *sync.WaitGroup, task *Task) {
 
 	// try to run Function first
 	// if failed, try to run shell scripts
-	// if failed, try to run lua scripts
 	if task.Step.Function != nil {
 		// each function should close its own Piper output writer
 		// and close it's own Piper input reader

@@ -55,13 +55,13 @@ func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
 
 // Fprintf formats using the format for each row and writes to writer.
 func (d *Dataset) Fprintf(writer io.Writer, format string) *Dataset {
-	fn := func(reader io.Reader) error {
+	fn := func(r io.Reader) error {
 		w := bufio.NewWriter(writer)
 		defer w.Flush()
 		if d.Step.IsPipe {
-			return util.TsvPrintf(reader, w, format)
+			return util.TsvPrintf(w, r, format)
 		}
-		return util.Fprintf(reader, w, format)
+		return util.Fprintf(w, r, format)
 	}
 	return d.Output(fn)
 }
