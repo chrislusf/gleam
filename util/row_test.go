@@ -1,11 +1,7 @@
 package util
 
 import (
-	"bytes"
-	"fmt"
 	"testing"
-
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 func TestMap(t *testing.T) {
@@ -17,9 +13,7 @@ func TestMap(t *testing.T) {
 	row.K = []interface{}{"abc"}
 	row.V = []interface{}{m}
 	encoded, err := encodeRow(row)
-	encodedMsgpack, err := encodeToMsgpack(row)
-	t.Logf("encoded grnpack row of map: %x", encoded)
-	t.Logf("encoded msgpack row of map: %x", encodedMsgpack)
+	t.Logf("encoded row of map: %x", encoded)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,12 +25,10 @@ func TestNumber(t *testing.T) {
 
 	row := Row{}
 	row.K = []interface{}{"abc"}
-	row.V = []interface{}{x, 34, 45, 56, 7, 8, 456346, 5634563, 456345634, 568657}
+	row.V = []interface{}{x}
 	encoded, err := encodeRow(row)
-	encodedMsgpack, err := encodeToMsgpack(row)
 
-	t.Logf("encoded grnpack row of uint32: %x", encoded)
-	t.Logf("encoded msgpack row of uint32: %x", encodedMsgpack)
+	t.Logf("encoded row of uint32: %x", encoded)
 
 	if err != nil {
 		t.Fatal(err)
@@ -55,13 +47,4 @@ func TestNumber(t *testing.T) {
 		}
 	}
 
-}
-
-func encodeToMsgpack(row Row) ([]byte, error) {
-	var buf bytes.Buffer
-	encoder := msgpack.NewEncoder(&buf)
-	if err := encoder.Encode(row); err != nil {
-		return nil, fmt.Errorf("Failed to encode row: %v", err)
-	}
-	return buf.Bytes(), nil
 }

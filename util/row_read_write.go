@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/glycerine/greenpack/msgp"
+	"github.com/glycerine/truepack/msgp"
 )
 
 // WriteTo encode and write a row of data to the writer

@@ -1,4 +1,4 @@
-//go:generate greenpack -fast-strings -o row_codec.go
+//go:generate truepack -fast-strings -o row_codec.go
 package util
 
 type Row struct {
