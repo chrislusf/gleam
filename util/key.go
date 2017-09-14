@@ -14,27 +14,37 @@ func HashByKeys(data []interface{}) int {
 }
 
 func hashByKey(data interface{}) int {
-	var x int
-	if key, ok := data.(string); ok {
-		x = int(Hash([]byte(key)))
-	} else if key, ok := data.([]byte); ok {
-		x = int(Hash(key))
-	} else if key, ok := data.(uint64); ok {
-		x = int(key)
-	} else if key, ok := data.(uint32); ok {
-		x = int(key)
-	} else if key, ok := data.(uint8); ok {
-		x = int(key)
-	} else if key, ok := data.(int); ok {
-		x = key
-	} else if key, ok := data.(int8); ok {
-		x = int(key)
-	} else if key, ok := data.(int64); ok {
-		x = int(key)
-	} else if key, ok := data.(int32); ok {
-		x = int(key)
+
+	switch key := data.(type) {
+	case string:
+		return int(Hash([]byte(key)))
+
+	case []byte:
+		return int(Hash(key))
+
+	case uint64:
+		return int(key)
+
+	case uint32:
+		return int(key)
+
+	case uint8:
+		return int(key)
+
+	case int:
+		return key
+
+	case int8:
+		return int(key)
+
+	case int32:
+		return int(key)
+
+	case int64:
+		return int(key)
 	}
-	return x
+
+	return 0
 }
 
 func PartitionByKeys(shardCount int, data []interface{}) int {
@@ -45,8 +55,15 @@ func LessThan(a interface{}, b interface{}) bool {
 	return Compare(a, b) < 0
 }
 
+func toFloat64(isFloat bool, v interface{}) float64 {
+	if isFloat {
+		return getFloat64(v)
+	}
+	return float64(getInt64(v))
+}
 func Compare(a interface{}, b interface{}) (ret int) {
-	if x, ok := a.([]interface{}); ok {
+	switch x := a.(type) {
+	case []interface{}:
 		y := b.([]interface{})
 		for i := 0; i < len(x); i++ {
 			ret = Compare(x[i], y[i])
@@ -54,67 +71,68 @@ func Compare(a interface{}, b interface{}) (ret int) {
 				return ret
 			}
 		}
-	} else if x, ok := a.(string); ok {
-		if y, y_ok := b.(string); y_ok {
+
+	case string:
+		if y, ok := b.(string); ok {
 			return strings.Compare(x, y)
 		}
-		if y, y_ok := b.([]byte); y_ok {
+		if y, ok := b.([]byte); ok {
 			return strings.Compare(x, string(y))
 		}
-	} else if x, ok := a.([]byte); ok {
-		if y, y_ok := b.([]byte); y_ok {
+
+	case []byte:
+		if y, ok := b.([]byte); ok {
 			return bytes.Compare(x, y)
 		}
-		if y, y_ok := b.(string); y_ok {
+		if y, ok := b.(string); ok {
 			return strings.Compare(string(x), y)
 		}
-	} else {
+
+	default:
 		aIsFloat := isFloat(a)
 		bIsFloat := isFloat(b)
 		if !aIsFloat && !bIsFloat {
 			return int(getInt64(a) - getInt64(b))
 		}
-		var x, y float64
-		if aIsFloat {
-			x = getFloat64(a)
-		} else {
-			x = float64(getInt64(a))
-		}
-		if bIsFloat {
-			y = getFloat64(b)
-		} else {
-			y = float64(getInt64(b))
-		}
-		if x < y {
+
+		t := toFloat64(aIsFloat, a)
+		y := toFloat64(bIsFloat, b)
+
+		if t < y {
 			return -1
-		} else if x > y {
+
+		} else if t > y {
 			return 1
-		} else {
-			return 0
 		}
+		return 0
 	}
+
 	return ret
 }
 
-func getInt64(a interface{}) int64 {
-	if x, ok := a.(uint64); ok {
-		return int64(x)
-	} else if x, ok := a.(int64); ok {
-		return x
-	} else if x, ok := a.(uint32); ok {
-		return int64(x)
-	} else if x, ok := a.(int32); ok {
-		return int64(x)
-	} else if x, ok := a.(int); ok {
-		return int64(x)
-	} else if x, ok := a.(uint8); ok {
-		return int64(x)
-	} else if x, ok := a.(int8); ok {
-		return int64(x)
-	}
-	return 0
-}
+func getInt64(v interface{}) int64 {
+	switch t := v.(type) {
 
+	case uint64:
+		return int64(t)
+	case uint32:
+		return int64(t)
+	case int32:
+		return int64(t)
+	case int:
+		return int64(t)
+	case uint8:
+		return int64(t)
+	case int8:
+		return int64(t)
+
+	case int64:
+		return t
+	}
+
+	return 0
+
+}
 func getFloat64(a interface{}) float64 {
 	if x, ok := a.(float64); ok {
 		return float64(x)
