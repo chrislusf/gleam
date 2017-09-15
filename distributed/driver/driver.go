@@ -52,9 +52,9 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	fcd.logExecutionPlan(fc)
 
 	// create the scheduler
-	sched := scheduler.NewScheduler(
+	sched := scheduler.New(
 		fcd.Option.Master,
-		&scheduler.SchedulerOption{
+		&scheduler.Option{
 			DataCenter:   fcd.Option.DataCenter,
 			Rack:         fcd.Option.Rack,
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,
@@ -78,18 +78,28 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	}, nil)
 
 	// schedule to run the steps
-	var wg, reportWg sync.WaitGroup
-	for _, taskGroup := range fcd.taskGroups {
+	var (
+		wg       sync.WaitGroup
+		reportWg sync.WaitGroup
+	)
+	for _, tg := range fcd.taskGroups {
 		wg.Add(1)
-		go func(taskGroup *plan.TaskGroup) {
-			sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
-				fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
-		}(taskGroup)
+		go func(t *plan.TaskGroup) {
+			sched.ExecuteTaskGroup(
+				ctx,
+				fc,
+				fcd.GetTaskGroupStatus(t),
+				&wg,
+				t,
+				fcd.Option.FlowBid/float64(len(fcd.taskGroups)),
+				fcd.Option.RequiredFiles)
+		}(tg)
 	}
 	go sched.Market.FetcherLoop()
 
 	stopChan := make(chan bool)
 	reportWg.Add(1)
+
 	go fcd.reportStatus(ctx, &reportWg, fcd.Option.Master, stopChan)
 
 	log.Printf("Start Job Status URL http://%s/job/%d", fcd.Option.Master, fcd.status.GetId())
@@ -104,12 +114,12 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 	var wg sync.WaitGroup
 
-	for _, taskGroup := range fcd.taskGroups {
+	for _, tg := range fcd.taskGroups {
 		wg.Add(1)
-		go func(taskGroup *plan.TaskGroup) {
+		go func(t *plan.TaskGroup) {
 			defer wg.Done()
-			sched.DeleteOutout(taskGroup)
-		}(taskGroup)
+			sched.DeleteOutout(t)
+		}(tg)
 	}
 
 	wg.Wait()
@@ -119,19 +129,19 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 		return
 	}
 
-	touchedAgents := make(map[string]bool)
-	for _, taskGroup := range fcd.taskGroups {
-		tasks := taskGroup.Tasks
+	touchedAgents := make(map[string]struct{})
+	for _, tg := range fcd.taskGroups {
+		tasks := tg.Tasks
 		for _, shard := range tasks[len(tasks)-1].OutputShards {
 			location, _ := sched.GetShardLocation(shard)
 			if location.Location == nil {
 				continue
 			}
-			touchedAgents[location.Location.URL()] = true
+			touchedAgents[location.Location.URL()] = struct{}{}
 		}
 	}
 
-	for url, _ := range touchedAgents {
+	for url := range touchedAgents {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()

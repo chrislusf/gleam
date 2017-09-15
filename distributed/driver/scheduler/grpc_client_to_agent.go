@@ -21,7 +21,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		return err
 	}
 
-	fileResourceRequest := &pb.FileResourceRequest{
+	req := &pb.FileResourceRequest{
 		Name:         filepath.Base(relatedFile.FullPath),
 		Dir:          relatedFile.TargetFolder,
 		Hash:         fh.Hash,
@@ -34,19 +34,19 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		return err
 	}
 
-	err = stream.Send(fileResourceRequest)
+	err = stream.Send(req)
 	if err != nil {
 		log.Printf("%v.SendFirstFileResource(_) = _, %v", client, err)
 		return err
 	}
 
-	fileResourceResponse, err := stream.Recv()
+	resp, err := stream.Recv()
 	if err != nil {
 		log.Printf("%v.CheckFileResourceExists(_) = _, %v", client, err)
 		return err
 	}
 
-	if fileResourceResponse.AlreadyExists {
+	if resp.AlreadyExists {
 		stream.CloseSend()
 		return nil
 	}
@@ -58,6 +58,8 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		return err
 	}
 
+	defer f.Close()
+
 	buffer := make([]byte, 4*1024)
 	for {
 		n, err := f.Read(buffer)
@@ -68,15 +70,15 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 			log.Printf("File Read %s error: %v", relatedFile.FullPath, err)
 			return err
 		}
-		fileResource := &pb.FileResourceRequest{
+		fr := &pb.FileResourceRequest{
 			Name:         filepath.Base(relatedFile.FullPath),
 			Dir:          relatedFile.TargetFolder,
 			Content:      buffer[0:n],
 			FlowHashCode: flowHashCode,
 		}
-		err = stream.Send(fileResource)
+		err = stream.Send(fr)
 		if err != nil {
-			log.Printf("%v.Send file %s: %v", client, fileResource.Name, err)
+			log.Printf("%v.Send file %s: %v", client, fr.Name, err)
 			return err
 		}
 	}
@@ -90,10 +92,12 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 
 }
 
-func sendExecutionRequest(ctx context.Context,
-	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
-	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
-	server string, request *pb.ExecutionRequest) error {
+func sendExecutionRequest(
+	ctx context.Context,
+	_ *pb.FlowExecutionStatus_TaskGroup,
+	execStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
+	server string,
+	request *pb.ExecutionRequest) error {
 
 	return withClient(server, func(client pb.GleamAgentClient) error {
 		log.Printf("%s %v> starting with %v MB memory...\n", server, request.InstructionSet.Name, request.GetResource().GetMemoryMb())
@@ -106,7 +110,7 @@ func sendExecutionRequest(ctx context.Context,
 		// stream.CloseSend()
 
 		for {
-			response, err := stream.Recv()
+			resp, err := stream.Recv()
 			if err == io.EOF {
 				break
 			}
@@ -114,25 +118,25 @@ func sendExecutionRequest(ctx context.Context,
 				log.Printf("sendExecutionRequest %v stream from %s: %v", request.GetInstructionSet().GetName(), server, err)
 				break
 			}
-			if response.GetError() != nil {
-				log.Printf("%s %v>%s", server, request.InstructionSet.Name, string(response.GetError()))
-				executionStatus.Error = response.GetError()
+			if resp.GetError() != nil {
+				log.Printf("%s %v>%s", server, request.InstructionSet.Name, string(resp.GetError()))
+				execStatus.Error = resp.GetError()
 			}
-			if response.GetOutput() != nil {
-				fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(response.GetOutput()))
+			if resp.GetOutput() != nil {
+				fmt.Fprintf(os.Stdout, "%s>%s\n", server, string(resp.GetOutput()))
 			}
-			if response.GetSystemTime() != 0 {
+			if resp.GetSystemTime() != 0 {
 				// log.Printf("%s %v>  UserTime: %2.2fs SystemTime: %2.2fs\n", server, request.InstructionSet.Name, response.GetSystemTime(), response.GetUserTime())
-				executionStatus.SystemTime = response.GetSystemTime()
-				executionStatus.UserTime = response.GetUserTime()
+				execStatus.SystemTime = resp.GetSystemTime()
+				execStatus.UserTime = resp.GetUserTime()
 			}
-			if response.GetExecutionStat() != nil {
-				if executionStatus.ExecutionStat == nil {
-					executionStatus.ExecutionStat = response.GetExecutionStat()
+			if resp.GetExecutionStat() != nil {
+				if execStatus.ExecutionStat == nil {
+					execStatus.ExecutionStat = resp.GetExecutionStat()
 				} else {
-					executionStatus.ExecutionStat.Stats = mergeStats(
-						executionStatus.ExecutionStat.Stats,
-						response.GetExecutionStat().GetStats())
+					execStatus.ExecutionStat.Stats = mergeStats(
+						execStatus.ExecutionStat.Stats,
+						resp.GetExecutionStat().GetStats())
 				}
 			}
 		}
@@ -197,15 +201,14 @@ func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
+	conn, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("driver dial agent: %v", err)
 	}
 	defer func() {
 		time.Sleep(50 * time.Millisecond)
-		grpcConection.Close()
+		conn.Close()
 	}()
-	client := pb.NewGleamAgentClient(grpcConection)
 
-	return fn(client)
+	return fn(pb.NewGleamAgentClient(conn))
 }
