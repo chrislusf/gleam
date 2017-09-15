@@ -197,15 +197,14 @@ func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
+	conn, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("driver dial agent: %v", err)
 	}
 	defer func() {
 		time.Sleep(50 * time.Millisecond)
-		grpcConection.Close()
+		conn.Close()
 	}()
-	client := pb.NewGleamAgentClient(grpcConection)
 
-	return fn(client)
+	return fn(pb.NewGleamAgentClient(conn))
 }
