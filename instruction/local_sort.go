@@ -72,12 +72,11 @@ func DoLocalSort(reader io.Reader, writer io.Writer, orderBys []OrderBy, stats *
 	})
 
 	for _, row := range rows {
-		// println("sorted key", kv.(pair).keys[0].(string))
+		// println("sorted key", row.K[0].(string))
 		if err := row.WriteTo(writer); err != nil {
 			return fmt.Errorf("Sort>Failed to write: %v", err)
-		} else {
-			stats.OutputCounter++
 		}
+		stats.OutputCounter++
 	}
 	return nil
 }

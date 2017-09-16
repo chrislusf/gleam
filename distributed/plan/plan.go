@@ -31,8 +31,8 @@ type StepGroup struct {
 }
 
 func GroupTasks(fc *flow.Flow) ([]*StepGroup, []*TaskGroup) {
-	stepGroups := translateToStepGroups(fc)
-	return stepGroups, translateToTaskGroups(stepGroups)
+	sg := translateToStepGroups(fc)
+	return sg, translateToTaskGroups(sg)
 }
 
 func NewStepGroup() *StepGroup {
@@ -41,14 +41,14 @@ func NewStepGroup() *StepGroup {
 	return sg
 }
 
-func (t *StepGroup) AddStep(Step *flow.Step) *StepGroup {
-	t.Steps = append(t.Steps, Step)
-	return t
+func (s *StepGroup) AddStep(Step *flow.Step) *StepGroup {
+	s.Steps = append(s.Steps, Step)
+	return s
 }
 
-func (t *StepGroup) AddParent(parent *StepGroup) *StepGroup {
-	t.Parents = append(t.Parents, parent)
-	return t
+func (s *StepGroup) AddParent(parent *StepGroup) *StepGroup {
+	s.Parents = append(s.Parents, parent)
+	return s
 }
 
 func NewTaskGroup() *TaskGroup {
@@ -83,8 +83,8 @@ func (t *TaskGroup) RequiredResources() *pb.ComputeResource {
 	for _, task := range t.Tasks {
 		inst := task.Step.Instruction
 		if inst != nil && task.Step.OutputDataset != nil {
-			taskMemSize := inst.GetMemoryCostInMB(task.Step.OutputDataset.GetPartitionSize())
-			resource.MemoryMb += taskMemSize
+			size := inst.GetMemoryCostInMB(task.Step.OutputDataset.GetPartitionSize())
+			resource.MemoryMb += size
 			// log.Printf("  %s : %s (%d MB)\n", t.String(), task.Step.Name, taskMemSize)
 		}
 	}
@@ -102,8 +102,8 @@ func (s *StepGroup) WaitForAllTasksToComplete() {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, taskGroup := range s.TaskGroups {
-		for taskGroup.StopAt.IsZero() || taskGroup.Error != nil {
+	for _, tg := range s.TaskGroups {
+		for tg.StopAt.IsZero() || tg.Error != nil {
 			s.waitForAllTasks.Wait()
 		}
 	}
