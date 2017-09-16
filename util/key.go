@@ -55,12 +55,6 @@ func LessThan(a interface{}, b interface{}) bool {
 	return Compare(a, b) < 0
 }
 
-func toFloat64(isFloat bool, v interface{}) float64 {
-	if isFloat {
-		return getFloat64(v)
-	}
-	return float64(getInt64(v))
-}
 func Compare(a interface{}, b interface{}) (ret int) {
 	switch x := a.(type) {
 	case []interface{}:
@@ -92,11 +86,11 @@ func Compare(a interface{}, b interface{}) (ret int) {
 		aIsFloat := isFloat(a)
 		bIsFloat := isFloat(b)
 		if !aIsFloat && !bIsFloat {
-			return int(getInt64(a) - getInt64(b))
+			return int(ToInt64(a) - ToInt64(b))
 		}
 
-		t := toFloat64(aIsFloat, a)
-		y := toFloat64(bIsFloat, b)
+		t := ToFloat64(a)
+		y := ToFloat64(b)
 
 		if t < y {
 			return -1
@@ -108,36 +102,6 @@ func Compare(a interface{}, b interface{}) (ret int) {
 	}
 
 	return ret
-}
-
-func getInt64(v interface{}) int64 {
-	switch t := v.(type) {
-
-	case uint64:
-		return int64(t)
-	case uint32:
-		return int64(t)
-	case int32:
-		return int64(t)
-	case int:
-		return int64(t)
-	case uint8:
-		return int64(t)
-	case int8:
-		return int64(t)
-
-	case int64:
-		return t
-	}
-
-	return 0
-
-}
-func getFloat64(a interface{}) float64 {
-	if x, ok := a.(float64); ok {
-		return float64(x)
-	}
-	return 0.0
 }
 
 func isFloat(a interface{}) bool {
