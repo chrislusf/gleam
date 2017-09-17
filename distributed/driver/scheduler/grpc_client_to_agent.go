@@ -57,6 +57,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		stream.CloseSend()
 		return err
 	}
+	defer f.Close()
 
 	buffer := make([]byte, 4*1024)
 	for {

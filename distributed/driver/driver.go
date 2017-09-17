@@ -52,9 +52,9 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	fcd.logExecutionPlan(fc)
 
 	// create the scheduler
-	sched := scheduler.NewScheduler(
+	sched := scheduler.New(
 		fcd.Option.Master,
-		&scheduler.SchedulerOption{
+		&scheduler.Option{
 			DataCenter:   fcd.Option.DataCenter,
 			Rack:         fcd.Option.Rack,
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,

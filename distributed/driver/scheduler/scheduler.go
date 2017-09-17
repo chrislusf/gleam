@@ -17,7 +17,7 @@ type Scheduler struct {
 	Master       string
 	EventChan    chan interface{}
 	Market       *market.Market
-	Option       *SchedulerOption
+	Option       *Option
 	shardLocator *DatasetShardLocator
 }
 
@@ -32,7 +32,7 @@ type RemoteExecutorStatus struct {
 	StopTime     time.Time
 }
 
-type SchedulerOption struct {
+type Option struct {
 	Username     string
 	Hostname     string
 	FlowHashcode uint32
@@ -43,7 +43,7 @@ type SchedulerOption struct {
 	IsProfiling  bool
 }
 
-func NewScheduler(leader string, option *SchedulerOption) *Scheduler {
+func New(leader string, option *Option) *Scheduler {
 	if currentUser, err := user.Current(); err == nil {
 		option.Username = currentUser.Username
 	}
