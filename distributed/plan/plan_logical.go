@@ -32,19 +32,22 @@ func findAncestorStepId(step *flow.Step) (int, bool) {
 	// println("find step", step.Name)
 
 	for taskCount == len(current.Tasks) {
-		// =0 no dataset inputs
-		// >1 more than 2 dataset inputs
-		if len(current.InputDatasets) != 1 {
+		if len(current.InputDatasets) > 1 {
+			// more than 2 dataset inputs
+			break
+		}
+		if len(current.InputDatasets) == 0 {
+			// no dataset inputs
 			break
 		}
 		if !isMergeableDataset(current.InputDatasets[0], taskCount) {
 			break
 		}
-
-		// they all must on the same side
-		if current.IsOnDriverSide != current.InputDatasets[0].Step.IsOnDriverSide {
+		if (!current.IsOnDriverSide && current.InputDatasets[0].Step.IsOnDriverSide) ||
+			(current.IsOnDriverSide && !current.InputDatasets[0].Step.IsOnDriverSide) {
 			break
 		}
+
 		current = current.InputDatasets[0].Step
 		taskCount = len(current.Tasks)
 
@@ -58,23 +61,21 @@ func translateToStepGroups(fc *flow.Flow) []*StepGroup {
 	stepId2StepGroup := make([]*StepGroup, len(fc.Steps))
 	for _, step := range fc.Steps {
 		// println("step:", step.Name, step.Id, "starting...")
-		ancestorStepId, has := findAncestorStepId(step)
-		if !has {
+		ancestorStepId, foundStepId := findAncestorStepId(step)
+		if !foundStepId {
 			println("step:", step.Id, "Not found ancestorStepId.")
 			continue
 		}
-
 		// println("step:", step.Name, step.Id, "ancestorStepId", ancestorStepId)
 		if stepId2StepGroup[ancestorStepId] == nil {
 			stepId2StepGroup[ancestorStepId] = NewStepGroup()
-
 			for _, ds := range step.InputDatasets {
-				parentStepId, has := findAncestorStepId(ds.Step)
-				if !has {
+				parentDsId, hasParentIdId := findAncestorStepId(ds.Step)
+				if !hasParentIdId {
 					// since we add steps following the same order as the code
 					log.Panic("parent StepGroup should already be in the map")
 				}
-				parentSg := stepId2StepGroup[parentStepId]
+				parentSg := stepId2StepGroup[parentDsId]
 				if parentSg == nil {
 					// since we add steps following the same order as the code
 					log.Panic("parent StepGroup should already be in the map")
@@ -86,12 +87,12 @@ func translateToStepGroups(fc *flow.Flow) []*StepGroup {
 	}
 	// shrink
 	var ret []*StepGroup
-	for _, sg := range stepId2StepGroup {
-		if sg == nil || len(sg.Steps) == 0 {
+	for _, stepGroup := range stepId2StepGroup {
+		if stepGroup == nil || len(stepGroup.Steps) == 0 {
 			continue
 		}
 		// println("add step group started by", stepGroup.Steps[0].Name, "with", len(stepGroup.Steps), "steps")
-		ret = append(ret, sg)
+		ret = append(ret, stepGroup)
 	}
 
 	return ret

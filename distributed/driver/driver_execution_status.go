@@ -26,18 +26,13 @@ func (fcd *FlowDriver) GetTaskGroupStatus(taskGroup *plan.TaskGroup) *pb.FlowExe
 func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 
 	for _, step := range fc.Steps {
-		var (
-			parentIds       []int32
-			taskIds         []int32
-			inputDatasetIds []int32
-		)
-
-		for _, ds := range step.InputDatasets {
-			parentIds = append(parentIds, int32(ds.Step.Id))
-			inputDatasetIds = append(inputDatasetIds, int32(ds.Id))
+		var parentIds, taskIds, inputDatasetIds []int32
+		for _, inputDataset := range step.InputDatasets {
+			parentIds = append(parentIds, int32(inputDataset.Step.Id))
+			inputDatasetIds = append(inputDatasetIds, int32(inputDataset.Id))
 		}
-		for _, t := range step.Tasks {
-			taskIds = append(taskIds, int32(t.Id))
+		for _, task := range step.Tasks {
+			taskIds = append(taskIds, int32(task.Id))
 		}
 		outputDatasetId := int32(0)
 		if step.OutputDataset != nil {
@@ -68,15 +63,12 @@ func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 		}
 	}
 
-	for _, sg := range fcd.stepGroups {
-		var (
-			stepIds   []int32
-			parentIds []int32
-		)
-		for _, step := range sg.Steps {
+	for _, stepGroup := range fcd.stepGroups {
+		var stepIds, parentIds []int32
+		for _, step := range stepGroup.Steps {
 			stepIds = append(stepIds, int32(step.Id))
 		}
-		for _, parent := range sg.Parents {
+		for _, parent := range stepGroup.Parents {
 			// find the parent step group from all step groups
 			for id, stepGroup := range fcd.stepGroups {
 				// if the first step is the same
@@ -94,37 +86,33 @@ func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 		)
 	}
 
-	for _, ds := range fc.Datasets {
-		for _, shard := range ds.Shards {
+	for _, dataset := range fc.Datasets {
+		for _, shard := range dataset.Shards {
 			fcd.status.DatasetShards = append(
 				fcd.status.DatasetShards,
 				&pb.FlowExecutionStatus_DatasetShard{
-					DatasetId: int32(ds.Id),
+					DatasetId: int32(dataset.Id),
 					Id:        int32(shard.Id),
 				},
 			)
 		}
 		var stepIds []int32
-		for _, step := range ds.ReadingSteps {
+		for _, step := range dataset.ReadingSteps {
 			stepIds = append(stepIds, int32(step.Id))
 		}
-
 		fcd.status.Datasets = append(
 			fcd.status.Datasets,
 			&pb.FlowExecutionStatus_Dataset{
-				Id:             int32(ds.Id),
-				StepId:         int32(ds.Step.Id),
+				Id:             int32(dataset.Id),
+				StepId:         int32(dataset.Step.Id),
 				ReadingStepIds: stepIds,
 			},
 		)
 	}
 
-	for _, tg := range fcd.taskGroups {
-		var (
-			stepIds []int32
-			taskIds []int32
-		)
-		for _, task := range tg.Tasks {
+	for _, taskGroup := range fcd.taskGroups {
+		var stepIds, taskIds []int32
+		for _, task := range taskGroup.Tasks {
 			stepIds = append(stepIds, int32(task.Step.Id))
 			taskIds = append(taskIds, int32(task.Id))
 		}
