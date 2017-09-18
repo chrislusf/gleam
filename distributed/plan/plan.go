@@ -41,14 +41,14 @@ func NewStepGroup() *StepGroup {
 	return sg
 }
 
-func (t *StepGroup) AddStep(Step *flow.Step) *StepGroup {
-	t.Steps = append(t.Steps, Step)
-	return t
+func (s *StepGroup) AddStep(Step *flow.Step) *StepGroup {
+	s.Steps = append(s.Steps, Step)
+	return s
 }
 
-func (t *StepGroup) AddParent(parent *StepGroup) *StepGroup {
-	t.Parents = append(t.Parents, parent)
-	return t
+func (s *StepGroup) AddParent(parent *StepGroup) *StepGroup {
+	s.Parents = append(s.Parents, parent)
+	return s
 }
 
 func NewTaskGroup() *TaskGroup {
