@@ -92,7 +92,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 }
 
 func sendExecutionRequest(ctx context.Context,
-	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
+	_ *pb.FlowExecutionStatus_TaskGroup,
 	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	server string, request *pb.ExecutionRequest) error {
 
