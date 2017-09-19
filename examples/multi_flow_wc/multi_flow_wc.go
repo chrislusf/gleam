@@ -3,8 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"os/exec"
 	"time"
 
 	"github.com/chrislusf/gleam/flow"
@@ -13,11 +11,6 @@ import (
 	"github.com/chrislusf/gleam/gio/reducer"
 	"github.com/chrislusf/gleam/plugins/file"
 	"github.com/chrislusf/gleam/util"
-)
-
-var (
-	isCron = flag.Bool("cron", false, "run as cron or not")
-	driver = flag.Int("driver", 1, "the current running driver")
 )
 
 type Handler func() *flow.Dataset
@@ -59,15 +52,11 @@ var handlers = map[int]Handler{
 	inPipe: makeWCInPipeline,
 }
 
-func run(mode int, at string) {
-	exe, _ := os.Executable()
-	cmd := exec.Command(exe, fmt.Sprintf("-driver=%d", mode))
-	cmd.Stdout = os.Stdout
-	err := cmd.Run()
-	fmt.Printf("run at %s with mode: %d and error: %v\n", at, mode, err)
-}
+func main() {
+	flag.Parse() // optional, since gio.Init() will call this also.
 
-func doCron() {
+	gio.Init() // If the command line invokes the mapper or reducer, execute it and exit.
+
 	t := time.NewTicker(5e9)
 	m := inGo
 FOR_LOOP:
@@ -77,25 +66,13 @@ FOR_LOOP:
 			if m == modeNum {
 				break FOR_LOOP
 			}
-			run(m, now.String())
+
+			handlers[m]().Run()
+			fmt.Printf("run at %s with mode: %d\n", now.String(), m)
+
 			m++
 		}
 
-	}
-
-}
-func main() {
-	flag.Parse() // optional, since gio.Init() will call this also.
-
-	if *isCron {
-		doCron()
-		return
-	}
-
-	gio.Init() // If the command line invokes the mapper or reducer, execute it and exit.
-
-	if h, ok := handlers[*driver]; ok {
-		h().Run()
 	}
 
 }
