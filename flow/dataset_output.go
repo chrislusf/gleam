@@ -102,24 +102,25 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 		}
 
 		return util.TakeMessage(reader, 1, func(encodedBytes []byte) error {
-			if row, err := util.DecodeRow(encodedBytes); err != nil {
+			row, err := util.DecodeRow(encodedBytes)
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				return err
-			} else {
-				var counter int
-				for _, v := range row.K {
-					if err := setValueTo(v, decodedObjects[counter]); err != nil {
-						return err
-					}
-					counter++
-				}
-				for _, v := range row.V {
-					if err := setValueTo(v, decodedObjects[counter]); err != nil {
-						return err
-					}
-					counter++
-				}
 			}
+			var counter int
+			for _, v := range row.K {
+				if err := setValueTo(v, decodedObjects[counter]); err != nil {
+					return err
+				}
+				counter++
+			}
+			for _, v := range row.V {
+				if err := setValueTo(v, decodedObjects[counter]); err != nil {
+					return err
+				}
+				counter++
+			}
+
 			return nil
 		})
 	}
@@ -140,13 +141,12 @@ func (d *Dataset) OutputRow(f func(*util.Row) error) *Dataset {
 		}
 
 		return util.TakeMessage(reader, -1, func(encodedBytes []byte) error {
-			if row, err := util.DecodeRow(encodedBytes); err != nil {
+			row, err := util.DecodeRow(encodedBytes)
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to decode byte: %v\n", err)
 				return err
-			} else {
-				return f(row)
 			}
-			return nil
+			return f(row)
 		})
 	}
 	return d.Output(fn)
