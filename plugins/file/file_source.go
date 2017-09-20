@@ -59,7 +59,7 @@ func newFileSource(fileType, fileOrPattern string, partitionCount int) *FileSour
 	var err error
 	fileOrPattern, err = filepath.Abs(fileOrPattern)
 	if err != nil {
-		log.Fatalf("file \"%s\" not found: %v")
+		log.Fatalf("file \"%s\" not found: %v", fileOrPattern, err)
 	}
 
 	s.folder = filepath.Dir(fileOrPattern)
