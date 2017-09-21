@@ -35,7 +35,7 @@ func assertSameNumberOfTasks(steps []*flow.Step) {
 	count := len(steps[0].Tasks)
 	for _, step := range steps {
 		if count != len(step.Tasks) {
-			log.Fatalf("This should not happen: step %d has %d tasks, but step %d has %d tasks.", steps[0].Id, count, step.Id, len(step.Tasks))
+			log.Fatalf("This should not happen: step %d have %d tasks, but step %d have %d tasks.", steps[0].Id, count, step.Id, len(step.Tasks))
 		}
 	}
 }
