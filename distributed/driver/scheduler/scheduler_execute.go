@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 
 	"github.com/chrislusf/gleam/distributed/netchan"
@@ -25,10 +24,6 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 
 	// fmt.Printf("allocated %s on %v\n", tasks[0].Name(), allocation.Location)
 	// create reqeust
-	args := []string{}
-	for _, arg := range os.Args[1:] {
-		args = append(args, arg)
-	}
 	instructionSet := plan.TranslateToInstructionSet(taskGroup)
 	firstInstruction := instructionSet.GetInstructions()[0]
 	lastInstruction := instructionSet.GetInstructions()[len(instructionSet.GetInstructions())-1]
@@ -43,6 +38,7 @@ func (s *Scheduler) remoteExecuteOnLocation(ctx context.Context,
 		}
 		inputLocations = append(inputLocations, loc)
 	}
+
 	for _, shard := range lastTask.OutputShards {
 		outputLocations = append(outputLocations, pb.DataLocation{
 			Name:     shard.Name(),
@@ -83,9 +79,9 @@ func (s *Scheduler) localExecute(ctx context.Context,
 	wg *sync.WaitGroup) error {
 	if task.Step.OutputDataset == nil {
 		return s.localExecuteOutput(ctx, flowContext, task, wg)
-	} else {
-		return s.localExecuteSource(ctx, flowContext, executionStatus, task, wg)
 	}
+	return s.localExecuteSource(ctx, flowContext, executionStatus, task, wg)
+
 }
 
 func (s *Scheduler) localExecuteSource(ctx context.Context,
