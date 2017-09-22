@@ -13,7 +13,7 @@ import (
 // This is used to execute pure Go code.
 func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	ret, step := add1ShardTo1Step(d)
-	step.Name = name
+	step.Name = name + ".Map"
 	step.IsPipe = false
 	step.IsGoCode = true
 
