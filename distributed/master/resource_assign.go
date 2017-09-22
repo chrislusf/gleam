@@ -8,13 +8,13 @@ import (
 	"github.com/chrislusf/gleam/pb"
 )
 
-func (t *Topology) allocateDataCenter(requests []*pb.ComputeResource) (string, error) {
+func (tp *Topology) allocateDataCenter(requests []*pb.ComputeResource) (string, error) {
 
 	var total pb.ComputeResource
 	for _, r := range requests {
 		total = r.Plus(total)
 	}
-	dataCenters := t.GetDataCenters()
+	dataCenters := tp.GetDataCenters()
 	for name, dc := range dataCenters {
 		if dc.Resource.Minus(dc.Allocated).Covers(total) {
 			return name, nil
@@ -28,7 +28,7 @@ func (t *Topology) allocateDataCenter(requests []*pb.ComputeResource) (string, e
 	return "", fmt.Errorf("All data centers are busy.")
 }
 
-func (t *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []*pb.ComputeResource) (
+func (tp *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []*pb.ComputeResource) (
 	allocated []*pb.Allocation, remainingRequests []*pb.ComputeResource) {
 
 	agents := rack.GetAgents()
@@ -55,7 +55,7 @@ func (t *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []
 				agent.Allocated = agent.Allocated.Plus(*request)
 				rack.Allocated = rack.Allocated.Plus(*request)
 				dc.Allocated = dc.Allocated.Plus(*request)
-				t.Allocated = t.Allocated.Plus(*request)
+				tp.Allocated = tp.Allocated.Plus(*request)
 				available = available.Minus(*request)
 				hasAllocation = true
 				break
@@ -71,7 +71,7 @@ func (t *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests []
 	return
 }
 
-func (t *Topology) findServers(dc *DataCenter, requests []*pb.ComputeResource) (ret []*pb.Allocation) {
+func (tp *Topology) findServers(dc *DataCenter, requests []*pb.ComputeResource) (ret []*pb.Allocation) {
 
 	// sort racks by unallocated resources
 	var racks []*Rack
@@ -83,7 +83,7 @@ func (t *Topology) findServers(dc *DataCenter, requests []*pb.ComputeResource) (
 	sort.Sort(byRequestedResources(requests))
 
 	for _, rack := range racks {
-		allocated, requests := t.allocateServersOnRack(dc, rack, requests)
+		allocated, requests := tp.allocateServersOnRack(dc, rack, requests)
 		ret = append(ret, allocated...)
 		if len(requests) == 0 {
 			break

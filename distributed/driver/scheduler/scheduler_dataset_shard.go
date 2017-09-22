@@ -8,7 +8,7 @@ import (
 	"github.com/chrislusf/gleam/pb"
 )
 
-func (s *Scheduler) DeleteOutout(taskGroup *plan.TaskGroup) {
+func (s *Scheduler) DeleteOutput(taskGroup *plan.TaskGroup) {
 	var wg sync.WaitGroup
 	tasks := taskGroup.Tasks
 	for _, shard := range tasks[len(tasks)-1].OutputShards {
