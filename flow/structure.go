@@ -20,6 +20,7 @@ const (
 	OneShardToEveryNShard
 	LinkedNShardToOneShard
 	MergeTwoShardToOneShard
+	AllShardTOAllShard
 )
 
 type DatasetShardStatus int
