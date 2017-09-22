@@ -6,11 +6,11 @@ import (
 	"github.com/chrislusf/gleam/pb"
 )
 
-func (l *Topology) UpdateAgentInformation(ai *pb.Heartbeat) {
-	dc, hasDc := l.GetDataCenter(ai.Location.DataCenter)
+func (tp *Topology) UpdateAgentInformation(ai *pb.Heartbeat) {
+	dc, hasDc := tp.GetDataCenter(ai.Location.DataCenter)
 	if !hasDc {
 		dc = NewDataCenter(ai.Location.DataCenter)
-		l.AddDataCenter(dc)
+		tp.AddDataCenter(dc)
 	}
 
 	rack, hasRack := dc.GetRack(ai.Location.Rack)
@@ -37,13 +37,13 @@ func (l *Topology) UpdateAgentInformation(ai *pb.Heartbeat) {
 		})
 	}
 
-	l.Lock()
-	defer l.Unlock()
+	tp.Lock()
+	defer tp.Unlock()
 
 	if !deltaResource.IsZero() {
 		rack.Resource = rack.Resource.Plus(deltaResource)
 		dc.Resource = dc.Resource.Plus(deltaResource)
-		l.Resource = l.Resource.Plus(deltaResource)
+		tp.Resource = tp.Resource.Plus(deltaResource)
 	}
 
 	if hasOldInfo {
@@ -53,15 +53,15 @@ func (l *Topology) UpdateAgentInformation(ai *pb.Heartbeat) {
 		if !deltaAllocated.IsZero() {
 			rack.Allocated = rack.Allocated.Plus(deltaAllocated)
 			dc.Allocated = dc.Allocated.Plus(deltaAllocated)
-			l.Allocated = l.Allocated.Plus(deltaAllocated)
+			tp.Allocated = tp.Allocated.Plus(deltaAllocated)
 		}
 	}
 
 }
 
-func (l *Topology) deleteAgentInformation(location *pb.Location) {
+func (tp *Topology) deleteAgentInformation(location *pb.Location) {
 
-	dc, hasDc := l.GetDataCenter(location.DataCenter)
+	dc, hasDc := tp.GetDataCenter(location.DataCenter)
 	if !hasDc {
 		return
 	}
@@ -76,8 +76,8 @@ func (l *Topology) deleteAgentInformation(location *pb.Location) {
 		return
 	}
 
-	l.Lock()
-	defer l.Unlock()
+	tp.Lock()
+	defer tp.Unlock()
 
 	deltaResource := oldInfo.Resource
 	deltaAllocated := oldInfo.Allocated
@@ -90,14 +90,14 @@ func (l *Topology) deleteAgentInformation(location *pb.Location) {
 		rack.Allocated = rack.Allocated.Minus(deltaAllocated)
 		dc.Resource = dc.Resource.Minus(deltaResource)
 		dc.Allocated = dc.Allocated.Minus(deltaAllocated)
-		l.Resource = l.Resource.Minus(deltaResource)
-		l.Allocated = l.Allocated.Minus(deltaAllocated)
+		tp.Resource = tp.Resource.Minus(deltaResource)
+		tp.Allocated = tp.Allocated.Minus(deltaAllocated)
 	}
 
 }
 
-func (l *Topology) findAgentInformation(location *pb.Location) (*AgentInformation, bool) {
-	d, hasDc := l.GetDataCenter(location.DataCenter)
+func (tp *Topology) findAgentInformation(location *pb.Location) (*AgentInformation, bool) {
+	d, hasDc := tp.GetDataCenter(location.DataCenter)
 	if !hasDc {
 		return nil, false
 	}

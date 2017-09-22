@@ -108,7 +108,7 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 		wg.Add(1)
 		go func(taskGroup *plan.TaskGroup) {
 			defer wg.Done()
-			sched.DeleteOutout(taskGroup)
+			sched.DeleteOutput(taskGroup)
 		}(taskGroup)
 	}
 
