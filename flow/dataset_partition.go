@@ -4,12 +4,13 @@ import (
 	"github.com/chrislusf/gleam/instruction"
 )
 
-func (d *Dataset) RoundRobin(name string, shard int) *Dataset {
-	if len(d.Shards) == shard {
+func (d *Dataset) RoundRobin(name string, n int) *Dataset {
+	if n <= 1 {
 		return d
 	}
+	shard := n * len(d.Shards)
 	ret := d.Flow.newNextDataset(shard)
-	step := d.Flow.AddOneToAllStep(d, ret)
+	step := d.Flow.AddAllToAllStep(d, ret)
 	step.SetInstruction(name, instruction.NewRoundRobin())
 	return ret
 }
