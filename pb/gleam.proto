@@ -339,6 +339,8 @@ message Instruction {
 	}
 	LocalGroupBySorted localGroupBySorted = 23;
 
+	message MsgPack {}
+	MsgPack msgPack = 24;
 }
 
 message OrderBy{
