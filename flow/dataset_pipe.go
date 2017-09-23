@@ -28,3 +28,11 @@ func (d *Dataset) PipeAsArgs(name, code string) *Dataset {
 	step.SetInstruction(name, instruction.NewPipeAsArgs(code))
 	return ret
 }
+
+func (d *Dataset) MsgPack(name string) *Dataset {
+	ret, step := add1ShardTo1Step(d)
+	step.Name = name
+
+	step.SetInstruction(name, instruction.NewMsgPack())
+	return ret
+}
