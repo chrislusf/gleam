@@ -112,7 +112,7 @@ func (exe *Executor) ExecuteInstructionSet() error {
 	return nil
 }
 
-func  setupReaders(ctx context.Context, wg *sync.WaitGroup, ioErrChan chan error,
+func setupReaders(ctx context.Context, wg *sync.WaitGroup, ioErrChan chan error,
 	i *pb.Instruction, inPiper *util.Piper, isFirst bool) (readers []io.Reader) {
 
 	if !isFirst {
