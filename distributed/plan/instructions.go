@@ -28,8 +28,6 @@ func translateToInstruction(task *flow.Task) (ret *pb.Instruction) {
 
 	// try to run Instruction first
 	// if failed, try to run shell scripts
-	// if failed, try to run lua scripts
-
 	if task.Step.Instruction != nil {
 		ret = task.Step.Instruction.SerializeToCommand()
 	} else {
@@ -40,7 +38,7 @@ func translateToInstruction(task *flow.Task) (ret *pb.Instruction) {
 
 		ret = &pb.Instruction{
 			Script: &pb.Instruction_Script{
-				IsPipe: (task.Step.IsPipe),
+				IsPipe: task.Step.IsPipe,
 				Path:   command.Path,
 				Args:   command.Args,
 				Env:    command.Env,

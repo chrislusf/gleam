@@ -111,6 +111,23 @@ func (f *Flow) AddOneToAllStep(input *Dataset, output *Dataset) (step *Step) {
 	return
 }
 
+func (f *Flow) AddAllToAllStep(input *Dataset, output *Dataset) (step *Step) {
+	step = f.NewStep()
+	step.NetworkType = AllShardTOAllShard
+	fromStepToDataset(step, output)
+	fromDatasetToStep(input, step)
+
+	// setup the network
+	task := step.NewTask()
+	for _, shard := range input.GetShards() {
+		fromDatasetShardToTask(shard, task)
+	}
+	for _, shard := range output.GetShards() {
+		fromTaskToDatasetShard(task, shard)
+	}
+	return
+}
+
 func (f *Flow) AddOneToEveryNStep(input *Dataset, n int, output *Dataset) (step *Step) {
 	step = f.NewStep()
 	step.NetworkType = OneShardToEveryNShard

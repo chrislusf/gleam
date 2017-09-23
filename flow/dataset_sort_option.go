@@ -38,7 +38,7 @@ func OrderBy(index int, ascending bool) *SortOption {
 func (o *SortOption) By(index int, ascending bool) *SortOption {
 	order := instruction.Descending
 	if ascending {
-		order = instruction.Descending
+		order = instruction.Ascending
 	}
 	o.orderByList = append(o.orderByList, instruction.OrderBy{
 		Index: index,

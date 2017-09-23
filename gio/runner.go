@@ -30,7 +30,7 @@ func (runner *gleamRunner) runMapperReducer() {
 
 	stat.FlowHashCode = uint32(runner.Option.HashCode)
 	stat.Stats = []*pb.InstructionStat{
-		&pb.InstructionStat{
+		{
 			StepId: int32(runner.Option.StepId),
 			TaskId: int32(runner.Option.TaskId),
 		},
@@ -42,9 +42,9 @@ func (runner *gleamRunner) runMapperReducer() {
 				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
 			}
 			return
-		} else {
-			log.Fatalf("Failed to find mapper function for %v", runner.Option.Mapper)
 		}
+		log.Fatalf("Failed to find mapper function for %v", runner.Option.Mapper)
+
 	}
 
 	if runner.Option.Reducer != "" {
@@ -52,7 +52,6 @@ func (runner *gleamRunner) runMapperReducer() {
 			log.Fatalf("Also expecting values for -gleam.keyFields! Actual arguments: %v", os.Args)
 		}
 		if fn, ok := reducers[runner.Option.Reducer]; ok {
-
 			keyPositions := strings.Split(runner.Option.KeyFields, ",")
 			var keyIndexes []int
 			for _, keyPosition := range keyPositions {
@@ -66,11 +65,10 @@ func (runner *gleamRunner) runMapperReducer() {
 			if err := runner.processReducer(ctx, fn, keyIndexes); err != nil {
 				log.Fatalf("Failed to execute reducer %v: %v", os.Args, err)
 			}
-
 			return
-		} else {
-			log.Fatalf("Failed to find reducer function for %v", runner.Option.Reducer)
 		}
+		log.Fatalf("Failed to find reducer function for %v", runner.Option.Reducer)
+
 	}
 
 	log.Fatalf("Failed to find function to execute. Args: %v", os.Args)

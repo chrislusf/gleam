@@ -23,13 +23,13 @@ func (as *AgentServer) heartbeat() {
 
 func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 
-	grpcConection, err := grpc.Dial(as.Master, grpc.WithInsecure())
+	grpcConnection, err := grpc.Dial(as.Master, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
 	}
-	defer grpcConection.Close()
+	defer grpcConnection.Close()
 
-	client := pb.NewGleamMasterClient(grpcConection)
+	client := pb.NewGleamMasterClient(grpcConnection)
 
 	stream, err := client.SendHeartbeat(context.Background())
 	if err != nil {

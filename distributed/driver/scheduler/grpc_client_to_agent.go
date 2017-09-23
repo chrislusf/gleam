@@ -57,6 +57,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		stream.CloseSend()
 		return err
 	}
+	defer f.Close()
 
 	buffer := make([]byte, 4*1024)
 	for {
@@ -91,7 +92,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 }
 
 func sendExecutionRequest(ctx context.Context,
-	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
+	_ *pb.FlowExecutionStatus_TaskGroup,
 	executionStatus *pb.FlowExecutionStatus_TaskGroup_Execution,
 	server string, request *pb.ExecutionRequest) error {
 
@@ -197,15 +198,15 @@ func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
+	grpcConnection, err := grpc.Dial(server, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("driver dial agent: %v", err)
 	}
 	defer func() {
 		time.Sleep(50 * time.Millisecond)
-		grpcConection.Close()
+		grpcConnection.Close()
 	}()
-	client := pb.NewGleamAgentClient(grpcConection)
+	client := pb.NewGleamAgentClient(grpcConnection)
 
 	return fn(client)
 }

@@ -52,9 +52,9 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	fcd.logExecutionPlan(fc)
 
 	// create the scheduler
-	sched := scheduler.NewScheduler(
+	sched := scheduler.New(
 		fcd.Option.Master,
-		&scheduler.SchedulerOption{
+		&scheduler.Option{
 			DataCenter:   fcd.Option.DataCenter,
 			Rack:         fcd.Option.Rack,
 			TaskMemoryMB: fcd.Option.TaskMemoryMB,
@@ -108,7 +108,7 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 		wg.Add(1)
 		go func(taskGroup *plan.TaskGroup) {
 			defer wg.Done()
-			sched.DeleteOutout(taskGroup)
+			sched.DeleteOutput(taskGroup)
 		}(taskGroup)
 	}
 
