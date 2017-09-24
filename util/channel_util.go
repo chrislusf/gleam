@@ -160,6 +160,27 @@ func LineReaderToChannel(wg *sync.WaitGroup, stat *pb.InstructionStat, name stri
 	}
 }
 
+func ConvertLineReaderToRowReader(lineReader io.Reader, name string, errorOutput io.Writer) (rowReader io.Reader) {
+	piper := NewPiper()
+	go func() {
+		scanner := bufio.NewScanner(lineReader)
+		for scanner.Scan() {
+			parts := bytes.Split(scanner.Bytes(), []byte{'\t'})
+			var slice []interface{}
+			for _, m := range parts {
+				slice = append(slice, m)
+				// fmt.Fprintf(errorOutput, "> %s\n", m)
+			}
+			NewRow(Now(), slice...).WriteTo(piper.Writer)
+		}
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintf(errorOutput, "%s>Failed to read lines to rows: %v\n", name, err)
+		}
+		piper.Writer.Close()
+	}()
+	return piper.Reader
+}
+
 func ChannelToLineWriter(wg *sync.WaitGroup, stat *pb.InstructionStat, name string, reader io.Reader, writer io.WriteCloser, errorOutput io.Writer) {
 	defer wg.Done()
 	defer writer.Close()

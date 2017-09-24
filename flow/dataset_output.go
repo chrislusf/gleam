@@ -37,30 +37,11 @@ func (d *Dataset) Output(f func(io.Reader) error) *Dataset {
 	return d
 }
 
-// PipeOut writes to writer.
-// If previous step is a Pipe() or PipeAsArgs(), the output is written as is.
-// Otherwise, each row of output is written in tab-separated lines.
-func (d *Dataset) PipeOut(writer io.Writer) *Dataset {
-	fn := func(reader io.Reader) error {
-		w := bufio.NewWriter(writer)
-		defer w.Flush()
-		if d.Step.IsPipe {
-			_, err := io.Copy(w, reader)
-			return err
-		}
-		return util.PrintDelimited(&pb.InstructionStat{}, reader, w, "\t", "\n")
-	}
-	return d.Output(fn)
-}
-
 // Fprintf formats using the format for each row and writes to writer.
 func (d *Dataset) Fprintf(writer io.Writer, format string) *Dataset {
 	fn := func(r io.Reader) error {
 		w := bufio.NewWriter(writer)
 		defer w.Flush()
-		if d.Step.IsPipe {
-			return util.TsvPrintf(w, r, format)
-		}
 		return util.Fprintf(w, r, format)
 	}
 	return d.Output(fn)
@@ -85,22 +66,6 @@ func (d *Dataset) Printlnf(format string) *Dataset {
 // SaveFirstRowTo saves the first row's values into the operands.
 func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 	fn := func(reader io.Reader) error {
-		if d.Step.IsPipe {
-			return util.TakeTsv(reader, 1, func(args []string) error {
-				for i, o := range decodedObjects {
-					if i >= len(args) {
-						break
-					}
-					if v, ok := o.(*string); ok {
-						*v = args[i]
-					} else {
-						return fmt.Errorf("Should save to *string.")
-					}
-				}
-				return nil
-			})
-		}
-
 		return util.TakeMessage(reader, 1, func(encodedBytes []byte) error {
 			row, err := util.DecodeRow(encodedBytes)
 			if err != nil {
@@ -129,17 +94,6 @@ func (d *Dataset) SaveFirstRowTo(decodedObjects ...interface{}) *Dataset {
 
 func (d *Dataset) OutputRow(f func(*util.Row) error) *Dataset {
 	fn := func(reader io.Reader) error {
-		if d.Step.IsPipe {
-			return util.TakeTsv(reader, -1, func(args []string) error {
-				var objects []interface{}
-				for _, arg := range args {
-					objects = append(objects, arg)
-				}
-				row := util.NewRow(util.Now(), objects...)
-				return f(row)
-			})
-		}
-
 		return util.TakeMessage(reader, -1, func(encodedBytes []byte) error {
 			row, err := util.DecodeRow(encodedBytes)
 			if err != nil {
