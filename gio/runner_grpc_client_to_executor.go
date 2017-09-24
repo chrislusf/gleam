@@ -74,7 +74,7 @@ func withClient(server string, fn func(client pb.GleamExecutorClient) error) err
 	}
 
 	// add block option to avoid premature connection
-	grpcConection, err := grpc.Dial(server, grpc.WithInsecure(), grpc, grpc.WithBlock())
+	grpcConection, err := grpc.Dial(server, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("executor dial agent: %v", err)
 	}
