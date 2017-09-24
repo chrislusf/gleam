@@ -16,7 +16,7 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 	defer wg.Done()
 
 	err := withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
-		stream, err := client.CollectExecutionStatistics(context.Background())
+		stream, err := client.CollectExecutionStatistics(context.Background(), grpc.FailFast(false))
 		if err != nil {
 			return fmt.Errorf("runner => executor %v: %v", runner.Option.ExecutorAddress, err)
 		}
@@ -46,7 +46,7 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 func (runner *gleamRunner) reportStatus() {
 
 	err := withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
-		stream, err := client.CollectExecutionStatistics(context.Background())
+		stream, err := client.CollectExecutionStatistics(context.Background(), grpc.FailFast(false))
 		if err != nil {
 			return fmt.Errorf("runner => executor %v: %v", runner.Option.ExecutorAddress, err)
 		}
@@ -71,15 +71,19 @@ func withClient(server string, fn func(client pb.GleamExecutorClient) error) err
 		return nil
 	}
 
-	grpcConection, err := grpc.Dial(server, grpc.WithInsecure())
+	grpcConnection, err := grpc.Dial(server,
+		grpc.WithInsecure(),
+		grpc.FailOnNonTempDialError(true),
+		grpc.WithBlock(),
+	)
 	if err != nil {
 		return fmt.Errorf("executor dial agent: %v", err)
 	}
 	defer func() {
 		time.Sleep(50 * time.Millisecond)
-		grpcConection.Close()
+		grpcConnection.Close()
 	}()
-	client := pb.NewGleamExecutorClient(grpcConection)
+	client := pb.NewGleamExecutorClient(grpcConnection)
 
 	return fn(client)
 }
