@@ -76,7 +76,6 @@ func (exe *Executor) reportStatus() {
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
 	grpcConnection, err := grpc.Dial(server,
 		grpc.WithInsecure(),
-		grpc.FailOnNonTempDialError(true),
 		grpc.WithBlock(),
 	)
 	if err != nil {

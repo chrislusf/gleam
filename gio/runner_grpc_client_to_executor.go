@@ -73,7 +73,6 @@ func withClient(server string, fn func(client pb.GleamExecutorClient) error) err
 
 	grpcConnection, err := grpc.Dial(server,
 		grpc.WithInsecure(),
-		grpc.FailOnNonTempDialError(true),
 		grpc.WithBlock(),
 	)
 	if err != nil {
