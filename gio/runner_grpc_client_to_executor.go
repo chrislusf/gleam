@@ -75,11 +75,14 @@ func withClient(server string, fn func(client pb.GleamExecutorClient) error) err
 	if err != nil {
 		return fmt.Errorf("executor dial agent: %v", err)
 	}
+	/**  Could be closed prematurely before fn finish its use of the connection
 	defer func() {
 		time.Sleep(50 * time.Millisecond)
 		grpcConection.Close()
 	}()
+	*/
 	client := pb.NewGleamExecutorClient(grpcConection)
-
-	return fn(client)
+	err = fn(client)
+	defer grpcConection.Close()  // fn has finished its use of the client, connection could be closed safely
+	return err
 }
