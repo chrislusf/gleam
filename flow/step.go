@@ -3,10 +3,12 @@ package flow
 import (
 	"io"
 	"log"
+	"os"
 
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/script"
+	"github.com/chrislusf/gleam/util"
 )
 
 func (fc *Flow) NewStep() (step *Step) {
@@ -35,8 +37,13 @@ func (step *Step) RunFunction(task *Task) error {
 	var readers []io.Reader
 	var writers []io.Writer
 
-	for _, reader := range task.InputChans {
-		readers = append(readers, reader.Reader)
+	for i, reader := range task.InputChans {
+		var r io.Reader
+		r = reader.Reader
+		if task.InputShards[i].Dataset.Step.IsPipe {
+			r = util.ConvertLineReaderToRowReader(r, step.Name, os.Stderr)
+		}
+		readers = append(readers, r)
 	}
 
 	for _, shard := range task.OutputShards {

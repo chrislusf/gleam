@@ -176,6 +176,13 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 
 	util.BufWrites(writers, func(writers []io.Writer) {
 		if f := instruction.InstructionRunner.GetInstructionFunction(i); f != nil {
+			if prevIsPipe {
+				var tmpReaders []io.Reader
+				for _, r := range readers {
+					tmpReaders = append(tmpReaders, util.ConvertLineReaderToRowReader(r, "pipeToRow", os.Stderr))
+				}
+				readers = tmpReaders
+			}
 			err := f(readers, writers, stat)
 			if err != nil {
 				// println(i.GetName(), "running error", err.Error())
@@ -188,15 +195,17 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 
 		var err error
 		// println("starting", i.Name, "inChan", inChan, "outChan", outChan)
-		i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
-			"%s -gleam.executor=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
-			i.GetScript().Args[len(i.GetScript().Args)-1],
-			exe.grpcAddress,
-			is.FlowHashCode,
-			i.StepId,
-			i.TaskId,
-			is.IsProfiling,
-		)
+		if !i.GetScript().IsPipe {
+			i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
+				"%s -gleam.executor=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
+				i.GetScript().Args[len(i.GetScript().Args)-1],
+				exe.grpcAddress,
+				is.FlowHashCode,
+				i.StepId,
+				i.TaskId,
+				is.IsProfiling,
+			)
+		}
 
 		// println("args:", i.GetScript().Args[len(i.GetScript().Args)-1])
 
