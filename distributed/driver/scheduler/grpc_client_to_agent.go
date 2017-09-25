@@ -28,7 +28,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		FlowHashCode: flowHashCode,
 	}
 
-	stream, err := client.SendFileResource(ctx)
+	stream, err := client.SendFileResource(ctx, grpc.FailFast(false))
 	if err != nil {
 		log.Printf("%v.SendFileResource(_) = _, %v", client, err)
 		return err
@@ -98,7 +98,7 @@ func sendExecutionRequest(ctx context.Context,
 
 	return withClient(server, func(client pb.GleamAgentClient) error {
 		log.Printf("%s %v> starting with %v MB memory...\n", server, request.InstructionSet.Name, request.GetResource().GetMemoryMb())
-		stream, err := client.Execute(ctx, request)
+		stream, err := client.Execute(ctx, request, grpc.FailFast(false))
 		if err != nil {
 			log.Printf("sendExecutionRequest.Execute: %v", err)
 			return err
@@ -179,7 +179,7 @@ func mergeStats(a, b []*pb.InstructionStat) (ret []*pb.InstructionStat) {
 
 func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) error {
 	return withClient(server, func(client pb.GleamAgentClient) error {
-		_, err := client.Delete(context.Background(), request)
+		_, err := client.Delete(context.Background(), request, grpc.FailFast(false))
 		if err != nil {
 			log.Printf("%v.Delete(_) = _, %v", client, err)
 		}
@@ -189,7 +189,7 @@ func sendDeleteRequest(server string, request *pb.DeleteDatasetShardRequest) err
 
 func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 	return withClient(server, func(client pb.GleamAgentClient) error {
-		_, err := client.Cleanup(context.Background(), request)
+		_, err := client.Cleanup(context.Background(), request, grpc.FailFast(false))
 		if err != nil {
 			log.Printf("%v.Delete(_) = _, %v", client, err)
 		}
@@ -198,7 +198,10 @@ func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConnection, err := grpc.Dial(server, grpc.WithInsecure())
+	grpcConnection, err := grpc.Dial(server,
+		grpc.WithInsecure(),
+		grpc.WithBlock(),
+	)
 	if err != nil {
 		return fmt.Errorf("driver dial agent: %v", err)
 	}
