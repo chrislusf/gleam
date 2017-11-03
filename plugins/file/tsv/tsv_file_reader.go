@@ -24,6 +24,9 @@ func (r *TsvFileReader) ReadHeader() (fieldNames []string, err error) {
 func (r *TsvFileReader) Read() (row *util.Row, err error) {
 	var values []string
 	values, err = r.readOneLine()
+        if err != nil {
+		return nil, err
+	}
 	var data []interface{}
 	for _, v := range values {
 		data = append(data, v)
