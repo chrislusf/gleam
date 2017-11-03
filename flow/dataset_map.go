@@ -30,7 +30,7 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 }
 
 func add1ShardTo1Step(d *Dataset) (ret *Dataset, step *Step) {
-	ret = d.Flow.newNextDataset(len(d.Shards))
+	ret = d.Flow.NewNextDataset(len(d.Shards))
 	step = d.Flow.AddOneToOneStep(d, ret)
 	return
 }

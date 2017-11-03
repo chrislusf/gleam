@@ -22,7 +22,7 @@ func (d *Dataset) CoGroup(name string, other *Dataset, sortOption *SortOption) *
 // CoGroupPartitionedSorted joins 2 datasets that are sharded
 // by the same key and already locally sorted within each shard.
 func (this *Dataset) CoGroupPartitionedSorted(name string, that *Dataset, indexes []int) (ret *Dataset) {
-	ret = this.Flow.newNextDataset(len(this.Shards))
+	ret = this.Flow.NewNextDataset(len(this.Shards))
 	ret.IsPartitionedBy = indexes
 
 	inputs := []*Dataset{this, that}

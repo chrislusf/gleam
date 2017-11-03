@@ -52,7 +52,7 @@ func (fc *Flow) Listen(network, address string) (ret *Dataset) {
 // The written bytes should be MsgPack encoded []byte.
 // Use util.EncodeRow(...) to encode the data before sending to this channel
 func (fc *Flow) Source(name string, f func(io.Writer, *pb.InstructionStat) error) (ret *Dataset) {
-	ret = fc.newNextDataset(1)
+	ret = fc.NewNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = name
@@ -76,7 +76,7 @@ func (fc *Flow) Source(name string, f func(io.Writer, *pb.InstructionStat) error
 
 // Channel accepts a channel to feed into the flow.
 func (fc *Flow) Channel(ch chan interface{}) (ret *Dataset) {
-	ret = fc.newNextDataset(1)
+	ret = fc.NewNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Channel"
@@ -140,7 +140,7 @@ func (fc *Flow) Ints(numbers []int) (ret *Dataset) {
 // Slices begins a flow with an [][]interface{}
 func (fc *Flow) Slices(slices [][]interface{}) (ret *Dataset) {
 
-	ret = fc.newNextDataset(1)
+	ret = fc.NewNextDataset(1)
 	step := fc.AddOneToOneStep(nil, ret)
 	step.IsOnDriverSide = true
 	step.Name = "Slices"

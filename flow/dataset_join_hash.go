@@ -11,7 +11,7 @@ func (bigger *Dataset) HashJoin(name string, smaller *Dataset, sortOption *SortO
 }
 
 func (this *Dataset) LocalHashAndJoinWith(name string, that *Dataset, sortOption *SortOption) *Dataset {
-	ret := this.Flow.newNextDataset(len(that.Shards))
+	ret := this.Flow.NewNextDataset(len(that.Shards))
 	ret.IsPartitionedBy = that.IsPartitionedBy
 	ret.IsLocalSorted = that.IsLocalSorted
 	inputs := []*Dataset{this, that}
@@ -25,7 +25,7 @@ func (d *Dataset) Broadcast(name string, shardCount int) *Dataset {
 	if shardCount == 1 && len(d.Shards) == shardCount {
 		return d
 	}
-	ret := d.Flow.newNextDataset(shardCount)
+	ret := d.Flow.NewNextDataset(shardCount)
 	step := d.Flow.AddOneToAllStep(d, ret)
 	step.SetInstruction(name, instruction.NewBroadcast())
 	return ret
