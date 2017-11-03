@@ -339,6 +339,10 @@ message Instruction {
 	}
 	LocalGroupBySorted localGroupBySorted = 23;
 
+    message Union {
+        bool isParallel = 1;
+    }
+	Union union = 24;
 }
 
 message OrderBy{
