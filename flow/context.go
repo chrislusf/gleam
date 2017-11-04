@@ -42,7 +42,7 @@ func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 	}
 }
 
-func (fc *Flow) newNextDataset(shardSize int) (ret *Dataset) {
+func (fc *Flow) NewNextDataset(shardSize int) (ret *Dataset) {
 	ret = newDataset(fc)
 	setupDatasetShard(ret, shardSize)
 	return

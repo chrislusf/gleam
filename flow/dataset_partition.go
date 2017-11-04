@@ -9,7 +9,7 @@ func (d *Dataset) RoundRobin(name string, n int) *Dataset {
 		return d
 	}
 	shard := n * len(d.Shards)
-	ret := d.Flow.newNextDataset(shard)
+	ret := d.Flow.NewNextDataset(shard)
 	step := d.Flow.AddAllToAllStep(d, ret)
 	step.SetInstruction(name, instruction.NewRoundRobin())
 	return ret
@@ -40,7 +40,7 @@ func (d *Dataset) PartitionByKey(name string, shard int) *Dataset {
 }
 
 func (d *Dataset) partition_scatter(name string, shardCount int, indexes []int) (ret *Dataset) {
-	ret = d.Flow.newNextDataset(len(d.Shards) * shardCount)
+	ret = d.Flow.NewNextDataset(len(d.Shards) * shardCount)
 	ret.IsPartitionedBy = indexes
 	step := d.Flow.AddOneToEveryNStep(d, shardCount, ret)
 	step.SetInstruction(name, instruction.NewScatterPartitions(indexes))
@@ -48,7 +48,7 @@ func (d *Dataset) partition_scatter(name string, shardCount int, indexes []int) 
 }
 
 func (d *Dataset) partition_collect(name string, shardCount int, indexes []int) (ret *Dataset) {
-	ret = d.Flow.newNextDataset(shardCount)
+	ret = d.Flow.NewNextDataset(shardCount)
 	ret.IsPartitionedBy = indexes
 	step := d.Flow.AddLinkedNToOneStep(d, len(d.Shards)/shardCount, ret)
 	step.SetInstruction(name, instruction.NewCollectPartitions())

@@ -8,7 +8,7 @@ func (d *Dataset) MergeSortedTo(name string, partitionCount int) (ret *Dataset) 
 	if len(d.Shards) == partitionCount {
 		return d
 	}
-	ret = d.Flow.newNextDataset(partitionCount)
+	ret = d.Flow.NewNextDataset(partitionCount)
 	everyN := len(d.Shards) / partitionCount
 	if len(d.Shards)%partitionCount > 0 {
 		everyN++
@@ -36,7 +36,7 @@ func (d *Dataset) MergeTo(name string, partitionCount int) (ret *Dataset) {
 	if len(d.Shards) == partitionCount {
 		return d
 	}
-	ret = d.Flow.newNextDataset(partitionCount)
+	ret = d.Flow.NewNextDataset(partitionCount)
 	everyN := len(d.Shards) / partitionCount
 	if len(d.Shards)%partitionCount > 0 {
 		everyN++

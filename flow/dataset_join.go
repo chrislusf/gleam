@@ -45,7 +45,7 @@ func (d *Dataset) DoJoin(name string, other *Dataset, leftOuter, rightOuter bool
 // JoinPartitionedSorted Join multiple datasets that are sharded by the same key, and locally sorted within the shard
 func (this *Dataset) JoinPartitionedSorted(name string, that *Dataset, sortOption *SortOption,
 	isLeftOuterJoin, isRightOuterJoin bool) *Dataset {
-	ret := this.Flow.newNextDataset(len(this.Shards))
+	ret := this.Flow.NewNextDataset(len(this.Shards))
 	ret.IsPartitionedBy = that.IsPartitionedBy
 	ret.IsLocalSorted = that.IsLocalSorted
 
