@@ -10,7 +10,7 @@ func TestEncodeDecode(t *testing.T) {
 
 	originalData := []interface{}{
 		originalKey,
-		"jkjkj",
+		"",
 		123,
 		"zx,mcv",
 	}
