@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"math"
 	"strings"
 )
 
@@ -10,7 +11,7 @@ func HashByKeys(data []interface{}) int {
 	for _, d := range data {
 		x = x*31 + hashByKey(d)
 	}
-	return x
+	return x & math.MaxInt64
 }
 
 func hashByKey(data interface{}) int {
