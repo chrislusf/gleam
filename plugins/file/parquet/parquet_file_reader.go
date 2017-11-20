@@ -1,15 +1,15 @@
 package parquet
 
 import (
+	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/util"
 	. "github.com/xitongsys/parquet-go/Common"
 	. "github.com/xitongsys/parquet-go/ParquetHandler"
-	. "github.com/xitongsys/parquet-go/ParquetType"
 	"io"
 )
 
 type PqFile struct {
-	reader io.Reader
+	reader filesystem.VirtualFile
 }
 
 func (self *PqFile) Create(name string) (ParquetFile, error) {
@@ -17,10 +17,11 @@ func (self *PqFile) Create(name string) (ParquetFile, error) {
 }
 
 func (self *PqFile) Open(name string) (ParquetFile, error) {
-	return self
+	return self, nil
 }
 func (self *PqFile) Seek(offset int, pos int) (int64, error) {
-	return self.File.Seek(int64(offset), pos)
+	_, err := self.reader.ReadAt([]byte{}, int64(offset))
+	return int64(offset), err
 }
 func (self *PqFile) Read(b []byte) (n int, err error) {
 	return self.reader.Read(b)
@@ -40,23 +41,23 @@ type ParquetFileReader struct {
 	fieldNames []string
 }
 
-func New(reader io.Reader) *ParquetFileReader {
-	parquetReader := new(ParquetFileReader)
+func New(reader filesystem.VirtualFile) *ParquetFileReader {
+	parquetFileReader := new(ParquetFileReader)
 	pqFile := &PqFile{
 		reader: reader,
 	}
 	parquetFileReader.pqHandler = NewParquetHandler()
-	parquetFileReader.rowGroupNum = parquetReader.pqHandler.ReadInit(pqFile, 1)
+	parquetFileReader.rowGroupNum = parquetFileReader.pqHandler.ReadInit(pqFile, 1)
 
-	mp := parquetReader.pqHandler.SchemaHandler.MapIndex
+	mp := parquetFileReader.pqHandler.SchemaHandler.MapIndex
 	for key, _ := range mp {
-		parquetFileReader.fieldNames = append(self.fieldNames, key)
+		parquetFileReader.fieldNames = append(parquetFileReader.fieldNames, key)
 	}
 
 	return parquetFileReader
 }
 
-func (self *ParquetFileReader) ReadHeader(fieldNames []string, err error) {
+func (self *ParquetFileReader) ReadHeader() (fieldNames []string, err error) {
 	return self.fieldNames, nil
 }
 
@@ -71,7 +72,7 @@ func (self *ParquetFileReader) Read() (row *util.Row, err error) {
 	}
 
 	for _, fieldName := range self.fieldNames {
-		objects = append(objects, self.buffer[fieldName].Values[self.cursor])
+		objects = append(objects, (*self.buffer)[fieldName].Values[self.cursor])
 	}
 	self.cursor++
 	return util.NewRow(util.Now(), objects...), nil
