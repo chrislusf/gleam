@@ -6,6 +6,7 @@ import (
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/plugins/file/csv"
 	"github.com/chrislusf/gleam/plugins/file/orc"
+	"github.com/chrislusf/gleam/plugins/file/parquet"
 	"github.com/chrislusf/gleam/plugins/file/tsv"
 	"github.com/chrislusf/gleam/plugins/file/txt"
 	"github.com/chrislusf/gleam/util"
@@ -28,6 +29,9 @@ func Tsv(fileOrPattern string, partitionCount int) *FileSource {
 func Orc(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("orc", fileOrPattern, partitionCount)
 }
+func Parquet(fileOrPattern string, partitionCount int) *FileSource {
+	return newFileSource("parquet", fileOrPattern, partitionCount)
+}
 
 func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error) {
 	switch ds.FileType {
@@ -43,6 +47,8 @@ func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error
 		} else {
 			return nil, err
 		}
+	case "parquet":
+		return parquet.New(vf), nil
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }
