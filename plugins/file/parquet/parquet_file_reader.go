@@ -5,6 +5,7 @@ import (
 	"github.com/chrislusf/gleam/util"
 	. "github.com/xitongsys/parquet-go/Common"
 	. "github.com/xitongsys/parquet-go/ParquetHandler"
+	. "github.com/xitongsys/parquet-go/ParquetType"
 	"io"
 )
 
@@ -20,8 +21,7 @@ func (self *PqFile) Open(name string) (ParquetFile, error) {
 	return self, nil
 }
 func (self *PqFile) Seek(offset int, pos int) (int64, error) {
-	_, err := self.reader.ReadAt([]byte{}, int64(offset))
-	return int64(offset), err
+	return self.reader.Seek(int64(offset), pos)
 }
 func (self *PqFile) Read(b []byte) (n int, err error) {
 	return self.reader.Read(b)
@@ -46,12 +46,17 @@ func New(reader filesystem.VirtualFile) *ParquetFileReader {
 	pqFile := &PqFile{
 		reader: reader,
 	}
+
 	parquetFileReader.pqHandler = NewParquetHandler()
 	parquetFileReader.rowGroupNum = parquetFileReader.pqHandler.ReadInit(pqFile, 1)
 
-	mp := parquetFileReader.pqHandler.SchemaHandler.MapIndex
-	for key, _ := range mp {
-		parquetFileReader.fieldNames = append(parquetFileReader.fieldNames, key)
+	sH := parquetFileReader.pqHandler.SchemaHandler
+	for i := 0; i < len(sH.SchemaElements); i++ {
+		schema := sH.SchemaElements[i]
+		if schema.GetNumChildren() == 0 {
+			pathStr := sH.IndexMap[int32(i)]
+			parquetFileReader.fieldNames = append(parquetFileReader.fieldNames, pathStr)
+		}
 	}
 
 	return parquetFileReader
@@ -72,7 +77,8 @@ func (self *ParquetFileReader) Read() (row *util.Row, err error) {
 	}
 
 	for _, fieldName := range self.fieldNames {
-		objects = append(objects, (*self.buffer)[fieldName].Values[self.cursor])
+		value := (*self.buffer)[fieldName].Values[self.cursor]
+		objects = append(objects, ParquetTypeToGoType(value))
 	}
 	self.cursor++
 	return util.NewRow(util.Now(), objects...), nil

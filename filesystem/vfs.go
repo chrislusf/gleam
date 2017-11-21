@@ -20,6 +20,7 @@ type FileLocation struct {
 type VirtualFile interface {
 	io.ReaderAt
 	io.ReadCloser
+	io.Seeker
 	Size() int64
 }
 

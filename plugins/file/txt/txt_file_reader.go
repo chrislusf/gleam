@@ -12,6 +12,7 @@ type TxtFileReader struct {
 }
 
 func New(reader io.Reader) *TxtFileReader {
+
 	return &TxtFileReader{
 		scanner: bufio.NewScanner(reader),
 	}
