@@ -40,7 +40,7 @@ func NewExecutor(option *ExecutorOption, instructions *pb.InstructionSet) *Execu
 func (exe *Executor) ExecuteInstructionSet() error {
 
 	// start a listener for stats
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp4", ":0")  //exclude ipv6 issue by temporarily using tcp4 only
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

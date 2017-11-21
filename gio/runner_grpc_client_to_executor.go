@@ -71,7 +71,11 @@ func withClient(server string, fn func(client pb.GleamExecutorClient) error) err
 		return nil
 	}
 
-	grpcConnection, err := grpc.Dial(server,
+	// using block option, a dial may never return even if the server is inaccessible, so
+	// a more appropriate way is pairing with DialContext and setting a timeout value
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	grpcConnection, err := grpc.DialContext(ctx, server,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 	)
