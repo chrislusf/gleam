@@ -48,7 +48,7 @@ func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error
 			return nil, err
 		}
 	case "parquet":
-		return parquet.New(vf), nil
+		return parquet.New(vf, ds.FileName), nil
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }

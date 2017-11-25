@@ -3,14 +3,15 @@ package parquet
 import (
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/util"
-	. "github.com/xitongsys/parquet-go/Common"
-	. "github.com/xitongsys/parquet-go/ParquetHandler"
+	. "github.com/xitongsys/parquet-go/ParquetFile"
+	. "github.com/xitongsys/parquet-go/ParquetReader"
 	. "github.com/xitongsys/parquet-go/ParquetType"
 	"io"
 )
 
 type PqFile struct {
-	reader filesystem.VirtualFile
+	FileName string
+	VF       filesystem.VirtualFile
 }
 
 func (self *PqFile) Create(name string) (ParquetFile, error) {
@@ -18,13 +19,24 @@ func (self *PqFile) Create(name string) (ParquetFile, error) {
 }
 
 func (self *PqFile) Open(name string) (ParquetFile, error) {
-	return self, nil
+	if name == "" {
+		name = self.FileName
+	}
+	vf, err := filesystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	res := &PqFile{
+		VF:       vf,
+		FileName: name,
+	}
+	return res, nil
 }
 func (self *PqFile) Seek(offset int, pos int) (int64, error) {
-	return self.reader.Seek(int64(offset), pos)
+	return self.VF.Seek(int64(offset), pos)
 }
 func (self *PqFile) Read(b []byte) (n int, err error) {
-	return self.reader.Read(b)
+	return self.VF.Read(b)
 }
 func (self *PqFile) Write(b []byte) (n int, err error) {
 	return 0, nil
@@ -32,54 +44,34 @@ func (self *PqFile) Write(b []byte) (n int, err error) {
 func (self *PqFile) Close() {}
 
 type ParquetFileReader struct {
-	pqHandler   *ParquetHandler
-	rowGroupNum int
-	buffer      *map[string]*Table
-	cursor      int
-	size        int
-
-	fieldNames []string
+	pqReader *ParquetReader
+	NumRows  int
+	Cursor   int
 }
 
-func New(reader filesystem.VirtualFile) *ParquetFileReader {
+func New(reader filesystem.VirtualFile, fileName string) *ParquetFileReader {
 	parquetFileReader := new(ParquetFileReader)
-	pqFile := &PqFile{
-		reader: reader,
-	}
-
-	parquetFileReader.pqHandler = NewParquetHandler()
-	parquetFileReader.rowGroupNum = parquetFileReader.pqHandler.ReadInit(pqFile, 1)
-
-	sH := parquetFileReader.pqHandler.SchemaHandler
-	for i := 0; i < len(sH.SchemaElements); i++ {
-		schema := sH.SchemaElements[i]
-		if schema.GetNumChildren() == 0 {
-			pathStr := sH.IndexMap[int32(i)]
-			parquetFileReader.fieldNames = append(parquetFileReader.fieldNames, pathStr)
-		}
-	}
-
+	var pqFile ParquetFile = &PqFile{}
+	pqFile, _ = pqFile.Open(fileName)
+	parquetFileReader.pqReader, _ = NewParquetReader(pqFile, 1)
+	parquetFileReader.NumRows = int(parquetFileReader.pqReader.GetNumRows())
 	return parquetFileReader
 }
 
 func (self *ParquetFileReader) ReadHeader() (fieldNames []string, err error) {
-	return self.fieldNames, nil
+	return self.pqReader.SchemaHandler.ValueColumns, nil
 }
 
 func (self *ParquetFileReader) Read() (row *util.Row, err error) {
-	var objects []interface{}
-	if self.cursor >= self.size && self.rowGroupNum > 0 {
-		self.buffer, self.size = self.pqHandler.ReadOneRowGroup()
-		self.rowGroupNum--
-		self.cursor = 0
-	} else if self.cursor >= self.size {
+	if self.Cursor >= self.NumRows {
 		return nil, io.EOF
 	}
-
-	for _, fieldName := range self.fieldNames {
-		value := (*self.buffer)[fieldName].Values[self.cursor]
-		objects = append(objects, ParquetTypeToGoType(value))
+	objects := make([]interface{}, 0)
+	for _, fieldName := range self.pqReader.SchemaHandler.ValueColumns {
+		values := make([]interface{}, 1)
+		self.pqReader.ReadColumnByPath(fieldName, &values)
+		objects = append(objects, ParquetTypeToGoType(values[0]))
 	}
-	self.cursor++
+	self.Cursor++
 	return util.NewRow(util.Now(), objects...), nil
 }
