@@ -53,7 +53,7 @@ func New(reader filesystem.VirtualFile, fileName string) *ParquetFileReader {
 	parquetFileReader := new(ParquetFileReader)
 	var pqFile ParquetFile = &PqFile{}
 	pqFile, _ = pqFile.Open(fileName)
-	parquetFileReader.pqReader, _ = NewParquetReader(pqFile, 1)
+	parquetFileReader.pqReader, _ = NewParquetColumnReader(pqFile, 1)
 	parquetFileReader.NumRows = int(parquetFileReader.pqReader.GetNumRows())
 	return parquetFileReader
 }
