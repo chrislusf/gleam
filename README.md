@@ -269,13 +269,13 @@ After the flow is defined, the Run() function can be executed in local mode or d
 * Read data from Local, HDFS, or S3.
 * Data Sources
   * [Cassandra](https://github.com/chrislusf/gleam/tree/master/plugins/cassandra), with [example](https://github.com/chrislusf/gleam/tree/master/examples/cassandra_reader)
-  * [Kafka](https://github.com/chrislusf/gleam/tree/master/plugins/kafka)
-  * [Parquet files](https://github.com/chrislusf/gleam/tree/master/plugins/file/parquet)
-  * [ORC files](https://github.com/chrislusf/gleam/tree/master/plugins/file/orc)
-  * [CSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/csv)
-  * [TSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/tsv)
-  * [TXT files](https://github.com/chrislusf/gleam/tree/master/plugins/file/txt)
-  * Raw Socket
+  * [Kafka](https://github.com/chrislusf/gleam/tree/master/plugins/kafka) [example](https://github.com/chrislusf/gleam/tree/master/examples/kafka_reader)
+  * [Parquet files](https://github.com/chrislusf/gleam/tree/master/plugins/file/parquet) [example](https://github.com/chrislusf/gleam/tree/master/examples/parquet)
+  * [ORC files](https://github.com/chrislusf/gleam/tree/master/plugins/file/orc) [example](https://github.com/chrislusf/gleam/tree/master/examples/orc)
+  * [CSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/csv) [example](https://github.com/chrislusf/gleam/tree/master/examples/csv)
+  * [TSV files](https://github.com/chrislusf/gleam/tree/master/plugins/file/tsv) 
+  * [TXT files](https://github.com/chrislusf/gleam/tree/master/plugins/file/txt) 
+  * Raw Socket [example]()
 
 # Status
 Gleam is just beginning. Here are a few todo items. Welcome any help!
