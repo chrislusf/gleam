@@ -68,9 +68,13 @@ func (self *ParquetFileReader) Read() (row *util.Row, err error) {
 	}
 	objects := make([]interface{}, 0)
 	for _, fieldName := range self.pqReader.SchemaHandler.ValueColumns {
+		schemaIndex := self.pqReader.SchemaHandler.MapIndex[fieldName]
 		values := make([]interface{}, 1)
 		self.pqReader.ReadColumnByPath(fieldName, &values)
-		objects = append(objects, ParquetTypeToGoType(values[0]))
+		objects = append(objects, ParquetTypeToGoType(values[0],
+			self.pqReader.SchemaHandler.SchemaElements[schemaIndex].Type,
+			self.pqReader.SchemaHandler.SchemaElements[schemaIndex].ConvertedType,
+		))
 	}
 	self.Cursor++
 	return util.NewRow(util.Now(), objects...), nil
