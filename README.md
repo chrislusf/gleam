@@ -73,7 +73,7 @@ By leaving it in memory, the flow can have back pressure, and can support stream
 * [Gleam Wiki](https://github.com/chrislusf/gleam/wiki)
 * [Installation](https://github.com/chrislusf/gleam/wiki/Installation)
 * [Gleam Flow API GoDoc](https://godoc.org/github.com/chrislusf/gleam/flow)
-* [gleam-dev on Slack](https://gleam-dev.slack.com)
+* [gleam-dev on Slack](https://join.slack.com/t/gleam-dev/shared_invite/enQtMzIzMjYxMTg0MDgxLWNlNjgxYzNmNTRlMmNmY2RlMzI5ODAxYzYzNTY0ZmViODk0YTViMjk1YmE4NzA0YzQzZGVkZDQxZjRhODg0ZDE)
 
 # Standalone Example
 
