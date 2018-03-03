@@ -56,7 +56,9 @@ func TakeTsv(reader io.Reader, count int, f func([]string) error) (err error) {
 // TakeMessage Reads and processes MessagePack encoded messages.
 // If count is less than 0, all lines are processed.
 func TakeMessage(reader io.Reader, count int, f func([]byte) error) (err error) {
-	reader = bufio.NewReader(reader)
+	if _, isBufioReader := reader.(*bufio.Reader); !isBufioReader {
+		reader = bufio.NewReader(reader)
+	}
 	for err == nil {
 		if count == 0 {
 			io.Copy(ioutil.Discard, reader)
