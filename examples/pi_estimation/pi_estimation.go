@@ -165,7 +165,7 @@ func monteCarloMapper(row []interface{}) error {
 }
 
 func sumReducer(x, y interface{}) (interface{}, error) {
-	a := x.(uint64)
-	b := y.(uint64)
+	a := x.(int64)
+	b := y.(int64)
 	return a + b, nil
 }
