@@ -81,7 +81,7 @@ func main() {
 
 		if instructionSet.IsProfiling {
 			// profiling the gleam executor
-			profilingFile := fmt.Sprintf("exe%d-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-"))
+			profilingFile := fmt.Sprintf("exe%d-cpu-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-"))
 			pwd, _ := os.Getwd()
 			println("saving exe pprof to", pwd+"/"+profilingFile)
 			f, err := os.Create(profilingFile)
@@ -90,6 +90,19 @@ func main() {
 			}
 			pprof.StartCPUProfile(f)
 			defer pprof.StopCPUProfile()
+
+			memProfFile := fmt.Sprintf("exe%d-mem-%s.pprof", instructionSet.GetFlowHashCode(), strings.Join(instructionSet.InstructionNames(), "-"))
+			mf, err := os.Create(memProfFile)
+			println("saving pprof to", pwd+"/"+memProfFile)
+			if err != nil {
+				log.Fatalf("failed to create memory profile file %s: %v", pwd+"/"+memProfFile, err)
+			}
+
+			defer func() {
+				runtime.GC()
+				pprof.Lookup("heap").WriteTo(mf, 0)
+
+			}()
 		}
 
 		if err := exe.NewExecutor(&exe.ExecutorOption{

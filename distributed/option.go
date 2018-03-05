@@ -51,6 +51,7 @@ func (o *DistributedOption) SetMaster(master string) *DistributedOption {
 	return o
 }
 
+// SetProfiling profiling will generate cpu and memory profile files when the executors are completed.
 func (o *DistributedOption) SetProfiling(isProfiling bool) *DistributedOption {
 	o.IsProfiling = isProfiling
 	return o
