@@ -14,6 +14,7 @@ import (
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util/on_interrupt"
+	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 )
 
@@ -35,6 +36,8 @@ type FlowDriver struct {
 	taskGroups []*plan.TaskGroup
 
 	status *pb.FlowExecutionStatus
+
+	mu sync.RWMutex
 }
 
 func NewFlowDriver(option *Option) *FlowDriver {
@@ -81,9 +84,12 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 	var wg, reportWg sync.WaitGroup
 	for _, taskGroup := range fcd.taskGroups {
 		wg.Add(1)
+		fcd.mu.RLock()
+		taskGroupsLen := len(fcd.taskGroups)
+		status := proto.Clone(fcd.GetTaskGroupStatus(taskGroup)).(*pb.FlowExecutionStatus_TaskGroup)
+		fcd.mu.RUnlock()
 		go func(taskGroup *plan.TaskGroup) {
-			sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
-				fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
+			sched.ExecuteTaskGroup(ctx, fc, status, &wg, taskGroup, fcd.Option.FlowBid/float64(taskGroupsLen), fcd.Option.RequiredFiles)
 		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
@@ -131,7 +137,7 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 		}
 	}
 
-	for url, _ := range touchedAgents {
+	for url := range touchedAgents {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
@@ -182,7 +188,9 @@ func (fcd *FlowDriver) reportStatus(ctx context.Context, wg *sync.WaitGroup, mas
 			stream.CloseSend()
 			return
 		case <-ticker.C:
+			fcd.mu.RLock()
 			stream.Send(fcd.status)
+			fcd.mu.RUnlock()
 		}
 	}
 
