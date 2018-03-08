@@ -24,7 +24,9 @@ func (runner *gleamRunner) doProcessMapper(ctx context.Context, f Mapper) error 
 			}
 			return fmt.Errorf("mapper input row error: %v", err)
 		}
-		stat.Stats[0].InputCounter++
+		stat.Lock()
+		stat.v.Stats[0].InputCounter++
+		stat.Unlock()
 
 		var data []interface{}
 		data = append(data, row.K...)

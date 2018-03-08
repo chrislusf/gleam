@@ -27,7 +27,10 @@ func (runner *gleamRunner) doProcessReducer(f Reducer) (err error) {
 		}
 		return fmt.Errorf("reducer input row error: %v", err)
 	}
-	stat.Stats[0].InputCounter++
+
+	stat.Lock()
+	stat.v.Stats[0].InputCounter++
+	stat.Unlock()
 
 	lastTs := row.T
 	lastKeys := row.K
@@ -40,7 +43,9 @@ func (runner *gleamRunner) doProcessReducer(f Reducer) (err error) {
 			}
 			break
 		}
-		stat.Stats[0].InputCounter++
+		stat.Lock()
+		stat.v.Stats[0].InputCounter++
+		stat.Unlock()
 
 		keys := row.K
 		lastKeys, err = reduce(f, lastKeys, keys)
@@ -66,7 +71,10 @@ func (runner *gleamRunner) doProcessReducerByKeys(f Reducer, keyPositions []int)
 		}
 		return fmt.Errorf("reducer input row error: %v", err)
 	}
-	stat.Stats[0].InputCounter++
+
+	stat.Lock()
+	stat.v.Stats[0].InputCounter++
+	stat.Unlock()
 
 	lastTs := row.T
 	row.UseKeys(keyPositions)
@@ -80,7 +88,9 @@ func (runner *gleamRunner) doProcessReducerByKeys(f Reducer, keyPositions []int)
 			}
 			break
 		}
-		stat.Stats[0].InputCounter++
+		stat.Lock()
+		stat.v.Stats[0].InputCounter++
+		stat.Unlock()
 
 		row.UseKeys(keyPositions)
 		keys, values := row.K, row.V

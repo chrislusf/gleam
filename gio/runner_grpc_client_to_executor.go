@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/pb"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
 func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan bool) {
-
 	defer wg.Done()
 
 	err := withClient(runner.Option.ExecutorAddress, func(client pb.GleamExecutorClient) error {
@@ -26,15 +26,17 @@ func (runner *gleamRunner) statusHeartbeat(wg *sync.WaitGroup, finishedChan chan
 		for {
 			select {
 			case <-tickChan:
-				if err := stream.Send(stat); err != nil {
-					return fmt.Errorf("runner Send(%v): %v", stat, err)
+				stat.Lock()
+				clone := proto.Clone(stat.v).(*pb.ExecutionStat)
+				stat.Unlock()
+				if err := stream.Send(clone); err != nil {
+					return fmt.Errorf("runner Send(%v): %v", clone, err)
 				}
 			case <-finishedChan:
 				stream.CloseSend()
 				return nil
 			}
 		}
-
 	})
 
 	if err != nil {
@@ -52,8 +54,11 @@ func (runner *gleamRunner) reportStatus() {
 		}
 		// defer stream.CloseSend()
 
-		if err := stream.Send(stat); err != nil {
-			log.Printf("%v.Send(%v) = %v", stream, stat, err)
+		stat.Lock()
+		clone := proto.Clone(stat.v).(*pb.ExecutionStat)
+		stat.Unlock()
+		if err := stream.Send(clone); err != nil {
+			log.Printf("%v.Send(%v) = %v", stream, clone, err)
 			return nil
 		}
 

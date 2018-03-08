@@ -47,16 +47,22 @@ func (runner *gleamRunner) runMapperReducer() {
 		}()
 	}
 
-	stat.FlowHashCode = uint32(runner.Option.HashCode)
-	stat.Stats = []*pb.InstructionStat{
+	stat.Lock()
+	stat.v.FlowHashCode = uint32(runner.Option.HashCode)
+	stat.v.Stats = []*pb.InstructionStat{
 		{
 			StepId: int32(runner.Option.StepId),
 			TaskId: int32(runner.Option.TaskId),
 		},
 	}
+	stat.Unlock()
 
 	if runner.Option.Mapper != "" {
-		if fn, ok := mappers[runner.Option.Mapper]; ok {
+		log.Printf("processing mapper %s", runner.Option.Mapper)
+		mappersLock.Lock()
+		fn, ok := mappers[runner.Option.Mapper]
+		mappersLock.Unlock()
+		if ok {
 			if err := runner.processMapper(ctx, fn); err != nil {
 				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
 			}
@@ -70,7 +76,10 @@ func (runner *gleamRunner) runMapperReducer() {
 		if runner.Option.KeyFields == "" {
 			log.Fatalf("Also expecting values for -gleam.keyFields! Actual arguments: %v", os.Args)
 		}
-		if fn, ok := reducers[runner.Option.Reducer]; ok {
+		reducersLock.Lock()
+		fn, ok := reducers[runner.Option.Reducer]
+		reducersLock.Unlock()
+		if ok {
 			keyPositions := strings.Split(runner.Option.KeyFields, ",")
 			var keyIndexes []int
 			for _, keyPosition := range keyPositions {

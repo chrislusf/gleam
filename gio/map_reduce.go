@@ -33,7 +33,10 @@ var (
 	HasInitalized bool
 
 	taskOption gleamTaskOption
-	stat       = &pb.ExecutionStat{} // TsEmit() needs this global value
+	stat       = struct {
+		v *pb.ExecutionStat
+		sync.Mutex
+	}{v: &pb.ExecutionStat{}} // TsEmit() needs this global value
 )
 
 func init() {
