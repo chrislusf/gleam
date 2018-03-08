@@ -59,9 +59,7 @@ func (runner *gleamRunner) runMapperReducer() {
 
 	if runner.Option.Mapper != "" {
 		log.Printf("processing mapper %s", runner.Option.Mapper)
-		mappersLock.Lock()
 		fn, ok := mappers[runner.Option.Mapper]
-		mappersLock.Unlock()
 		if ok {
 			if err := runner.processMapper(ctx, fn); err != nil {
 				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
@@ -76,9 +74,7 @@ func (runner *gleamRunner) runMapperReducer() {
 		if runner.Option.KeyFields == "" {
 			log.Fatalf("Also expecting values for -gleam.keyFields! Actual arguments: %v", os.Args)
 		}
-		reducersLock.Lock()
 		fn, ok := reducers[runner.Option.Reducer]
-		reducersLock.Unlock()
 		if ok {
 			keyPositions := strings.Split(runner.Option.KeyFields, ",")
 			var keyIndexes []int
