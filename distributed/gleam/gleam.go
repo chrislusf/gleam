@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
+	"gopkg.in/alecthomas/kingpin.v2"
 
 	a "github.com/chrislusf/gleam/distributed/agent"
 	exe "github.com/chrislusf/gleam/distributed/executor"
@@ -47,7 +47,7 @@ var (
 		MemoryMB:     agent.Flag("memory", "memory limit in MB").Default("1024").Int64(),
 		CleanRestart: agent.Flag("clean.restart", "clean up previous dataset files").Default("true").Bool(),
 	}
-	cpuProfile = agent.Flag("cpuprofile", "cpu profile output file").Default("").String()
+	profiling = agent.Flag("profiling", "enable cpu and memory profiling").Default("false").Bool()
 
 	writer             = app.Command("write", "Write data to a topic, input from console")
 	writeTopic         = writer.Flag("topic", "Name of a topic").Required().String()
@@ -133,10 +133,11 @@ func main() {
 
 	case agent.FullCommand():
 
-		if *cpuProfile != "" {
-			f, err := os.Create(*cpuProfile)
+		if *profiling {
+			cpuProfile := fmt.Sprintf("agent-%d-cpu.pprof", *agentOption.Port)
+			f, err := os.Create(cpuProfile)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("failed to create agent cpu profile file %s: %v", cpuProfile, err)
 			}
 			pprof.StartCPUProfile(f)
 			defer pprof.StopCPUProfile()
@@ -145,6 +146,16 @@ func main() {
 			}, func() {
 				pprof.StopCPUProfile()
 			})
+
+			memProfFile := fmt.Sprintf("agent-%d-mem.pprof", *agentOption.Port)
+			mf, err := os.Create(memProfFile)
+			if err != nil {
+				log.Fatalf("failed to create agent memory profile file %s: %v", memProfFile, err)
+			}
+			defer func() {
+				runtime.GC()
+				pprof.Lookup("heap").WriteTo(mf, 0)
+			}()
 		}
 
 		a.RunAgentServer(agentOption)
