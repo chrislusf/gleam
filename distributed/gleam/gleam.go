@@ -147,6 +147,8 @@ func main() {
 				pprof.StopCPUProfile()
 			})
 
+
+			runtime.MemProfileRate = 1
 			memProfFile := fmt.Sprintf("agent-%d-mem.pprof", *agentOption.Port)
 			mf, err := os.Create(memProfFile)
 			if err != nil {
