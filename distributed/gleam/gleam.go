@@ -143,7 +143,7 @@ func main() {
 			defer pprof.StopCPUProfile()
 
 			runtime.MemProfileRate = 1
-			memProfFile := fmt.Sprintf("agent-%d-mem.pprof", *agentOption.Port)
+			memProfFile := fmt.Sprintf("agent-%d-mem.mprof", *agentOption.Port)
 			mf, err := os.Create(memProfFile)
 			if err != nil {
 				log.Fatalf("failed to create agent memory profile file %s: %v", memProfFile, err)
@@ -155,10 +155,7 @@ func main() {
 				pprof.Lookup("heap").WriteTo(mf, 0)
 			}, func() {
 				pprof.StopCPUProfile()
-				runtime.GC()
-				pprof.Lookup("heap").WriteTo(mf, 0)
 			})
-
 
 		}
 
