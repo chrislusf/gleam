@@ -141,12 +141,6 @@ func main() {
 			}
 			pprof.StartCPUProfile(f)
 			defer pprof.StopCPUProfile()
-			on_interrupt.OnInterrupt(func() {
-				pprof.StopCPUProfile()
-			}, func() {
-				pprof.StopCPUProfile()
-			})
-
 
 			runtime.MemProfileRate = 1
 			memProfFile := fmt.Sprintf("agent-%d-mem.pprof", *agentOption.Port)
@@ -154,10 +148,18 @@ func main() {
 			if err != nil {
 				log.Fatalf("failed to create agent memory profile file %s: %v", memProfFile, err)
 			}
-			defer func() {
+
+			on_interrupt.OnInterrupt(func() {
+				pprof.StopCPUProfile()
 				runtime.GC()
 				pprof.Lookup("heap").WriteTo(mf, 0)
-			}()
+			}, func() {
+				pprof.StopCPUProfile()
+				runtime.GC()
+				pprof.Lookup("heap").WriteTo(mf, 0)
+			})
+
+
 		}
 
 		a.RunAgentServer(agentOption)
