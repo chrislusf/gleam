@@ -41,7 +41,7 @@ func (self *PqFile) Read(b []byte) (n int, err error) {
 func (self *PqFile) Write(b []byte) (n int, err error) {
 	return 0, nil
 }
-func (self *PqFile) Close() {}
+func (self *PqFile) Close() error { return nil }
 
 type ParquetFileReader struct {
 	pqReader *ParquetReader
