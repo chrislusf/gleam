@@ -32,8 +32,8 @@ func (self *PqFile) Open(name string) (ParquetFile, error) {
 	}
 	return res, nil
 }
-func (self *PqFile) Seek(offset int, pos int) (int64, error) {
-	return self.VF.Seek(int64(offset), pos)
+func (self *PqFile) Seek(offset int64, pos int) (int64, error) {
+	return self.VF.Seek(offset, pos)
 }
 func (self *PqFile) Read(b []byte) (n int, err error) {
 	return self.VF.Read(b)
