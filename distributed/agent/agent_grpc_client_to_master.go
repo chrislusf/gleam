@@ -36,6 +36,7 @@ func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 		log.Printf("SendHeartbeat error: %v", err)
 		return err
 	}
+	as.sendOneHeartbeat(stream)
 
 	log.Printf("Heartbeat to %s", as.Master)
 
