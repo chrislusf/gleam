@@ -29,6 +29,8 @@ func (as *AgentServer) executeCommand(
 		ctx,
 		executableFullFilename,
 		"execute",
+		"--dir",
+		dir,
 		"--note",
 		startRequest.GetInstructionSet().GetName(),
 	)

@@ -33,6 +33,7 @@ var (
 
 	executor     = app.Command("execute", "Execute an instruction set")
 	executorNote = executor.Flag("note", "description").String()
+	executorDir  = executor.Flag("dir", "working directory of the executor").String()
 
 	agent       = app.Command("agent", "Agent that can accept read, write requests, manage executors")
 	agentOption = &a.AgentServerOption{
@@ -107,6 +108,7 @@ func main() {
 
 		if err := exe.NewExecutor(&exe.ExecutorOption{
 			AgentAddress: instructionSet.AgentAddress,
+			Dir:          *executorDir,
 		}, &instructionSet).ExecuteInstructionSet(); err != nil {
 			log.Fatalf("Failed task %s: %v", *executorNote, err)
 		}

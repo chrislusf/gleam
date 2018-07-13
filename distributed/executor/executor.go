@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 )
 
 type ExecutorOption struct {
+	Dir          string
 	AgentAddress string
 	HashCode     uint32
 }
@@ -194,44 +196,44 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 		//TODO add errChan to scripts also?
 
 		var err error
+		script := i.GetScript()
+		if script == nil {
+			exeErrChan <- fmt.Errorf("no script provided in instruction")
+			return
+		}
+
 		// println("starting", i.Name, "inChan", inChan, "outChan", outChan)
-		if !i.GetScript().IsPipe {
-			i.GetScript().Args[len(i.GetScript().Args)-1] = fmt.Sprintf(
-				"%s -gleam.executor=%s -flow.hashcode=%d -flow.stepId=%d -flow.taskId=%d -gleam.profiling=%v",
-				i.GetScript().Args[len(i.GetScript().Args)-1],
-				exe.grpcAddress,
-				is.FlowHashCode,
-				i.StepId,
-				i.TaskId,
-				is.IsProfiling,
-			)
+		if !script.IsPipe {
+			script.Args = append(script.Args,
+				"-gleam.executor", exe.grpcAddress,
+				"-flow.hashcode", fmt.Sprint(is.FlowHashCode),
+				"-flow.stepId", fmt.Sprint(i.StepId),
+				"-flow.taskId", fmt.Sprint(i.TaskId))
+			if is.IsProfiling {
+				script.Args = append(script.Args, "-gleam.profiling")
+			}
+			script.Path = filepath.Join(exe.Option.Dir, script.Path)
 		}
 
 		// println("args:", i.GetScript().Args[len(i.GetScript().Args)-1])
 
-		if i.GetScript() != nil {
-			for x := 0; x < 3; x++ {
-				command := exec.CommandContext(ctx,
-					i.GetScript().GetPath(), i.GetScript().GetArgs()...,
-				)
-				// fmt.Fprintf(os.Stderr, "starting %d %d: %v\n", i.StepId, i.TaskId, command.Args)
-				wg.Add(1)
-				err = util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, i.GetScript().GetIsPipe(), false, os.Stderr)
-				if err == nil || stat.InputCounter != 0 {
-					break
-				}
-				if err != nil {
-					log.Printf("Failed %d time to start %v %v %v:%v", (x + 1), command.Path, command.Args, command.Env, err)
-					time.Sleep(time.Duration(1) * time.Second)
-				}
+		for x := 0; x < 3; x++ {
+			command := exec.CommandContext(ctx, script.Path, script.Args...)
+			command.Dir = exe.Option.Dir
+			// fmt.Fprintf(os.Stderr, "starting %d %d: %v\n", i.StepId, i.TaskId, command.Args)
+			wg.Add(1)
+			err = util.Execute(ctx, wg, stat, i.GetName(), command, readers[0], writers[0], prevIsPipe, script.GetIsPipe(), false, os.Stderr)
+			if err == nil || stat.InputCounter != 0 {
+				break
 			}
 			if err != nil {
-				exeErrChan <- fmt.Errorf("Failed executing command %s: %v", i.GetName(), err)
+				log.Printf("Failed %d time to start %v %v %v:%v", (x + 1), command.Path, command.Args, command.Env, err)
+				time.Sleep(time.Duration(1) * time.Second)
 			}
-		} else {
-			panic("what is this? " + i.String())
 		}
-
+		if err != nil {
+			exeErrChan <- fmt.Errorf("Failed executing command %s: %v", i.GetName(), err)
+		}
 	})
 
 }
