@@ -2,7 +2,7 @@ package flow
 
 import (
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/instruction"
@@ -20,12 +20,12 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	ex, _ := os.Executable()
 
 	var args []string
-	args = append(args, ex)
-	// args = append(args, os.Args[1:]...) // empty string in an arg can fail the execution
-	args = append(args, "-gleam.mapper="+string(mapperId))
-	commandLine := strings.Join(args, " ")
-	// println("args:", commandLine)
-	step.Command = script.NewShellScript().Pipe(commandLine).GetCommand()
+	args = append(args, os.Args[1:]...)
+	args = append(args, "-gleam.mapper", string(mapperId))
+	step.Command = &script.Command{
+		Path: filepath.Base(ex),
+		Args: args,
+	}
 	return ret
 }
 
