@@ -129,7 +129,7 @@ message FlowExecutionStatus {
 		string name = 7;
     }
     DriverInfo driver = 8;
-
+    string error = 9;
 }
 
 

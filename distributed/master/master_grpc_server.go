@@ -87,7 +87,29 @@ func (s *MasterServer) SendHeartbeat(stream pb.GleamMaster_SendHeartbeatServer) 
 	}
 }
 
-func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExecutionStatusServer) error {
+func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExecutionStatusServer) (err error) {
+	var id uint32
+	defer func() {
+		if id == 0 {
+			return
+		}
+		status, ok := s.statusCache.Get(id)
+		if !ok {
+			return
+		}
+		fes := status.(*pb.FlowExecutionStatus)
+		if err != nil && err != io.EOF {
+			fes.Error = err.Error()
+		}
+		if fes.Driver.StopTime == 0 {
+			fes.Driver.StopTime = time.Now().UnixNano()
+		}
+		s.statusCache.Add(id, fes)
+
+		data, _ := proto.Marshal(fes)
+		ioutil.WriteFile(fmt.Sprintf("%s/f%d.log", s.logDirectory, id), data, 0644)
+	}()
+
 	for {
 		status, err := stream.Recv()
 
@@ -99,12 +121,8 @@ func (s *MasterServer) SendFlowExecutionStatus(stream pb.GleamMaster_SendFlowExe
 			return err
 		}
 
-		s.statusCache.Add(status.GetId(), status)
-
-		if status.Driver.GetStopTime() != 0 {
-			data, _ := proto.Marshal(status)
-			ioutil.WriteFile(fmt.Sprintf("%s/f%d.log", s.logDirectory, status.GetId()), data, 0644)
-		}
+		id = status.GetId()
+		s.statusCache.Add(id, status)
 	}
 }
 
