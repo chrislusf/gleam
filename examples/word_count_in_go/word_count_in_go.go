@@ -14,11 +14,16 @@ import (
 var (
 	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 	isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
+	verbose = flag.Bool("verbose", false, "print out actual mapper and reducer function names")
 )
 
 func main() {
 
-	flag.Parse() // optional, since gio.Init() will call this also.
+	if *verbose{
+		gio.ListRegisteredFunctions()
+	}
+
+	// flag.Parse() // optional, since gio.Init() will call this also.
 	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
 
 	f := flow.New("top5 words in passwd").

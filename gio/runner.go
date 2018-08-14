@@ -56,21 +56,20 @@ func (runner *gleamRunner) runMapperReducer() {
 	}
 
 	if runner.Option.Mapper != "" {
-		if fn, ok := mappers[runner.Option.Mapper]; ok {
-			if err := runner.processMapper(ctx, fn); err != nil {
+		if fn, ok := mappers[MapperId(runner.Option.Mapper)]; ok {
+			if err := runner.processMapper(ctx, fn.Mapper); err != nil {
 				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
 			}
 			return
 		}
-		log.Fatalf("Failed to find mapper function for %v", runner.Option.Mapper)
-
+		log.Fatalf("Missing mapper function %v. Args: %v", runner.Option.Mapper, os.Args)
 	}
 
 	if runner.Option.Reducer != "" {
 		if runner.Option.KeyFields == "" {
 			log.Fatalf("Also expecting values for -gleam.keyFields! Actual arguments: %v", os.Args)
 		}
-		if fn, ok := reducers[runner.Option.Reducer]; ok {
+		if fn, ok := reducers[ReducerId(runner.Option.Reducer)]; ok {
 			keyPositions := strings.Split(runner.Option.KeyFields, ",")
 			var keyIndexes []int
 			for _, keyPosition := range keyPositions {
@@ -81,12 +80,12 @@ func (runner *gleamRunner) runMapperReducer() {
 				keyIndexes = append(keyIndexes, keyIndex)
 			}
 
-			if err := runner.processReducer(ctx, fn, keyIndexes); err != nil {
+			if err := runner.processReducer(ctx, fn.Reducer, keyIndexes); err != nil {
 				log.Fatalf("Failed to execute reducer %v: %v", os.Args, err)
 			}
 			return
 		}
-		log.Fatalf("Failed to find reducer function for %v", runner.Option.Reducer)
+		log.Fatalf("Missing reducer function %v. Args: %v", runner.Option.Reducer, os.Args)
 
 	}
 

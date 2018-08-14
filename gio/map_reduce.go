@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"reflect"
+	"runtime"
 	"sync"
 
 	"github.com/chrislusf/gleam/pb"
@@ -48,15 +50,25 @@ func init() {
 }
 
 var (
-	mappers      map[string]Mapper
-	reducers     map[string]Reducer
+	mappers      map[MapperId]MapperObject
+	reducers     map[ReducerId]ReducerObject
 	mappersLock  sync.Mutex
 	reducersLock sync.Mutex
 )
 
+type MapperObject struct {
+	Mapper Mapper
+	Name   string
+}
+
+type ReducerObject struct {
+	Reducer Reducer
+	Name    string
+}
+
 func init() {
-	mappers = make(map[string]Mapper)
-	reducers = make(map[string]Reducer)
+	mappers = make(map[MapperId]MapperObject)
+	reducers = make(map[ReducerId]ReducerObject)
 }
 
 // RegisterMapper register a mapper function to process a command
@@ -64,18 +76,38 @@ func RegisterMapper(fn Mapper) MapperId {
 	mappersLock.Lock()
 	defer mappersLock.Unlock()
 
-	mapperName := fmt.Sprintf("m%d", len(mappers)+1)
-	mappers[mapperName] = fn
-	return MapperId(mapperName)
+	mapperId := MapperId(fmt.Sprintf("m%d", len(mappers)+1))
+	mappers[mapperId] = MapperObject{fn, runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()}
+
+	return mapperId
+}
+
+func GetMapper(mapperId MapperId) (mapper MapperObject, found bool) {
+	mappersLock.Lock()
+	defer mappersLock.Unlock()
+
+	mapper, found = mappers[mapperId]
+
+	return
 }
 
 func RegisterReducer(fn Reducer) ReducerId {
 	reducersLock.Lock()
 	defer reducersLock.Unlock()
 
-	reducerName := fmt.Sprintf("r%d", len(reducers)+1)
-	reducers[reducerName] = fn
-	return ReducerId(reducerName)
+	reducerId := ReducerId(fmt.Sprintf("r%d", len(reducers)+1))
+	reducers[reducerId] = ReducerObject{fn, runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()}
+
+	return reducerId
+}
+
+func GetReducer(reducerId ReducerId) (reducer ReducerObject, found bool) {
+	reducersLock.Lock()
+	defer reducersLock.Unlock()
+
+	reducer, found = reducers[reducerId]
+
+	return
 }
 
 // Init determines whether the driver program will execute the mapper/reducer or not.
@@ -90,5 +122,15 @@ func Init() {
 		runner := &gleamRunner{Option: &taskOption}
 		runner.runMapperReducer()
 		os.Exit(0)
+	}
+}
+
+// ListRegisteredFunctions lists out all registered mappers and reducers
+func ListRegisteredFunctions() {
+	for k, fn := range mappers {
+		println(k, "=>", fn.Name)
+	}
+	for k, fn := range reducers {
+		println(k, "=>", fn.Name)
 	}
 }
