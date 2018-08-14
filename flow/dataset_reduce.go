@@ -1,8 +1,7 @@
 package flow
 
 import (
-	"os"
-	"path/filepath"
+		"os"
 	"strconv"
 	"strings"
 
@@ -63,13 +62,16 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 
 	ex, _ := os.Executable()
 
+	// reducer, _ := gio.GetReducer(reducerId)
+	// fmt.Printf("%s %s: %s\n", reducerId, name, reducer.Name)
+
 	var args []string
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.reducer", string(reducerId))
 	args = append(args, "-gleam.keyFields", keyFields)
 
 	step.Command = &script.Command{
-		Path: filepath.Base(ex),
+		Path: ex,
 		Args: args,
 	}
 	return ret

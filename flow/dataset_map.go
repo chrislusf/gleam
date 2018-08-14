@@ -1,8 +1,7 @@
 package flow
 
 import (
-	"os"
-	"path/filepath"
+		"os"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/instruction"
@@ -19,11 +18,14 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 
 	ex, _ := os.Executable()
 
+	// mapper, _ := gio.GetMapper(mapperId)
+	// fmt.Printf("%s %s: %s\n", mapperId, name, mapper.Name)
+
 	var args []string
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.mapper", string(mapperId))
 	step.Command = &script.Command{
-		Path: filepath.Base(ex),
+		Path: ex,
 		Args: args,
 	}
 	return ret
