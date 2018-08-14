@@ -212,7 +212,8 @@ func (exe *Executor) executeInstruction(ctx context.Context, wg *sync.WaitGroup,
 			if is.IsProfiling {
 				script.Args = append(script.Args, "-gleam.profiling")
 			}
-			script.Path = filepath.Join(exe.Option.Dir, script.Path)
+			executablePath := filepath.Base(script.Path)
+			script.Path = filepath.Join(exe.Option.Dir, executablePath)
 		}
 
 		// println("args:", i.GetScript().Args[len(i.GetScript().Args)-1])
