@@ -62,8 +62,8 @@ func (d *Dataset) LocalReduceBy(name string, reducerId gio.ReducerId, sortOption
 
 	ex, _ := os.Executable()
 
-	// reducer, _ := gio.GetReducer(reducerId)
-	// fmt.Printf("%s %s: %s\n", reducerId, name, reducer.Name)
+	reducer, _ := gio.GetReducer(reducerId)
+	step.Description = reducer.Name
 
 	var args []string
 	args = append(args, os.Args[1:]...)

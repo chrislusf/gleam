@@ -1,7 +1,8 @@
 package flow
 
 import (
-		"os"
+	"fmt"
+	"os"
 
 	"github.com/chrislusf/gleam/gio"
 	"github.com/chrislusf/gleam/instruction"
@@ -18,8 +19,8 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 
 	ex, _ := os.Executable()
 
-	// mapper, _ := gio.GetMapper(mapperId)
-	// fmt.Printf("%s %s: %s\n", mapperId, name, mapper.Name)
+	mapper, _ := gio.GetMapper(mapperId)
+	step.Description = mapper.Name
 
 	var args []string
 	args = append(args, os.Args[1:]...)
@@ -43,6 +44,7 @@ func (d *Dataset) Select(name string, sortOption *SortOption) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	indexes := sortOption.Indexes()
 	step.SetInstruction(name, instruction.NewSelect([]int{indexes[0]}, indexes[1:]))
+	step.Description = fmt.Sprintf("select %v", sortOption.Indexes())
 	return ret
 }
 
@@ -59,5 +61,6 @@ func (d *Dataset) LocalLimit(name string, n int, offset int) *Dataset {
 	ret.IsLocalSorted = d.IsLocalSorted
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(name, instruction.NewLocalLimit(n, offset))
+	step.Description = fmt.Sprintf("local limit %d", n)
 	return ret
 }

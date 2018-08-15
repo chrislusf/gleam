@@ -76,6 +76,7 @@ message FlowExecutionStatus {
         repeated int32 taskIds = 4;
         repeated int32 inputDatasetId = 5;
         int32 outputDatasetId = 6;
+		string description = 7;
     }
     message Dataset {
         int32 id = 1;
@@ -107,7 +108,6 @@ message FlowExecutionStatus {
 		    ExecutionStat executionStat = 7;
         }
         repeated Execution executions = 5;
-		
     }
 
     repeated StepGroup stepGroups = 1;

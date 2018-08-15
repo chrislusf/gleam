@@ -11,6 +11,7 @@ import (
 func (d *Dataset) Pipe(name, code string) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = name
+	step.Description = code
 	step.IsPipe = true
 	step.Command = script.NewShellScript().Pipe(code).GetCommand()
 	return ret

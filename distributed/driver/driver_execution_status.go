@@ -43,6 +43,7 @@ func (fcd *FlowDriver) logExecutionPlan(fc *flow.Flow) {
 			&pb.FlowExecutionStatus_Step{
 				Id:              int32(step.Id),
 				Name:            step.Name,
+				Description:     step.Description,
 				ParentIds:       parentIds,
 				TaskIds:         taskIds,
 				InputDatasetId:  inputDatasetIds,

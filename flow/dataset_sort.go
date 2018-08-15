@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"fmt"
+
 	"github.com/chrislusf/gleam/instruction"
 )
 
@@ -63,6 +65,7 @@ func (d *Dataset) LocalSort(name string, sortOption *SortOption) *Dataset {
 	ret.IsLocalSorted = sortOption.orderByList
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(name, instruction.NewLocalSort(sortOption.orderByList, int(d.GetPartitionSize())*3))
+	step.Description = sortOption.String()
 	return ret
 }
 
@@ -71,6 +74,7 @@ func (d *Dataset) LocalTop(name string, n int, sortOption *SortOption) *Dataset 
 	ret.IsLocalSorted = getReverseOrderBy(sortOption.orderByList)
 	ret.IsPartitionedBy = d.IsPartitionedBy
 	step.SetInstruction(name, instruction.NewLocalTop(n, ret.IsLocalSorted))
+	step.Description = fmt.Sprintf("local top %v", n)
 
 	return ret
 }

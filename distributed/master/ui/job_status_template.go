@@ -84,6 +84,7 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                 <tr>
                   <th>Step</th>
                   <th>Name</th>
+                  <th>Description</th>
                 </tr>
               </thead>
               <tbody>
@@ -91,6 +92,7 @@ var JobStatusTpl = template.Must(template.New("job").Funcs(funcMap).Parse(`<!DOC
                 <tr>
                   <td>{{ $step.Id }}</td>
                   <td>{{ $step.Name }}</td>
+                  <td>{{ $step.Description }}</td>
                 </tr>
               {{ end }}
               </tbody>
