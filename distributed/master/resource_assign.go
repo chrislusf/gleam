@@ -32,6 +32,9 @@ func (tp *Topology) allocateServersOnRack(dc *DataCenter, rack *Rack, requests [
 	allocated []*pb.Allocation, remainingRequests []*pb.ComputeResource) {
 
 	agents := rack.GetAgents()
+	if len(agents) == 0 {
+		return
+	}
 	start := rand.Intn(len(agents)) - 1
 	for _, req := range requests {
 		request := req
