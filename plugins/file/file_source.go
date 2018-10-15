@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -56,15 +57,27 @@ func newFileSource(fileType, fileOrPattern string, partitionCount int) *FileSour
 		prefix:         fileType,
 	}
 
-	var err error
-	fileOrPattern, err = filepath.Abs(fileOrPattern)
-	if err != nil {
-		log.Fatalf("file \"%s\" not found: %v", fileOrPattern, err)
-	}
+	if strings.Contains(fileOrPattern, "://") {
+		u, err := url.Parse(fileOrPattern)
+		if err != nil {
+			log.Printf("Invalid input URL %s", fileOrPattern)
+			return nil
+		}
+		s.fileBaseName = filepath.Base(u.Path)
+		u.Path = filepath.Dir(u.Path)
+		s.folder = u.String()
+		s.Path = fileOrPattern
 
-	s.folder = filepath.Dir(fileOrPattern)
-	s.fileBaseName = filepath.Base(fileOrPattern)
-	s.Path = fileOrPattern
+	} else {
+		var err error
+		fileOrPattern, err = filepath.Abs(fileOrPattern)
+		if err != nil {
+			log.Fatalf("file \"%s\" not found: %v", fileOrPattern, err)
+		}
+		s.folder = filepath.Dir(fileOrPattern)
+		s.fileBaseName = filepath.Base(fileOrPattern)
+		s.Path = fileOrPattern
+	}
 
 	if strings.ContainsAny(s.fileBaseName, "*?") {
 		s.hasWildcard = true
