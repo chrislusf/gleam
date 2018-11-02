@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"log"
 	"os"
 
@@ -52,6 +53,9 @@ func (ds *FileShardInfo) ReadSplit() error {
 	for {
 		row, err := reader.Read()
 		if err != nil {
+			if err != io.EOF {
+				log.Printf("ds.ReadSplit() Failed to read from file %s: %v", ds.FileName, err)
+			}
 			break
 		}
 		row.WriteTo(os.Stdout)
