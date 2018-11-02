@@ -14,20 +14,21 @@ import (
 var (
 	isDistributed   = flag.Bool("distributed", false, "run in distributed or not")
 	isDockerCluster = flag.Bool("onDocker", false, "run in docker cluster")
-	verbose = flag.Bool("verbose", false, "print out actual mapper and reducer function names")
+	verbose         = flag.Bool("verbose", false, "print out actual mapper and reducer function names")
+	filename        = flag.String("f", "/etc/passwd", "the file to process")
 )
 
 func main() {
 
-	if *verbose{
+	if *verbose {
 		gio.ListRegisteredFunctions()
 	}
 
 	// flag.Parse() // optional, since gio.Init() will call this also.
-	gio.Init()   // If the command line invokes the mapper or reducer, execute it and exit.
+	gio.Init() // If the command line invokes the mapper or reducer, execute it and exit.
 
 	f := flow.New("top5 words in passwd").
-		Read(file.Txt("/etc/passwd", 1)).
+		Read(file.Txt(*filename, 1)).
 		Map("tokenize", mapper.Tokenize). // invoke the registered "tokenize" mapper function.
 		Pipe("debugWithPipe", "tee debug.txt").
 		Map("addOne", mapper.AppendOne).      // invoke the registered "addOne" mapper function.
