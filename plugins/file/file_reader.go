@@ -1,7 +1,11 @@
 package file
 
 import (
+	"compress/bzip2"
+	"compress/gzip"
 	"fmt"
+	"io"
+	"path/filepath"
 
 	"github.com/chrislusf/gleam/filesystem"
 	"github.com/chrislusf/gleam/plugins/file/csv"
@@ -23,6 +27,9 @@ func Csv(fileOrPattern string, partitionCount int) *FileSource {
 func Txt(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("txt", fileOrPattern, partitionCount)
 }
+func Gzip(fileOrPattern string, partitionCount int) *FileSource {
+	return newFileSource("gzip", fileOrPattern, partitionCount)
+}
 func Tsv(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("tsv", fileOrPattern, partitionCount)
 }
@@ -34,21 +41,37 @@ func Parquet(fileOrPattern string, partitionCount int) *FileSource {
 }
 
 func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error) {
-	switch ds.FileType {
-	case "csv":
-		return csv.New(vf), nil
-	case "txt":
-		return txt.New(vf), nil
-	case "tsv":
-		return tsv.New(vf), nil
-	case "orc":
+	// These formats require seeking, so they cannot be
+	// sequentially read by a compress/* reader.
+	if ds.FileType == "orc" {
 		if reader, err := orc.New(vf); err == nil {
 			return reader.Select(ds.Fields), nil
 		} else {
 			return nil, err
 		}
-	case "parquet":
+	} else if ds.FileType == "parquet" {
 		return parquet.New(vf, ds.FileName), nil
+	}
+
+	var r io.Reader = vf
+	var err error
+	switch filepath.Ext(ds.FileName) {
+	case ".gz":
+		r, err = gzip.NewReader(r)
+	case ".bz2":
+		r = bzip2.NewReader(r)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	switch ds.FileType {
+	case "csv":
+		return csv.New(r), nil
+	case "txt":
+		return txt.New(r), nil
+	case "tsv":
+		return tsv.New(r), nil
 	}
 	return nil, fmt.Errorf("File type %s is not defined.", ds.FileType)
 }
