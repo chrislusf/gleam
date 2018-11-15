@@ -27,9 +27,6 @@ func Csv(fileOrPattern string, partitionCount int) *FileSource {
 func Txt(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("txt", fileOrPattern, partitionCount)
 }
-func Gzip(fileOrPattern string, partitionCount int) *FileSource {
-	return newFileSource("gzip", fileOrPattern, partitionCount)
-}
 func Tsv(fileOrPattern string, partitionCount int) *FileSource {
 	return newFileSource("tsv", fileOrPattern, partitionCount)
 }
