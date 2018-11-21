@@ -16,9 +16,7 @@ gleam: deps
 	GOOS=linux GOARCH=amd64 go build -o $(BINARY) $(SOURCE_DIR)
 
 docker: gleam
-	cp ../script/MessagePack.lua .
 	docker build -t chrislusf/gleam .
-	rm MessagePack.lua
 	rm -f $(BINARY)
 
 run_docker: docker
