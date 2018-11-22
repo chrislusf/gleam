@@ -16,6 +16,7 @@ import (
 	"github.com/chrislusf/gleam/instruction"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
+	"github.com/chrislusf/gleam/util/on_interrupt"
 )
 
 type ExecutorOption struct {
@@ -51,7 +52,18 @@ func (exe *Executor) ExecuteInstructionSet() error {
 
 	//TODO pass in the context
 	ctx, cancel := context.WithCancel(context.Background())
+
 	var wg sync.WaitGroup
+	on_interrupt.OnInterrupt(func() {
+		// Calling cancel() will stop all the mappers and reducers.
+		cancel()
+
+		// Wait for all the mappers and reducers to stop.
+		// If we don't wait here, the executor process may exit before the signal is
+		// passed to all of its children processes.
+		wg.Wait()
+	}, nil)
+
 	exeErrChan := make(chan error, len(exe.instructions.GetInstructions()))
 	ioErrChan := make(chan error, 2*len(exe.instructions.GetInstructions()))
 	finishedChan := make(chan bool, 1)

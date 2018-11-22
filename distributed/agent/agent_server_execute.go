@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+	"syscall"
 
 	"github.com/chrislusf/gleam/pb"
 	"github.com/golang/protobuf/proto"
@@ -20,13 +21,17 @@ func (as *AgentServer) executeCommand(
 	statChan chan *pb.ExecutionStat,
 ) (err error) {
 
-	ctx := stream.Context()
 	stopChan := make(chan bool)
 
 	// start the command
 	executableFullFilename, _ := osext.Executable()
-	command := exec.CommandContext(
-		ctx,
+
+	// Note: don't use exec.CommandContext here.
+	// The executor process will be killed by SIGKILL and all of its child process will be left behind if
+	// the context passed to exec.CommandContext is canceled.
+	// Instead, we send a SIGTERM to the executor process when stream.Context is canceled and give
+	// the executor a chance to reap its children.
+	command := exec.Command(
 		executableFullFilename,
 		"execute",
 		"--dir",
@@ -57,6 +62,14 @@ func (as *AgentServer) executeCommand(
 			command.Path, command.Dir, err)
 		return err
 	}
+
+	go func() {
+		select {
+		case <-stream.Context().Done():
+			command.Process.Signal(syscall.SIGTERM)
+		case <-stopChan:
+		}
+	}()
 
 	errors := make([]error, 2)
 	var wg sync.WaitGroup
@@ -93,7 +106,7 @@ func (as *AgentServer) executeCommand(
 		log.Printf("Failed to run command %s: %v", startRequest.GetInstructionSet().GetName(), waitErr)
 	}
 
-	stopChan <- true
+	close(stopChan)
 	wg.Wait()
 
 	sendExitStats(stream, command)
