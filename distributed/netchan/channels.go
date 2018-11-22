@@ -18,7 +18,8 @@ import (
 
 func DialReadChannel(ctx context.Context, wg *sync.WaitGroup, readerName string, address string, channelName string, onDisk bool, outChan io.WriteCloser) error {
 
-	conn, err := net.Dial("tcp", address)
+	var dialer net.Dialer
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		wg.Done()
 		return fmt.Errorf("Fail to dial read %s: %v", address, err)
@@ -52,7 +53,8 @@ func DialReadChannel(ctx context.Context, wg *sync.WaitGroup, readerName string,
 
 func DialWriteChannel(ctx context.Context, wg *sync.WaitGroup, writerName string, address string, channelName string, onDisk bool, inChan io.Reader, readerCount int) error {
 
-	conn, err := net.Dial("tcp", address)
+	var dialer net.Dialer
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		wg.Done()
 		return fmt.Errorf("Fail to dial write %s: %v", address, err)
