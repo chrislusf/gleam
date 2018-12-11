@@ -37,7 +37,7 @@ type AgentServer struct {
 	Master                  string
 	computeResource         *pb.ComputeResource
 	allocatedResource       *pb.ComputeResource
-	allocatedHasChanges     bool
+	allocatedHasChanges     chan struct{}
 	allocatedResourceLock   sync.Mutex
 	storageBackend          *LocalDatasetShardsManager
 	inMemoryChannels        *LocalDatasetShardsManagerInMemory
@@ -62,7 +62,8 @@ func RunAgentServer(option *AgentServerOption) {
 			CpuLevel: int32(*option.CPULevel),
 			MemoryMb: *option.MemoryMB,
 		},
-		allocatedResource: &pb.ComputeResource{},
+		allocatedResource:   &pb.ComputeResource{},
+		allocatedHasChanges: make(chan struct{}, 5),
 	}
 
 	go as.storageBackend.purgeExpiredEntries()
