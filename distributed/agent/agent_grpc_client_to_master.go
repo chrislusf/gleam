@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/chrislusf/gleam/pb"
+	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -41,15 +42,11 @@ func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 	log.Printf("Heartbeat to %s", as.Master)
 
 	ticker := time.NewTicker(sleepInterval)
-	quickTicker := time.NewTicker(500 * time.Millisecond)
 	for {
 		select {
-		case <-quickTicker.C:
-			if as.allocatedHasChanges {
-				as.allocatedHasChanges = false
-				if err := as.sendOneHeartbeat(stream); err != nil {
-					return err
-				}
+		case <-as.allocatedHasChanges:
+			if err := as.sendOneHeartbeat(stream); err != nil {
+				return err
 			}
 		case <-ticker.C:
 			if err := as.sendOneHeartbeat(stream); err != nil {
@@ -61,6 +58,7 @@ func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 }
 
 func (as *AgentServer) sendOneHeartbeat(stream pb.GleamMaster_SendHeartbeatClient) error {
+	as.allocatedResourceLock.Lock()
 	beat := &pb.Heartbeat{
 		Location: &pb.Location{
 			DataCenter: *as.Option.DataCenter,
@@ -69,8 +67,9 @@ func (as *AgentServer) sendOneHeartbeat(stream pb.GleamMaster_SendHeartbeatClien
 			Port:       int32(*as.Option.Port),
 		},
 		Resource:  as.computeResource,
-		Allocated: as.allocatedResource,
+		Allocated: proto.Clone(as.allocatedResource).(*pb.ComputeResource),
 	}
+	as.allocatedResourceLock.Unlock()
 
 	// log.Printf("Reporting allocated %v", as.allocatedResource)
 

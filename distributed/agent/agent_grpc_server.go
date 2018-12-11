@@ -143,14 +143,14 @@ func (as *AgentServer) Delete(ctx context.Context, deleteRequest *pb.DeleteDatas
 
 func (as *AgentServer) plusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
-	defer as.allocatedResourceLock.Unlock()
-	as.allocatedHasChanges = true
 	*as.allocatedResource = as.allocatedResource.Plus(allocated)
+	as.allocatedResourceLock.Unlock()
+	as.allocatedHasChanges <- struct{}{}
 }
 
 func (as *AgentServer) minusAllocated(allocated pb.ComputeResource) {
 	as.allocatedResourceLock.Lock()
-	defer as.allocatedResourceLock.Unlock()
-	as.allocatedHasChanges = true
 	*as.allocatedResource = as.allocatedResource.Minus(allocated)
+	as.allocatedResourceLock.Unlock()
+	as.allocatedHasChanges <- struct{}{}
 }
