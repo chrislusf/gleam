@@ -4,14 +4,15 @@ import (
 	"log"
 	"time"
 
+	"context"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
+	"github.com/chrislusf/gleam/util"
 	"google.golang.org/grpc"
 )
 
 func getResources(master string, request *pb.ComputeRequest) (*pb.AllocationResult, error) {
 
-	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
+	grpcConection, err := util.GleamGrpcDial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("fail to dial %s: %v", master, err)
 	}

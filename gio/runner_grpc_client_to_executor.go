@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"context"
+
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

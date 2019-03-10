@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"context"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
+	"github.com/chrislusf/gleam/util"
 	"google.golang.org/grpc"
 )
 
@@ -74,7 +75,7 @@ func (exe *Executor) reportStatus() {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConnection, err := grpc.Dial(server,
+	grpcConnection, err := util.GleamGrpcDial(server,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 	)

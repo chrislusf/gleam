@@ -13,6 +13,7 @@ import (
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
+	"github.com/chrislusf/gleam/util"
 	"github.com/chrislusf/gleam/util/on_interrupt"
 	"google.golang.org/grpc"
 )
@@ -147,7 +148,7 @@ func (fcd *FlowDriver) cleanup(sched *scheduler.Scheduler, fc *flow.Flow) {
 }
 
 func (fcd *FlowDriver) reportStatus(ctx context.Context, wg *sync.WaitGroup, master string, stopChan chan bool) {
-	grpcConection, err := grpc.Dial(master, grpc.WithInsecure())
+	grpcConection, err := util.GleamGrpcDial(master, grpc.WithInsecure())
 	if err != nil {
 		log.Printf("Failed to dial: %v", err)
 		return

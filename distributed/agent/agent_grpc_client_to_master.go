@@ -5,9 +5,10 @@ import (
 	"log"
 	"time"
 
+	"context"
 	"github.com/chrislusf/gleam/pb"
+	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 
@@ -24,7 +25,7 @@ func (as *AgentServer) heartbeat() {
 
 func (as *AgentServer) doHeartbeat(sleepInterval time.Duration) error {
 
-	grpcConnection, err := grpc.Dial(as.Master, grpc.WithInsecure())
+	grpcConnection, err := util.GleamGrpcDial(as.Master, grpc.WithInsecure())
 	if err != nil {
 		return fmt.Errorf("fail to dial: %v", err)
 	}

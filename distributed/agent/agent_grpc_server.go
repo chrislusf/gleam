@@ -9,9 +9,9 @@ import (
 	"path"
 	"path/filepath"
 
+	"context"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
 

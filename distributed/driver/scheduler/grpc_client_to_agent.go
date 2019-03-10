@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"context"
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
-	"golang.org/x/net/context"
+	"github.com/chrislusf/gleam/util"
 	"google.golang.org/grpc"
 )
 
@@ -28,7 +29,7 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		FlowHashCode: flowHashCode,
 	}
 
-	stream, err := client.SendFileResource(ctx, grpc.FailFast(false))
+	stream, err := client.SendFileResource(ctx, grpc.WaitForReady(true))
 	if err != nil {
 		log.Printf("%v.SendFileResource(_) = _, %v", client, err)
 		return err
@@ -198,7 +199,7 @@ func SendCleanupRequest(server string, request *pb.CleanupRequest) error {
 }
 
 func withClient(server string, fn func(client pb.GleamAgentClient) error) error {
-	grpcConnection, err := grpc.Dial(server,
+	grpcConnection, err := util.GleamGrpcDial(server,
 		grpc.WithInsecure(),
 		grpc.WithBlock(),
 	)

@@ -1,7 +1,7 @@
 package flow
 
 import (
-		"fmt"
+	"fmt"
 	"strings"
 
 	"github.com/chrislusf/gleam/instruction"
@@ -61,11 +61,11 @@ func (o *SortOption) Indexes() []int {
 
 func (o *SortOption) String() string {
 	var buf strings.Builder
-	for _, orderBy := range o.orderByList{
+	for _, orderBy := range o.orderByList {
 		buf.WriteString(fmt.Sprintf("%d ", orderBy.Index))
 		if orderBy.Order == instruction.Ascending {
 			buf.WriteString("asc")
-		}else{
+		} else {
 			buf.WriteString("desc")
 		}
 	}

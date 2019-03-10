@@ -22,7 +22,7 @@ func (runner *gleamRunner) runMapperReducer() {
 		cpuProfFile := fmt.Sprintf("mr_cpu_%d-s%d-t%d.pprof", runner.Option.HashCode,
 			runner.Option.StepId, runner.Option.TaskId)
 		pwd, _ := os.Getwd()
-		println("saving pprof to", pwd+"/"+cpuProfFile)
+		// println("saving pprof to", pwd+"/"+cpuProfFile)
 
 		cf, err := os.Create(cpuProfFile)
 		if err != nil {
@@ -35,7 +35,7 @@ func (runner *gleamRunner) runMapperReducer() {
 			runner.Option.StepId, runner.Option.TaskId)
 
 		mf, err := os.Create(memProfFile)
-		println("saving pprof to", pwd+"/"+memProfFile)
+		// println("saving pprof to", pwd+"/"+memProfFile)
 		if err != nil {
 			log.Fatalf("failed to create memory profile file %s: %v", pwd+"/"+memProfFile, err)
 		}

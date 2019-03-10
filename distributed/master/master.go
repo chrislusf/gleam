@@ -8,8 +8,8 @@ import (
 	"net/http"
 
 	"github.com/chrislusf/gleam/pb"
-	router "github.com/gorilla/mux"
-	"github.com/soheilhy/cmux"
+	"github.com/chrislusf/gleam/util"
+	"github.com/gorilla/mux"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -20,32 +20,34 @@ func RunMaster(listenOn string, logDirectory string) {
 
 	masterServer = newMasterServer(logDirectory)
 
-	listener, err := net.Listen("tcp", listenOn)
+	httpL, err := net.Listen("tcp", listenOn)
 	if err != nil {
 		log.Fatalf("master server fails to listen on %s: %v", listenOn, err)
 	}
-	defer listener.Close()
+	defer httpL.Close()
 
-	m := cmux.New(listener)
-
-	grpcL := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	httpL := m.Match(cmux.Any())
+	grpcAddress, err := util.ParseServerToGrpcAddress(listenOn)
+	if err != nil {
+		log.Fatalf("master server fails to parse listen on %s: %v", listenOn, err)
+	}
+	grpcL, err := net.Listen("tcp", grpcAddress)
+	if err != nil {
+		log.Fatalf("master server fails to listen on %s: %v", listenOn, err)
+	}
+	defer grpcL.Close()
 
 	// Create your protocol servers.
 	grpcS := grpc.NewServer()
 	pb.RegisterGleamMasterServer(grpcS, masterServer)
 	reflection.Register(grpcS)
 
-	r := router.NewRouter()
-	r.HandleFunc("/", masterServer.uiStatusHandler)
+	r := mux.NewRouter()
 	r.HandleFunc("/job/{id:[0-9]+}", masterServer.jobStatusHandler)
-	httpS := &http.Server{Handler: r}
+	r.HandleFunc("/", masterServer.uiStatusHandler)
 
 	go grpcS.Serve(grpcL)
-	go httpS.Serve(httpL)
+	go http.Serve(httpL, r)
 
-	if err := m.Serve(); err != nil {
-		log.Fatalf("master server failed to serve: %v", err)
-	}
+	select {}
 
 }

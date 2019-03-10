@@ -16,7 +16,6 @@ import (
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
 	"github.com/golang/protobuf/proto"
-	"github.com/soheilhy/cmux"
 )
 
 type AgentServerOption struct {
@@ -70,12 +69,17 @@ func RunAgentServer(option *AgentServerOption) {
 	go as.inMemoryChannels.purgeExpiredEntries()
 	go as.heartbeat()
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
+	tcpListener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println("AgentServer tcp starts on", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
 
-	fmt.Println("AgentServer starts on", fmt.Sprintf("%v:%d", *option.Host, *option.Port))
+	grpcListener, err := net.Listen("tcp", fmt.Sprintf("%v:%d", *option.Host, *option.Port+10000))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("AgentServer grpc starts on", fmt.Sprintf("%v:%d", *option.Host, *option.Port+10000))
 
 	if *option.CleanRestart {
 		if fileInfos, err := ioutil.ReadDir(as.storageBackend.dir); err == nil {
@@ -90,17 +94,10 @@ func RunAgentServer(option *AgentServerOption) {
 		}
 	}
 
-	m := cmux.New(listener)
-	grpcListener := m.Match(cmux.HTTP2HeaderField("content-type", "application/grpc"))
-	tcpListener := m.Match(cmux.Any())
-
 	go as.serveGrpc(grpcListener)
 	go as.serveTcp(tcpListener)
 
-	if err := m.Serve(); !strings.Contains(err.Error(), "use of closed network connection") {
-		panic(err)
-	}
-
+	select {}
 }
 
 // Run starts the heartbeating to master and starts accepting requests.
