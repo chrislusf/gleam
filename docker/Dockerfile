@@ -2,6 +2,7 @@ FROM alpine:latest
 MAINTAINER Chris Lu <chris.lu@gmail.com>
 
 EXPOSE 45326
+EXPOSE 55326
 
 VOLUME /data
 

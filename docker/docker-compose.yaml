@@ -6,6 +6,7 @@ services:
     command: "master"
     ports:
       - 45326:45326
+      - 55326:55326
   agent_1:
     image: chrislusf/gleam
     command: 'agent --memory=3000 --master=master:45326'
