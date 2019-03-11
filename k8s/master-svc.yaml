@@ -9,6 +9,8 @@ spec:
   ports:
   - port: 45326
     protocol: TCP
+  - port: 55326
+    protocol: TCP
   clusterIP: None
   selector:
     service: master

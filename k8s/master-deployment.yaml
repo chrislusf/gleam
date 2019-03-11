@@ -23,5 +23,7 @@ spec:
         ports:
         - containerPort: 45326
           protocol: TCP
+        - containerPort: 55326
+          protocol: TCP
         args:
           - "master"
