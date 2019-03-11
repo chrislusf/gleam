@@ -18,6 +18,7 @@ gleam: deps
 docker: gleam
 	docker build -t chrislusf/gleam .
 	rm -f $(BINARY)
+	docker push chrislusf/gleam:latest
 
 run_docker: docker
 	docker-compose up
