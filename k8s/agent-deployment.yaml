@@ -21,12 +21,17 @@ spec:
         service: agent
     spec:
       containers:
-      - name: agent
-        image: chrislusf/gleam
-        resources:
-          limits:
-            memory: "2Gi"
-            cpu: "0.5"
-        args:
-          - "agent"
-          - "--memory=2048 --master=master:45326"
+        - name: agent
+          image: chrislusf/gleam
+          ports:
+            - containerPort: 45327
+              protocol: TCP
+            - containerPort: 55327
+              protocol: TCP
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "0.5"
+          args:
+            - "agent"
+            - "--memory=2048 --master=master:45326"

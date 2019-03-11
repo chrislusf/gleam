@@ -18,12 +18,12 @@ spec:
         service: master
     spec:
       containers:
-      - name: master
-        image: chrislusf/gleam
-        ports:
-        - containerPort: 45326
-          protocol: TCP
-        - containerPort: 55326
-          protocol: TCP
-        args:
-          - "master"
+        - name: master
+          image: chrislusf/gleam
+          ports:
+            - containerPort: 45326
+              protocol: TCP
+            - containerPort: 55326
+              protocol: TCP
+          args:
+            - "master"
