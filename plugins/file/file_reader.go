@@ -14,6 +14,7 @@ import (
 	"github.com/chrislusf/gleam/plugins/file/tsv"
 	"github.com/chrislusf/gleam/plugins/file/txt"
 	"github.com/chrislusf/gleam/util"
+	"github.com/klauspost/compress/zstd"
 )
 
 type FileReader interface {
@@ -57,6 +58,8 @@ func (ds *FileShardInfo) NewReader(vf filesystem.VirtualFile) (FileReader, error
 		r, err = gzip.NewReader(r)
 	case ".bz2":
 		r = bzip2.NewReader(r)
+	case ".zst":
+		r, err = zstd.NewReader(r)
 	}
 	if err != nil {
 		return nil, err
