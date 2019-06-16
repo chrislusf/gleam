@@ -16,18 +16,11 @@ type FileReader struct {
 
 func New(filename string) *FileReader {
 	r, _ := zip.OpenReader(filename)
-	count := 0
-	for _, f := range r.File {
-		if f.FileInfo().IsDir() {
-			continue
-		}
-		count++
-	}
-
+	numFilesAndDirs := len(r.File)
 	return &FileReader{
 		reader:   r,
 		Cursor:   0,
-		NumFiles: count,
+		NumFiles: numFilesAndDirs,
 	}
 }
 
