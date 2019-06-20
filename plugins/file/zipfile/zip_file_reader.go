@@ -25,7 +25,7 @@ func New(filename string) *FileReader {
 }
 
 func (r *FileReader) ReadHeader() (fieldNames []string, err error) {
-	return nil, nil
+	return []string{"file_name", "file_content"}, nil
 }
 
 // Read will iterate through the zip file, it will treat each file
