@@ -113,7 +113,7 @@ func main() {
 		Read(file.Txt("/etc/passwd", 2)).  // read a txt file and partitioned to 2 shards
 		Map("tokenize", Tokenize).    // invoke the registered "tokenize" mapper function.
 		Map("appendOne", AppendOne).  // invoke the registered "appendOne" mapper function.
-		ReduceBy("sum", Sum).         // invoke the registered "sum" reducer function.
+		ReduceByKey("sum", Sum).         // invoke the registered "sum" reducer function.
 		Sort("sortBySum", flow.OrderBy(2, true)).
 		Top("top5", 5, flow.OrderBy(2, false)).
 		Printlnf("%s\t%d")
