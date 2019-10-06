@@ -230,9 +230,9 @@ func main() {
 ## Setup Gleam Cluster Locally
 Start a gleam master and several gleam agents
 ```go
-// start "gleam master" on a server
+// start "gleam master" on a server. If you are using MacOS, add sudo.
 > go get github.com/chrislusf/gleam/distributed/gleam
-> gleam master --address=":45326"
+> (sudo) gleam master --address=":45326"
 
 // start up "gleam agent" on some different servers or ports
 > gleam agent --dir=2 --port 45327 --host=127.0.0.1
