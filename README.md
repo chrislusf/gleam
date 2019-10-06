@@ -235,8 +235,8 @@ Start a gleam master and several gleam agents
 > (sudo) gleam master --address=":45326"
 
 // start up "gleam agent" on some different servers or ports
-> gleam agent --dir=2 --port 45327 --host=127.0.0.1
-> gleam agent --dir=3 --port 45328 --host=127.0.0.1
+> (sudo) gleam agent --dir=2 --port 45327 --host=127.0.0.1
+> (sudo) gleam agent --dir=3 --port 45328 --host=127.0.0.1
 ```
 
 ## Setup Gleam Cluster on Kubernetes
