@@ -39,7 +39,7 @@ func main() {
 
 }
 
-func absolute(row []interface{}) error {
+func absolute(row []interface{}, _ ...interface{}) error {
 	a, b := gio.ToString(row[0]), gio.ToInt64(row[1])
 	if b < 0 {
 		b = -b

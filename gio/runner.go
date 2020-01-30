@@ -2,6 +2,7 @@ package gio
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -57,7 +58,13 @@ func (runner *gleamRunner) runMapperReducer() {
 
 	if runner.Option.Mapper != "" {
 		if fn, ok := mappers[MapperId(runner.Option.Mapper)]; ok {
-			if err := runner.processMapper(ctx, fn.Mapper); err != nil {
+			var args []interface{}
+			if len(runner.Option.MapperArgs) > 0 {
+				if err := json.Unmarshal(MapperArgs(runner.Option.MapperArgs), &args); err != nil {
+					log.Fatalf("Failed to de-serialize mapper %v arguments: %v", os.Args, err)
+				}
+			}
+			if err := runner.processMapper(ctx, fn.Mapper, args); err != nil {
 				log.Fatalf("Failed to execute mapper %v: %v", os.Args, err)
 			}
 			return

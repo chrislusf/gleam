@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 
 // Mapper runs the mapper registered to the mapperId.
 // This is used to execute pure Go code.
-func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
+func (d *Dataset) Map(name string, mapperId gio.MapperId, arguments ...interface{}) *Dataset {
 	ret, step := add1ShardTo1Step(d)
 	step.Name = name + ".Map"
 	step.IsPipe = false
@@ -25,6 +26,14 @@ func (d *Dataset) Map(name string, mapperId gio.MapperId) *Dataset {
 	var args []string
 	args = append(args, os.Args[1:]...)
 	args = append(args, "-gleam.mapper", string(mapperId))
+	if len(arguments) > 0 {
+		// serialize arguments to json and pass them as arguments of the command
+		serializedArgs, ok := json.Marshal(arguments)
+		if ok != nil {
+			panic(fmt.Sprintf("Cannot serialize mapper's arguments %s", arguments))
+		}
+		args = append(args, "-gleam.mapperArgs", string(serializedArgs))
+	}
 	step.Command = &script.Command{
 		Path: ex,
 		Args: args,

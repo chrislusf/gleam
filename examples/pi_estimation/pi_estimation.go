@@ -150,7 +150,7 @@ func testLocalFlow() {
 	fmt.Println()
 }
 
-func monteCarloMapper(row []interface{}) error {
+func monteCarloMapper(row []interface{}, _ ...interface{}) error {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	var count int
