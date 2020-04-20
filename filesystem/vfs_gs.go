@@ -60,7 +60,7 @@ func (fs *GoogleStorageFileSystem) List(fl *FileLocation) (fileLocations []*File
 	}
 
 	bucket := gs.Bucket(u.Hostname())
-	iter := bucket.Objects(ctx, &storage.Query{Prefix: fl.Location})
+	iter := bucket.Objects(ctx, &storage.Query{Prefix: u.Path[1:]})
 
 	for {
 		attr, err := iter.Next()
@@ -80,11 +80,10 @@ func (fs *GoogleStorageFileSystem) List(fl *FileLocation) (fileLocations []*File
 }
 
 // IsDir - returns true if directory detected
-// since there no concept of directories in cloud storage,
-// this is not implemented, as using List() is sufficient in
-// querying both flat paths and sub-objects
+// This function assumes that if the prefix ends with "/"
+// then the intent of the user is to represent a Dir
 func (fs *GoogleStorageFileSystem) IsDir(fl *FileLocation) bool {
-	return false
+	return strings.HasSuffix(fl.Location, "/")
 }
 
 // VirtualFileGS - Virtual File implementation for Google Storage
