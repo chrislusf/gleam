@@ -20,7 +20,6 @@ func (fs *LocalFileSystem) Accept(fl *FileLocation) bool {
 			return false
 		}
 	}
-	// return !strings.HasPrefix(fl.Location, "hdfs://") && !strings.HasPrefix(fl.Location, "s3://") && !strings.HasPrefix(fl.Location, "gs://")
 	return true
 }
 
