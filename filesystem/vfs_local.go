@@ -11,7 +11,17 @@ type LocalFileSystem struct {
 }
 
 func (fs *LocalFileSystem) Accept(fl *FileLocation) bool {
-	return !strings.HasPrefix(fl.Location, "hdfs://") && !strings.HasPrefix(fl.Location, "s3://")
+	for _, prefix := range []string{
+		"hdfs://",
+		"s3://",
+		"gs://",
+	} {
+		if strings.HasPrefix(fl.Location, prefix) {
+			return false
+		}
+	}
+	// return !strings.HasPrefix(fl.Location, "hdfs://") && !strings.HasPrefix(fl.Location, "s3://") && !strings.HasPrefix(fl.Location, "gs://")
+	return true
 }
 
 func (fs *LocalFileSystem) Open(fl *FileLocation) (VirtualFile, error) {
