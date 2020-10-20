@@ -36,6 +36,7 @@ var (
 		&LocalFileSystem{},
 		&HdfsFileSystem{},
 		&S3FileSystem{},
+		&GoogleStorageFileSystem{},
 	}
 )
 
