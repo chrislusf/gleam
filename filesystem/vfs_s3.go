@@ -66,7 +66,7 @@ func (fs *S3FileSystem) IsDir(fl *FileLocation) bool {
 func splitS3LocationToParts(location string) (bucketName, objectKey string, err error) {
 	s3Prefix := "s3://"
 	if !strings.HasPrefix(location, s3Prefix) {
-		return "", "", fmt.Errorf("parameter %s should start with hdfs://", location)
+		return "", "", fmt.Errorf("parameter %s should start with s3://", location)
 	}
 
 	parts := strings.SplitN(location[len(s3Prefix):], "/", 2)
