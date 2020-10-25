@@ -104,7 +104,7 @@ func (vf *VirtualFileGS) Close() error {
 	return os.Remove(vf.filename)
 }
 
-func newVirtualFileGS(readerCloser io.ReadCloser) (*VirtualFileS3, error) {
+func newVirtualFileGS(readerCloser io.ReadCloser) (*VirtualFileGS, error) {
 	filename := fmt.Sprintf("%s/gs_%d", os.TempDir(), rand.Uint32())
 	outFile, err := os.Create(filename)
 	if err != nil {
@@ -115,5 +115,5 @@ func newVirtualFileGS(readerCloser io.ReadCloser) (*VirtualFileS3, error) {
 
 	outFile.Seek(0, 0)
 
-	return &VirtualFileS3{outFile, filename, size}, err
+	return &VirtualFileGS{outFile, filename, size}, err
 }
