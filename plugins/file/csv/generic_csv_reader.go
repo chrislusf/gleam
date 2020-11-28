@@ -10,11 +10,11 @@
 //
 //	field1,field2,field3
 //
-// White space is considered part of a field.
+// Empty space is considered part of a field.
 //
 // Carriage returns before newline characters are silently removed.
 //
-// Blank lines are ignored.  A line with only whitespace characters (excluding
+// Blank lines are ignored.  A line with only empty space characters (excluding
 // the ending newline character) is not considered a blank line.
 //
 // Fields which start and stop with the quote character " are called
@@ -103,7 +103,7 @@ const (
 // If LazyQuotes is true, a quote may appear in an unquoted field and a
 // non-doubled quote may appear in a quoted field.
 //
-// If TrimLeadingSpace is true, leading white space in a field is ignored.
+// If TrimLeadingSpace is true, leading empty space in a field is ignored.
 type Reader struct {
 	Comma            rune // field delimiter (set to ',' by NewReader)
 	Comment          rune // comment character for start of line

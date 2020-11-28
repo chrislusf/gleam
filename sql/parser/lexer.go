@@ -135,7 +135,7 @@ func NewScanner(s string) *Scanner {
 	return &Scanner{r: reader{s: s}}
 }
 
-func (s *Scanner) skipWhitespace() rune {
+func (s *Scanner) skipEmptySpace() rune {
 	return s.r.incAsLongAs(unicode.IsSpace)
 }
 
@@ -158,7 +158,7 @@ func (s *Scanner) scan() (tok int, pos Pos, lit string) {
 
 	ch0 := s.r.peek()
 	if unicode.IsSpace(ch0) {
-		ch0 = s.skipWhitespace()
+		ch0 = s.skipEmptySpace()
 	}
 	pos = s.r.pos()
 	if s.r.eof() {
@@ -370,11 +370,11 @@ func startString(s *Scanner) (tok int, pos Pos, lit string) {
 
 	// Quoted strings placed next to each other are concatenated to a single string.
 	// See http://dev.mysql.com/doc/refman/5.7/en/string-literals.html
-	ch := s.skipWhitespace()
+	ch := s.skipEmptySpace()
 	for ch == '\'' || ch == '"' {
 		_, _, lit1 := s.scanString()
 		lit = lit + lit1
-		ch = s.skipWhitespace()
+		ch = s.skipEmptySpace()
 	}
 	return
 }
