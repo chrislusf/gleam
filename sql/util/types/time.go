@@ -1848,8 +1848,8 @@ func mysqlTimeFix(t *mysqlTime, ctx map[string]int) error {
 // strToDate converts date string according to format, returns true on success,
 // the value will be stored in argument t or ctx.
 func strToDate(t *mysqlTime, date string, format string, ctx map[string]int) bool {
-	date = skipWhiteSpace(date)
-	format = skipWhiteSpace(format)
+	date = skipEmptySpace(date)
+	format = skipEmptySpace(format)
 
 	token, formatRemain, succ := getFormatToken(format)
 	if !succ {
@@ -1892,7 +1892,7 @@ func getFormatToken(format string) (token string, remain string, succ bool) {
 	return format[:1], format[1:], true
 }
 
-func skipWhiteSpace(input string) string {
+func skipEmptySpace(input string) string {
 	for i, c := range input {
 		if !unicode.IsSpace(c) {
 			return input[i:]
@@ -2036,7 +2036,7 @@ func time12Hour(t *mysqlTime, input string, ctx map[string]int) (string, bool) {
 		return input, false
 	}
 
-	remain := skipWhiteSpace(input[8:])
+	remain := skipEmptySpace(input[8:])
 	switch {
 	case strings.HasPrefix(remain, "AM"):
 		t.hour = uint8(hour)

@@ -28,7 +28,7 @@ import (
 // Lookup returns the encoding with the specified label, and its canonical
 // name. It returns nil and the empty string if label is not one of the
 // standard encodings for HTML. Matching is case-insensitive and ignores
-// leading and trailing whitespace.
+// leading and trailing empty space.
 func Lookup(label string) (e encoding.Encoding, name string) {
 	label = strings.ToLower(strings.Trim(label, "\t\n\r\f "))
 	enc := encodings[label]
