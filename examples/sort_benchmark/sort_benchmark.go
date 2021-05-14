@@ -86,7 +86,7 @@ func gleamSortDistributed(fileName string, size int64, partition int, isDistribu
 	}
 }
 
-func splitLine(row []interface{}) error {
+func splitLine(row []interface{}, _ ...interface{}) error {
 	line := row[0].(string)
 	gio.Emit(line[0:10], line[12:])
 	return nil
