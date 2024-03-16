@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin/v2"
 
 	a "github.com/chrislusf/gleam/distributed/agent"
 	exe "github.com/chrislusf/gleam/distributed/executor"
