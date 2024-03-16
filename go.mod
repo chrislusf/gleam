@@ -8,7 +8,7 @@ require (
 	github.com/OneOfOne/xxhash v1.2.8
 	github.com/ajstarks/svgo v0.0.0-20211024235047-1546f124cd8b
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/aws/aws-sdk-go v1.30.19
+	github.com/aws/aws-sdk-go v1.34.0
 	github.com/chrislusf/glow v0.0.0-20181102060906-4c40a2717eee
 	github.com/colinmarc/hdfs v1.1.3
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548
