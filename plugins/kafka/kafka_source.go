@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/chrislusf/gleam/flow"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
