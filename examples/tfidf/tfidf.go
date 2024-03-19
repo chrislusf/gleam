@@ -71,7 +71,7 @@ func main() {
 
 }
 
-func readContent(x []interface{}) error {
+func readContent(x []interface{}, _ ...interface{}) error {
 
 	filepath := gio.ToString(x[0])
 
@@ -93,7 +93,7 @@ func readContent(x []interface{}) error {
 	return nil
 }
 
-func tfidf(x []interface{}) error {
+func tfidf(x []interface{}, _ ...interface{}) error {
 	fmt.Fprintf(os.Stderr, "tfidf input: %v\n", x)
 	word := gio.ToString(x[0])
 	df := uint16(gio.ToInt64(x[1]))

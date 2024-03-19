@@ -11,7 +11,7 @@ var (
 	AppendOne = gio.RegisterMapper(addOne)
 )
 
-func tokenize(row []interface{}) error {
+func tokenize(row []interface{}, _ ...interface{}) error {
 
 	line := gio.ToString(row[0])
 
@@ -24,7 +24,7 @@ func tokenize(row []interface{}) error {
 	return nil
 }
 
-func addOne(row []interface{}) error {
+func addOne(row []interface{}, _ ...interface{}) error {
 	row = append(row, 1)
 
 	gio.Emit(row...)

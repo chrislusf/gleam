@@ -34,7 +34,7 @@ func init() {
 	gob.Register(CassandraShardInfo{})
 }
 
-func readShard(row []interface{}) error {
+func readShard(row []interface{}, _ ...interface{}) error {
 	encodedShardInfo := row[0].([]byte)
 	return decodeShardInfo(encodedShardInfo).ReadSplit()
 }
