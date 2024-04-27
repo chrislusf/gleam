@@ -240,9 +240,37 @@ Start a gleam master and several gleam agents
 ```
 
 ## Setup Gleam Cluster on Kubernetes
-Start a gleam master and several gleam agents
-```bash
-kubectl apply -f k8s/
+
+Install [Kubernetes tools](https://kubernetes.io/docs/tasks/tools/)
+At the very least you will need a local K8s cluster, Docker & Kubectl.
+Docker Desktop [provides all of this out the box](https://www.docker.com/products/docker-desktop/).
+
+### Install Skaffold
+
+Choose the appropriate binary [here](https://skaffold.dev/docs/install/#standalone-binary).
+For example, ARM64:
+
+```sh
+curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-darwin-arm64 && \
+sudo install skaffold /usr/local/bin/
+```
+
+### Run Latest Version
+
+```sh
+cd ./k8s
+skaffold run --profile base 
+```
+
+Use `skaffold delete --profile base` to bring the cluster down.
+
+### Alternately Build & Run Local Version
+
+You can build a local copy of gleam for development with hot reloading:
+
+```sh
+cd ./k8s
+skaffold dev --profile dev 
 ```
 
 ## Change Execution Mode.

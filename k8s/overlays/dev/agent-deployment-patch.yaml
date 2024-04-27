@@ -7,6 +7,6 @@ spec:
   template:
     spec:
       containers:
-        - name: master
+        - name: agent
           image: local/gleam
           imagePullPolicy: Never
