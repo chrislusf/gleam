@@ -1,23 +1,17 @@
 BINARY = gleam
 SOURCE_DIR = github.com/chrislusf/gleam/distributed/gleam
 
-all: gleam
+all: docker
 
-.PHONY : clean deps docker run_docker
+.PHONY : clean docker run_docker
 
 clean:
-	go clean $(SOURCE_DIR)
-	rm -f $(BINARY)
+	docker rmi chrislusf/gleam
 
-deps:
-	go get $(GO_FLAGS) -d $(SOURCE_DIR)
+docker:
+	cd ../ && docker build -t chrislusf/gleam -f docker/Dockerfile  .
 
-gleam: deps
-	GOOS=linux GOARCH=amd64 go build -o $(BINARY) $(SOURCE_DIR)
-
-docker: gleam
-	docker build -t chrislusf/gleam .
-	rm -f $(BINARY)
+push: docker
 	docker push chrislusf/gleam:latest
 
 run_docker: docker

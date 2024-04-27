@@ -1,0 +1,20 @@
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: gleam
+build:
+  artifacts:
+    - image: local/gleam
+      context: ../
+      docker:
+        dockerfile: ../docker/Dockerfile
+manifests:
+  kustomize:
+    paths:
+      - k8s/overlays/dev
+profiles:
+  - name: base
+    manifests:
+      kustomize:
+        paths:
+          - k8s/base
