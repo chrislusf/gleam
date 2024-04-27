@@ -8,8 +8,10 @@ metadata:
 spec:
   ports:
     - port: 45326
+      name: port1
       protocol: TCP
     - port: 55326
+      name: port2
       protocol: TCP
   clusterIP: None
   selector:
