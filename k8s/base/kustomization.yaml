@@ -1,0 +1,5 @@
+resources:
+- 00-gleam-namespace.yaml
+- 01-master-deployment.yaml
+- 02-agent-deployment.yaml
+- 03-master-svc.yaml
