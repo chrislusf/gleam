@@ -125,7 +125,7 @@ func main() {
 
 }
 
-func tokenize(row []interface{}) error {
+func tokenize(row []interface{}, _ ...interface{}) error {
 	line := gio.ToString(row[0])
 	for _, s := range strings.FieldsFunc(line, func(r rune) bool {
 		return !('A' <= r && r <= 'Z' || 'a' <= r && r <= 'z' || '0' <= r && r <= '9')
@@ -135,7 +135,7 @@ func tokenize(row []interface{}) error {
 	return nil
 }
 
-func appendOne(row []interface{}) error {
+func appendOne(row []interface{}, _ ...interface{}) error {
 	row = append(row, 1)
 	gio.Emit(row...)
 	return nil

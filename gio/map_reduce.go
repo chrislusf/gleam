@@ -12,14 +12,16 @@ import (
 )
 
 type MapperId string
+type MapperArgs []byte
 type ReducerId string
-type Mapper func([]interface{}) error
+type Mapper func([]interface{}, ...interface{}) error
 type Reducer func(x, y interface{}) (interface{}, error)
 
 type gleamTaskOption struct {
 	Mapper          string
 	Reducer         string
 	KeyFields       string
+	MapperArgs      string // json-marshalled
 	ExecutorAddress string
 	HashCode        uint
 	StepId          int
@@ -40,6 +42,7 @@ var (
 
 func init() {
 	flag.StringVar(&taskOption.Mapper, "gleam.mapper", "", "the generated mapper name")
+	flag.StringVar(&taskOption.MapperArgs, "gleam.mapperArgs", "", "arguments for the mapper in JSON")
 	flag.StringVar(&taskOption.Reducer, "gleam.reducer", "", "the generated reducer name")
 	flag.StringVar(&taskOption.KeyFields, "gleam.keyFields", "", "the 1-based key fields")
 	flag.StringVar(&taskOption.ExecutorAddress, "gleam.executor", "", "executor address")
