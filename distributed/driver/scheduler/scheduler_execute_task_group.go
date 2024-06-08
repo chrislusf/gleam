@@ -84,7 +84,6 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	for _, t := range tasks {
 		hasGoCode = hasGoCode || t.Step.IsGoCode
 	}
-	// TODO: [DCFS] here's the place we send the binary to the agent
 	if hasGoCode {
 		if binaryPath == "" {
 			relatedFiles = append(relatedFiles, resource.FileResource{os.Args[0], "."})
