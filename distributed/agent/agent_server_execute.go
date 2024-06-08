@@ -24,7 +24,16 @@ func (as *AgentServer) executeCommand(
 	stopChan := make(chan bool)
 
 	// start the command
+	// TODO: [DCFS] use os.Executable() instead of osext.Executable()
+	// TODO: [DCFS] also this might change -- we're no longer getting the current executable
+	// but the executable built for the target architecture. Question is ... do we build it here?
 	executableFullFilename, _ := osext.Executable()
+
+	// TODO: [DCFS] Okay so the AGENT executes this, but where does the executable come from?
+	// Perhaps this is not the 'task' binary but the 'gleam' binary?
+	log.Println("-------------------------------------------------")
+	log.Printf("executableFullFilename: %s", executableFullFilename)
+	log.Println("-------------------------------------------------")
 
 	// Note: don't use exec.CommandContext here.
 	// The executor process will be killed by SIGKILL and all of its child process will be left behind if

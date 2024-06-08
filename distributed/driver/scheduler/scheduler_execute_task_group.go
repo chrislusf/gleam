@@ -22,7 +22,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
 	taskGroup *plan.TaskGroup,
-	bid float64, relatedFiles []resource.FileResource) {
+	bid float64, relatedFiles []resource.FileResource, binaryPath string) {
 
 	defer wg.Done()
 
@@ -84,8 +84,13 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	for _, t := range tasks {
 		hasGoCode = hasGoCode || t.Step.IsGoCode
 	}
+	// TODO: [DCFS] here's the place we send the binary to the agent
 	if hasGoCode {
-		relatedFiles = append(relatedFiles, resource.FileResource{os.Args[0], "."})
+		if binaryPath == "" {
+			relatedFiles = append(relatedFiles, resource.FileResource{os.Args[0], "."})
+		} else {
+			relatedFiles = append(relatedFiles, resource.FileResource{binaryPath, "."})
+		}
 	}
 
 	if len(relatedFiles) > 0 {

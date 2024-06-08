@@ -17,6 +17,7 @@ type DistributedOption struct {
 	FlowBid       float64
 	Module        string
 	IsProfiling   bool
+	BinaryPath    string
 }
 
 func Option() *DistributedOption {
@@ -25,6 +26,7 @@ func Option() *DistributedOption {
 		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
+		BinaryPath:   "",
 	}
 }
 
@@ -38,6 +40,7 @@ func (o *DistributedOption) GetFlowRunner() flow.FlowRunner {
 		FlowBid:       o.FlowBid,
 		Module:        o.Module,
 		IsProfiling:   o.IsProfiling,
+		BinaryPath:    o.BinaryPath,
 	})
 }
 
@@ -66,5 +69,15 @@ func (o *DistributedOption) WithFile(relatedFile, toFolder string) *DistributedO
 		relativePath = relatedFile
 	}
 	o.RequiredFiles = append(o.RequiredFiles, resource.FileResource{relativePath, toFolder})
+	return o
+}
+
+func (o *DistributedOption) WithBinary(binaryPath string) *DistributedOption {
+	// TODO: [DCFS] not sure this is needed
+	relativePath, err := filepath.Rel(".", binaryPath)
+	if err != nil {
+		relativePath = binaryPath
+	}
+	o.BinaryPath = relativePath
 	return o
 }

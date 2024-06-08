@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/chrislusf/gleam/distributed/resource"
 	"github.com/chrislusf/gleam/pb"
 	"github.com/chrislusf/gleam/util"
@@ -21,6 +22,8 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		log.Printf("Failed2 to read %s: %v", relatedFile.FullPath, err)
 		return err
 	}
+
+	log.Printf("Sending file %s to client", relatedFile.FullPath)
 
 	fileResourceRequest := &pb.FileResourceRequest{
 		Name:         filepath.Base(relatedFile.FullPath),

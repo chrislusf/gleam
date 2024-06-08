@@ -27,6 +27,7 @@ type Option struct {
 	FlowBid       float64
 	Module        string
 	IsProfiling   bool
+	BinaryPath    string
 }
 
 type FlowDriver struct {
@@ -84,7 +85,7 @@ func (fcd *FlowDriver) RunFlowContext(parentCtx context.Context, fc *flow.Flow) 
 		wg.Add(1)
 		go func(taskGroup *plan.TaskGroup) {
 			sched.ExecuteTaskGroup(ctx, fc, fcd.GetTaskGroupStatus(taskGroup), &wg, taskGroup,
-				fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles)
+				fcd.Option.FlowBid/float64(len(fcd.taskGroups)), fcd.Option.RequiredFiles, fcd.Option.BinaryPath)
 		}(taskGroup)
 	}
 	go sched.Market.FetcherLoop()
