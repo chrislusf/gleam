@@ -72,8 +72,9 @@ func (o *DistributedOption) WithFile(relatedFile, toFolder string) *DistributedO
 	return o
 }
 
+// WithBinary allows you to provide a binary built to run
+// on the gleam agents' architecture.
 func (o *DistributedOption) WithBinary(binaryPath string) *DistributedOption {
-	// TODO: [DCFS] not sure this is needed
 	relativePath, err := filepath.Rel(".", binaryPath)
 	if err != nil {
 		relativePath = binaryPath

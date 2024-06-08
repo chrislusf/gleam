@@ -36,7 +36,6 @@ func (fc *Flow) RunContext(ctx context.Context, options ...FlowOption) {
 	if len(options) == 0 {
 		Local.RunFlowContext(ctx, fc)
 	} else {
-		// TODO: [DCFS] what is this for?
 		for _, option := range options {
 			option.GetFlowRunner().RunFlowContext(ctx, fc)
 		}

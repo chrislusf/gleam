@@ -23,8 +23,6 @@ func sendRelatedFile(ctx context.Context, client pb.GleamAgentClient, flowHashCo
 		return err
 	}
 
-	log.Printf("Sending file %s to client", relatedFile.FullPath)
-
 	fileResourceRequest := &pb.FileResourceRequest{
 		Name:         filepath.Base(relatedFile.FullPath),
 		Dir:          relatedFile.TargetFolder,
