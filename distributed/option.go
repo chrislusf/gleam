@@ -1,6 +1,7 @@
 package distributed
 
 import (
+	"os"
 	"path/filepath"
 
 	"github.com/chrislusf/gleam/distributed/driver"
@@ -26,7 +27,7 @@ func Option() *DistributedOption {
 		DataCenter:   "",
 		TaskMemoryMB: 64,
 		FlowBid:      100.0,
-		BinaryPath:   "",
+		BinaryPath:   os.Args[0],
 	}
 }
 
