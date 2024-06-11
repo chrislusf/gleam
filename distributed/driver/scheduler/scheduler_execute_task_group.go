@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -22,7 +21,7 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 	taskGroupStatus *pb.FlowExecutionStatus_TaskGroup,
 	wg *sync.WaitGroup,
 	taskGroup *plan.TaskGroup,
-	bid float64, relatedFiles []resource.FileResource) {
+	bid float64, relatedFiles []resource.FileResource, binaryPath string) {
 
 	defer wg.Done()
 
@@ -85,7 +84,10 @@ func (s *Scheduler) ExecuteTaskGroup(ctx context.Context,
 		hasGoCode = hasGoCode || t.Step.IsGoCode
 	}
 	if hasGoCode {
-		relatedFiles = append(relatedFiles, resource.FileResource{os.Args[0], "."})
+		relatedFiles = append(relatedFiles, resource.FileResource{
+			FullPath:     binaryPath,
+			TargetFolder: ".",
+		})
 	}
 
 	if len(relatedFiles) > 0 {
