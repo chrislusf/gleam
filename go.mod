@@ -1,6 +1,6 @@
 module github.com/chrislusf/gleam
 
-go 1.23.0
+go 1.24.0
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -27,7 +27,7 @@ require (
 	github.com/pingcap/tipb v0.0.0-20240314065809-8303e7d7a9e1
 	github.com/scritchley/orc v0.0.0-20210513144143-06dddf1ad665
 	github.com/xitongsys/parquet-go v1.5.4
-	golang.org/x/text v0.23.0
+	golang.org/x/text v0.31.0
 	google.golang.org/grpc v1.56.3
 )
 
@@ -66,10 +66,10 @@ require (
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
-	golang.org/x/net v0.38.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.27.0 // indirect
-	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.110.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
