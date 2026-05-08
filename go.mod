@@ -1,6 +1,6 @@
 module github.com/chrislusf/gleam
 
-go 1.24.0
+go 1.25
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -36,7 +36,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v0.13.0 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
-	github.com/apache/thrift v0.13.1-0.20201008052519-daf620915714 // indirect
+	github.com/apache/thrift v0.23.0 // indirect
 	github.com/cznic/golex v0.0.0-20181122101858-9c343928389c // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.6.0 // indirect
