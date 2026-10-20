@@ -23,7 +23,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1
 	github.com/juju/errors v1.0.0
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0
-	github.com/klauspost/compress v1.17.7
+	github.com/klauspost/compress v1.18.7
 	github.com/pingcap/tipb v0.0.0-20240314065809-8303e7d7a9e1
 	github.com/scritchley/orc v0.0.0-20210513144143-06dddf1ad665
 	github.com/xitongsys/parquet-go v1.5.4
